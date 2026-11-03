@@ -6,6 +6,48 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 [backend PR7](https://github.com/sdevil7th/MoDiff/pull/7) and
 [client PR7](https://github.com/sdevil7th/MoDiff-client/pull/7).
 
+## Current Gallery and hardware follow-up
+
+The user authorizes work on the broader Gallery blockers and hardware claims.
+The 73 recorded Gallery errors affect 63 examples across 17 model types;
+they are not 73 independent model runs. A per-example inventory now binds each
+published lock and model pin to the current creator, execution selection,
+expected output and required input roles. No manifest lock, media or creator
+default has been refreshed to turn historical evidence into current proof.
+
+Hardware tooling exposed two diagnosed defects: CPU execution could be labelled
+with the host's first GPU, and genuine current task execution fingerprints were
+compared to health's different resource-fingerprint domain. The repair checks
+actual device/backend/index and independently binds resource, execution,
+normalized runtime and original worker source. Retained artifacts require their
+original completed task, and the full provenance validator remains mandatory.
+The original failing checks are retained alongside focused regression results.
+
+Validation passes all 46 focused hardware/runtime/policy tests and the complete
+client `npm run check`, with the declared ordinary CPU schema-fixture environment.
+The first full-check attempt omitted that required fixture selection and failed;
+that original log is retained. The final check passes without changing source
+fixtures or production boundaries to hide that setup failure. Release contract
+and resource-report reproducibility checks pass. The regenerated candidate
+correctly remains blocked and `--require-ready` fails: AMD is observed, no
+advertised supported profile is yet physically qualified, and current template,
+workflow and resource-recipe gaps remain. No app source/bundle/runtime deployment
+or new model run is needed for these maintainer-tooling changes.
+
+One genuine retained Linux/ROCm run is now registered as a physical observation
+on Radeon 8060S without rerunning a model. It retains the original source,
+capture time and conditional tier. CPU/NVIDIA/MPS release qualification is not
+promoted. The available machines and missing Apple hardware remain explicit in
+[the installation guide](../../docs/accelerator-installation.md#runtime-targets-and-physical-release-qualification).
+
+Linux inspection finds the pinned 11.1 GB ACE selection intact, with about
+380 GB free. The first planned new native rows are the exact 75-second song and
+joined 90-second continuation. The Linux connection then repeatedly resets;
+the forwarding failure and original ready/idle observations are retained. No
+model task was submitted. Resume only after fresh stable access, idle/cache/
+download checks and task-specific resource admission. The user has been asked
+to check the machine's connection. Keep all accepted clips/templates intact.
+
 ## Delivered
 
 - Shared video stages and selected LTX/Wan/H3/Pika route implementations, exact
@@ -66,7 +108,7 @@ the downstream release reports to run; it does not qualify any model or device.
 | Close old Qwen provenance holds                      | Recover the four original duplicate runs, complete executed model sets and contemporaneous source/runtime evidence. The currently retained public records lack required complete model-set authority. Use fail-closed retained-evidence repair only if those originals exist.                                                                                               | About 1â€“2 hours search/validation; absent originals are a real hold. No large Windows Qwen rerun.                                                                                                  |
 | Current Gallery and canonical-workflow qualification | The current creator lock deliberately includes stage execution selection. Previous-recipe display is not current native proof. Batch missing genuine runs by cached family on Linux after preservation, capacity and exact-input admission; diagnose failures before changing a recipe.                                                                                     | Requires an enumerated campaign and per-family measured timings; 73 failures are not 73 independent code bugs or a short test rerun. Retired/missing models and licensing may block particular rows. |
 | Resource and physical hardware qualification         | Recover complete receipts before rerunning. Use genuinely small cached workloads for CPU/NVIDIA where all runtime, model, source and measurement bindings can be captured. Linux/ROCm cannot stand in for NVIDIA or MPS. Keep other Windows applications' RAM allowance.                                                                                                    | Small workload preparation about 1â€“2 hours per available profile; 60 resource recipes need individual evidence. Apple Silicon remains unavailable.                                                 |
-| Extra H3 motion variants                             | One specifically authorized photographic keyframe comparison is delivered and awaits human visual review. All other H3 variants remain deferred; no further H3 run is queued or authorized.                                                                                                                                                                                 | Latest photographic keyframes took 3h17 native; earlier reference routes took about6–6.5h. These are measured waits, not acceptance guarantees.                                                      |
+| Extra H3 motion variants                             | One specifically authorized photographic keyframe comparison is delivered and visually accepted. All other H3 variants remain deferred; no further H3 run is queued or authorized.                                                                                                                                                                                          | Latest photographic keyframes took 3h17 native; earlier reference routes took about6–6.5h. These are measured waits, not acceptance guarantees.                                                      |
 | Human audio and publication decisions                | Keep visual acceptance separate from listening and exact-file rights/publication. Prepare reviewable exact-file records before requesting approval. No public video upload is authorized by the current visual verdicts.                                                                                                                                                    | Depends on human review; never auto-approve.                                                                                                                                                         |
 
 The newly generated whole-app report covers **90 templates, 203 canonical

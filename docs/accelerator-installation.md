@@ -178,6 +178,30 @@ Executable profiles are `nvidia-cuda`, `amd-rocm-linux`, `amd-instinct-rocm-linu
 
 On macOS, the `cpu` and `apple-mps` profiles use the same MPS-capable PyTorch wheel. The managed profile remains authoritative: selecting `cpu` validates and records a CPU tensor even though the wheel contains MPS support, while selecting `mps` requires an available MPS device and validates on `mps:0`.
 
+### Runtime targets and physical release qualification
+
+An installation profile's support tier describes the declared runtime target.
+It does not establish that every model, memory policy or template has passed
+physical release qualification. The release report separately requires current
+model, graph, source, runtime, output, timing and memory evidence. Unit tests,
+hosted CI and a successful tensor check cannot replace that model evidence.
+
+Retained real-model evidence has been registered as a physical observation on
+Radeon 8060S under the conditional Linux/ROCm profile. That observation retains
+its original source and capture time and does not promote AMD's tier or qualify
+other models. CPU and NVIDIA release coverage still requires complete registered
+receipts. Apple MPS remains unverified for this delivery because no physical
+Apple Silicon machine is available; Linux and Windows cannot close that row.
+Other preview/conditional targets retain their stated limits. Keep all declared
+targets in the release denominator while these gaps remain.
+
+The hardware recorder checks the actual measured device/backend and GPU index,
+not merely the host's available accelerators. Current health resource hashes
+and task execution hashes remain separate, bound through retained source and
+runtime evidence. A CPU run on a GPU-equipped host cannot qualify that GPU.
+See the client's [Gallery evidence procedure](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/docs/template-gallery-assets.md)
+for the original-task requirements when registering retained observations.
+
 Integrated AMD and Intel devices use shared system memory. Hardware discovery records accessible, dedicated, shared, and planning memory separately; Auto budgets from local/planning capacity instead of treating a large GTT or unified-memory aperture as equivalent discrete VRAM. MPS and XPU use direct device residency because CUDA-oriented Diffusers CPU-offload hooks are not portable to those backends.
 
 Missing `video`/`render` membership, `/dev/kfd`, DRM render nodes, a successful `rocminfo` GPU agent, or the minimum kernel is blocking. Allowlisted administrator actions show their exact effect and require immediate confirmation. The installer saves state before offering a reboot and always prints the resume command.

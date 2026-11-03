@@ -1,5 +1,13 @@
 # Video stages workflows and templates
 
+The newly authorized Gallery/hardware follow-up is in progress. Hardware
+registration now checks executed device/backend/index and the separate runtime
+hash domains against original source-bound provenance. Focused regressions and
+the complete client check pass; one retained AMD/ROCm observation is registered
+without a model rerun. The Gallery's 73 failures remain explicit. New Linux
+cases are pending stable access after repeated connection resets. See the
+[current closeout](RELEASE-CLOSEOUT-20261103.md#current-gallery-and-hardware-follow-up).
+
 Current local delivery, 3 November: Windows and Linux video apps run the tested
 audio-upload fix, with preserved data/runtime and no model reruns for the repair.
 The single authorized photographic MiniMax comparison is delivered privately
