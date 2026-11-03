@@ -1,5 +1,6 @@
 import hashlib
 import json
+import subprocess
 import tempfile
 import unittest
 from concurrent.futures import ThreadPoolExecutor
@@ -334,6 +335,61 @@ class SeparateDataRootUploadTests(unittest.IsolatedAsyncioTestCase):
 
     def tearDown(self):
         self.temporary.cleanup()
+
+    def _video_fixture(self, *, audio):
+        path = self.root / ("soundtrack.mp4" if audio else "silent.mp4")
+        command = [media_io.get_ffmpeg_exe(), "-y", "-v", "error", "-nostdin",
+                   "-f", "lavfi", "-i", "color=c=blue:s=32x32:r=4:d=1"]
+        if audio:
+            command += ["-f", "lavfi", "-i", "sine=frequency=440:duration=1", "-c:a", "aac"]
+        command += ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-shortest", str(path)]
+        subprocess.run(command, check=True, capture_output=True, timeout=15)
+        return path
+
+    async def _upload_bytes(self, name, body, kind):
+        class UploadRequest:
+            async def post(self):
+                return {"file": SimpleNamespace(filename=name, file=BytesIO(body)), "type": kind}
+
+        return await self.server.filePost(UploadRequest())
+
+    async def test_audio_upload_preserves_av_source_and_previews_its_soundtrack(self):
+        source = self._video_fixture(audio=True)
+        original = source.read_bytes()
+        response = await self._upload_bytes("soundtrack.mp4", original, "audio")
+        self.assertEqual(response.status, 200, response.text)
+        payload = json.loads(response.text)
+        self.assertEqual(payload["path"], "@data/audio/soundtrack.mp4")
+        self.assertEqual(payload["media"]["kind"], "video")
+        self.assertEqual(payload["media"]["sha256"], hashlib.sha256(original).hexdigest())
+        stored = self.data / "audio" / "soundtrack.mp4"
+        self.assertEqual(stored.read_bytes(), original)
+        preview = await self.server.media_preview(
+            SimpleNamespace(query={"file": payload["path"], "media_kind": "audio"})
+        )
+        self.assertEqual(preview.status, 200)
+        self.assertEqual(preview.content_type, "audio/mpeg")
+        self.assertEqual(stored.read_bytes(), original)
+        strict_probe = await self.server.media_probe(
+            SimpleNamespace(query={"file": payload["path"], "media_kind": "audio"})
+        )
+        self.assertEqual(strict_probe.status, 422)
+
+    async def test_audio_upload_rejects_silent_video_and_renamed_image_without_retaining_files(self):
+        silent = self._video_fixture(audio=False).read_bytes()
+        image = BytesIO()
+        Image.new("RGB", (2, 2), "blue").save(image, format="PNG")
+        for name, body in (("silent.mp4", silent), ("renamed.mp4", image.getvalue())):
+            with self.subTest(name=name):
+                response = await self._upload_bytes(name, body, "audio")
+                self.assertEqual(response.status, 400)
+                self.assertFalse((self.data / "audio" / name).exists())
+
+    async def test_other_upload_kinds_still_reject_av_as_an_image(self):
+        original = self._video_fixture(audio=True).read_bytes()
+        response = await self._upload_bytes("renamed.png", original, "images")
+        self.assertEqual(response.status, 400)
+        self.assertFalse((self.data / "images" / "renamed.png").exists())
 
     async def test_upload_returns_data_root_identifier_and_every_file_route_resolves_it(self):
         encoded = BytesIO()

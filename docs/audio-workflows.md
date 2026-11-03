@@ -33,6 +33,13 @@ Keep upload, preview, playback and seek available on that source. Continuation
 can retain separate loudness-match and join operations; repaint keeps its bounded
 time interval. These operations do not disappear when Model Setup is grouped.
 
+An audio input can upload an MP4 containing a real soundtrack, as advertised by
+its file picker. The upload preserves the original bytes and reports the actual
+video-container kind; its audio preview extracts the soundtrack into a separate
+managed cache. Silent video, corrupt media and images renamed as audio remain
+rejected. Ordinary probes and original-file audio conversions keep their strict
+kind checks; selecting audio for an upload does not relabel a video as audio.
+
 Music controls such as lyrics, language, BPM and key appear only where the task
 contract supports them. A nominal audio socket alone does not make those controls
 valid for a sound-generation or speech model. AudioLDM2's candidate waveforms

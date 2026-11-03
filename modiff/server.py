@@ -4167,7 +4167,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
             expected_kind = {"images": "image", "videos": "video", "audio": "audio", "text": "text"}.get(type)
             metadata = (
-                await asyncio.to_thread(probe_media_file, file_path, expected_kind)
+                await asyncio.to_thread(
+                    probe_media_file, file_path, expected_kind,
+                    # Audio inputs already advertise MP4 soundtrack sources.
+                    # Keep the original container/kind; require a real audio
+                    # stream, as for the explicit converted-audio preview.
+                    allow_audio_from_video=expected_kind == "audio",
+                )
                 if expected_kind
                 else {
                     "filename": file_path.name,
