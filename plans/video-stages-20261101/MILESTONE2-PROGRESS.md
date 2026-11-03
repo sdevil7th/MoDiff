@@ -840,3 +840,22 @@ before the sole genuine UI Run. Rendering and creative acceptance remain pending
 No further variants, extra H3 runs, downloads, model retirements or public uploads
 are part of this pilot. The six approved clips and eight rejected paper clips
 remain preserved. Technical audits and human review will be recorded separately.
+
+The sole photographic pilot has now completed in 35m46s without a resource stop.
+Exact task/attempt/source/adapter/owner/cache/source-file/durable/served joins and
+full decoding pass: 124 frames at 24 FPS, 832×480, stereo 32 kHz. Whole built-editor
+muted playback presents all 124 frames with zero drops/errors. Normal owned
+ModelSetup and ImageLoad release preserves all 98 app files and durable media;
+cache is empty and temporary offload is absent. A private auditor's initial raw
+cache URL failed on a slash-bearing Block owner; matching the application's
+existing segment encoding fixed the helper, with the failed partial evidence
+retained and every identity/hash check unchanged. No application fix or rerun
+was required.
+
+The private review adds the genuine photographic pilot as awaiting user review,
+preserving all 14 previous clip objects, 20 video references, comparisons and
+six accepted/eight rejected verdicts. Cycling and foreground parallax are visible;
+camera angle remains mostly side-on and the ending crops the wheels. The next
+step is the user's visual verdict before further recipe replacements. This is
+candidate delivery, not accepted-template, listening, publication or whole-app
+signoff. The source brief is versioned separately from all private media/evidence.

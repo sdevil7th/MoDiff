@@ -1,15 +1,26 @@
 # Optional-reference fix and advanced Pika delivery
 
-**Photographic pilot authorized, 3 November:** one separate Pika image-reference
-workflow is now rendering on Linux using frame zero from the human-accepted
+**Photographic pilot delivered, 3 November:** one separate Pika image-reference
+workflow completed on Linux in 35m46s using frame zero from the human-accepted
 cycling clip. Only the reference image, full creative prompt and export filename
-change; geometry, seed, official sampler, immutable model/adapter and resource
-floors are retained. Normal built-editor import, Save and reload preserve the
+changed; geometry, seed, official sampler, immutable model/adapter and resource
+floors were retained. Normal built-editor import, Save and reload preserve the
 complete new snapshot and all 41 prior saved workflow bodies. The independent
-guard was ready before the actual UI submission. The pilot is pending technical
-and human visual review. No further replacement render is authorized by this
-single-pilot step; the rejected paper examples remain held. No app code,
-deployment, model download, deletion or extra H3 run is needed for this recipe.
+guard was ready before the actual UI submission and ended without a resource
+stop. Strict task/source/adapter/cache/durable/served joins, all 124 decoded frames
+at 24 FPS with stereo 32 kHz audio, and whole-editor muted playback pass with zero
+drops/errors. Normal scoped release preserves all 98 app files and durable media.
+
+The private review now presents this photographic cyclist candidate before the
+six accepted and eight rejected prior outputs, preserving all prior clip objects,
+verdicts and comparison URLs. Samples show cycling and foreground parallax; the
+camera stays mostly side-on and crops the wheels near the ending. Human visual
+review of this candidate is pending; listening/publication remain separate.
+No further replacement render is authorized before that review. The rejected
+paper examples remain held. No app code, deployment, download, model deletion,
+extra H3 run or broad gate rerun was needed. The
+[versioned creative brief](photographic-reference-pilot.v1.json) records the
+candidate prompt and settings without private media or paths.
 
 **Latest human review, 3 November:** all eight paper-boat outputs are rejected;
 the other six displayed outputs are accepted. This supersedes the earlier

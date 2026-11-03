@@ -484,10 +484,10 @@
     "humanVisualReviewPending": true,
     "humanAudioReviewPending": true,
     "newRendersAfterFeedback": 1,
-    "nextProposedWork": "Single photographic cyclist-reference Pika pilot authorized and running; human review before any further variants",
-    "reviewPendingScope": "Single photographic pilot pending; six earlier outputs accepted, eight paper outputs rejected. Audio/publication separate.",
+    "nextProposedWork": "User visual review of the single photographic cyclist-reference pilot before further variants",
+    "reviewPendingScope": "Photographic pilot delivered, awaiting human visual verdict; six earlier clips accepted, eight paper clips rejected. Listening/publication separate.",
     "photographicReferencePilot": {
-      "status": "native_running",
+      "status": "delivered_awaiting_user_visual_review",
       "singlePilotOnly": true,
       "existingReferenceGraph": true,
       "executableChanges": [
@@ -504,9 +504,19 @@
       "priorSavedWorkflowBodiesExact": 41,
       "priorAppFilesExactAtFrameExtraction": 92,
       "guardReadyBeforeAllocation": true,
-      "nativeSuccess": false,
+      "nativeSuccess": true,
       "humanVisualAccepted": false,
-      "moreReplacementsAuthorized": false
+      "moreReplacementsAuthorized": false,
+      "nativeSeconds": 2145.8967747688293,
+      "technicalMediaAuditPassed": true,
+      "wholeMutedPlaybackFrames": 124,
+      "wholeMutedPlaybackDrops": 0,
+      "protectedFilesExactAtRelease": 98,
+      "cacheEmpty": true,
+      "temporaryOffloadAbsent": true,
+      "priorReviewClipObjectsExact": 14,
+      "priorReviewVideoReferencesExact": 20,
+      "framingAndCameraLimitations": true
     }
   }
 }
