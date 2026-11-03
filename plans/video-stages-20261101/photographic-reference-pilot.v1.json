@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "status": "local_candidate_awaiting_human_visual_review",
-  "scope": "One photographic image-reference pilot; not an accepted public template or hardware qualification",
+  "status": "human_visual_accepted",
+  "scope": "Photographic image-reference pilot accepted visually; user authorized keyframe and mixed-reference replacements and reusable templates from good outputs. Listening/publication and hardware qualification remain separate.",
   "task": "reference_to_video_with_audio",
   "pipelineClass": "PikaH3FlexModularPipeline",
   "model": {
@@ -36,8 +36,8 @@
     "Camera mostly stays side-on rather than reaching a clear front three-quarter view",
     "Ending tightens and crops the bicycle wheels"
   ],
-  "humanVisualAccepted": false,
+  "humanVisualAccepted": true,
   "humanListeningAccepted": false,
   "publicationApproved": false,
-  "moreVariantsAuthorized": false
+  "moreVariantsAuthorized": true
 }

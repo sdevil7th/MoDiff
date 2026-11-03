@@ -462,8 +462,8 @@
     },
     "latestHumanVisualReview": {
       "dateIst": "2026-11-03",
-      "displayedOutputs": 14,
-      "visuallyAcceptedOutputs": 6,
+      "displayedOutputs": 15,
+      "visuallyAcceptedOutputs": 7,
       "visuallyRejectedPaperBoatOutputs": 8,
       "acceptedScope": [
         "two conventional sailboat text outputs",
@@ -474,20 +474,21 @@
       ],
       "paperRejectionSupersedesPriorVisualApprovals": true,
       "technicalReceiptsAndMediaPreserved": true,
-      "audioOrPublicationApprovalInferred": false
+      "audioOrPublicationApprovalInferred": false,
+      "photographicPilotAccepted": true
     },
     "localExampleVisualStatus": {
       "matchedKeyframes": "rejected_paper_recipe_replacement_required",
       "mixedImageVideoAudioReferences": "rejected_paper_recipe_replacement_required",
       "cyclistContinuationAndTimeline": "human_visual_accepted"
     },
-    "humanVisualReviewPending": true,
+    "humanVisualReviewPending": false,
     "humanAudioReviewPending": true,
     "newRendersAfterFeedback": 1,
-    "nextProposedWork": "User visual review of the single photographic cyclist-reference pilot before further variants",
-    "reviewPendingScope": "Photographic pilot delivered, awaiting human visual verdict; six earlier clips accepted, eight paper clips rejected. Listening/publication separate.",
+    "nextProposedWork": "Complete serial photographic keyframe and mixed-reference native review, then create and verify portable templates from good outputs",
+    "reviewPendingScope": "Photographic pilot accepted; keyframe replacement rendering and mixed-reference prepared. Audio and publication remain separate.",
     "photographicReferencePilot": {
-      "status": "delivered_awaiting_user_visual_review",
+      "status": "human_visual_accepted",
       "singlePilotOnly": true,
       "existingReferenceGraph": true,
       "executableChanges": [
@@ -505,8 +506,8 @@
       "priorAppFilesExactAtFrameExtraction": 92,
       "guardReadyBeforeAllocation": true,
       "nativeSuccess": true,
-      "humanVisualAccepted": false,
-      "moreReplacementsAuthorized": false,
+      "humanVisualAccepted": true,
+      "moreReplacementsAuthorized": true,
       "nativeSeconds": 2145.8967747688293,
       "technicalMediaAuditPassed": true,
       "wholeMutedPlaybackFrames": 124,
@@ -517,6 +518,25 @@
       "priorReviewClipObjectsExact": 14,
       "priorReviewVideoReferencesExact": 20,
       "framingAndCameraLimitations": true
+    },
+    "photographicReplacements": {
+      "status": "keyframe_native_running_mixed_prepared",
+      "authorizedCases": [
+        "photographic first-last keyframes",
+        "photographic ordered image-video-audio references"
+      ],
+      "sourceReference": "human-accepted photographic cyclist pilot",
+      "sourceFrameIndices": [0, 123],
+      "templatesFromGoodOutputs": true,
+      "existingRecipesPreserved": true,
+      "guardFloorsUnchanged": true,
+      "keyframeSaveReloadExact": true,
+      "unrelatedWorkflowBodiesExactAtSave": 43,
+      "extraH3Runs": 0,
+      "newDownloads": 0,
+      "modelRetirements": 0,
+      "publicUploads": 0,
+      "nativeAccepted": false
     }
   }
 }

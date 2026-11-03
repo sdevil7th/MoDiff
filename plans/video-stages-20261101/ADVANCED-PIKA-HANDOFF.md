@@ -1,5 +1,16 @@
 # Optional-reference fix and advanced Pika delivery
 
+**New authorized continuation, 3 November:** the user accepts the photographic
+cyclist reference pilot and requests keyframe and mixed-reference replacements,
+with reusable templates from good results. Both new recipes use the approved
+pilot's photographic cyclist: first/last frames for keyframes, and its opening
+image plus trimmed video/audio for ordered mixed references. The ordinary
+keyframe package passes complete built-editor Save/reload while preserving all
+43 prior workflow bodies and is now rendering under the unchanged Linux guard.
+The mixed recipe is prepared but has not run. Seven clips are visually accepted;
+all eight paper clips remain rejected and preserved. No extra H3, downloads,
+model retirement, runtime/code changes or public upload is part of this work.
+
 **Photographic pilot delivered, 3 November:** one separate Pika image-reference
 workflow completed on Linux in 35m46s using frame zero from the human-accepted
 cycling clip. Only the reference image, full creative prompt and export filename

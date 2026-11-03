@@ -859,3 +859,21 @@ camera angle remains mostly side-on and the ending crops the wheels. The next
 step is the user's visual verdict before further recipe replacements. This is
 candidate delivery, not accepted-template, listening, publication or whole-app
 signoff. The source brief is versioned separately from all private media/evidence.
+
+## Photographic keyframe and mixed-reference replacements authorized
+
+The user accepts the photographic cyclist pilot and authorizes both replacements
+and reusable templates from good outputs. Seven clips are now visually accepted;
+all eight paper clips remain rejected. New keyframes are the exact first and
+last frames of that approved photographic pilot; the mixed recipe uses its
+opening image, video motion and original audio together. Deterministic extraction
+preserves all 98 existing app files. Old workflows and media remain untouched.
+
+The keyframe replacement passes ordinary import, Arrange, complete Save/reload
+and exact executable-graph comparison, preserving all 43 prior workflow bodies.
+Its sole UI render is running on Linux, with the independent resource guard
+ready before allocation. The 15-node mixed recipe is prepared, not submitted;
+it waits for first-case review, release and fresh idle admission. All fixed model,
+adapter, sampler and memory/disk/swap/time limits remain unchanged. Templates
+will be checked as ordinary portable packages with empty required media, after
+their real outputs are reviewed. No extra H3 or unaffected-model/gate reruns.
