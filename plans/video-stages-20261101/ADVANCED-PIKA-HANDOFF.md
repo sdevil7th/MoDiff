@@ -1,5 +1,14 @@
 # Optional-reference fix and advanced Pika delivery
 
+**Latest human review, 3 November:** all eight paper-boat outputs are rejected;
+the other six displayed outputs are accepted. This supersedes the earlier
+seven-approval count and positive local paper-boat assessments below. The two
+text-only conventional sailboats and four cycling outputs are accepted. Keyframe
+and mixed-reference paper recipes need replacement; the cyclist continuation
+template is visually accepted. Technical execution/export evidence remains valid,
+and no new render was started in response to the verdict. Audio listening and
+publication are separate. Earlier sections retain their historical proof scope.
+
 3 November 2026. This finite local update is ready for testing. Source changes
 remain in the canonical Windows `fix-ui-ux-issues` branches and the same two
 existing PR #7s. Large-model runs were serialized on Linux. Extra H3 runs remain

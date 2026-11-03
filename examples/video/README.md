@@ -52,13 +52,18 @@ other applications.
 
 ## Quality and reuse
 
-The keyframe example preserves a recognizable paper boat with gentle drift.
-The mixed-reference example exercises all three input kinds and preserves
-identity and coherent water detail, but its requested camera arc is weak.
-It is a multimodal reference example, not a guarantee of strong camera motion.
-The continuation retains the cyclist and pedalling with foreground parallax;
-the transition is coherent, but the ending remains tighter than the requested
-camera pullback. The native segment and composed timeline are separate exports.
+The latest human review rejects **all paper-boat outputs**. This supersedes the
+earlier local quality assessments. The keyframe and mixed-reference packages
+remain technically tested source examples, but their paper-boat recipes are
+**visually rejected and held for replacement**. Do not present their retained
+renders as accepted template examples. Preserve those recipes and outputs for
+diagnosis rather than modifying their historical evidence.
+
+The cyclist continuation and composed timeline are **visually accepted by the
+user**. They retain the cyclist and pedalling with foreground parallax and a
+coherent join; the tighter ending remains a recorded deviation from the original
+camera brief. Human visual approval does not grant publication or establish
+audio listening. The native segment and composed timeline are separate exports.
 Changing a prompt or source media creates a new creative result that needs its
 own review.
 

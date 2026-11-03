@@ -808,3 +808,17 @@ and submitting no model task. Fourteen review media files, ten prior clip object
 seven approvals and all 24 full workflow bodies from the preceding current
 baseline remain exact. The finite local update is ready for user testing;
 new visual/audio review, publication and wider release gates remain separate.
+
+## Latest human verdict: paper-boat recipes rejected
+
+The user rejects all eight paper-boat clips and accepts the six other displayed
+outputs: two conventional sailboat text outputs and four cyclist outputs,
+including the continuation and composed timeline. This supersedes prior visual
+approval and local positive assessments for those exact paper outputs. Original
+media, recipes and technical evidence remain unchanged. No new render was run.
+
+The keyframe and mixed-reference paper recipes are held for creative replacement;
+the continuation template is visually accepted. The next proposed step is one
+photographic cyclist-reference Pika pilot using retained accepted media, reviewed
+before any further variants. New rendering waits for user direction. Audio and
+publication approval remain separate; code/CI fixes require no repetition.
