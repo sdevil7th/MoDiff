@@ -56,20 +56,25 @@
     {
       "id": "V1",
       "title": "Declare shared video stage contracts",
-      "status": "in_progress",
+      "status": "verified",
       "estimateActiveHours": {
         "minimum": 3,
         "maximum": 5
       },
       "dependencies": ["V0"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
-      "openIssues": []
+      "evidenceRefs": [
+        "MILESTONE2-PROGRESS.md",
+        "ADVANCED-PIKA-HANDOFF.md",
+        "RELEASE-CLOSEOUT-20261103.md"
+      ],
+      "openIssues": [],
+      "completionScope": "Shared modality/task stage contracts and selected route mappings implemented and covered by current contract/browser tests; native scope is recorded per route."
     },
     {
       "id": "V2",
       "title": "Review and lock the video runtime",
-      "status": "in_progress",
+      "status": "verified",
       "estimateActiveHours": {
         "minimum": 4,
         "maximum": 7
@@ -77,17 +82,18 @@
       "dependencies": ["V0", "V1"],
       "actualActiveHours": null,
       "evidenceRefs": [
-        "Milestone 2 private package/source/attachment checks; not native model evidence"
+        "Milestone 2 private package/source/attachment checks; not native model evidence",
+        "MILESTONE2-PROGRESS.md",
+        "ADVANCED-PIKA-HANDOFF.md",
+        "RELEASE-CLOSEOUT-20261103.md"
       ],
-      "openIssues": [
-        "Exact reviewed optional video provider qualified on Linux and Windows CPU; base Diffusers remains pinned independently. No ordinary base upgrade is required for these explicit routes.",
-        "Complete final paired checks and protected delivery remain open."
-      ]
+      "openIssues": [],
+      "completionScope": "Reviewed immutable optional video provider admitted without changing the independently pinned base runtime; no implicit installs; current no-download/runtime checks and paired gates pass."
     },
     {
       "id": "V3",
       "title": "Implement shared backend stage semantics",
-      "status": "in_progress",
+      "status": "verified",
       "estimateActiveHours": {
         "minimum": 5,
         "maximum": 8
@@ -95,16 +101,18 @@
       "dependencies": ["V1", "V2"],
       "actualActiveHours": null,
       "evidenceRefs": [
-        "FIRST-MILESTONE.md; exact private originals retained separately"
+        "FIRST-MILESTONE.md; exact private originals retained separately",
+        "MILESTONE2-PROGRESS.md",
+        "ADVANCED-PIKA-HANDOFF.md",
+        "RELEASE-CLOSEOUT-20261103.md"
       ],
-      "openIssues": [
-        "Shared task-specific stages and Wan image binding are deployed and have bounded native evidence. No remaining implementation blocker in the selected continuation; broader task/resource coverage is not implied."
-      ]
+      "openIssues": [],
+      "completionScope": "Selected shared backend stage, task binding, AV export, ownership and cancellation semantics implemented; actual native cases retain their original source identities."
     },
     {
       "id": "V4",
       "title": "Extend shared frontend stage authoring",
-      "status": "in_progress",
+      "status": "verified",
       "estimateActiveHours": {
         "minimum": 5,
         "maximum": 8
@@ -114,16 +122,17 @@
       "evidenceRefs": [
         "FIRST-MILESTONE.md; exact private originals retained separately",
         "Milestone 2 private package/source/attachment checks; not native model evidence",
-        "MILESTONE2-PROGRESS.md"
+        "MILESTONE2-PROGRESS.md",
+        "ADVANCED-PIKA-HANDOFF.md",
+        "RELEASE-CLOSEOUT-20261103.md"
       ],
-      "openIssues": [
-        "Paired production integration and current editor/media/lifecycle checks pass in bounded scope. Optional Reference Assembler inputs still appear in Fix suggestions on a valid image-only graph; no unwanted fix was applied, and the exact registry/create origin needs separate diagnosis."
-      ]
+      "openIssues": [],
+      "completionScope": "Shared stage authoring, persistence, optional-reference Fix repair and media-input previews implemented and deployed; actual retained-media editor checks require no model rerun."
     },
     {
       "id": "V5",
       "title": "Close LTX and Wan route bindings",
-      "status": "in_progress",
+      "status": "verified",
       "estimateActiveHours": {
         "minimum": 3,
         "maximum": 5
@@ -131,16 +140,18 @@
       "dependencies": ["V2", "V3"],
       "actualActiveHours": null,
       "evidenceRefs": [
-        "FIRST-MILESTONE.md; exact private originals retained separately"
+        "FIRST-MILESTONE.md; exact private originals retained separately",
+        "MILESTONE2-PROGRESS.md",
+        "ADVANCED-PIKA-HANDOFF.md",
+        "RELEASE-CLOSEOUT-20261103.md"
       ],
-      "openIssues": [
-        "Five selected LTX/Wan routes and the direct Wan image route retain actual native evidence. Current paired integration, Wan full playback and real named-input/output Service CLI inference pass. Additional routes/hardware remain outside these proofs."
-      ]
+      "openIssues": [],
+      "completionScope": "Selected LTX/Wan native routes, corrected direct Wan image binding and model-backed named-input/output Service CLI verification delivered."
     },
     {
       "id": "V6",
       "title": "Admit H3 memory and MiniMax execution",
-      "status": "in_progress",
+      "status": "verified",
       "estimateActiveHours": {
         "minimum": 5,
         "maximum": 9
@@ -149,16 +160,17 @@
       "actualActiveHours": null,
       "evidenceRefs": [
         "Milestone 2 private package/source/attachment checks; not native model evidence",
-        "MILESTONE2-PROGRESS.md"
+        "MILESTONE2-PROGRESS.md",
+        "ADVANCED-PIKA-HANDOFF.md",
+        "RELEASE-CLOSEOUT-20261103.md"
       ],
-      "openIssues": [
-        "H3 text/keyframe technical outputs and trained-geometry reference technical audit/release retain their actual source scope. Human listening remains open. Extra H3 camera/action, first-frame and reference motion variants are deferred by the user."
-      ]
+      "openIssues": [],
+      "completionScope": "Bounded H3 text, keyframe and trained-geometry reference technical routes and guarded loading/offload/release measured on Linux; extra creative motion variants remain deferred by the user."
     },
     {
       "id": "V7",
       "title": "Integrate Pika with exact adapter and sampler",
-      "status": "in_progress",
+      "status": "verified",
       "estimateActiveHours": {
         "minimum": 4,
         "maximum": 7
@@ -166,16 +178,18 @@
       "dependencies": ["V2", "V3", "V6"],
       "actualActiveHours": null,
       "evidenceRefs": [
-        "Milestone 2 private package/source/attachment checks; not native model evidence"
+        "Milestone 2 private package/source/attachment checks; not native model evidence",
+        "MILESTONE2-PROGRESS.md",
+        "ADVANCED-PIKA-HANDOFF.md",
+        "RELEASE-CLOSEOUT-20261103.md"
       ],
-      "openIssues": [
-        "Pika required immutable task adapters, fixed sampler, actual Stop/recovery, eligible cached reuse, joined AV media and owned release pass in bounded scope. Corrected reference and first-frame-only v3 pass strict native/full playback/local review; human visual/audio acceptance of these new clips and public qualification remain open."
-      ]
+      "openIssues": [],
+      "completionScope": "Pika required adapter selection and fixed sampler integrated; native reference/keyframe/mixed-media routes, Stop/recovery, unchanged cached repeat and scoped release delivered."
     },
     {
       "id": "V8",
       "title": "Prepare exact artifacts and disk budget",
-      "status": "in_progress",
+      "status": "verified",
       "estimateActiveHours": {
         "minimum": 1,
         "maximum": 2
@@ -184,11 +198,13 @@
       "actualActiveHours": null,
       "evidenceRefs": [
         "FIRST-MILESTONE.md; exact private originals retained separately",
-        "Milestone 2 private package/source/attachment checks; not native model evidence"
+        "Milestone 2 private package/source/attachment checks; not native model evidence",
+        "MILESTONE2-PROGRESS.md",
+        "ADVANCED-PIKA-HANDOFF.md",
+        "RELEASE-CLOSEOUT-20261103.md"
       ],
-      "openIssues": [
-        "Existing finite immutable selections and required adapters are verified; the selected continuation needed no new downloads or model deletions. Reference and first-frame native routes are now exercised. Wider geometry/offload/disk combinations remain unqualified; do not infer additional deletion authorization."
-      ]
+      "openIssues": [],
+      "completionScope": "Selected immutable artifact inventories, finite adapters, source inputs and guarded disk staging delivered; wider resource combinations are not implied."
     },
     {
       "id": "V9",
@@ -205,8 +221,8 @@
         "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
-        "Selected corrected-reference, first-frame-only and actual Wan Service CLI cases pass strict native task/media/full playback and scoped-release preservation checks. Existing Stop/recovery and cached-repeat evidence is reused; no duplicate runs for source labels.",
-        "User visually accepts seven original displayed outputs, including cycling/Wan, and rejects the old reference speedboat. Both new v3 clips pass local review but await human visual/audio review. Extra H3 motion runs are deferred; whole-plan acceptance remains separate."
+        "Nine private review clips visually accepted by the user; all eight paper-boat outputs rejected and preserved. Both photographic replacements are now visually accepted.",
+        "Audio listening remains a human review item. Extra H3 motion variants remain explicitly deferred; wider native geometry/offload/hardware cases are unqualified."
       ]
     },
     {
@@ -225,8 +241,8 @@
         "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
-        "Twelve original local candidates and eight revised motion workflows retain actual editor/graph evidence. Two v3 Pika replacements are saved, reopened and natively exercised. Public-template qualification, exact-file rights/publication records and human listening remain open; no public video approval exists.",
-        "Seven previously displayed clips retain human visual approval; rejected reference v2 stays preserved. Corrected reference/first-frame v3 are separate outputs awaiting human review. Superseded first-frame v2 remains unrun, not relabelled complete."
+        "Both photographic source/saved templates pass ordinary import, required-media blocking, complete Save/reload and exact private native rebind proof. Their outputs are visually accepted.",
+        "All twelve original candidates are not publicly qualified: rejected paper examples retain rejection; exact-file rights/publication and current recipe qualification remain open."
       ]
     },
     {
@@ -243,11 +259,9 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Corrected backend 579bd123 complete gate passed 8,976 tests / 13,183 subtests / 763 skips, Ruff, dependency consistency and CPU preflight. Client npm run check passed at d357832a; all 119 bundle files exact.",
-        "Full browser gate at test-only client 5ad393f3 against frozen backend 8351b62a passed 16 shared and 322 mocked cases. Product bytes remain d357832a.",
-        "Original LTX/Wan app protected refresh to 579bd123/d357832a completed, followed by actual retained-LTX built-client reopen/reload. Normal envelope changes and startup approval-file replacement are explicitly recorded; no global preservation PASS.",
-        "M2 H3/Pika instance now deploys the tested 579bd123/d357832a pair:119 disk files / 118 served assets exact,46 protected files exact except expected queue worker/timestamp, prior task bodies/config/runtime/packages preserved. Original LTX/Wan worker untouched. Two diagnosed maintenance-helper holds are retained; explicit supported-interpreter/stopped-state continuation completed without force. All 4 backend CI jobs at 17a784ce pass.",
-        "Whole-app Gallery acceptance remains failed: 83 retained errors plus 5 earlier LTX/Wan stage-card locks. All 90 computed locks are unchanged by the Pika product changes; no qualification or public media relabelling."
+        "Current delivered preview repair: backend ce0fb40c/client product75080b73. Backend 8986 passed/763 skipped/13185 subtests; local browser16+325; all four BE and four FE CI jobs for that delivery passed.",
+        "Gallery verifier fix a0145878 resolves15 decoder-version false failures. Registry inspection fix66b5152 passes22 focused tests; both frozen revisions pass complete client npm run check. Product UI bundle is unchanged.",
+        "The whole-app gate remains blocked:73 current Gallery failures; generated candidate report covers90 templates/203 workflows/60 resource recipes with only1 eligible template/workflow before retained-proof recovery. Unavailable hardware and missing current native evidence are not unit-test failures."
       ]
     },
     {
@@ -264,7 +278,8 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "The user-selected corrected Pika/first-frame/real Service CLI continuation and its handoff are ready for testing. Human review of the two new v3 clips, listening/publication, deferred H3 variants and separate whole-app holds remain open. The complete plan is not marked verified."
+        "Selected video and two photographic template handoffs are delivered and both new outputs visually accepted. Input-preview repair is deployed and independently verified.",
+        "Final whole-app handoff awaits genuine current catalog/resource/hardware evidence, required listening and any separately approved publication. Additional H3 work requires lifting the explicit deferral."
       ]
     }
   ],
@@ -462,33 +477,37 @@
     },
     "latestHumanVisualReview": {
       "dateIst": "2026-11-03",
-      "displayedOutputs": 15,
-      "visuallyAcceptedOutputs": 7,
+      "displayedOutputs": 17,
+      "visuallyAcceptedOutputs": 9,
       "visuallyRejectedPaperBoatOutputs": 8,
       "acceptedScope": [
         "two conventional sailboat text outputs",
         "camera/action cyclist",
         "two-scene cyclist",
         "cyclist native continuation",
-        "composed cyclist timeline"
+        "composed cyclist timeline",
+        "photographic cyclist keyframes",
+        "photographic image/video/audio references"
       ],
       "paperRejectionSupersedesPriorVisualApprovals": true,
       "technicalReceiptsAndMediaPreserved": true,
       "audioOrPublicationApprovalInferred": false,
-      "photographicPilotAccepted": true
+      "photographicPilotAccepted": true,
+      "photographicKeyframesAccepted": true,
+      "photographicMixedReferencesAccepted": true
     },
     "localExampleVisualStatus": {
       "matchedKeyframes": "rejected_paper_recipe_preserved_as_diagnostic_photographic_replacement_delivered",
       "mixedImageVideoAudioReferences": "rejected_paper_recipe_preserved_as_diagnostic_photographic_replacement_delivered",
       "cyclistContinuationAndTimeline": "human_visual_accepted",
-      "photographicKeyframes": "locally_good_template_verified_user_review_pending",
-      "photographicMixedReferences": "locally_good_template_verified_user_review_pending"
+      "photographicKeyframes": "human_visual_accepted_template_verified",
+      "photographicMixedReferences": "human_visual_accepted_template_verified"
     },
-    "humanVisualReviewPending": true,
+    "humanVisualReviewPending": false,
     "humanAudioReviewPending": true,
     "newRendersAfterFeedback": 1,
-    "nextProposedWork": "Human review/listening of two new photographic outputs; separately address loader input-preview URL/AV-audio preview defect",
-    "reviewPendingScope": "Two new photographic outputs locally good and templates verified; seven prior approvals/eight paper rejections preserved. New human visual/audio/publication separate. Input-preview defect remains.",
+    "nextProposedWork": "Close release tooling verification and recover current native catalog evidence; listening/publication and the explicit H3 deferral remain separate.",
+    "reviewPendingScope": "Nine clips visually accepted and all eight paper clips rejected; audio listening and publication remain unapproved.",
     "photographicReferencePilot": {
       "status": "human_visual_accepted",
       "singlePilotOnly": true,
@@ -522,7 +541,7 @@
       "framingAndCameraLimitations": true
     },
     "photographicReplacements": {
-      "status": "two_native_replacements_and_portable_templates_delivered_pending_human_review",
+      "status": "two_native_replacements_templates_delivered_and_human_visually_accepted",
       "authorizedCases": [
         "photographic first-last keyframes",
         "photographic ordered image-video-audio references"
@@ -543,7 +562,7 @@
         "nativeSeconds": 1509.1241562366486,
         "technicalAuditPassed": true,
         "localCreativeAccepted": true,
-        "humanVisualAccepted": false,
+        "humanVisualAccepted": true,
         "templateSource": "examples/video/pika-photographic-keyframes.workflow.json",
         "templateEmptyMediaCount": 2,
         "templateSaveReloadAndExecutableExact": true,
@@ -569,7 +588,7 @@
         "wholeMutedPlaybackFrames": 124,
         "wholeMutedPlaybackDrops": 0,
         "localCreativeAccepted": true,
-        "humanVisualAccepted": false,
+        "humanVisualAccepted": true,
         "releaseProtectedAppFilesExact": 112,
         "cacheAndScratchCleared": true,
         "templateSource": "examples/video/pika-photographic-mixed-references.workflow.json",
@@ -582,7 +601,7 @@
         "priorReviewVideoReferencesExact": 22
       },
       "newOutputHumanVisualApprovalInferred": false,
-      "applicationInputPreviewDefectRemaining": true,
+      "applicationInputPreviewDefectRemaining": false,
       "finalVerification": {
         "unrelatedWorkflowBodiesExact": 49,
         "all17ReviewMediaServedBytesExact": true,
@@ -590,11 +609,35 @@
         "all23ReviewVideoPlayersReady": true,
         "bothAppsReadyIdle": true,
         "originalWorkerUntouched": true,
-        "inputPreviewDefectExplicit": true
+        "inputPreviewDefectExplicit": false,
+        "inputPreviewRepairDelivered": true
       }
     },
-    "remainingAppFixes": [
-      "Load-node media preview URL handling and AV-to-audio preview consistency"
-    ]
+    "remainingAppFixes": [],
+    "inputPreviewRepair": {
+      "status": "deployed_verified",
+      "backend": "ce0fb40ce872b80634f986bd4705d0b7ce8786e4",
+      "clientProduct": "75080b73fb22bc0ef197f17a119cf507b3352695",
+      "modelSubmissions": 0,
+      "priorSavedBodiesPreserved": 51,
+      "all17ClipsAnd23VideoURLsPreserved": true,
+      "fullBrowserGate": "16 shared + 325 editor PASS",
+      "backendGate": "8986 passed / 763 skipped / 13185 subtests",
+      "pairedCI": "all four backend and four client jobs PASS"
+    }
+  },
+  "currentCheckpoint": {
+    "updatedAtUtc": "2026-11-03T11:21:00.242613+00:00",
+    "status": "LOCAL_VIDEO_IMPLEMENTATION_DELIVERED_FULL_RELEASE_EVIDENCE_OPEN",
+    "report": "RELEASE-CLOSEOUT-20261103.md",
+    "humanVisualAcceptedClips": 9,
+    "humanVisualRejectedPaperClips": 8,
+    "bothPhotographicReplacementsVisuallyAccepted": true,
+    "applicationInputPreviewDefectRemaining": false,
+    "optionalReferenceFixSuggestionsDefectRemaining": false,
+    "sourceAuthoring": "Canonical Windows fix-ui-ux-issues repositories; existing PR7 pair only",
+    "extraH3Runs": "Still deferred by explicit user instruction",
+    "wholeAppReleaseReady": false,
+    "listeningOrPublicationApprovalInferred": false
   }
 }

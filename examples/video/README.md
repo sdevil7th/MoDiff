@@ -59,9 +59,10 @@ replacements for the paper-boat briefs. Both native outputs pass full media and
 editor playback checks. Samples show a recognizable cyclist, pedalling and
 foreground parallax. Keyframes progress between the supplied wider opening and
 closer ending; mixed references preserve the subject with a mostly side-on camera.
-The ending may crop the wheels. Both new outputs await the user's visual verdict;
-the source cyclist-reference pilot was already accepted visually. These statuses
-grant neither audio listening nor publication approval.
+The ending may crop the wheels. On 3 November the user accepted both photographic
+replacements visually, following the earlier visual acceptance of the source
+cyclist-reference pilot. These statuses grant neither audio listening nor
+publication approval.
 
 The photographic templates import and save with two or three required media
 fields empty, respectively. Run remains blocked before and after reopening.

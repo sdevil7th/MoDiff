@@ -1,5 +1,14 @@
 # Video stages workflows and templates
 
+Current status, 3 November: shared video implementation, optional-reference Fix
+repair, two reusable photographic templates, Service CLI verification and the
+input-preview repair are delivered. The user visually accepts nine clips,
+including both photographic replacements, and rejects all eight paper-boat
+clips. Audio listening, public video publication and the specifically deferred
+extra H3 variants remain separate. See
+[the current closeout](RELEASE-CLOSEOUT-20261103.md); older checkpoints below are
+historical, not the current remaining-work list.
+
 The selected local continuation is ready for testing: corrected Pika reference
 and first-frame-only v3 clips, real model-backed Wan Service CLI verification,
 and [the completed handoff](SELECTED-CONTINUATION-HANDOFF.md). The seven approved

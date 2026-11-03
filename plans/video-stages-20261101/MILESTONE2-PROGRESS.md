@@ -11,7 +11,7 @@ testing app has not been replaced by this in-progress milestone.
 | H3 Model Setup          | Native task `RotZTltUc8G4`, 118.70 seconds; loading only                                                                                                                                                                                |
 | Conditioner entrypoints | Source-declared leaf hooks for the actual nested Qwen3-VL call; tiny numerical red/green regression and four exact-provider Linux checks                                                                                                |
 | Audio VAE placement     | Honor the official group-offload opt-out; reviewed resident placement for the small float32 H3/Pika audio VAE, with actual per-component cache policy. 193 focused checks, one skip, 32 subtests; four exact-provider Linux checks      |
-| H3 engineering export   | Task `7BojyLbXZkAp`, backend `b770e165c7b665ba9006ec98df89e744841d8543`; 512×288, 124 frames, 24 fps, two sigma points / one model evaluation. Completed in 552.83 seconds without a resource guard                                     |
+| H3 engineering export   | Task `7BojyLbXZkAp`, backend `b770e165c7b665ba9006ec98df89e744841d8543`; 512Ã—288, 124 frames, 24 fps, two sigma points / one model evaluation. Completed in 552.83 seconds without a resource guard                                    |
 | Actual saved media      | SHA-256 `35468d91636462bbd701df90ca6479e94432de14972bc1da23d63e3c1e37c65c`; 2,687,607 bytes. All 124 frames decode and differ; stereo 32 kHz audio is finite and non-silent. Exact cache-owner/file bytes agree                         |
 | Same-compute reuse      | Task `40RBQUbQ2JpZ`, 0.375 seconds; actual WebSocket events report all five nodes cached. One genuine persisted output record. This is API/executor evidence, not a visible browser or quality signoff                                  |
 | Inline adapter message  | LTX/Wan Model Setup accurately reports its unsupported inline LoRA editor instead of blaming valid consumers. 387 focused checks and two mounted-control browser cases; graph/export unchanged                                          |
@@ -69,7 +69,7 @@ below. No timeout or validator was loosened.
 ## Latest bounded results
 
 Pika's first/last-frame route now completed through the corrected ordinary AV
-exporter: 124 distinct decoded frames at 832×480/24 fps, synchronized finite
+exporter: 124 distinct decoded frames at 832Ã—480/24 fps, synchronized finite
 stereo audio, exact saved/served bytes, and muted Chromium playback to the end
 with zero dropped frames. An unchanged repeat reused all nine nodes and retained
 the exact MP4. A seed-only Stop case reached genuine sampler progress, cancelled,
@@ -78,7 +78,7 @@ saved media. These are native/API lifecycle and playback results; audio listenin
 full visible-editor acceptance and public publication remain separate.
 
 H3 first/last task `jPn69jG3gIIF` completed in 8,292.63 seconds on backend
-`86efa329`: 960×544, 124 distinct decoded frames, 24 fps and finite stereo 32 kHz
+`86efa329`: 960Ã—544, 124 distinct decoded frames, 24 fps and finite stereo 32 kHz
 audio. Its MP4 SHA-256 is
 `4865320db9fdc1a6962f29ea714cd554068bdf703bfc2cf2b721040ff8d703c5`.
 Ten contact-sheet samples and both source views show a coherent red sailboat and
@@ -115,7 +115,7 @@ backend copy. Its isolated CPU interpreter was explicit; older CUDA-fixture and
 default-Expert-versus-Auto test mistakes remain archived. The latest paired
 integration checkpoint above distinguishes current source from that baseline.
 
-The H3 quality task `eBU924y4iqro` completed in 7,979.47 seconds at 960×544,
+The H3 quality task `eBU924y4iqro` completed in 7,979.47 seconds at 960Ã—544,
 124 frames and 24 fps, without triggering a resource guard. Its saved MP4
 SHA-256 is `22e7aed778073eb834921bc6309ccdd9ac6a708f9f98c4aa7de90bd301e6ab6f`.
 All frames decode; sampled frames show a clear red sailboat and stable motion.
@@ -166,7 +166,7 @@ rewritten, and recognizing a task grants no Auto, template or runtime eligibilit
 
 ## In progress and still open
 
-Pika task `jpqAjXcnc1GI` completed the six-step 832×480 / 124-frame model route
+Pika task `jpqAjXcnc1GI` completed the six-step 832Ã—480 / 124-frame model route
 in 1,559.65 seconds without a resource guard. The decoder retained all 124 frames,
 but its first video/audio export contained only 121. The strict audit failed and
 that original remains unchanged. A cached ordinary video export confirmed all 124
@@ -395,7 +395,7 @@ claimed by this bounded snapshot.
 The H3 reference retry passed the original vision-encoding failure and reached
 14 of 49 evaluations by 10:19 UTC. Available RAM was 109.00 GB, free filesystem
 space 237.62 GB and owned offload scratch 143.41 GB. At about 437 seconds per
-evaluation, total reference inference is estimated at 6–6½ hours on this Linux
+evaluation, total reference inference is estimated at 6â€“6Â½ hours on this Linux
 machine. The earlier text/keyframe timing was an inadequate estimate for this
 task. Pika reference and Wan image runs have not started.
 
@@ -494,7 +494,7 @@ installed runtimes are unchanged, so the passing full code gates are reused.
 
 The retained H3 reference task completed in 22,861.73 seconds of native execution
 (about 6 hours 21 minutes). Its original source remains `9168e6de`. Strict
-task/history/cache/durable/served-byte checks pass with 960×544, 124 decoded
+task/history/cache/durable/served-byte checks pass with 960Ã—544, 124 decoded
 frames at 24 FPS and stereo 32 kHz audio. Ordinary scoped release cleared its
 owned cache and scratch while preserving all 46 application files. This closes
 technical execution at trained reference geometry; visual identity, sufficient
@@ -597,7 +597,7 @@ was not rerun just to repeat it. No model cache was retired.
 The revised Pika reference-motion workflow is now running through the normal
 built UI with nine executable nodes. Its guard checks the complete cached
 35-file reference selection against the committed closure and binds the retained
-512×288 boat input to its original staging hash. It keeps the trained 1,024-pixel
+512Ã—288 boat input to its original staging hash. It keeps the trained 1,024-pixel
 reference preprocessing, existing ROCm/BF16 reference attention policy, required
 reference adapter and official six evaluations. The new task passed reference
 encoding and reached sampling; full output/motion review is pending. No new
@@ -632,7 +632,7 @@ The revised Wan 5B image-to-video workflow is now running through the actual
 built UI. Its six-node submitted graph matches the frozen saved workflow
 exactly. Before Run, a separate monitor checked its retained immutable cache,
 complete indexed safetensors, original image hash, active reviewed runtime,
-idle queue and memory/disk reserves. It uses 512×320, 121 frames, 24 FPS,
+idle queue and memory/disk reserves. It uses 512Ã—320, 121 frames, 24 FPS,
 50 steps, guidance five, BF16 and resident placement, with video-only export.
 No Pika sampler/audio assumptions or new downloads are introduced. Its native
 media, conditioning/motion review, cleanup and final bounded handoff remain
@@ -643,7 +643,7 @@ merely for labels; unrun H3/first-frame motion variants stay unaccepted.
 
 The revised Wan opening-image case completed in 10 minutes 24 seconds through
 the ordinary saved-workflow Run. Strict checks join actual task/attempt/owner,
-source and durable/served video bytes: all 121 frames, 512×320, 24 FPS and no
+source and durable/served video bytes: all 121 frames, 512Ã—320, 24 FPS and no
 audio stream, as expected. Whole actual built-client playback presented all
 121 frames with zero drops and no media error. The input boat remains
 recognizable, with travel, a wake and a strong camera approach. The ending
@@ -665,7 +665,7 @@ model-backed service CLI verification, public-template qualification and the
 retained whole-app Gallery/hardware holds remain separate. The complete video
 plan is not marked verified from this local checkpoint.
 
-## User visual review — reference boat rejected
+## User visual review â€” reference boat rejected
 
 The user visually accepts seven of the eight displayed outputs and specifically
 praises both cycling videos. The Pika referenced-boat result is rejected because
@@ -732,7 +732,7 @@ next after this case's actual output review and owned release.
 
 First-frame v3 completed in 27 minutes 8 seconds through actual built-client
 Run. Its eight-node graph connects the opening image and supplies no last frame.
-Strict native task/source/media checks pass all 124 frames at 832×480, 24 FPS,
+Strict native task/source/media checks pass all 124 frames at 832Ã—480, 24 FPS,
 with original stereo 32 kHz audio. Full editor playback presented all frames
 with no drops or media errors. Opening identity, gentle movement and whole-boat
 framing pass local review; human visual/audio acceptance remains pending. Owned
@@ -742,7 +742,7 @@ The subsequent real `modiff.service` CLI run completed in about 10 minutes
 6 seconds including client polling, exited zero and returned named `video`
 from the named image/prompt inputs. Original observed HTTP bytes match the
 current-source exported package and submitted graph. Actual fresh computation
-includes all 50 sampling steps. Its 121-frame, 512×320, 24 FPS video-only output
+includes all 50 sampling steps. Its 121-frame, 512Ã—320, 24 FPS video-only output
 passes strict task/attempt/source/durable/served-byte joins and complete editor
 playback with zero drops/errors. The bytes equal the already approved Wan clip
 under the same recipe. This closes actual service inference for this route,
@@ -777,7 +777,7 @@ Three serial Pika runs add four private outputs: exact retained MiniMax keyframe
 prompt/two-image comparison (23m08), mixed image/video/audio references (53m35),
 and actual last-frame cyclist continuation with separate composed timeline
 (27m12). Exact native media audits and full editor playback pass, with 124 native
-frames or 248 composed frames at 832×480, 24 FPS, stereo 32 kHz. The timeline seam
+frames or 248 composed frames at 832Ã—480, 24 FPS, stereo 32 kHz. The timeline seam
 and container timing pass local inspection. Camera arc/pullback limitations
 remain explicit. No extra MiniMax run, download, retirement or public upload was
 performed. All original media objects and seven user visual approvals remain.
@@ -843,7 +843,7 @@ remain preserved. Technical audits and human review will be recorded separately.
 
 The sole photographic pilot has now completed in 35m46s without a resource stop.
 Exact task/attempt/source/adapter/owner/cache/source-file/durable/served joins and
-full decoding pass: 124 frames at 24 FPS, 832×480, stereo 32 kHz. Whole built-editor
+full decoding pass: 124 frames at 24 FPS, 832Ã—480, stereo 32 kHz. Whole built-editor
 muted playback presents all 124 frames with zero drops/errors. Normal owned
 ModelSetup and ImageLoad release preserves all 98 app files and durable media;
 cache is empty and temporary offload is absent. A private auditor's initial raw
@@ -880,7 +880,7 @@ their real outputs are reviewed. No extra H3 or unaffected-model/gate reruns.
 
 The photographic keyframe replacement completed in 25m09s. Strict actual
 task/attempt/source/adapter/owner/cache/source/durable/served-byte checks pass,
-with 124 frames at 24 FPS, 832×480 and stereo 32 kHz. Full built-editor muted
+with 124 frames at 24 FPS, 832Ã—480 and stereo 32 kHz. Full built-editor muted
 playback has zero drops/errors. Samples show realistic continuous cycling and
 foreground parallax, with framing matching the supplied wider opening and closer
 ending. Normal scoped release preserves all 104 app files and durable media.
@@ -891,7 +891,7 @@ human verdicts remain exact.
 The new portable photographic keyframe package has two empty required media
 fields, exact sealed definitions/form/parser roundtrip and exact private media
 rebinding to the admitted native graph. Actual import/Arrange/Save/reload under
-**Template — Pika photographic cyclist keyframes** preserves its complete
+**Template â€” Pika photographic cyclist keyframes** preserves its complete
 snapshot/executable graph and all 45 prior workflow bodies. Empty inputs block
 Run before and after reload; no graph is submitted. The mixed-reference recipe
 also passes complete Save/reload while preserving all 47 prior workflow bodies
@@ -902,7 +902,7 @@ The mixed-reference replacement also completed, in 48m50s, without a resource
 stop. All 15 submitted nodes appear in the actual resolved-execution record,
 including all three reference assemblers, video trim, audio trim and media loads.
 Strict task/source/adapter/owner/media joins and full decoding pass: 124 frames
-at 24 FPS, 832×480, stereo 32 kHz. Complete built-editor muted playback has zero
+at 24 FPS, 832Ã—480, stereo 32 kHz. Complete built-editor muted playback has zero
 drops/media errors. Samples show a realistic recognizable cyclist, repeated
 pedalling and foreground parallax; the camera remains mostly side-on and some
 ending wheel crop remains. The new clip is delivered privately pending human
@@ -911,7 +911,7 @@ and seven accepted/eight rejected verdicts. Original paper outputs remain held.
 
 Normal ModelSetup plus independent image/video/audio root releases preserve all
 112 app files and durable media, with empty cache and no temporary offload.
-The mixed portable source and actual **Template — Pika photographic image video
+The mixed portable source and actual **Template â€” Pika photographic image video
 audio references** pass complete parser/form/sealed-definition/private native
 rebind checks and ordinary import/Arrange/Save/reload. All three required media
 inputs are blank; Run stays blocked before/after reload, no graph is submitted,
@@ -927,7 +927,7 @@ input previews are correct. No application patch or additional model run was
 performed for that diagnosis. Current delivery is the two photographic examples
 and reusable templates, with human review and this preview defect still explicit.
 
-## 3 November — input-preview repair delivered
+## 3 November â€” input-preview repair delivered
 
 The separately diagnosed input-preview hold above is now closed. Selected video
 and audio paths resolve through the managed preview endpoint, including Windows
@@ -954,7 +954,7 @@ Actual built-app verification imports only two ordinary media loaders and reuses
 the accepted cyclist MP4. Video plays all 124 frames at 1x with zero drops/errors;
 both AV soundtrack players complete. Normal Save/reload, clear/Save/reload with
 Run blocked, and array-valued rebind/Save/reload pass with correct managed URLs.
-No graph POST or large-model run occurs. A saved **QA — Retained video/audio input
+No graph POST or large-model run occurs. A saved **QA â€” Retained video/audio input
 previews** workflow provides the same small test without model execution.
 
 Final preservation checks retain all 114 earlier app files except the expected
@@ -967,3 +967,39 @@ The original LTX/Wan worker is untouched. No model download, retirement, runtime
 installation, public upload, new rendering or qualification promotion occurred.
 Human review/listening/publication and deferred model work retain their prior
 scope; this repair does not extend their acceptance.
+
+## 3 November â€” photographic approval and release-tooling closeout
+
+The user now explicitly accepts **both photographic replacements visually**.
+The private review records nine accepted clips and eight rejected paper-boat
+clips, preserving all 17 media identities and comparisons. Both portable/saved
+templates remain intact. Audio listening and publication were not inferred.
+The task ledger and handoff now close the stale input-preview and visual-review
+items; historical checkpoints remain preserved.
+
+Gallery diagnosis establishes a real decoder-producer portability defect:
+identical decoded LTX frame rows have different raw `framemd5` hashes solely
+because of the FFmpeg software header. Client `a0145878` retains the actual raw
+digest and strictly checks reviewed historical-header variants without changing
+frame data, media, PCM, locks or provenance. All 60 Gallery harness tests and
+the complete client check pass. The real report improves from 88 failures to
+73; this is not a Gallery pass.
+
+Client `66b5152` fixes a second release-tooling defect: removed modules leaving
+only empty/cache directories no longer prevent static bundled-node inspection.
+Incomplete source modules still fail closed. The original failure and 22 passing
+focused tests are retained; its complete client gate also passes. Downstream reports now enumerate 90 templates, 203 workflows and
+60 resource recipes. Before retained-proof recovery, only one template/workflow
+is release-eligible; supported physical profile evidence is absent. These
+denominators remain unchanged, with a blocked release result.
+
+Two recovered FLUX3 proofs pass the full V2 provenance validator. Ordinary
+registration correctly refuses their experimental canonical routes; the existing
+explicit blocked-probe path retains the still-current reference-edit receipt
+without promoting its route. The T2I receipt's creator lock is now stale and is
+held as historical. No model is rerun or lock rewritten for this recovery.
+
+See [the current closeout](RELEASE-CLOSEOUT-20261103.md) for the exact remaining
+work and constraints. No extra H3 render, download, deletion, installation or
+public upload occurs during this tooling/status work. App source and approved
+media remain unchanged.

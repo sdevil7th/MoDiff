@@ -1,5 +1,21 @@
 # Optional-reference fix and advanced Pika delivery
 
+**Current checkpoint, 3 November:** the user explicitly accepts both photographic
+keyframe and mixed-reference outputs visually. The review now preserves nine
+accepted clips and eight rejected paper-boat clips. Both reusable photographic
+templates remain delivered. Audio listening and public release are separate.
+
+The input-preview defect described in the historical delivery below is fixed
+and deployed: backend `ce0fb40c`, client product `75080b73`. Retained video and
+AV-soundtrack inputs pass actual built-editor playback, clear/rebind and complete
+Save/reload checks without submitting a model graph. The complete backend gate
+passes 8,986 tests and the full browser gate passes 16 shared-control plus 325
+editor cases; all four backend and all four client CI jobs passed for that pair's
+delivery. See the latest progress entry and
+[release closeout](RELEASE-CLOSEOUT-20261103.md) for later tooling fixes and the
+separate whole-app qualification backlog. The entries below retain the original
+chronology and are superseded where this checkpoint explicitly closes a hold.
+
 **Both photographic replacements and reusable templates delivered, 3 November:**
 keyframes completed in 25m09s and ordered image/video/audio references in 48m50s.
 Both pass exact native task/attempt/source/adapter/owner/cache/source/durable/
