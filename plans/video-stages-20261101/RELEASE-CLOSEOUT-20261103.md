@@ -122,6 +122,44 @@ not an equal-compute benchmark. The result is pending, with no automatic retry
 or extra H3 variants authorized. All nine accepted/eight rejected clips and
 both photographic templates remain preserved. Listening/publication stay open.
 
+### 3 November, 13:55 UTC — Windows audio upload delivered
+
+The complete backend gate at `496f3aed` now passes: Ruff, dependency checks,
+preflight and `python -B -m pytest -q`, with **8,993 passed, 762 skipped and
+13,194 passing subtests**. All four backend CI jobs at that commit and all four
+client CI jobs at `66b5152` pass. The earlier one-failure gate remains historical.
+
+The guarded native Windows cutover succeeds once, using the existing launcher:
+backend `496f3aed`, product `75080b73`, 119 exact disk/118 exact served assets,
+ready idle worker and unchanged runtime/config/packages. The full fresh baseline
+of 108 workflows/374 files is preserved through restart. The original 105 saved
+workflow bodies/369 files remain exact through subsequent UI checks, apart from
+the already authorized worker/timestamp fields in the runtime queue.
+
+Ordinary Audio.Load MP4 upload now returns HTTP 200 and retains the exact
+4,509,153-byte original. One video and both audio preview controls load and
+finish full muted playback; all 124 video frames are presented with zero drops
+or errors. Explicit Save/reload, Remove media, empty Save/reload, rebind and
+populated Save/reload pass. The disconnected QA graph stays blocked and submits
+zero model requests. Only the owned QA media/layout/save fields change; all
+other fields and unrelated workflows remain exact. The only new files are the
+uploaded audio input, its managed soundtrack preview and the owned empty draft.
+
+Initial QA helpers retain their failures: a wrong initial gallery locator, a
+Session activity overlay intercepting a clear click, then an attempted clear of
+an already cleared field. After inspecting actual state, the remaining visible
+audio clear is completed, explicitly saved, and verified empty after reload.
+The ordinary picker stores that empty selection as `[""]`; it is not relabelled
+as null. No production source change, forced click or hidden overlay was used
+to complete those checks. The final Windows QA browser is closed after saving.
+
+The single authorized H3 comparison continues separately on Linux. Its active
+source/process/recipe remain unchanged. Once that genuine task is audited and
+its cache normally released, the shared audio-upload fix still needs protected
+adoption and a no-model upload check on the Linux video app. Do not restart it
+during rendering. Extra H3 cases, broader release qualification, human listening
+and public publication remain unclosed.
+
 The append-only private closeout records retain the original Gallery result,
 decoder producer comparison, focused red/green logs, complete check logs,
 generated release reports, retained-proof recovery attempts and the exact user

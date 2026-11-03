@@ -1027,3 +1027,27 @@ checks. It uses the accepted Pika prompt and identical first/last photos,
 immutable cached H3 weights and native geometry/sampling. No other H3 render,
 download or media publication is authorized. Approved clips/templates and
 original rejected media remain unchanged; native output/review are pending.
+
+## 3 November, 13:55 UTC — native Windows audio upload accepted
+
+Backend `496f3aed` completes the full local gate: 8,993 passing tests, 762 skips
+and 13,194 passing subtests, plus Ruff/dependencies/preflight. All four backend
+CI jobs and all four client `66b5152` CI jobs pass. One guarded Windows cutover
+deploys that backend with unchanged product `75080b73`, runtime/config/packages
+and all 119 disk/118 served assets.
+
+Actual Windows UI Audio.Load MP4 upload now succeeds with original bytes exact.
+One video/two audio players finish muted playback; 124 video frames, zero drops
+or errors. Save/reload, explicit media removal, empty Save/reload and rebind/
+populated Save/reload all pass, with Run blocked and zero model submissions.
+The original 105 workflow bodies/369 app files remain exact except authorized
+restart queue fields. Against the fresh 108-workflow/374-file baseline, only
+owned QA fields change; upload/managed preview/owned empty draft are the three
+new files. Initial locator/layout/picker-assumption helper failures remain
+recorded separately from the completed native acceptance.
+
+H3 task `DUC96v3XXjU-` remains active on its original Linux source. No extra model
+or rerun is started. After its actual terminal audit and normal release, adopt
+the shared upload fix on the Linux video app with protected deployment and
+no-model verification. Existing nine visual acceptances/eight paper rejections,
+all clips/templates and human listening/publication boundaries remain exact.
