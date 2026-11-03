@@ -235,8 +235,9 @@ without an intent marker are treated as saved without rewriting their files.
 Unknown historical documents are not reclassified or deleted.
 
 Required media Load fields also participate in Run readiness, including literal
-file-browser editors without a socket. The current registry supplies the
-requirement for older saved graphs. A blank path, empty collection or blank
+file-browser editors without a socket. Unannotated file editors on normally
+validated nodes are mandatory; explicit optionality and dynamic skip-validation
+remain respected without changing raw or saved definitions. A blank path, empty collection or blank
 collection member blocks Run and directs the user to select a file; it does not
 suggest creating another Load node. Optional file selectors remain optional.
 This presence check does not establish that a path exists or is safe; backend

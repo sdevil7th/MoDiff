@@ -57,7 +57,6 @@ class Load(NodeBase):
             "label": False,
             "display": "filebrowser",
             "type": "str",
-            "required": True,
             "fieldOptions": {
                 "fileTypes": ["video"],
                 "multiple": False,
