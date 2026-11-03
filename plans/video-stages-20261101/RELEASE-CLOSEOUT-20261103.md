@@ -269,3 +269,46 @@ closed Stop/cache/playback proofs, run broad gates for recipe-only changes,
 substitute old paper briefs, bypass a stale creator lock, infer audio approval
 from a muted player, or call the whole plan complete because local templates are
 ready. Preserve approved clips/templates and keep a single source-authoring pair.
+
+### Gallery and hardware evidence follow-up
+
+The admission inventory identifies 73 public Gallery errors affecting 63
+examples across 17 model types. Read-only cache checks find matching pinned
+snapshots for 20 affected examples; 43 depend on retired exact revisions.
+Neither snapshot presence nor an old published image establishes current graph
+qualification. Recover original authority before arranging a necessary rerun.
+Public locks, media and creator defaults remain unchanged.
+
+A genuine retained AMD/ROCm result is recovered with its original source and
+capture time, and registered as an observation under its conditional tier.
+The hardware recorder now rejects CPU-as-GPU attribution, binds the actual
+device index, and distinguishes the execution and resource fingerprint domains.
+It still requires complete original task/source/runtime provenance. See the
+[physical-claim boundaries](../../docs/runtime-support-matrix.md#physical-release-claims).
+
+The current full 75-second ACE recipe now has a successful native Linux output,
+exact byte/task/source joins, decoded stereo 48 kHz audio and full normal-player
+muted playback. Scoped release preserves all current app files and prior saved
+workflow bodies. The original shorter public example remains unchanged. The new
+song is a private listening candidate; missing historical consumed controls and
+source-before inventory are not backfilled into its receipt.
+
+The diagnosed creative-input recording gap is fixed for future audio dispatch,
+with matching client history parsing. A separate maintainer fix recovers the
+manual resource identity of supported ordinary audio chains without a legacy
+Studio binding; broken or contradictory ownership remains held. This identity
+does not grant model/hardware/Auto qualification or fill missing input evidence.
+
+The complete backend gate passes with 8,996 tests and 13,194 subtests. Complete
+client checks pass, including the audio parser and subsequent proof-reader
+change. Measured bundle growth retains prior headroom, module membership and
+independent deferred caps. The tested generated client is mirrored exactly into
+the backend; protected native adoption remains a separate next checkpoint.
+
+The joined 90-second continuation is prepared through normal template creation,
+source selection, Save and reload, with the new 75-second WAV and unchanged
+creative controls. It has not run yet. Existing Windows tiny-reference results
+are retained with their original canonical-seed hold; no duplicate model run
+was submitted merely to repeat that limitation. Human listening, exact-file
+publication, missing-model admission and unavailable-hardware qualification
+remain separate. The whole-app Gallery/release gate is still held.

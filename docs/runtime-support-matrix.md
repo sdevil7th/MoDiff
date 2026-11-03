@@ -20,6 +20,30 @@ and macOS; GPU and full-model claims still require the physical checks below.
 
 “Supported” describes installation/runtime qualification, not model performance. `/model_capabilities` remains the source of graph capability. Exact model, dtype, placement, optimization, driver, and hardware qualification is receipt-specific; an unqualified recipe may be runnable with a warning but must not be described as optimized.
 
+## Physical release claims
+
+Use the generated release-candidate report's `physicallyObservedProfiles` and
+`physicallyQualifiedProfiles` separately from the installer tiers above. Keep
+the actual OS, device index, backend, runtime, model pin and resource recipe on
+each receipt. A successful Windows CUDA reference does not qualify Ubuntu CUDA
+or a larger model. CPU execution on a GPU host does not qualify its GPU profile.
+
+Conditional AMD/ROCm model evidence remains an observation under its captured
+tier. It does not promote an experimental stack or another AMD device. Likewise,
+macOS CI and an available MPS installer do not establish Apple Silicon model
+execution. When an Apple, Intel or Instinct reference host is unavailable, list
+its physical model qualification as unverified and keep the corresponding
+release gate held. Do not infer a hardware pass from registry discovery,
+installation, tensor-only tests, an output file without its original task, or
+another machine's success.
+
+Hardware registration checks the run's measured device/backend against captured
+host metadata, and requires complete original task, runtime and source evidence.
+Retained results keep their original capture time and source. Missing evidence
+is a recovery or qualification task; current metadata cannot replace an absent
+historical observation. These boundaries preserve useful local test results
+without making a release-wide model or memory-fit claim.
+
 Graph resource measurements use peak-accounting version 2. The serial worker
 preserves accelerator high-water marks across per-node counter resets, including
 offloaded generation followed by a small Preview. Resource fingerprints include
