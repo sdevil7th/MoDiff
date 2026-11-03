@@ -1,6 +1,6 @@
 # Current video delivery and remaining release work
 
-Updated 3 November 2026. This checkpoint supersedes older pending-work summaries;
+Updated 4 November 2026. This checkpoint supersedes older pending-work summaries;
 historical recipes, verdicts and raw receipts remain unchanged. Source changes
 stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existing
 [backend PR7](https://github.com/sdevil7th/MoDiff/pull/7) and
@@ -40,13 +40,31 @@ capture time and conditional tier. CPU/NVIDIA/MPS release qualification is not
 promoted. The available machines and missing Apple hardware remain explicit in
 [the installation guide](../../docs/accelerator-installation.md#runtime-targets-and-physical-release-qualification).
 
-Linux inspection finds the pinned 11.1 GB ACE selection intact, with about
-380 GB free. The first planned new native rows are the exact 75-second song and
-joined 90-second continuation. The Linux connection then repeatedly resets;
-the forwarding failure and original ready/idle observations are retained. No
-model task was submitted. Resume only after fresh stable access, idle/cache/
-download checks and task-specific resource admission. The user has been asked
-to check the machine's connection. Keep all accepted clips/templates intact.
+The exact 75-second song and joined 90-second continuation have now completed
+on Linux using the cached immutable ACE selection. The user accepted the song;
+listening review of the new continuation ending remains pending. Strict current
+task/source/input/media joins, full 90-second player playback and normal scoped
+release pass. All 145 app files remain exact through the final release, the
+cache is empty, and no model files were deleted. The original shorter public
+examples and all accepted/rejected clips and templates remain unchanged.
+
+The user explicitly holds the 43 examples whose exact model pins were retired;
+do not restore those weights. Twenty examples have cached base pins, which still
+require complete artifact/input/current-graph admission before execution. The
+Z-Image quick-concept recipe has since completed one guarded Linux run in 61.51
+native seconds, with exact source/task/media and 1024-square decode checks. Its
+photographic output adds a handle instead of the specified flat orange pull tab;
+retain that visual limitation rather than silently accepting the whole brief.
+
+Protected Linux adoption of tested backend `5c0edbc9` and application source
+`7c9b2133` succeeded with exact 119 disk/118 served bundle files and preserved
+data, configuration and runtime packages. All four backend and all four client
+CI jobs pass at the corresponding published checkpoint. Later proof-reader
+changes are maintainer tooling, not another application deployment. Intermittent
+SSH access recovered for closeout. Automatic approval review rejected restarting
+the expired Windows app forwarding connection with only "blocked by policy";
+that action was not retried through another route. Existing SSH and native local
+browser checks supplied the independent evidence; original holds remain retained.
 
 ## Delivered
 
@@ -290,7 +308,7 @@ The current full 75-second ACE recipe now has a successful native Linux output,
 exact byte/task/source joins, decoded stereo 48 kHz audio and full normal-player
 muted playback. Scoped release preserves all current app files and prior saved
 workflow bodies. The original shorter public example remains unchanged. The new
-song is a private listening candidate; missing historical consumed controls and
+song is listening-accepted by the user; missing historical consumed controls and
 source-before inventory are not backfilled into its receipt.
 
 The diagnosed creative-input recording gap is fixed for future audio dispatch,
@@ -303,12 +321,36 @@ The complete backend gate passes with 8,996 tests and 13,194 subtests. Complete
 client checks pass, including the audio parser and subsequent proof-reader
 change. Measured bundle growth retains prior headroom, module membership and
 independent deferred caps. The tested generated client is mirrored exactly into
-the backend; protected native adoption remains a separate next checkpoint.
+the backend. Protected Linux source/bundle adoption then passed with preserved
+data, configuration and runtime packages; the Windows app was not redeployed for
+this campaign.
 
-The joined 90-second continuation is prepared through normal template creation,
-source selection, Save and reload, with the new 75-second WAV and unchanged
-creative controls. It has not run yet. Existing Windows tiny-reference results
-are retained with their original canonical-seed hold; no duplicate model run
-was submitted merely to repeat that limitation. Human listening, exact-file
-publication, missing-model admission and unavailable-hardware qualification
-remain separate. The whole-app Gallery/release gate is still held.
+The joined 90-second continuation completed in 911.03 native seconds with the
+accepted 75-second WAV and unchanged creative controls. Its original task,
+attempt, workflow, browser request, full source-before/after inventory, consumed
+controls and durable/served bytes agree. Decode gives exactly 4,320,000 stereo
+frames at 48 kHz; full ordinary built-app 1x muted playback passed. The accepted
+source WAV remains exact, and its prefix differs by at most one PCM16 unit
+outside the declared 10 ms joining fade, consistent with normal decode/export.
+The original 16 MiB post-release inspection cap was too short for this 17.28 MB
+file; that observer failure is preserved. A new bounded read of the known exact
+length then passed against the same before-release inventory, without another
+render or cache mutation.
+
+Native Audio Load/Export previews exposed a separate maintainer proof-reader
+defect: ordinary `filename`/`file` presentation references were rejected as extra
+wiring. Regression tests reproduce the original defect and reject unknown keys,
+connected suppliers and malformed/oversized values. The narrow repair recovers
+the exact manual recipe from the actual original submission without changing
+its canonical graph identity or rewriting evidence. The complete client check
+passes at `7b126cb7`; all 119 built files remain exact to the packaged application,
+so no model rerun or deployment is needed for that maintainer fix. It grants no missing
+consumption, canonical-workflow, hardware, Auto or publication qualification.
+
+Existing Windows tiny-reference results retain their original canonical-seed
+hold; no duplicate model run was submitted merely to repeat that limitation.
+The 43 missing-model cases remain held by explicit user decision. Human review
+of the continuation, exact-file publication and unavailable-hardware qualification
+remain separate. The public Gallery gate still has its original 73 errors;
+new private audio candidates do not replace public records or close release-wide
+canonical/template/resource proof. The whole-app release remains held.
