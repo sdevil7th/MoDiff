@@ -55,6 +55,21 @@ Z-Image quick-concept recipe has since completed one guarded Linux run in 61.51
 native seconds, with exact source/task/media and 1024-square decode checks. Its
 photographic output adds a handle instead of the specified flat orange pull tab;
 retain that visual limitation rather than silently accepting the whole brief.
+Normal model release and a separate remaining Guider release preserve all 149
+then-current app files and both image representations; the cache is empty and
+there are no offload files or model deletions. All native source, task, input and
+media observations retain their original source rather than a later UI label.
+
+That cleanup exposed a separate UI defect: selecting another node or wire could
+raise an invisible edge hit path over a cache button. Selecting the affected
+stage first allowed an ordinary release without forced clicks. A shared client
+fix keeps selected wires below ordinary node controls while retaining selection
+styling and exposed wire interaction. Two faithful browser regressions fail on
+the original behavior and pass after the fix. Complete client checks pass at
+`d59d5e1e`; the exact 119-file package is mirrored for final backend checks and
+protected adoption. The running app identities below remain the prior deployed
+versions until that adoption actually succeeds. No model rerun is needed for
+this UI correction.
 
 Protected Linux adoption of tested backend `5c0edbc9` and application source
 `7c9b2133` succeeded with exact 119 disk/118 served bundle files and preserved
