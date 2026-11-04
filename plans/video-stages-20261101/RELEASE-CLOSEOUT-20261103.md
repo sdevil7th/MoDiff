@@ -590,3 +590,47 @@ across seven cases, plus the remote v2 revision, two historical functional cases
 and 11 other cached cases without current native outputs. The user-held 43
 missing-model cases, 73 retained public errors, hardware and publication gates
 remain explicit. All four current client CI jobs now pass at `d4d0874c`.
+
+### 4 November — revised contact sheet accepted; source update verified
+
+The connection recovers and the original rear-view v2 result is retrieved.
+The final strict audit passes on the genuine late browser record joined to the
+original task: all 47 creator fields, consumed inputs, source-before/after,
+attempt/session/graph and durable/served image bytes remain bound. Native
+execution took 53.43 seconds at unchanged geometry, seed and generation settings.
+The user visually accepts the revised sheet. The original version and its
+revision-request verdict remain preserved; publication is still unapproved.
+
+Normal UI scoped release preserves all 178 current files, clears cache/scratch
+and closes the QA browser. A subsequent read-only check confirms 90 workflows,
+the ready idle worker, no downloads and the untouched original LTX/Wan worker.
+The complete private provenance factory and validator pass without rewriting
+either raw task/output record. The absent original template identity remains
+absent; this was a predeclared private v2 workflow when it executed.
+
+Client `8147e2a4` promotes that exact accepted prompt for new contact-sheet
+creation and corrects its four-panel description. A versioned creative-revision
+entry preserves the frozen v1 creator contract. Every other template contract
+is unchanged, as are model, seed, geometry, steps and resource controls.
+The complete client `npm run check` passes. Earlier failures are retained: the
+first identifies the missing versioned registry entry; the next passes tests
+but exceeds the old bundle-size allowance. The measured prompt-data increase
+is 235/236 compressed bytes in the largest/aggregate startup code. Only that
+measured growth is allowed, retaining prior headroom, asset membership and
+deferred limits. Module-identity checks pass; no dependency/loading rule changes.
+
+The checked client is packaged as 119 backend bundle files. All five dependent
+inventories regenerate with source hashes only; their semantic entries, model
+pins and qualification statuses are exact. Backend executable code remains
+identical to the complete 9,015-test source; that evidence is reused with fresh
+checks passing 71 tests and 890 subtests for the affected generated inventories,
+rather than another model run. This is not labelled a new complete backend gate.
+Packaging is separate from protected live-app adoption.
+
+The seven unique cached reference files for eight declared remaining-case
+bindings are transferred to private Linux staging with exact hash readback.
+No Internet/model download or app-data mutation occurs. Eleven other cached
+cases still require their own input/graph/resource admission and native closure;
+the 43 missing-model cases remain explicitly held. The old public 73-error
+report remains a retained baseline, not a fresh pass for the new prompt.
+Public assets/locks and physical hardware qualification are not promoted.
