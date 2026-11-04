@@ -8,45 +8,47 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 
 ## Latest source and delivery checkpoint
 
-This section is authoritative for current status. The earlier checkpoints below
+This section is authoritative for current status. The dated checkpoints below
 retain their original source, timing and proof scope.
 
-| Area                   | Actual status                                                                                                                                                                                                                                                                                                                                |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Running Linux app      | Backend `fcf3cc66`, client `3da7736a`; protected adoption and actual built-client saved-library open, refresh and API export pass. All 201 prior files, 109 workflow bodies, runtime/packages/configuration and the original LTX/Wan worker are preserved.                                                                                   |
-| Running Windows app    | Remains the previously verified `12a61082` / `d59d5e1e` pair. The subsequent Linux adoption is not a Windows deployment.                                                                                                                                                                                                                     |
-| LoRA receipt fix       | Versioned primary-model summaries are deployed on Linux. The original helmet receipt remains in its legacy format; the user accepts its wider visor.                                                                                                                                                                                         |
-| LoRA evidence reader   | Client `82d644f9` validates that original native run using strict base/adapter identities and a separate observed resource vocabulary. No render, raw-receipt rewrite or qualification promotion. Its complete client gate passes, with all 119 product files exact to the deployed client.                                                  |
-| Saved-workflow opening | Client `3da7736a` acknowledges the fetched backend document before opening it. Red/green reproduction, four related browser cases, complete client checks, all four hosted CI jobs and protected deployment are complete. The actual built app preserves the complete unchanged row through open/refresh/export, with zero model dispatches. |
-| Packaged client        | The exact checked 119-file client is mirrored and 118 served assets match. All five generated inventories change source hashes only. The complete final packaged backend gate and all four current backend CI jobs pass at `fcf3cc66`; earlier gates are retained separately.                                                                |
-| Gallery campaign       | Nine cached cases now have current native outputs, all with human visual/listening acceptance and recorded limitations; two additional Klein cases have recovered historical functional evidence; nine other cached cases still lack current native outputs. All 20 retain separate release qualification limits.                            |
-| Missing models         | The 43 user-held cases remain held, with no model restoration or download. The original 73-error public Gallery report remains a retained baseline, not a fresh pass.                                                                                                                                                                        |
-| Hardware/publication   | Conditional AMD observations remain scoped to their original recipes. Unavailable or untested physical targets and media publication remain unapproved/unverified.                                                                                                                                                                           |
+| Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Running Linux app            | Backend `8ead4a09`, client `d77d17f2`. Protected idle adoption preserves all 269 current app files except expected queue process/timestamp fields, all 149 workflow bodies, runtime, packages and configuration. All 119 disk files and 118 served assets match. The original LTX/Wan worker remains untouched.                                                 |
+| Running Windows app          | Remains the previously verified `12a61082` / `d59d5e1e` pair. Large models run only on Linux.                                                                                                                                                                                                                                                                   |
+| CPU-offload cache accounting | Real CPU weights retained by exact official Accelerate hooks are counted even when visible parameters are meta tensors. Aliases are deduplicated; invalidated owners get no reuse credit. Inspection never executes custom hooks/mappings or lazy disk readers. This does not change loading preference, working-memory declarations or hardware qualification. |
+| Required current gates       | Exact packaged backend: 9,066 tests and 13,198 subtests pass, 761 skips and 33 warnings, plus lint/dependencies/preflight. Complete paired client check and all three affected browser cases pass. Current hosted backend lint passes; three platform jobs were still running at the recorded observation. No whole-matrix pass is claimed.                     |
+| Preserved video delivery     | The accepted photographic Pika and MiniMax clips, portable templates, rejected paper-boat originals, preview/upload repairs and Service CLI evidence remain intact. No extra H3 run tests this cache-reader fix.                                                                                                                                                |
+| Gallery campaign             | Fourteen unique cached examples have current outputs; twelve have human visual/listening acceptance. Two additional Klein examples have recovered historical functional evidence; four other cached examples lack current successful outputs. All 20 retain separate release qualification limits.                                                              |
+| Requested nine               | Klein, rainy rail and ACE repaint are accepted: three closed, six unclosed. Boardwalk and car have completed sequential Expert diagnostics, with visual review pending and original Auto holds retained. Rocket, lyric composite, Wan seed vault and ACE variation's absent melody-codec capability remain.                                                     |
+| Missing models               | All 43 user-held cases remain held without downloads. The original 73-error public Gallery report is a retained baseline, not a fresh pass.                                                                                                                                                                                                                     |
+| Hardware/publication         | Exact AMD observations are scoped to their recipe and host. Unavailable physical targets, release-wide hardware claims, public locks and media publication remain separate.                                                                                                                                                                                     |
 
-The complete final `fcf3cc66` backend gate passes 9,049 tests and 13,194 subtests
-with 761 skips and 33 warnings; pytest takes 1,471.48 seconds. All four current
-backend and all four current client CI jobs pass. The hosted client checks report
-16 shared cases plus 329 editor passes and one audio-preview case that passes on
-retry. Its first failure after Remove media remains retained; this is not a claim
-of an entirely clean first-attempt browser suite. The CI synthetic merge has the
-exact same tree as client `3da7736a`.
+The car diagnostic preserves the original 161-frame workload, prompt, input,
+seed, strength and resolution while explicitly selecting Custom/Expert sequential
+CPU offload. It completes in 2,310.94 native seconds. Strict actual task, attempt,
+session, graph, source, 47 authored fields, consumed controls and durable / served /
+cached media joins pass. The output is 1536×1024, 161 decoded frames at 16 FPS,
+10.0625 seconds, video-only. Full ordinary browser playback has zero dropped
+frames or errors. Three scoped releases and normal QA closure preserve all 269
+files, 40 earlier output records and 147 unrelated earlier workflow bodies.
+One startup draft was already protected before allocation and binds to its genuine
+ordinary PUT; it is included in the current 149-body preservation baseline.
 
-The original style preallocation hold remains unchanged and unrun. After the
-diagnosed opening fix was deployed and verified, a new case ran the unchanged
-saved graph and all 47 creator fields through ordinary UI Run. It completes in
-59.64 native seconds with a 1024-square output, exact base/adapter revisions,
-activated adapter scale 0.8, version-2 primary-model summary and strict native
-task/source/media joins. The maintainer provenance reader reports zero blockers
-without rewriting missing raw template/candidate identities or granting public
-qualification. The user visually accepts the image with its wider radio-detail
-panel and cheek scar rather than the requested eyebrow scar. The original and
-exact limitations remain preserved; publication is separate.
+The clip has immediate acceleration, tire spray and recession, but the car body
+changes shape during its turn. Visual acceptance is pending; technical success
+does not close this creative limitation. Sampled minimum available RAM is about
+53.3 GiB, peak worker RSS about 44.1 GiB, and owned swap growth and temporary
+offload storage stay zero. Peak GTT is recorded separately, never added to RAM
+as independent capacity. This exact Expert success does not qualify original
+Auto or establish the cause of the earlier model-CPU safety cancellations.
 
-Normal scoped releases clear all seven owned cached nodes and preserve all 205
-current files and durable media. A separate post-run audit preserves 109 other
-original workflow bodies and all 34 prior output records; the sole new output
-and one owned workflow update match the genuine task and browser request. No
-model files are deleted and the original LTX/Wan worker remains untouched.
+Next, prepare the unchanged rocket through ordinary Normalize/replan, then use a
+fresh admission and independent guard for its exact workload. Separately finish
+a conservative LTX Auto selection and working-memory diagnosis. Its current
+machine-capacity declaration lacks a bounded video working-demand contract;
+changing a saved offload field under Auto still selects model CPU offload. No
+blind capability-list reordering, weaker guards, workload reduction or unchanged
+retry is permitted. Boardwalk/car review can proceed while that work continues.
 
 ## Earlier Gallery and hardware follow-up
 
@@ -976,3 +978,49 @@ evidence informs the next conservative Auto/loading diagnosis. The 43
 missing-model holds and all publication boundaries stay unchanged. Existing
 paired gates cover the unchanged application; this is a documentation-only
 checkpoint.
+
+### 4 November UTC — full car diagnostic and CPU-hook cache repair delivered
+
+The original 161-frame car workload completes through one separately admitted
+Expert sequential-offload Run in **2,310.94 native seconds**. Its technical,
+whole-playback, preservation and ordinary scoped-release proofs are closed.
+Immediate travel and tire spray are visible; body-shape drift during the turn
+remains a creative limitation awaiting human review. The original model-CPU Auto
+safety hold stays open, and no failed recipe is retried unchanged.
+
+Source tracing independently reproduces a cache-accounting defect with actual
+tiny Accelerate CPU-offload hooks: their visible Module weights become meta
+tensors while the real CPU tensors remain in the official weight map. The old
+reader misses those storages. Five original-source regression cases fail before
+the narrow repair; the final twelve-case hook file passes. Four focused resource
+files pass 336 tests, followed by the final additional model-lifetime check. The
+reader accepts only already-loaded exact official hook/prefix-wrapper types and
+bounded plain dictionaries. It reads only declared tensor names, retains storage
+alias deduplication and owner eligibility, and never materializes disk weights or
+executes custom descriptors. No loader, executor, dependency or client changes.
+
+The complete exact packaged backend gate at `8ead4a09` passes **9,066 tests /
+13,198 subtests**, 761 skips and 33 warnings in 1,440.33 pytest seconds, plus
+Ruff, dependency and preflight checks. The complete paired client check and three
+affected mocked browser cases pass without model allocation. Hosted CI is
+recorded separately; lint passes while platform jobs are still running at the
+snapshot. No pending job is represented as a pass.
+
+Protected idle Linux adoption then passes at `8ead4a09` / `d77d17f2`: all 269
+current app files, all workflow bodies, configuration, runtime and packages are
+preserved, with only expected queue worker/timestamp changes. All 119 disk files
+and 118 served assets match, no model runs during adoption, and the original
+LTX/Wan worker is untouched. Two read-only preservation-helper holds are retained:
+the historical 512 MiB reader cap was below the now-measured 582,085,196-byte
+protected set, and an incorrect 148-body assumption omitted one actual startup
+draft. The corrected reader requires exact 269-file names/sizes/hashes and binds
+the 149th draft to its preallocation bytes and genuine ordinary PUT. No data is
+restored or normalized to pass preservation, and model resource limits do not
+change. A stale private release-helper UI suffix was corrected before execution.
+
+Fourteen unique cached examples now have current outputs, twelve with human
+acceptance. Three requested cases remain accepted and six unclosed. Both
+boardwalk/car visual questions and original Auto holds remain distinct from
+rocket/lyric/Wan execution and ACE's absent melody-codec capability. All 43
+missing-model cases stay held without downloads. No public lock, media upload,
+whole-app release or unavailable-hardware qualification is inferred.
