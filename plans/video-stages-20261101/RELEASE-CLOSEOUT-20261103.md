@@ -369,3 +369,53 @@ of the continuation, exact-file publication and unavailable-hardware qualificati
 remain separate. The public Gallery gate still has its original 73 errors;
 new private audio candidates do not replace public records or close release-wide
 canonical/template/resource proof. The whole-app release remains held.
+
+### 4 November — selected-wire fix deployed; recovered evidence retained
+
+A selected wire's invisible interaction path intercepted an unrelated node's
+cache button during the genuine Z-image cleanup. Two faithful model-free
+browser regressions fail on the old behavior and pass with selected-edge
+elevation disabled. Wire emphasis and bare-wire selection remain, and inspected
+upstream parent/child elevation is independent of that setting. Earlier
+inadequate reproduction attempts remain retained.
+
+The full client check passes at `d59d5e1e`; all four client CI jobs pass,
+including **16 shared and 327 editor browser tests**. The complete backend gate
+at `12a61082` passes **8,997 tests and 13,194 subtests**, with 761 skips, plus
+Ruff, dependency and preflight checks. All four backend CI jobs pass. The exact
+119-file client bundle is packaged once; five regenerated inventories change
+source hashes only, with semantic entries, pins and statuses preserved.
+
+Protected adoption succeeds on both apps at exact tested `12a61082` /
+`d59d5e1e`, product `e75ba3c9bd12b08a`, with 119 disk/118 served assets. Linux
+preserves all 149 files and its 71 workflows, unchanged configuration/runtime/
+packages, and original LTX/Wan worker 118689. Windows preserves all 378 earlier
+files and 110 workflow bodies, original8190/H6A and runtime configuration. Its
+ordinary built-client smoke connects, blocks Run for an empty graph and has no
+console errors or model dispatch. Its sole addition is an observed empty QA
+draft: 379 current files/111 workflows. The QA browser is closed normally.
+Windows8194 is ready for this bounded update; refresh an older browser tab.
+These checks do not grant whole-app Gallery or physical-hardware signoff.
+
+A broader content search also recovers original Windows Klein text-to-image
+and edit requests, completed tasks, consumed values and exact output bytes.
+Both match the current declared native route. The text-to-image output form
+matches current locked settings; the edit form retains an original offload
+preset discrepancy. Neither case supplies the complete original source-file
+inventories or consumed token-limit evidence. The first strict audit's form
+assertion hold remains, followed by a separate bounded historical audit. No
+original is rewritten and neither case is promoted to current qualification.
+
+Read-only Linux metadata inspection finds all referenced component/shard files
+for seven cached model/adapter pins. LTX's valid shared Hub blob layout is
+identified separately from repo-local blobs; the initial overly narrow
+inspection and its diagnosis remain. Metadata availability does not establish
+weight-body hashes, loader compatibility, memory fit or model qualification.
+
+Private progress now separates 43 user-held missing-model cases, three current
+local outputs, two recovered historical functional cases and 15 other cached
+rows still open. All 20 cached rows still lack complete release qualification;
+the retained public result remains 73 errors. No additional model render,
+download, deletion, installation, media publication or hardware promotion is
+performed for this checkpoint. Continue admission/evidence work per case;
+do not rerun closed native outputs or these full gates for documentation alone.
