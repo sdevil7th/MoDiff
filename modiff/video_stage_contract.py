@@ -51,7 +51,9 @@ def video_stage_spec(original):
     for role, field, source in original['bindings']:
         if role != 'wanGenerate':
             bindings.append((role, field, 'defaultRevision'
-                             if role == 'wanPipeline' and field == 'revision' else source))
+                             if role == 'wanPipeline' and field == 'revision' else
+                             'attentionBackend'
+                             if role == 'diffusersRecipe' and field == 'attention_backend' else source))
         elif field == 'mode':
             # The resolved stage operations already own their exact selected
             # task. A form binding must not override that immutable identity.

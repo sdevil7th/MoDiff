@@ -410,6 +410,13 @@ def test_selected_starter_publishes_real_stage_edges_and_no_extra_whole_consumer
     assert loader['values']['revision'] == require_catalog_revision(profile.default_repo)
     assert result['authoring']['id'] == 'generic-video-stages:v1'
     assert not any(field == 'mode' for _role, field, _source in result['authoring']['bindings'])
+    assert ('diffusersRecipe', 'attention_backend', 'attentionBackend') in result['authoring']['bindings']
+    # The whole-operation source is historical authority, not a fresh-stage
+    # default. An imported graph's literal policy is never rewritten here.
+    if identity == 'ltx-video:direct':
+        from modiff.studio_execution_specs import studio_execution_spec_for_pair
+        retained = studio_execution_spec_for_pair('LTXVideoPipeline', task)
+        assert ('diffusersRecipe', 'attention_backend', 'nativeMath') in retained['bindings']
     if identity == 'ltx-video:direct':
         for node in result['nodes']:
             for field, expected in (('guidance_scale', 1.), ('num_inference_steps', 8)):

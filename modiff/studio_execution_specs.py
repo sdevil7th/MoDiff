@@ -5312,7 +5312,7 @@ _AUDIO_GRAPH_BINDINGS = (
     ("diffusersRecipe", "device_map", "deviceMapNone"),
     ("diffusersRecipe", "offload_mode", "offloadMode"),
     ("diffusersRecipe", "device", "device"),
-    ("diffusersRecipe", "attention_backend", "nativeMath"),
+    ("diffusersRecipe", "attention_backend", "attentionBackend"),
     ("diffusersRecipe", "attention_components", "empty"),
     ("diffusersRecipe", "vae_slicing", "true"),
     ("diffusersRecipe", "vae_tiling", "true"),

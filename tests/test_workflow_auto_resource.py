@@ -433,6 +433,62 @@ def test_outpaint_geometry_is_deferred_to_existing_data_preparation(setup):
     assert result['preparationNodeIds'] == ['canvas', 'source']
 
 
+def normalized_video_graph(action='Normalize'):
+    g = graph()
+    g['nodes'] = {
+        'video': {'module': 'modules.Video', 'action': 'Load', 'params': {'file': {'value': '/not/read/during/planning.mp4'}}},
+        'normalized': {'module': 'modules.VideoConditioning', 'action': action,
+                       'params': {'video': {'sourceId': 'video', 'sourceKey': 'video'},
+                                  'width': {'value': 1024}, 'height': {'value': 1024}, 'num_frames': {'value': 81}}},
+        **g['nodes'],
+    }
+    g['nodes']['generate']['params']['video'] = {'sourceId': 'normalized', 'sourceKey': 'output'}
+    g['paths'] = [list(g['nodes'])]
+    return g
+
+
+def test_normalize_video_is_reviewed_data_without_a_model_owner_or_execution(setup, monkeypatch):
+    from modules.VideoConditioning.main import Normalize
+    monkeypatch.setattr(Normalize, 'execute', lambda *_args, **_kwargs: pytest.fail('Planning executed Normalize'))
+    plan, _, _, _ = setup
+    g = normalized_video_graph()
+    before = deepcopy(g)
+    result = plan(g)
+    assert result['canAutoRun'], result['issues']
+    assert [owner['nodeId'] for owner in result['loaders']] == ['load']
+    assert not result['requiresPreparation']
+    assert g == before
+
+
+def test_normalized_video_frame_count_defers_to_actual_prepared_output(setup):
+    from modiff.workflow_auto_values import RUNTIME_VALUES
+    plan, candidate, _, requests = setup
+    candidate['generation']['numFrames'] = 61
+    g = normalized_video_graph()
+    g['nodes']['generate']['params']['num_frames'] = {'sourceId': 'normalized', 'sourceKey': 'frames_out'}
+    original = deepcopy(g)
+    pending = plan(g)
+    assert pending['canAutoRun'] and pending['requiresPreparation'], pending['issues']
+    assert pending['preparationNodeIds'] == ['normalized', 'video']
+    token = RUNTIME_VALUES.set({('normalized', 'frames_out'): 61})
+    try:
+        ready = plan(g)
+    finally:
+        RUNTIME_VALUES.reset(token)
+    assert ready['canAutoRun'] and not ready['requiresPreparation'], ready['issues']
+    assert ready['resolvedFields']['generate']['num_frames'] == 61
+    assert requests[-1]['form']['numFrames'] == 61
+    assert g == original
+
+
+@pytest.mark.parametrize('action', ['UnknownNormalize', 'ModelPreprocessor'])
+def test_other_video_conditioning_actions_do_not_inherit_normalize_data_trust(setup, action):
+    plan, _, _, _ = setup
+    result = plan(normalized_video_graph(action))
+    assert not result['canAutoRun']
+    assert any('no workflow Auto resource contract' in issue for issue in result['issues'])
+
+
 def test_native_runtime_policy_is_preserved_and_connected_controls_are_bound(setup):
     plan, _, _, _ = setup
     g = graph()

@@ -12,6 +12,7 @@ DATA_ACTIONS = {
     ('modules.DiffusersRuntime', 'PipelineQuantizationConfigV2'),
     ('modules.DiffusersRuntime', 'DiffusersExecutionRecipe'),
     ('modules.DiffusersImage', 'OutpaintCanvas'),
+    ('modules.VideoConditioning', 'Normalize'),
 }
 
 

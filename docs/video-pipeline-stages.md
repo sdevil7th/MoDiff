@@ -126,6 +126,15 @@ ancillary branches remain intact. A decoder and file-backed exporter are grouped
 only when their actual connections allow it. An intervening upscaler or independent
 audio branch remains distinct.
 
+Fresh ordinary video stages and ACE audio recipes bind attention to the authored
+form choice, defaulting to official automatic attention. They do not force math
+attention merely because an older whole-pipeline specification selected it.
+Explicit math/flash choices are retained and checked through the existing backend
+recipe and installed-library boundary. Saved graphs keep their literal policy;
+there is no automatic migration, output-parity claim or additional hardware
+qualification. A capacity tier still cannot admit forced math attention without
+an explicit working-memory declaration.
+
 ## Validation boundaries
 
 Export Video with Audio keeps generated intermediates in its own temporary

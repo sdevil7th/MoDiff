@@ -6,6 +6,13 @@ independent model owners, even when they select the same repository. Planning
 never loads models, installs packages, changes prompts or reduces creative
 settings to make a workflow fit.
 
+The built-in Normalize Video stage is a deterministic data supplier, not an
+independent model owner. Inspection does not decode its input or execute it.
+When its connected frame count is needed, ordinary Run preparation executes the
+reviewed data ancestors and replans against the actual normalized count. Unknown
+conditioning actions remain unreviewed; requested frame counts are not substituted
+for the supplier's real output.
+
 For a built-in Modular loader, planning and execution share the same read-only
 checkpoint selector. An explicitly selected reviewed variant supplies its own
 repository and immutable catalog revision together; the workflow's sealed base
