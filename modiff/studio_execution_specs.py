@@ -5312,7 +5312,7 @@ _AUDIO_GRAPH_BINDINGS = (
     ("diffusersRecipe", "device_map", "deviceMapNone"),
     ("diffusersRecipe", "offload_mode", "offloadMode"),
     ("diffusersRecipe", "device", "device"),
-    ("diffusersRecipe", "attention_backend", "attentionBackend"),
+    ("diffusersRecipe", "attention_backend", "nativeMath"),
     ("diffusersRecipe", "attention_components", "empty"),
     ("diffusersRecipe", "vae_slicing", "true"),
     ("diffusersRecipe", "vae_tiling", "true"),
@@ -19034,6 +19034,15 @@ def resolve_studio_operation_authoring_recipe(
             raise ValueError('The video authoring recipe requires one exact declared source specification.')
         definition = {'specId': candidates[0][0], 'task': selection['task'],
                       'profileId': selection['executionProfileId'], 'initialValues': ()}
+    if identity == 'generic-audio-recipe:v1':
+        candidates = [(spec_id, candidate) for spec_id, candidate in STUDIO_EXECUTION_SPEC_DEFINITIONS.items()
+            if candidate['profile']['id'] == selection.get('executionProfileId') == 'ace-step-audio:direct'
+            and candidate['profile']['pipeline_class'] == selection.get('pipelineClass') == 'AceStepPipeline'
+            and candidate['mode'] == selection.get('task')]
+        if len(candidates) != 1:
+            raise ValueError('The audio authoring recipe requires one exact reviewed integrated source specification.')
+        definition = {'specId': candidates[0][0], 'task': selection['task'],
+                      'profileId': selection['executionProfileId'], 'initialValues': ()}
     if identity == "generic-native-image:v1":
         # Fresh image templates share this projection. Resolve only existing
         # exact specifications; do not guess a route from a class-name family.
@@ -19071,6 +19080,12 @@ def resolve_studio_operation_authoring_recipe(
     if identity == 'generic-video-stages:v1':
         from modiff.video_stage_contract import video_stage_spec
         spec = video_stage_spec(spec)
+    if identity == 'generic-audio-recipe:v1':
+        # A fresh ordinary recipe can follow the authored attention choice
+        # without changing retained whole-operation/registered Block identities.
+        spec = {**spec, 'bindings': tuple((role, field, 'attentionBackend'
+            if role == 'diffusersRecipe' and field == 'attention_backend' else source)
+            for role, field, source in spec['bindings'])}
     if (selection.get("pipelineClass") != spec["pipelineClass"]
             or selection.get("task") != definition["task"]
             or selection.get("executionProfileId") != definition["profileId"]):

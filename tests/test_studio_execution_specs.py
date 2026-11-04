@@ -2256,7 +2256,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(repaint["edges"], variation["edges"])
         for spec in (text, variation, continuation, repaint):
             self.assertIn(("audioGenerate", "sample_rate", "sampleRate48000"), spec["bindings"])
-            self.assertIn(("diffusersRecipe", "attention_backend", "attentionBackend"), spec["bindings"])
+            self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), spec["bindings"])
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
 

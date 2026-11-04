@@ -45,6 +45,22 @@ class OperationAuthoringRecipeTests(unittest.TestCase):
         with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("constructed")):
             return resolve_operation_starter(MODULE_MAP, self.contracts, selection)
 
+    def test_fresh_audio_attention_binding_preserves_all_retained_specifications(self):
+        for task in ('text_to_audio', 'audio_variation', 'audio_continuation', 'audio_repaint'):
+            with self.subTest(task=task):
+                spec = studio_execution_spec_for_pair('AceStepAudioPipeline', task)
+                original = deepcopy(spec)
+                starter = self.resolve('AceStepPipeline', task, 'ace-step-audio:direct', 'generic-audio-recipe:v1')
+                recipe = starter['authoring']
+                self.assertIn(('diffusersRecipe', 'attention_backend', 'attentionBackend'), recipe['bindings'])
+                self.assertEqual(recipe['baseSpecContentHash'], spec['contentHash'])
+                self.assertIn(('diffusersRecipe', 'attention_backend', 'nativeMath'), spec['bindings'])
+                self.assertEqual(studio_execution_spec_for_pair('AceStepAudioPipeline', task), original)
+                self.assertEqual(recipe['roles'], list(spec['roles']))
+                self.assertEqual(recipe['edges'], list(spec['edges']))
+        with self.assertRaisesRegex(ValueError, 'audio authoring recipe'):
+            self.resolve('StableAudioPipeline', 'text_to_audio', 'stable-audio:direct', 'generic-audio-recipe:v1')
+
     def test_qwen_masked_compatibility_is_explicit_and_does_not_change_generic_defaults(self):
         args = ("QwenImageEditModularPipeline", "inpaint", "qwen-edit:modular")
         original = deepcopy(self.resolve(*args))

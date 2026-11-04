@@ -129,6 +129,9 @@ audio branch remains distinct.
 Fresh ordinary video stages and ACE audio recipes bind attention to the authored
 form choice, defaulting to official automatic attention. They do not force math
 attention merely because an older whole-pipeline specification selected it.
+ACE selects the explicit `generic-audio-recipe:v1` authoring projection for its
+four integrated tasks; the retained source specifications and compiled Block
+identities remain unchanged. This projection adds no new execution stage.
 Explicit math/flash choices are retained and checked through the existing backend
 recipe and installed-library boundary. Saved graphs keep their literal policy;
 there is no automatic migration, output-parity claim or additional hardware
