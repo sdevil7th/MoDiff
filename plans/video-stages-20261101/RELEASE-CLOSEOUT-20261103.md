@@ -475,3 +475,54 @@ has exactly the retained native graph hash, parameters and paths, avoiding an
 unchanged render. The Klein T2I candidate matches its retained stages, creative
 controls and paths but differs in memory placement; preserve that discrepancy.
 All 43 retired-model cases remain explicitly held, without restoration.
+
+### 4 November — accepted Auto product output and retained provenance
+
+The normal built Linux UI completes the unchanged Z-Image product creator in
+Auto mode on backend `2a69bfbf`, with the existing D59 application bundle. The
+fresh task takes 53.94 seconds at 1024×1024, seed 4202, eight steps, BF16 and
+model-CPU offload. Its independent guard, source-before/after inventory, all 47
+saved creator fields, consumed inputs, model pin, task/attempt/session and
+durable/served image bindings pass. Normal UI scoped release clears the caches
+and temporary offload without deleting models. All 155 post-run files are
+preserved across release. Across the actual generation, 147 of the earlier 149
+files remain byte-exact; only the expected queue and output index change, and
+all 28 original output records remain exact alongside the one new record.
+
+The raw task correctly has no primary Studio Auto candidate ID. A diagnosed
+maintainer-reader omission previously discarded its whole-workflow Auto recipe.
+The reader now derives a separately named observed identity from the genuine
+backend-resolved recipe, consumed receipts and exact graph/task/output joins.
+Incomplete, conflicting, connected, patched, reused and unsupported cases remain
+held. The identity does not register a primary Auto recipe or qualify hardware.
+The raw task/output remains unchanged. The output also lacks a prompt hash;
+initial provenance uses the original preallocation creator capture and unchanged
+immutable D59 creator source, explicitly recording that derivation. It does not
+repair a stale public record by borrowing present-day defaults.
+
+The complete provenance factory and validator pass on those retained originals.
+The original failing replay remains retained. The reader regression suite passes
+60 focused tests, including actual worker hash-protocol checks and malformed
+observation boundaries. The complete client `npm run check` passes at
+`d4d0874c` against `ad5cf92a`, with every one of the 119 bundle files unchanged.
+No application redeployment or large-model rerun is needed for this script fix.
+The new backend CI run at `ad5cf92a` passes all four jobs, including macOS; the
+earlier budget cancellation remains historical evidence, not an overwritten pass.
+CI still does not establish physical MPS qualification.
+
+The user accepts this exact product image visually and the joined 90-second
+ACE continuation for listening. The 75-second source song was already accepted.
+These decisions do not authorize publication. Four current local outputs and
+two historical functional cases are now retained; 14 other cached cases still
+need closure. All 20 cached cases still require their remaining canonical,
+template/resource, hardware or publication checks as applicable. The public
+73-error result is unchanged and the 43 missing-model cases remain explicitly
+held. Conditional AMD observations and unavailable/unverified physical targets
+retain their stated limits.
+
+The next Z-Image poster is prepared through the ordinary built UI in Auto mode,
+with all 75 pre-existing workflow bodies unchanged and all 47 creator fields
+exact. Its graph dispatch remains blocked during preparation. Fresh whole-graph,
+session, resource and guard admission is required before one native run. A
+subsequent SSH timeout occurs before the next private-helper transfer; it is
+not a model failure or permission to bypass those checks.
