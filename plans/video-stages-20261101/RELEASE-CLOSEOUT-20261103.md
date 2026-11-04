@@ -838,3 +838,48 @@ The original two-reference boardwalk workflow is now running serially on Linux:
 and the same reviewed 2× upscaler. Its immutable weight-body proof is reused only
 after matching current inode, size, modification time and original LFS identity.
 Public Gallery locks, qualification and publication remain separate.
+
+### 4 November UTC — boardwalk revision and cold-loading safety holds
+
+The original two-reference boardwalk completes in **1,173.43 native seconds**.
+Its 2× delivery passes 1536×1024, 81 decoded frames at 16 FPS, video-only,
+strict task/source/ordered-input/media joins and full saved-workflow playback
+with zero dropped frames or errors. The first immediate playback observer
+timed out before metadata; that failure remains retained. A separate ordinary
+saved-workflow open with an explicit metadata wait passes without rendering
+again. This is a narrower playback result, not a claimed product fix for the
+first stall. Scoped release preserves 234 files and all 37 earlier output
+records. Early motion holds and the ending blurs; the user authorizes a
+versioned motion-prompt revision, not acceptance of this original.
+
+The car's unchanged 161-frame Auto run and the new prompt-only 81-frame
+boardwalk revision both stop safely during denoising when owned worker swap
+growth crosses the existing 1 GiB limit. Both produce **zero outputs**. At the
+respective stop samples, at least 68.7 GiB and about 79.4 GiB of system RAM
+remain available. The actual observations establish a reproducible safety
+hold in the current loading path, not global RAM exhaustion or proof that a
+different offload strategy fits. Read-only cgroup checks find no memory-high,
+memory-max or OOM event. No safeguard, system setting, workload or model cache
+is changed, and no identical retry is submitted.
+
+Normal supervisor recovery replaces each worker. Separate read-only recovery
+audits and ordinary QA closure verify zero outputs, the same source/runtime/
+packages/configuration, all 119 disk and 118 served assets, all 38 earlier
+output records and protected media. The latest audit preserves 245 app files;
+only the expected queue state and exact-owned empty cancelled preview slot
+change. Genuine preallocation drafts and collection revision advances are
+bound separately. Original observer errors remain retained; no missing guard
+summary is synthesized. The original LTX/Wan worker is untouched. The new
+motion recipe keeps every creative control except the prompt, including the
+original graph's actual **0.55** conditioning strength; an earlier private
+continuation note incorrectly stated 0.8 and is superseded by the graph and
+consumed-field evidence.
+
+Two of the nine requested cases are accepted; seven remain unclosed. Twelve
+campaign cases now have current outputs, eleven with human acceptance. The
+boardwalk creative revision and car need a separately reviewed loading-policy
+diagnosis before another render; smaller eligible cases and ordinary composite
+authoring can continue independently. Existing sequential/group offload paths
+are possible hypotheses, not completed qualification. The 43 missing-model
+cases and ACE melody-cover codec hold remain unchanged. This checkpoint changes
+documentation only and reuses the completed packaged and paired-client gates.
