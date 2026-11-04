@@ -15553,6 +15553,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         hook_runtime = sys.modules.get('diffusers.hooks.hooks')
         group_types = vars(group_runtime) if group_runtime is not None else {}
         registry_type = vars(hook_runtime).get('HookRegistry') if hook_runtime is not None else None
+        accelerate_hooks = sys.modules.get('accelerate.hooks')
+        accelerate_types = vars(accelerate_hooks) if accelerate_hooks is not None else {}
+        accelerate_offload = sys.modules.get('accelerate.utils.offload')
+        prefixed_type = vars(accelerate_offload).get('PrefixedDataset') if accelerate_offload is not None else None
 
         def base_state(value):
             try:
@@ -15603,6 +15607,51 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                         keys.add(key)
             return keys
 
+        def accelerate_cpu_storages(state):
+            # Sequential CPU hooks replace Module tensors with meta tensors;
+            # their original CPU storage remains in the official hook's map.
+            # Inspect only already-loaded exact hook types and plain dicts.
+            # Lazy/disk/custom mappings must never be queried or materialized.
+            pending, seen, result = [state.get('_hf_hook')], set(), {}
+            while pending and len(seen) < 256:
+                hook = pending.pop()
+                if id(hook) in seen:
+                    continue
+                seen.add(id(hook))
+                if (type(hook) is not accelerate_types.get('SequentialHook')
+                        and type(hook) is not accelerate_types.get('AlignDevicesHook')):
+                    continue
+                values = base_state(hook)
+                if type(hook) is accelerate_types.get('SequentialHook'):
+                    children = values.get('hooks')
+                    if type(children) is tuple and len(children) <= 32:
+                        pending.extend(children)
+                    continue
+                if type(hook) is not accelerate_types.get('AlignDevicesHook') or values.get('offload') is not True:
+                    continue
+                names, mapping = values.get('original_devices'), values.get('weights_map')
+                if type(names) is not dict or len(names) > 100_000:
+                    continue
+                prefix = ''
+                for _ in range(32):
+                    if prefixed_type is None or type(mapping) is not prefixed_type:
+                        break
+                    data = base_state(mapping)
+                    part = data.get('prefix')
+                    if type(part) is not str or len(prefix) + len(part) > 4096:
+                        mapping = None
+                        break
+                    prefix, mapping = part + prefix, data.get('dataset')
+                if type(mapping) is not dict:
+                    continue
+                for name in names:
+                    if type(name) is not str:
+                        continue
+                    key = storage_key(mapping.get(prefix + name))
+                    if key is not None and key[0] == 'cpu':
+                        result[key] = ('systemRamBytes', key[2])
+            return result
+
         excluded_storage = set()
 
         def storages(models):
@@ -15618,6 +15667,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     state = {}
                 if isinstance(model, module_type):
                     placeholders.update(disk_placeholder_keys(state))
+                    result.update(accelerate_cpu_storages(state))
                     pending.extend((state.get("_modules") or {}).values())
                     tensors = [*(state.get("_parameters") or {}).values(), *(state.get("_buffers") or {}).values()]
                     for tensor in tensors:

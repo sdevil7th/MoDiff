@@ -174,6 +174,16 @@ compatible current owners. Physical storage is then credited once across that
 selection. An unrelated earlier cache record cannot consume a current owner's
 credit, and per-owner storage totals must not be summed to estimate reclamation.
 
+Standard Accelerate CPU-offload hooks can retain real CPU tensors in their weight
+maps after replacing a module's visible parameters with meta tensors. Cache
+inspection counts those live CPU storages through already loaded, exact official
+hook types and plain dictionaries, including their bounded prefix wrappers. It
+counts only the hook's declared tensor names and deduplicates aliases across
+modules and eligible owners. Inspection neither materializes parameters nor
+executes hook methods, custom mappings or lazy disk-weight readers. Invalidated
+owners still receive no reuse credit. This repairs storage accounting; it does
+not declare a new working-memory budget, loading preference or hardware tier.
+
 A fully resident `none` recipe uses the disk requirement of its accepted
 residency tier, rather than inheriting the minimum tier's SSD-offload floor.
 Actual disk-offload placement and missing-model download requirements retain
