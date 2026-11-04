@@ -761,3 +761,50 @@ maintainer observed-workflow-Auto reader admits only plain image graphs, not thi
 seven-node LoRA chain. That bounded reader integration is still open. Do not
 invent an identity, rewrite the legacy receipt or rerender the accepted image to
 address a reader limitation.
+
+### 4 November — cached-case fixes deployed; Klein accepted
+
+The paired cached-case repair is fully checked and packaged at backend
+`1884bf88` / client `d77d17f2`. Passive Auto document restore now preserves
+authored precision/offload values. Fresh video authoring and the explicit
+`generic-audio-recipe:v1` projection bind the authored attention policy, using
+official automatic attention by default. Historical ACE specifications,
+compiled Blocks and literal saved graphs remain unchanged. Normalize Video is
+an exact deterministic data supplier: inspection does not execute it, and the
+ordinary Run preparation/replan supplies the actual connected frame count.
+No math-memory guard or unknown-action refusal is weakened.
+
+The complete packaged backend gate passes **9,054 tests / 13,198 subtests**,
+with 761 skips and 33 warnings, plus lint, dependency and preflight checks.
+The complete client gate and three affected browser cases pass. Hosted backend
+lint/Ubuntu/Windows and client quality/full-browser/Windows jobs pass; both Mac
+jobs are cancelled, so this is not an all-platform CI or physical-hardware pass.
+The protected Linux adoption verifies all 119 disk / 118 served assets and 210
+predeployment files, apart from the expected queue process/timestamp update.
+Runtime, packages and configuration stay unchanged. The original LTX/Wan worker
+is untouched. No Windows model run or additional deployment tests are required
+for documentation checkpoints.
+
+The first of the nine requested cached cases, Klein multi-reference, completes
+through the ordinary saved Auto workflow in **45.80 native seconds**. Both
+original ordered reference bytes, all 47 creator fields, exact pinned weights,
+actual consumed controls, source inventory, task/attempt and 1024-square media
+are joined. The user accepts the material-fusion image. Normal UI scoped release
+clears all seven cached nodes while preserving all 218 files, 116 other workflow
+bodies and 35 prior output records. There is no rerender for audit-reader fixes.
+The original omitted raw template/resource-candidate identities remain omitted;
+private native acceptance does not grant public qualification or publication.
+
+Eight requested cached rows remain open. Seven have eligible cached workloads;
+ACE variation additionally needs source-codec components absent from its pinned
+cache to meet the promised melody-preserving cover. Timbre-only conditioning is
+not accepted as a substitute. The LTX rainy-rail case is now running with its
+unchanged prompt, 768×512 generation, 121 frames at 24 FPS, eight steps, seed
+8301 and reviewed 2× delivery upscaler. Its output is not yet accepted. A private
+preallocation check's shared-cache storage-ID/content-hash assumption was
+diagnosed before dispatch; the original LFS aliases match the streamed bytes.
+The failed check is retained, the existing finite cache resolver is reused, and
+no model file or resource floor changes. No duplicate model run is submitted.
+
+The **43 missing-model cases remain held**, without downloads. Public Gallery
+locks/media, whole-app release coverage and unavailable hardware remain separate.
