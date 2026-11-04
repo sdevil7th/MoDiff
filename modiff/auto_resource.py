@@ -2610,6 +2610,26 @@ def _requirements_for_offload(
     return value if isinstance(value, dict) else fallback
 
 
+def _parameter_floor_hardware(hardware: dict[str, Any], offload_mode: str) -> dict[str, Any]:
+    """Use the existing shared offload pool for the ordinary native census.
+
+    This is only a parameter-capacity comparison, not a free-memory allowance.
+    Full residency and separately bounded recipes retain their own policy.
+    """
+    accelerator = hardware.get("accelerator")
+    system = hardware.get("systemMemory")
+    if (offload_mode != OFFLOAD_MODE_MODEL_CPU or not isinstance(accelerator, dict)
+            or not isinstance(system, dict) or accelerator.get("kind") not in {"cuda", "xpu", "mps"}
+            or accelerator.get("memoryKind") not in {"shared", "unified"}):
+        return hardware
+    capacities = (accelerator.get("accessibleTotalBytes"), accelerator.get("sharedTotalBytes"), system.get("totalBytes"))
+    if any(type(value) is not int or not 0 < value <= 2**63 for value in capacities):
+        return hardware
+    # One pool, bounded by every measured limit. Never add borrowed RAM to
+    # dedicated VRAM or alter the hardware report and live free readings.
+    return {**hardware, "accelerator": {**accelerator, "totalBytes": min(capacities)}}
+
+
 def _requirements_missing_for_dict(
     hardware: dict[str, Any],
     requirement: dict[str, Any],
@@ -3634,7 +3654,9 @@ def build_auto_resource_plan(
             candidate["parameterStorageLowerBound"] = bound
             if conversion is not None:
                 candidate["parameterConversionReserve"] = conversion
-        missing = impossible_parameter_residency(hardware, bound, str(candidate.get("offloadMode") or "none"))
+        placement = str(candidate.get("offloadMode") or "none")
+        capacity_hardware = _parameter_floor_hardware(hardware, placement)
+        missing = impossible_parameter_residency(capacity_hardware, bound, placement)
         if not missing:
             continue
         candidate["requirementsMissing"] = list(dict.fromkeys([*(candidate.get("requirementsMissing") or []), *missing]))

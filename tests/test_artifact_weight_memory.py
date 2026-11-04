@@ -226,6 +226,88 @@ def test_no_lower_bound_is_not_a_new_fit_or_qualification_claim():
     assert impossible_parameter_residency({"accelerator": {"kind": "cuda", "totalBytes": 1}}, None, "none") == []
 
 
+@pytest.fixture
+def native_parameter_floor_plan(monkeypatch, tmp_path):
+    from modiff import auto_resource as planner
+
+    def plan(hardware, component_gib=40, offload_mode="model_cpu"):
+        gib = 1024**3
+        candidate = {
+            "id": "native", "modelType": "ZImageModularPipeline", "mode": "modular_text_to_image",
+            "artifactFormat": "native", "artifact": planner.Z_IMAGE_REPO,
+            "modelRepo": planner.Z_IMAGE_REPO, "resolvedArtifact": planner.Z_IMAGE_REPO,
+            "dtype": "bfloat16", "quantizationMode": "none", "loadedQuantization": "none",
+            "offloadMode": offload_mode, "installed": True, "artifactValidation": {"complete": True},
+            "artifactResolution": {"resolved": {"repo": planner.Z_IMAGE_REPO, "revision": REVISION}},
+            "proof": {"status": "declared_safe"}, "canAutoRun": True, "requirementsMissing": [],
+            "qualityTier": "native", "qualityScore": 100, "rank": 1,
+        }
+        monkeypatch.setattr(planner, "_declared_profile_candidates", lambda *args: [candidate.copy()])
+        monkeypatch.setattr(planner, "artifact_parameter_lower_bound", lambda *args: {
+            "totalBytes": (component_gib + 4)*gib, "largestComponentBytes": component_gib*gib,
+        })
+        return planner.build_auto_resource_plan(
+            {"form": {"modelType": "ZImageModularPipeline", "mode": "modular_text_to_image"}, "hardwareOverride": hardware},
+            runtime_fingerprint={}, local_models=[], data_dir=tmp_path, history={"entries": {}},
+        )
+
+    return plan
+
+
+@pytest.mark.parametrize("memory_kind", ["shared", "unified"])
+@pytest.mark.parametrize("component_gib", [8, 24, 40])
+def test_final_native_parameter_floor_uses_the_offloaded_shared_pool(native_parameter_floor_plan, memory_kind, component_gib):
+    """Exercise the late census check missed by machine-tier-only tests."""
+    gib = 1024**3
+    hardware = {
+        "accelerator": {"kind": "cuda", "backend": "rocm", "memoryKind": memory_kind,
+                        "totalBytes": 2*gib, "freeBytes": gib,
+                        "accessibleTotalBytes": 96*gib, "sharedTotalBytes": 112*gib},
+        "systemMemory": {"totalBytes": 128*gib, "availableBytes": 90*gib},
+        "offloadDisk": {"freeBytes": 256*gib},
+    }
+    original = json.loads(json.dumps(hardware))
+    result = native_parameter_floor_plan(hardware, component_gib)
+    assert result["status"] == "ready", result["candidates"]
+    assert result["selectedCandidate"]["offloadMode"] == "model_cpu"
+    # Correct the capacity comparison only; dedicated VRAM and actual free
+    # readings remain unchanged. This is not a physical model-fit test.
+    assert hardware == original
+
+
+@pytest.mark.parametrize("case", [
+    "dedicated", "unknown_kind", "missing_accessible", "missing_shared", "missing_ram",
+    "zero_accessible", "boolean_shared", "string_ram", "small_ram", "small_accessible", "small_shared", "resident",
+])
+def test_shared_parameter_floor_keeps_capacity_and_placement_boundaries(native_parameter_floor_plan, case):
+    gib = 1024**3
+    hardware = {
+        "accelerator": {"kind": "cuda", "backend": "rocm", "memoryKind": "shared",
+                        "totalBytes": 2*gib, "freeBytes": gib,
+                        "accessibleTotalBytes": 96*gib, "sharedTotalBytes": 112*gib},
+        "systemMemory": {"totalBytes": 128*gib, "availableBytes": 24*gib},
+        "offloadDisk": {"freeBytes": 256*gib},
+    }
+    device = hardware["accelerator"]
+    if case == "dedicated": device["memoryKind"] = "dedicated"
+    elif case == "unknown_kind": device.pop("memoryKind")
+    elif case == "missing_accessible": device.pop("accessibleTotalBytes")
+    elif case == "missing_shared": device.pop("sharedTotalBytes")
+    elif case == "missing_ram": hardware["systemMemory"].pop("totalBytes")
+    elif case == "zero_accessible": device["accessibleTotalBytes"] = 0
+    elif case == "boolean_shared": device["sharedTotalBytes"] = True
+    elif case == "string_ram": hardware["systemMemory"]["totalBytes"] = str(128*gib)
+    elif case == "small_ram": hardware["systemMemory"]["totalBytes"] = 32*gib
+    elif case == "small_accessible": device["accessibleTotalBytes"] = 32*gib
+    elif case == "small_shared": device["sharedTotalBytes"] = 32*gib
+    original = json.loads(json.dumps(hardware))
+    result = native_parameter_floor_plan(hardware, offload_mode="none" if case == "resident" else "model_cpu")
+    assert result["status"] != "ready"
+    assert result["selectedCandidate"] is None
+    assert "parameter storage" in result["candidates"][0]["skipReason"]
+    assert hardware == original
+
+
 def test_final_candidate_residency_cannot_be_promoted_past_a_known_parameter_bound(monkeypatch, tmp_path):
     from modiff import auto_resource as planner
 

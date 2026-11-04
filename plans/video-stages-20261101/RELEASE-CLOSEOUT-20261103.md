@@ -419,3 +419,28 @@ the retained public result remains 73 errors. No additional model render,
 download, deletion, installation, media publication or hardware promotion is
 performed for this checkpoint. Continue admission/evidence work per case;
 do not rerun closed native outputs or these full gates for documentation alone.
+
+### 4 November — shared-memory Auto refusal diagnosed and repaired in source
+
+Read-only planning against the deployed Linux app finds a parameter-storage
+refusal for all 20 cached root forms: the final dense census compares each
+component against the 2 GiB dedicated reservation. The existing machine-tier
+check already understands shared offload capacity. The source repair gives only
+the ordinary model-CPU parameter-floor comparison the minimum of its complete
+positive runtime-accessible, shared-pool and system-RAM totals. Reported dedicated
+memory, live free readings, one-pool demand, reserves, full-residency ranking and
+the separately bounded FLUX3 recipe remain unchanged.
+
+Six end-to-end planner regressions fail on the original code; twelve capacity
+and placement boundaries already pass. With the repair, 479 adjacent resource
+tests and 475 subtests pass. This is contract proof, not Auto model execution or
+physical qualification. The complete stable-source gate, review and protected
+Linux adoption remain required before native acceptance. Windows testing stays
+available on the already deployed cache-control update; no models are queued.
+
+The first advisory probe incorrectly added template profile IDs to root display
+forms. Its alias/profile refusals are preserved as inspection scope errors,
+never product failures. The corrected probe uses actual client defaults plus
+locked fields and no synthetic selection. It reproduces the shared-capacity
+refusal without changing any of the 149 app files, loading a model or downloading
+weights. Compound examples still need whole-graph and auxiliary admission.

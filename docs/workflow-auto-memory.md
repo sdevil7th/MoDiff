@@ -170,6 +170,17 @@ with `proofScope: parameter_storage_lower_bound_only`. Reading these headers
 does not construct a model or grant artifact, runtime or memory qualification.
 Unsupported quantization, missing headers and unknown layouts retain the existing
 unknown-demand policy. Audio and video host-memory admission is unchanged.
+
+For ordinary dense model-CPU offload on a reported shared/unified accelerator,
+the final parameter-capacity check uses the smallest of the known positive
+runtime-accessible, shared-pool and system-RAM totals. This keeps a small
+dedicated reservation from being mistaken for the entire accessible pool.
+Missing or malformed pool measurements retain the prior conservative check.
+The hardware report, dedicated capacity, live free-memory readings, one-pool
+working-demand admission and headroom remain unchanged. Full-residency ranking
+and separately bounded recipes keep their existing policy. This capacity check
+does not establish peak demand, Auto execution or hardware qualification.
+
 Image scope follows repository-aware backend capability output kinds and their
 task overrides. A legacy profile without that capability definition must match
 its exact declared repository and execution specification with an image Preview
