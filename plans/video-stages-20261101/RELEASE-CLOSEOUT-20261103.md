@@ -929,3 +929,50 @@ runtime remain unchanged. Changing a saved offload value would therefore not
 test an alternative under Auto. The next loading hypothesis needs an explicit
 review of selection and resource admission before another render; the safety
 limits stay intact.
+
+### 4 November UTC — explicit sequential-offload diagnostic completes
+
+The revised two-reference boardwalk now completes through ordinary saved
+**Custom memory (Expert)** Run with official sequential CPU offload. This is a
+separately versioned placement diagnostic; the original Auto safety holds remain
+open. Both original images, the full revised prompt, 81 frames / 16 FPS, eight
+steps, seed 8304, 0.55 conditioning, BF16 and 2× delivery remain unchanged. No
+package, product source, operating-system setting or safety limit changes.
+
+The native run takes **138.83 seconds**. Strict checks join the real task,
+attempt, session, workflow, all 47 authored fields, actual sequential loader and
+recipe settings, ordered consumed input hashes, source inventory and durable /
+served / cached media. The output passes 1536×1024, 81 decoded frames at 16 FPS,
+5.0625 seconds, video-only. Full ordinary output-node playback shows all 81
+frames with zero drops or errors. The sampled minimum available RAM is about
+71.5 GiB, peak worker RSS about 43.7 GiB, and owned worker swap growth and
+temporary offload storage both stay zero. Shared-memory domains are recorded
+separately. This supports only the exact Expert recipe on this host; it neither
+establishes the earlier swap root cause nor changes Auto or hardware claims.
+
+Twelve whole-duration samples still show a soft, distorted ending and limited
+early travel. The creative brief is therefore **not accepted**; a successful
+loading diagnostic does not close the requested visual revision. Both original
+input images and all earlier output versions remain preserved. Three ordinary
+owned releases and normal QA closure clear all nine cached nodes and preserve
+**262 app files**, **39 earlier output records** and **143 other workflow
+bodies**. The sole new output and owned document PUT bind to the genuine run;
+the original LTX/Wan worker stays unchanged.
+
+Two private preparation-reader errors are retained separately. The first
+incorrectly required a transport policy hint that raw imported Expert graphs
+intentionally omit; visible and saved form values and actual node settings
+remain authoritative. That request was blocked before reaching the app and its
+QA/guard closed with zero model runs. The next controller exited on a wrongly
+versioned historical recovery path before launching a browser. Corrected
+readers reuse the completed ordinary saved-graph preparation; they do not
+rewrite original receipts or rerender an already completed model task.
+
+Three of the nine requested cases remain accepted; six remain unclosed. The
+boardwalk still needs creative acceptance and original Auto qualification;
+car, rocket, lyric composite and Wan need their original native scopes, and
+ACE variation retains its unavailable-codec hold. The new measured placement
+evidence informs the next conservative Auto/loading diagnosis. The 43
+missing-model holds and all publication boundaries stay unchanged. Existing
+paired gates cover the unchanged application; this is a documentation-only
+checkpoint.
