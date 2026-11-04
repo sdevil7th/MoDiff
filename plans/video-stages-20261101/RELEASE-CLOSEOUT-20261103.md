@@ -703,3 +703,19 @@ Packaging, complete paired gates and protected live adoption of this subsequent
 fix remain separate. No model rerender is needed to test this metadata repair.
 The second LoRA draft has not run. The 43 missing-model holds, remaining cached
 cases, public locks/media, physical hardware and publication remain open.
+
+The paired client subsequently passes its complete gate at `2b6a5a15`. Its first
+complete run retained a bundle-budget failure after passing tests/build. The
+measured parser cost is 82/83 compressed startup bytes; only that cost is added,
+preserving prior headroom, all 94 JavaScript names and loading boundaries. The
+119-file bundle is packaged with five hash-only dependent inventory refreshes;
+every semantic inventory entry remains unchanged. The new packaged backend gate
+and guarded live adoption are still required.
+
+Recovery of the same original LoRA output also passes the existing required
+applied-adapter proof using both real installed model observations. Its remaining
+common provenance blocker is an absent resource-candidate identity: the current
+maintainer observed-workflow-Auto reader admits only plain image graphs, not this
+seven-node LoRA chain. That bounded reader integration is still open. Do not
+invent an identity, rewrite the legacy receipt or rerender the accepted image to
+address a reader limitation.
