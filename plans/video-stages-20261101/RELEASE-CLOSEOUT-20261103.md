@@ -6,7 +6,39 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 [backend PR7](https://github.com/sdevil7th/MoDiff/pull/7) and
 [client PR7](https://github.com/sdevil7th/MoDiff-client/pull/7).
 
-## Current Gallery and hardware follow-up
+## Latest source and delivery checkpoint
+
+This section is authoritative for current status. The earlier checkpoints below
+retain their original source, timing and proof scope.
+
+| Area                   | Actual status                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Running Linux app      | Backend `d917ae5d`, client product `2b6a5a15`; protected adoption and built Gallery checks complete. Runtime/packages/configuration and the original LTX/Wan worker are preserved.                                                                                                                                                                                             |
+| Running Windows app    | Remains the previously verified `12a61082` / `d59d5e1e` pair. The subsequent Linux adoption is not a Windows deployment.                                                                                                                                                                                                                                                       |
+| LoRA receipt fix       | Versioned primary-model summaries are deployed on Linux. The original helmet receipt remains in its legacy format; the user accepts its wider visor.                                                                                                                                                                                                                           |
+| LoRA evidence reader   | Client `82d644f9` validates that original native run using strict base/adapter identities and a separate observed resource vocabulary. No render, raw-receipt rewrite or qualification promotion. Its complete client gate passes, with all 119 product files exact to the deployed client.                                                                                    |
+| Saved-workflow opening | Client `3da7736a` fixes an unnecessary autosave when My workflows opens a closed document. The new browser regression fails on the original PUT and passes with the fix; all four related browser cases and the complete client gate pass. Production build/size checks pass without increasing budgets. Hosted CI and protected deployment of this later fix remain separate. |
+| Packaged client        | The exact checked 119-file client is mirrored. All five generated inventories change source hashes only, preserving semantic entries, model pins and qualification states. Backend Python and dependencies remain identical to the complete `d917ae5d` gate.                                                                                                                   |
+| Gallery campaign       | Eight cached cases have current native outputs; two additional Klein cases have recovered historical functional evidence; ten other cached cases still lack current native outputs. All 20 retain separate release qualification limits.                                                                                                                                       |
+| Missing models         | The 43 user-held cases remain held, with no model restoration or download. The original 73-error public Gallery report remains a retained baseline, not a fresh pass.                                                                                                                                                                                                          |
+| Hardware/publication   | Conditional AMD observations remain scoped to their original recipes. Unavailable or untested physical targets and media publication remain unapproved/unverified.                                                                                                                                                                                                             |
+
+The packaged backend's complete gate passes 9,049 tests and 13,194 subtests with
+761 skips; all four CI jobs pass at `d917ae5d`. The deployed product's full browser
+CI passes 16 shared plus 329 editor cases. The later `3da7736a` source has fresh
+local full-client and affected-browser proof; do not present the earlier full
+browser run as a fresh pass on that newer source.
+
+The saved style-LoRA workflow has not run. Its preallocation preservation check
+detects the opening-induced client ID, revision and timestamp rewrite while the
+complete snapshot remains exact. The original hold and both bodies are retained;
+no Run or guard allocation occurs. Normal QA close and read-only audit preserve
+all prior media/output records, 107 other workflow bodies and the original worker.
+The one new empty draft and style echo are bound to genuine browser PUTs. Do not
+restore old metadata or force a model run past that hold. Deploy and verify the
+narrow opening fix before a new admission.
+
+## Earlier Gallery and hardware follow-up
 
 The user authorizes work on the broader Gallery blockers and hardware claims.
 The 73 recorded Gallery errors affect 63 examples across 17 model types;
