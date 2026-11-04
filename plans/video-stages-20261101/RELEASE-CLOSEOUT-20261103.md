@@ -883,3 +883,32 @@ authoring can continue independently. Existing sequential/group offload paths
 are possible hypotheses, not completed qualification. The 43 missing-model
 cases and ACE melody-cover codec hold remain unchanged. This checkpoint changes
 documentation only and reuses the completed packaged and paired-client gates.
+
+### 4 November UTC — source-audio repaint delivered for listening review
+
+The original ACE repaint workflow completes through ordinary saved Auto Run in
+**322.77 native seconds**, using the original 30-second source, 0–10-second
+repaint interval, eight steps, seed 8304 and automatic attention. Its exact
+cached model selection and actual weight-body hashes pass before allocation;
+no download, installation, source change or second render is needed.
+
+The output is exactly 30 seconds, stereo 48 kHz PCM16. Strict checks join the
+actual task, attempt, session, workflow, six-node graph, all 47 creator fields,
+captured consumed controls, source inventory and durable/served/cache bytes.
+The opening changes; all 20 seconds outside the half-open repaint interval
+match the source's exact documented delivery conversion. Audio loading divides
+PCM16 by 32768 and WAV export multiplies by 32767 before truncation, so the
+retained region differs from original PCM by at most one least-significant bit.
+The source WAV itself stays unchanged. No pre-roll before time zero is claimed.
+
+Full 30-second muted playback ends normally. Three ordinary scoped releases
+clear all six cached nodes while preserving **253 app files**, all **38 earlier
+output records** and **138 other workflow bodies**. Both owned workflow updates
+match genuine UI requests. The QA browser closes normally; the original LTX/Wan
+worker remains untouched. Musical quality and the join at ten seconds await
+human listening. Raw audio tensor hashes, task type and repaint-bound fields
+are absent from the existing receipt allowlist; exact graph/source routing and
+PCM checks provide bounded local proof without inventing those fields or
+promoting public qualification. Thirteen campaign cases now have current
+outputs; eleven have human acceptance. The 43 missing-model cases, ACE codec
+capability hold and two LTX loading safety holds remain explicit.
