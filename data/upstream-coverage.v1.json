@@ -2458,7 +2458,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:1d4bbb36ca51fd068860f534dee9fcbfed74bddca52a1ce1e9becb29dbcb1c69",
+  "contentHash": "sha256:3a45c389766f5c6c653b1166f038f5398342c78d611fd6b014bb976e1bf16261",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7692,6 +7692,7 @@
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
       "executionSelection": {
+        "authoringRecipeId": "generic-audio-recipe:v1",
         "bindingSpec": {
           "mode": "audio_continuation",
           "modelType": "AceStepAudioPipeline"
@@ -7722,6 +7723,7 @@
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
       "executionSelection": {
+        "authoringRecipeId": "generic-audio-recipe:v1",
         "bindingSpec": {
           "mode": "audio_repaint",
           "modelType": "AceStepAudioPipeline"
@@ -7752,6 +7754,7 @@
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
       "executionSelection": {
+        "authoringRecipeId": "generic-audio-recipe:v1",
         "bindingSpec": {
           "mode": "audio_variation",
           "modelType": "AceStepAudioPipeline"
@@ -7782,6 +7785,7 @@
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
       "executionSelection": {
+        "authoringRecipeId": "generic-audio-recipe:v1",
         "bindingSpec": {
           "mode": "text_to_audio",
           "modelType": "AceStepAudioPipeline"
@@ -7812,6 +7816,7 @@
       "evidencePolicy": "user_supplied",
       "executionRecipeSource": "backend_operation_starter",
       "executionSelection": {
+        "authoringRecipeId": "generic-audio-recipe:v1",
         "bindingSpec": {
           "mode": "text_to_audio",
           "modelType": "AceStepAudioPipeline"
@@ -7857,6 +7862,7 @@
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
       "executionSelection": {
+        "authoringRecipeId": "generic-audio-recipe:v1",
         "bindingSpec": {
           "mode": "text_to_audio",
           "modelType": "AceStepAudioPipeline"
@@ -10254,7 +10260,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "f68129838dca8102529b20d63d9ad8ea68eddb424c4b464bfb7bb81d54fe77f6",
+    "templateBundleSha256": "27497c5a23a36d49f660efd355eaf359e155a60de4efa2a58cd359c647d748bb",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
