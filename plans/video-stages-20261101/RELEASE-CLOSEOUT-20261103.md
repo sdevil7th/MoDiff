@@ -552,3 +552,41 @@ in private staging. It does not change public registration, qualify another
 recipe or promote AMD's support tier. The 43 missing-model holds, original
 73-error public result and remaining physical-hardware/publication requirements
 are unchanged. No model is running at this checkpoint.
+
+### 4 November — lamp accepted; contact-sheet exit revision awaiting transfer
+
+The unchanged Auto-Offload Preview completes in 52.18 seconds at 1024×1024,
+seed 4204 and eight steps. Native/source/consumed-input/media checks and the
+complete private provenance validator pass. Normal UI release preserves all
+167 files and clears caches; the user visually accepts the exact desk-lamp
+image. This unified-memory observation does not qualify a dedicated 6–8 GB GPU.
+
+The original contact sheet completes in 220.62 seconds at 1344×768/seed4301.
+Its full native and private provenance checks pass; release preserves 170 files.
+The user requests a revised exit frame because the fourth shot faces camera
+instead of moving away. Version 1 and its verdict remain intact.
+
+The private v2 recipe removes the conflicting face-in-every-frame instruction
+and explicitly asks for a distinct rear-view exit. Other generation settings
+and seed remain unchanged. A first canvas edit saves the new graph prompt but
+retains older form metadata; this mismatch is caught before model allocation.
+A separate workflow package, authored through the ordinary builder/parser and
+then imported/Save-As/reopened through the built UI, has matching form and graph
+values. All prior workflows remain exact. It is a private versioned workflow,
+with no claim that the unchanged public default is already v2.
+
+One revised run completes under its unchanged independent guard. Its native
+guard elapsed time is 54.38 seconds with no resource stop. The early native
+output and later UI record have identical tasks; the audit encounters ordinary
+late presentation metadata and scalar/collection filename differences. Original
+records and failed assumptions are retained. A narrow exact join is prepared;
+all native identity, input, source and image-byte checks remain required, with
+unknown differences held. No model is rerun for these observer issues.
+
+Linux SSH is currently timing out, blocking image transfer, completion of that
+join/audit and normal UI cleanup. No model is running; the completed task's
+cache is still retained. There are seven locally archived current outputs
+across seven cases, plus the remote v2 revision, two historical functional cases
+and 11 other cached cases without current native outputs. The user-held 43
+missing-model cases, 73 retained public errors, hardware and publication gates
+remain explicit. All four current client CI jobs now pass at `d4d0874c`.
