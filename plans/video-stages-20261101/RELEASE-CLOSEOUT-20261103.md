@@ -444,3 +444,34 @@ never product failures. The corrected probe uses actual client defaults plus
 locked fields and no synthetic selection. It reproduces the shared-capacity
 refusal without changing any of the 149 app files, loading a model or downloading
 weights. Compound examples still need whole-graph and auxiliary admission.
+
+### 4 November — Linux shared-pool adoption and unchanged-form comparison
+
+The exact repair at backend `2a69bfbf` passes the complete local gate: 9,015
+tests, 761 skips and 13,194 subtests, plus Ruff, dependencies and preflight.
+The unchanged client passes its full compatible check. Ubuntu, Windows and lint
+CI pass; macOS reaches only 76% when its 35-minute job budget cancels it. That
+original incomplete result remains a release hold. The CI budget adjustment
+allows 45 minutes on macOS, retaining Ubuntu's 45 minutes, Windows' 60 minutes,
+every matrix entry and every check. It does not change model resource guards.
+
+Linux-only adoption uses the completed local/Ubuntu proof and unchanged client
+checks, explicitly retaining the incomplete Mac matrix as a separate release
+hold. It preserves all 149 app files and 71 workflows, configuration, packages,
+runtime, 119 disk/118 served assets and the original LTX/Wan worker. Windows
+remains on its ready, verified cache-control build. This is bounded local app
+delivery, not a full-matrix, hardware or whole-app release signoff.
+
+The same 20 unchanged root forms now all return ready Auto plans, instead of
+the dedicated-memory refusal. Planning preserves all 149 files with zero model
+loads or downloads. Compound graphs, auxiliary selections, input media, actual
+memory fit, output quality and publication still require their own acceptance.
+No cached example has been promoted merely because its root plan is ready.
+
+Private schema authoring stages 19 current graph candidates; the lyric-video
+composite needs its separate builder. These candidates are not native UI or
+model proof and do not change the public library. The Z quick-concept candidate
+has exactly the retained native graph hash, parameters and paths, avoiding an
+unchanged render. The Klein T2I candidate matches its retained stages, creative
+controls and paths but differs in memory placement; preserve that discrepancy.
+All 43 retired-model cases remain explicitly held, without restoration.
