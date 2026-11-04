@@ -12,6 +12,73 @@ def node(params=None):
     return {"module": "modules.Diffusers", "action": "Encode", "params": params or {}}
 
 
+@pytest.mark.parametrize('module,action', [
+    ('ModularDiffusers', 'Lora'), ('DiffusersImage', 'LoadAdapter'), ('DiffusersAudio', 'LoadAdapter'),
+])
+@pytest.mark.parametrize('adapter_id', ['a-adapter', 'z-adapter'])
+def test_adapter_revision_stays_in_its_node_without_obscuring_primary_model(module, action, adapter_id):
+    loader = {'module': 'modules.DiffusersImage', 'action': 'LoadPipeline', 'params': {}}
+    adapter = {'module': 'modules.' + module, 'action': action, 'params': {
+        'pipeline': {'sourceId': 'loader', 'sourceKey': 'pipeline'},
+    }}
+    preview = node({'image': {'sourceId': adapter_id, 'sourceKey': 'output'}})
+    graph = {'nodes': {'loader': loader, adapter_id: adapter, 'preview': preview}}
+    records = {
+        'loader': capture_generation_inputs('loader', loader, {'model_id': 'owner/model', 'revision': 'a' * 40}),
+        adapter_id: capture_generation_inputs(adapter_id, adapter, {'revision': 'b' * 40}),
+        'preview': capture_generation_inputs('preview', preview, {}),
+    }
+    receipt = build_resolved_execution_inputs(graph, records, task_id='run', attempt_index=0, node_id='preview')
+    assert receipt['summary'] == {'repo': 'owner/model', 'revision': 'a' * 40}
+    assert receipt['summaryScopeVersion'] == 2
+    assert receipt['ambiguousFields'] == []
+    assert next(r for r in receipt['nodes'] if r['nodeId'] == adapter_id) == records[adapter_id]
+    # An unavailable descriptor pin is not an unavailable base-model pin.
+    records[adapter_id] = capture_generation_inputs(adapter_id, adapter, {'revision': object()})
+    omitted = build_resolved_execution_inputs(graph, records, task_id='run', attempt_index=0, node_id='preview')
+    assert omitted['summary']['revision'] == 'a' * 40
+    assert omitted['unavailableFields'] == []
+    assert next(r for r in omitted['nodes'] if r['nodeId'] == adapter_id)['omittedFields'] == {
+        'revision': 'unsupported-value',
+    }
+
+
+@pytest.mark.parametrize('module,action', [
+    ('custom.ModularDiffusers', 'Lora'), ('ModularDiffusers', 'CustomLora'),
+    ('DiffusersImage', 'LoadPipeline'), ('DiffusersAudio', 'LoadPipeline'),
+])
+def test_scoped_adapter_summary_never_exempts_custom_or_other_model_owners(module, action):
+    graph = {'nodes': {
+        'a': node(),
+        'b': {'module': 'modules.' + module, 'action': action, 'params': {
+            'pipeline': {'sourceId': 'a', 'sourceKey': 'pipeline'},
+        }},
+    }}
+    records = {key: capture_generation_inputs(key, value, {'revision': ('a' if key == 'a' else 'b') * 40})
+               for key, value in graph['nodes'].items()}
+    receipt = build_resolved_execution_inputs(graph, records, task_id='run', attempt_index=0, node_id='b')
+    assert 'summaryScopeVersion' not in receipt
+    assert receipt['summary'] == {}
+    assert receipt['ambiguousFields'] == ['revision']
+
+
+def test_scoped_adapter_summary_preserves_ambiguity_between_real_primary_owners():
+    graph = {'nodes': {
+        'first': node(),
+        'second': node(),
+        'adapter': {'module': 'ModularDiffusers', 'action': 'Lora', 'params': {
+            'a': {'sourceId': 'first', 'sourceKey': 'pipeline'},
+            'b': {'sourceId': 'second', 'sourceKey': 'pipeline'},
+        }},
+    }}
+    records = {key: capture_generation_inputs(key, value, {'revision': str(index) * 40})
+               for index, (key, value) in enumerate(graph['nodes'].items())}
+    receipt = build_resolved_execution_inputs(graph, records, task_id='run', attempt_index=0, node_id='adapter')
+    assert receipt['summaryScopeVersion'] == 2
+    assert receipt['summary'] == {}
+    assert receipt['ambiguousFields'] == ['revision']
+
+
 @pytest.mark.parametrize('module,action,values', [
     ('Image', 'Resize', {'method': 'pad', 'interpolation': 'lanczos', 'multiple_of': 1}),
     ('ImageOperations', 'ResizeImage', {'fit_mode': 'contain', 'resampling': 'bicubic'}),

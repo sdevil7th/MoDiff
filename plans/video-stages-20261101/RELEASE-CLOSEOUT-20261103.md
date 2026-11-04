@@ -673,3 +673,33 @@ Focused checks pass 387 tests and 475 subtests. The complete backend gate and
 deployment of this subsequent repair remain separate; LTX/Wan/ACE math budgets,
 native outputs, the 43 missing-model holds, public registration/publication and
 physical-hardware qualification are not closed by this change.
+
+### 4 November — native LoRA output accepted; receipt projection repaired
+
+The complete backend gate at `f80f3653` passes 9,038 tests and 13,194 subtests
+(761 skips), plus lint, dependency and preflight checks. That storage repair is
+not yet deployed. This evidence does not close the separate forced-math budgets.
+
+The first newly saved seven-node Z-Image LoRA workflow completes through the
+ordinary Linux UI in 60.01 native seconds. Its pinned base model, activated
+adapter at scale 0.65, all 47 creator fields, task/attempt/source and original
+1024×1024 image are independently joined. The user accepts the image with its
+wider visor. Normal scoped release preserves all 199 files, all 105 unrelated
+workflow bodies and all 33 original output records; cache and temporary offload
+are empty and the QA browser closes normally. No public qualification is inferred.
+
+This run exposes a genuine receipt defect: the adapter's revision competes with
+the base-model revision in the generic summary. Both raw owner records and the
+actual adapter application are correct; the original ambiguous receipt and first
+audit hold remain unchanged. A paired optional `summaryScopeVersion: 2` separates
+the primary summary from the three builtin adapter descriptor identities while
+retaining every per-node field and omission. Legacy receipts retain their
+original aggregation. Other model owners/custom lookalikes still require normal
+ambiguity handling; unknown versions and forged summaries are rejected.
+
+Focused checks pass 28 backend tests, 47 client contract tests including real
+backend-produced fixtures, and two Gallery browser cases before/after refresh.
+Packaging, complete paired gates and protected live adoption of this subsequent
+fix remain separate. No model rerender is needed to test this metadata repair.
+The second LoRA draft has not run. The 43 missing-model holds, remaining cached
+cases, public locks/media, physical hardware and publication remain open.

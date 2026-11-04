@@ -2321,6 +2321,17 @@ not an unbounded per-iteration trace. This is not
 an assertion about internal library defaults, random seeds generated inside a
 library, output quality, model licensing, or publication qualification.
 
+Receipts containing builtin adapter descriptors add `summaryScopeVersion: 2`.
+This optional projection version excludes `ModularDiffusers.Lora`,
+`DiffusersImage.LoadAdapter` and `DiffusersAudio.LoadAdapter` records from the
+primary-model summary, including its ambiguity and unavailable-field sets.
+Their complete captured fields and omissions remain in `nodes`; an adapter's
+revision must not hide or replace the base-model revision. Other model owners
+and custom nodes retain ordinary ambiguity checks. Absence of this version keeps
+legacy all-node aggregation exactly as recorded. The paired client validates
+both vocabularies; old receipts are never rewritten or retroactively qualified.
+Per-node and applied-adapter proof is still required to establish adapter use.
+
 For concrete Modular graphs and reviewed ordinary image actions, the receipt can include `graphTasks`, a bounded
 list of `{loaderId, pipelineClass, task}` records for captured model owners in the
 output's actual ancestry. This is recognition of the owner's reviewed operation

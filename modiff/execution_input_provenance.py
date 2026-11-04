@@ -118,6 +118,20 @@ def _field_names(node):
         return {**FIELD_NAMES, 'pipeline_class': 'dataOperationType'}
     return NODE_FIELD_NAMES.get((module, node.get('action')), FIELD_NAMES)
 
+
+# These builtins describe an adapter, not another primary model. Keep every
+# captured field in its node; version only the cross-node summary projection.
+ADAPTER_DESCRIPTOR_NODES = frozenset({
+    ('ModularDiffusers', 'Lora'),
+    ('DiffusersImage', 'LoadAdapter'),
+    ('DiffusersAudio', 'LoadAdapter'),
+})
+
+
+def _is_adapter_descriptor(node):
+    return (str(node.get('module', '')).removeprefix('modules.'), node.get('action')) in ADAPTER_DESCRIPTOR_NODES
+
+
 MAX_STRING = 16_384
 MAX_ITEMS = 16
 MAX_NODES = 256
@@ -493,8 +507,11 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
             continue
         record['appliedAdapters'] = applied
         remaining_bytes -= size
+    scoped_summary = any(_is_adapter_descriptor(record) for record in captured)
     candidates, unavailable = {}, set()
     for record in captured:
+        if scoped_summary and _is_adapter_descriptor(record):
+            continue
         field_names = _field_names(record)
         for key, field in record["fields"].items():
             canonical = field_names[key]
@@ -516,6 +533,7 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
         if not incomplete and not missing else []
     )
     return {
+        **({'summaryScopeVersion': 2} if scoped_summary else {}),
         **({"graphTasks": graph_tasks} if graph_tasks else {}),
         **({'graphTasksVersion': 2} if any(nodes[t['loaderId']]['module'] == 'modules.DiffusersVideo'
                                          for t in graph_tasks) else {}),
