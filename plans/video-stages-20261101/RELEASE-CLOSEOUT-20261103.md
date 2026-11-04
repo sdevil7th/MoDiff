@@ -912,3 +912,20 @@ PCM checks provide bounded local proof without inventing those fields or
 promoting public qualification. Thirteen campaign cases now have current
 outputs; eleven have human acceptance. The 43 missing-model cases, ACE codec
 capability hold and two LTX loading safety holds remain explicit.
+
+The user subsequently accepts the repaint, including its regenerated opening
+and join. Native execution, preservation, playback, scoped release and listening
+are now closed for this case. **Three of the nine requested cases are accepted;
+six remain unclosed**, including ACE variation's absent-codec hold. Twelve of
+the thirteen current campaign outputs have human acceptance. No render is
+repeated to record the verdict, and publication remains unapproved.
+
+A separate no-model LTX inspection compares model, sequential and group CPU
+offload plus full residency against the actual current planner. Every request
+is admitted only after Auto selects model CPU offload; the alternatives receive
+explicit patches back to that strategy. These are inspection results, not native
+fit evidence. All 253 app files, 140 workflow bodies, prior media and the idle
+runtime remain unchanged. Changing a saved offload value would therefore not
+test an alternative under Auto. The next loading hypothesis needs an explicit
+review of selection and resource admission before another render; the safety
+limits stay intact.
