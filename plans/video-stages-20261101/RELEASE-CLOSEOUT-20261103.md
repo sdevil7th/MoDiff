@@ -526,3 +526,29 @@ exact. Its graph dispatch remains blocked during preparation. Fresh whole-graph,
 session, resource and guard admission is required before one native run. A
 subsequent SSH timeout occurs before the next private-helper transfer; it is
 not a model failure or permission to bypass those checks.
+
+### 4 November — accepted Auto poster and completed cleanup
+
+After the connection recovers, the saved poster passes fresh whole-graph and
+independent resource admission. One ordinary UI Auto run completes in 223.22
+seconds at its unchanged 768×1344/seed4203/eight-step settings. Strict native
+task/source/consumed-input/media checks and the complete provenance factory and
+validator pass. The user accepts the exact seed-library poster visually.
+Publication remains unapproved.
+
+Normal UI scoped release clears all six task-owned cache entries, preserving
+all 160 post-run files and durable/served media. The only changes across the
+generation are its queue, output index and owned new workflow, plus its two
+genuine image files. The QA browser closes normally. A closeout-helper hold
+incorrectly expected the one remaining cache entry to be EncodePrompt; actual
+evidence identifies the same-task Guider. The separately corrected helper binds
+that exact Guider, without repeating the completed model-owner release or
+weakening preservation. Both versions and the diagnosis are retained.
+
+Five current native outputs and two historical functional cases are retained;
+13 other cached cases still need closure. The existing hardware recorder also
+validates the accepted product's exact Auto run as a conditional AMD observation
+in private staging. It does not change public registration, qualify another
+recipe or promote AMD's support tier. The 43 missing-model holds, original
+73-error public result and remaining physical-hardware/publication requirements
+are unchanged. No model is running at this checkpoint.
