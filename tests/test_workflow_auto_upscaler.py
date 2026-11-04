@@ -13,6 +13,10 @@ PIN = {"source": "hub", "value": "amd/realesrgan-x4plus/RealESRGAN_x4plus.pth",
        "sha256": "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1",
        "byteSize": 67040989, "license": "bsd-3-clause"}
 GIB = 1024 ** 3
+VIDEO_PIN = {"source": "hub", "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth",
+             "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
+             "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+             "byteSize": 67061725, "license": "bsd-3-clause"}
 
 
 def node(action, module="modules.ModularDiffusers", **params):
@@ -242,3 +246,140 @@ def test_queued_selector_change_is_replanned_before_any_model_allocation(setup, 
     with pytest.raises(RuntimeError, match="workflow changed after Auto planning"):
         app._execute_graph(g)
     assert not executed
+
+
+def video_graph(mode="text_to_video"):
+    pipeline = {"sourceId": "load", "sourceKey": "pipeline"}
+    frames = {"text_to_video": 121, "image_to_video": 161, "reference_to_video": 81, "video_to_video": 81}[mode]
+    nodes = {
+        "load": node("LoadPipeline", module="modules.DiffusersVideo",
+                     model_id={"source": "hub", "value": "Lightricks/LTX-Video-0.9.8-13B-distilled"},
+                     revision="7c64400e1861cc0d7b98d570a1926d5408ec60cd", pipeline_class="LTXConditionPipeline",
+                     dtype="bfloat16", device="cuda:0", offload_mode="model_cpu", auto_offload=True),
+        "encode": node("EncodeInputs", module="modules.DiffusersVideo", pipeline=pipeline, mode=mode, prompt="one shot"),
+        "denoise": node("Denoise", module="modules.DiffusersVideo", pipeline=pipeline, mode=mode,
+                        encoded_inputs={"sourceId": "encode", "sourceKey": "encoded_inputs"},
+                        width=768, height=512, num_frames=frames),
+        "decode": node("DecodeLatents", module="modules.DiffusersVideo", pipeline=pipeline, output_type="pil",
+                       latents={"sourceId": "denoise", "sourceKey": "latents_out"},
+                       latent_binding={"sourceId": "denoise", "sourceKey": "latent_binding"}),
+        "upscale": node("Upscaler", module="modules.Spandrel", model_id=deepcopy(VIDEO_PIN),
+                        downscale=1, tile_size=256, tile_overlap=32, device="cuda:0",
+                        image={"sourceId": "decode", "sourceKey": "video_out"}),
+    }
+    owner = {"nodeId": "load", "modelType": "LTXVideoPipeline", "mode": mode,
+             "repository": "Lightricks/LTX-Video-0.9.8-13B-distilled", "consumers": ["encode", "denoise", "decode"]}
+    return nodes, owner
+
+
+@pytest.mark.parametrize("mode", ["text_to_video", "image_to_video", "reference_to_video", "video_to_video"])
+def test_exact_published_tiled_video_upscaler_counts_all_retained_frames(setup, mode):
+    _, hardware, calls = setup
+    nodes, owner = video_graph(mode)
+    before = deepcopy(nodes)
+    result = planner._upscaler_owner(nodes, "upscale", [owner], hardware)
+    frames = nodes["denoise"]["params"]["num_frames"]["value"]
+    assert nodes == before and calls == [VIDEO_PIN]
+    assert result["repository"] == "nateraw/real-esrgan"
+    assert result["candidateId"] == "reviewed-spandrel-x2-video-tiled-storage-v1"
+    assert result["requirements"]["vramBytes"] == 66812684
+    assert result["requirements"]["systemRamBytes"] >= 66812684 + frames * 768 * 512 * 3 * 4 * 5
+    assert result["workingMemoryPolicy"] == "runtime_headroom_policy"
+    assert result["workingDemandEvidence"]["frameCount"] == frames
+    assert result["workingDemandEvidence"]["inferencePeakMeasured"] is False
+
+
+@pytest.mark.parametrize("change", ["wrong_source", "missing_binding", "wrong_pipeline", "wrong_encode",
+                                   "unknown_decoder_control", "wrong_model_pin", "multiple_owners",
+                                   "oversized_width", "extra_frames", "batch", "tensor_output", "wrong_downscale"])
+def test_video_upscaler_rejects_unbounded_or_different_stage_routes_before_artifact_io(setup, change):
+    _, hardware, calls = setup
+    nodes, owner = video_graph()
+    owners = [owner]
+    if change == "wrong_source":
+        nodes["upscale"]["params"]["image"]["sourceKey"] = "images"
+    elif change == "missing_binding":
+        nodes["decode"]["params"].pop("latent_binding")
+    elif change == "wrong_pipeline":
+        nodes["decode"]["params"]["pipeline"]["sourceId"] = "encode"
+    elif change == "wrong_encode":
+        nodes["denoise"]["params"]["encoded_inputs"]["sourceId"] = "load"
+    elif change == "unknown_decoder_control":
+        nodes["decode"]["params"]["width"] = {"value": 2048}
+    elif change == "wrong_model_pin":
+        nodes["load"]["params"]["revision"] = {"value": "a" * 40}
+    elif change == "multiple_owners":
+        owners.append(deepcopy(owner))
+    elif change == "oversized_width":
+        nodes["denoise"]["params"]["width"] = {"value": 2048}
+    elif change == "extra_frames":
+        nodes["denoise"]["params"]["num_frames"] = {"value": 125}
+    elif change == "batch":
+        nodes["denoise"]["params"]["num_videos_per_prompt"] = {"value": 2}
+    elif change == "tensor_output":
+        nodes["decode"]["params"]["output_type"] = {"value": "pt"}
+    else:
+        nodes["upscale"]["params"]["downscale"] = {"value": .5}
+    with pytest.raises(ValueError):
+        planner._upscaler_owner(nodes, "upscale", owners, hardware)
+    assert calls == []
+
+
+@pytest.mark.parametrize("field,value", [("revision", "main"), ("sha256", "a" * 64), ("byteSize", 1),
+                                        ("value", "nateraw/real-esrgan/../escape.pth")])
+def test_video_upscaler_never_borrows_another_pin_storage_contract(setup, field, value):
+    _, hardware, calls = setup
+    nodes, owner = video_graph()
+    nodes["upscale"]["params"]["model_id"]["value"][field] = value
+    with pytest.raises(ValueError):
+        planner._upscaler_owner(nodes, "upscale", [owner], hardware)
+    assert calls == []
+
+
+def test_video_upscaler_cpu_storage_keeps_the_existing_headroom_policy(setup):
+    _, hardware, _ = setup
+    nodes, owner = video_graph()
+    nodes["upscale"]["params"]["device"] = {"value": "cpu"}
+    aux = planner._upscaler_owner(nodes, "upscale", [owner], hardware)
+    assert aux["requirements"]["vramBytes"] == 0
+    assert aux["requirements"]["systemRamBytes"] > 2 * GIB
+    hardware["systemMemory"]["availableBytes"] = 3 * GIB
+    with pytest.raises(ValueError, match="actual free memory"):
+        assert_next_owner_capacity(None, {**aux, "ownerId": "upscale", "device": "cpu"}, hardware)
+
+
+@pytest.mark.parametrize("math_budget", [False, True])
+def test_video_auxiliary_storage_does_not_admit_an_unbudgeted_generating_model(setup, monkeypatch, tmp_path, math_budget):
+    _, hardware, _ = setup
+    nodes, _ = video_graph()
+    nodes["load"]["params"]["execution_recipe"] = {"sourceId": "policy", "sourceKey": "execution_recipe"}
+    nodes = {"policy": node("DiffusersExecutionRecipe", module="modules.DiffusersRuntime",
+                            attention_backend="_native_math", offload_mode="model_cpu", device="cuda:0"), **nodes}
+    profile = SimpleNamespace(id="ltx-video:direct", model_type="LTXVideoPipeline", modes=("text_to_video",),
+                              loader_module="modules.DiffusersVideo", loader_action="LoadPipeline",
+                              execution_path="direct-diffusers-video")
+    monkeypatch.setattr(planner, "resolve_execution_profiles_for_loader",
+                        lambda module, action, values: ((profile,), None) if action == "LoadPipeline" else ((), None))
+    candidate = {"id": "unit-explicit-video-budget", "executionProfileId": profile.id,
+                 "modelRepo": "Lightricks/LTX-Video-0.9.8-13B-distilled", "modelType": profile.model_type,
+                 "mode": "text_to_video", "loaderModule": profile.loader_module, "loaderAction": profile.loader_action,
+                 "executionPath": profile.execution_path, "dtype": "bfloat16", "quantizationMode": "none",
+                 "offloadMode": "model_cpu", "autoOffload": True, "canAutoRun": True,
+                 "artifactRevision": "7c64400e1861cc0d7b98d570a1926d5408ec60cd", "proof": {"status": "declared_safe"},
+                 "generation": {"width": 768, "height": 512, "numFrames": 121},
+                 "requirements": {"memorySemantics": "machine_capacity", "minimum": {
+                     "accelerator": "gpu", "systemRamBytes": 16 * GIB, "vramBytes": 8 * GIB, "diskFreeBytes": 0}}}
+    if math_budget:
+        candidate["workingMemoryRequirements"] = {"systemRamBytes": GIB, "vramBytes": GIB, "diskFreeBytes": 0}
+    g = {"nodes": nodes, "paths": [list(nodes)]}
+    before = deepcopy(g)
+    result = planner.build_workflow_auto_plan(g, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path),
+                                            plan_recipe=lambda *args, **kwargs: {"candidates": [candidate]}, hardware=hardware)
+    assert g == before
+    assert result["canAutoRun"] == math_budget, result["issues"]
+    if math_budget:
+        assert [owner["nodeId"] for owner in result["loaders"]] == ["load", "upscale"]
+        assert result["requirements"]["systemRamBytes"] >= 4 * GIB
+    else:
+        assert not result["patches"]
+        assert any("working-memory budget" in issue for issue in result["issues"])

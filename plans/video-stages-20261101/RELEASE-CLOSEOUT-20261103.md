@@ -634,3 +634,42 @@ cases still require their own input/graph/resource admission and native closure;
 the 43 missing-model cases remain explicitly held. The old public 73-error
 report remains a retained baseline, not a fresh pass for the new prompt.
 Public assets/locks and physical hardware qualification are not promoted.
+
+### 4 November — accepted contact default deployed; cached-case blockers isolated
+
+All four client CI jobs pass at `8147e2a4`. The protected Linux refresh adopts
+backend `98fd0dfe` and that exact client bundle: 119 disk files and 118 served
+assets match, all 190 protected files remain exact except the expected queue
+worker/timestamp update, and 100 workflows remain preserved. Runtime, packages,
+configuration and the original LTX/Wan worker are unchanged. No model run is
+needed for this deployment. Windows remains on its previously verified build.
+
+The newly saved ACE variation receives a genuine normal-UI Auto refusal before
+any graph submission: forced math attention lacks a working-memory declaration.
+Its independent guard expires without observing a task; the browser closes
+normally with zero model requests. No attention setting, memory policy, prompt
+or guard is changed to manufacture a pass. Static adapter review also shows that
+the current variation source supplies timbre conditioning rather than the
+melody-preserving cover promised by the brief. That creative requirement remains
+held; the cached artifact lacks the optional source-codec components needed for
+the stronger route. Earlier ACE outputs and listening verdicts remain intact.
+
+A single read-only workflow-plan pass inspects ten retained API candidates and
+retains the known missing composite graph as an eleventh hold. Three candidates
+pass resource inspection: both Z-Image LoRA examples and FLUX.2 multi-reference.
+These are not native acceptance or required-input proofs; only ACE variation
+uses a genuine newly saved, input-bound UI graph. Seven candidates remain
+blocked by their actual resource contracts, including forced math attention,
+the video upscaler and a video-conditioning operation. All 190 app files remain
+exact; there are no model allocations, graph submissions or downloads.
+
+The focused repair adds a static storage contract for the exact cached 2× video
+upscaler. It binds its immutable file, unchanged tile controls, one native stage
+owner and the four declared frame workloads. It counts every retained frame
+instead of one image. Existing headroom, actual-free-memory resampling and the
+generating model's separate admission remain required. Static archive/opcode
+inspection confirms 702 FP32 storages without deserializing or executing them.
+Focused checks pass 387 tests and 475 subtests. The complete backend gate and
+deployment of this subsequent repair remain separate; LTX/Wan/ACE math budgets,
+native outputs, the 43 missing-model holds, public registration/publication and
+physical-hardware qualification are not closed by this change.

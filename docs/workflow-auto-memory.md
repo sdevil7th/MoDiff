@@ -122,6 +122,32 @@ This declaration does not qualify legacy/private profiles, other precisions,
 hardware targets, native output, Gallery or templates. A successful cold normal
 Automatic run and visual acceptance remain required independent evidence.
 
+## Sequential tiled video upscaler
+
+The declared video branch uses `nateraw/real-esrgan` at immutable revision
+`42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094`, file
+`RealESRGAN_x2plus.pth`, SHA-256
+`49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb`.
+It remains the ordinary Spandrel node, with tile size 256, overlap 32 and
+downscale 1. Its 702 reviewed FP32 storages total 66,812,684 bytes. Planning
+uses the existing immutable-file resolver; it never deserializes or runs the
+model, installs packages or downloads missing weights.
+
+Storage admission covers the pinned LTX 0.9.8 distilled ordinary
+Encode Inputs → Denoise → Decode Latents route, one prompt and one video at
+768×512: 121 frames for text-to-video, 161 for image-to-video, and 81 for
+reference/video-to-video. All stages must share one accepted model owner and
+the exact native latent binding. Decoder overrides, tensor output, external
+latents, changed pins and other workloads remain outside this declaration.
+
+The auxiliary owner counts all retained input/output frames and a complete CPU
+tile assembly, rather than budgeting one image for an entire video. Existing
+headroom, shared-pool accounting, owner lifetimes and actual free-memory checks
+remain mandatory. This is a static storage allowance, not an inference-peak or
+hardware qualification. The generating model still needs its independent Auto
+admission; this upscaler declaration does not authorize unbudgeted forced math
+attention. The previous single-image 4× contract remains unchanged.
+
 ## Machine capacity and working demand
 
 A recipe with `memorySemantics: machine_capacity` describes the machine class
@@ -188,11 +214,11 @@ terminal; pipeline class names do not establish modality.
 
 The ordinary native loader has these proven CPU storage minima:
 
-| Placement | CPU parameter minimum | `parameterResidencyPhase` |
-| --- | --- | --- |
-| CPU execution, model CPU offload (including `auto_cpu`), group CPU offload | Sum of selected component weights | `cpu_resident` |
-| Accelerator execution with `none` offload | Sum of component weights loaded before accelerator placement | `cpu_loading` |
-| Incremental group disk offload | Largest entire component loaded before its disk hook is installed | `cpu_loading` |
+| Placement                                                                  | CPU parameter minimum                                             | `parameterResidencyPhase` |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------- |
+| CPU execution, model CPU offload (including `auto_cpu`), group CPU offload | Sum of selected component weights                                 | `cpu_resident`            |
+| Accelerator execution with `none` offload                                  | Sum of component weights loaded before accelerator placement      | `cpu_loading`             |
+| Incremental group disk offload                                             | Largest entire component loaded before its disk hook is installed | `cpu_loading`             |
 
 Requested-dtype storage alone does not cover cold loading. The companion
 `parameterConversionReserve` binds source payloads, converted targets and shard
@@ -679,7 +705,6 @@ it does not prove preservation of existing region IDs. The pinned publisher
 structured prompts generate new class/index IDs and a full scene table. A
 separate explicit complete-composition proposal requires its own reviewed
 contract, parser, atomic UI action and live evidence; it is not enabled here.
-
 
 ### Independent native prompt-proposal cache observations
 

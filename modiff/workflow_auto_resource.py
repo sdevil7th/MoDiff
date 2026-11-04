@@ -546,7 +546,7 @@ def _controlnet_owner(nodes, node_id, planned, hardware):
 
 
 def _upscaler_owner(nodes, node_id, planned, hardware):
-    """Inspect the bounded built-in image branch without loading any model."""
+    """Inspect a reviewed decoded-media branch without loading any model."""
     from modiff.controlled_artifacts import portable_upscaler_selection, resolve_upscaler_artifact
 
     params = nodes[node_id]["params"]
@@ -555,7 +555,12 @@ def _upscaler_owner(nodes, node_id, planned, hardware):
     selection = _literal(nodes, node_id, "model_id")
     if not isinstance(selection, dict) or set(selection) - {"source", "value", "revision", "sha256", "byteSize", "license"}:
         raise ValueError("Auto needs the exact reviewed Hub upscaler selector.")
-    if portable_upscaler_selection(selection) != _REVIEWED_UPSCALER:
+    artifact = portable_upscaler_selection(selection)
+    from modiff.video_upscaler_resources import REVIEWED_VIDEO_UPSCALER, video_upscaler_owner
+    if artifact == REVIEWED_VIDEO_UPSCALER:
+        return video_upscaler_owner(nodes, node_id, planned, hardware, literal=_literal, number=_number,
+                                    resolve_artifact=resolve_upscaler_artifact)
+    if artifact != _REVIEWED_UPSCALER:
         raise ValueError("This upscaler artifact has no reviewed workflow Auto storage contract; use Custom memory policy.")
     controls = {field: _literal(nodes, node_id, field) for field in ("downscale", "tile_size", "tile_overlap", "device")}
     if (controls["downscale"] != .5 or type(controls["tile_size"]) is not int or controls["tile_size"] != 256
