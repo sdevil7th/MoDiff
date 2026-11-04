@@ -11,32 +11,42 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 This section is authoritative for current status. The earlier checkpoints below
 retain their original source, timing and proof scope.
 
-| Area                   | Actual status                                                                                                                                                                                                                                                                                                                                                                  |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Running Linux app      | Backend `d917ae5d`, client product `2b6a5a15`; protected adoption and built Gallery checks complete. Runtime/packages/configuration and the original LTX/Wan worker are preserved.                                                                                                                                                                                             |
-| Running Windows app    | Remains the previously verified `12a61082` / `d59d5e1e` pair. The subsequent Linux adoption is not a Windows deployment.                                                                                                                                                                                                                                                       |
-| LoRA receipt fix       | Versioned primary-model summaries are deployed on Linux. The original helmet receipt remains in its legacy format; the user accepts its wider visor.                                                                                                                                                                                                                           |
-| LoRA evidence reader   | Client `82d644f9` validates that original native run using strict base/adapter identities and a separate observed resource vocabulary. No render, raw-receipt rewrite or qualification promotion. Its complete client gate passes, with all 119 product files exact to the deployed client.                                                                                    |
-| Saved-workflow opening | Client `3da7736a` fixes an unnecessary autosave when My workflows opens a closed document. The new browser regression fails on the original PUT and passes with the fix; all four related browser cases and the complete client gate pass. Production build/size checks pass without increasing budgets. Hosted CI and protected deployment of this later fix remain separate. |
-| Packaged client        | The exact checked 119-file client is mirrored. All five generated inventories change source hashes only, preserving semantic entries, model pins and qualification states. Backend Python and dependencies remain identical to the complete `d917ae5d` gate.                                                                                                                   |
-| Gallery campaign       | Eight cached cases have current native outputs; two additional Klein cases have recovered historical functional evidence; ten other cached cases still lack current native outputs. All 20 retain separate release qualification limits.                                                                                                                                       |
-| Missing models         | The 43 user-held cases remain held, with no model restoration or download. The original 73-error public Gallery report remains a retained baseline, not a fresh pass.                                                                                                                                                                                                          |
-| Hardware/publication   | Conditional AMD observations remain scoped to their original recipes. Unavailable or untested physical targets and media publication remain unapproved/unverified.                                                                                                                                                                                                             |
+| Area                   | Actual status                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Running Linux app      | Backend `fcf3cc66`, client `3da7736a`; protected adoption and actual built-client saved-library open, refresh and API export pass. All 201 prior files, 109 workflow bodies, runtime/packages/configuration and the original LTX/Wan worker are preserved.                                                                                                                                                  |
+| Running Windows app    | Remains the previously verified `12a61082` / `d59d5e1e` pair. The subsequent Linux adoption is not a Windows deployment.                                                                                                                                                                                                                                                                                    |
+| LoRA receipt fix       | Versioned primary-model summaries are deployed on Linux. The original helmet receipt remains in its legacy format; the user accepts its wider visor.                                                                                                                                                                                                                                                        |
+| LoRA evidence reader   | Client `82d644f9` validates that original native run using strict base/adapter identities and a separate observed resource vocabulary. No render, raw-receipt rewrite or qualification promotion. Its complete client gate passes, with all 119 product files exact to the deployed client.                                                                                                                 |
+| Saved-workflow opening | Client `3da7736a` acknowledges the fetched backend document before opening it. Red/green reproduction, four related browser cases, complete client checks, all four hosted CI jobs and protected deployment are complete. The actual built app preserves the complete unchanged row through open/refresh/export, with zero model dispatches.                                                                |
+| Packaged client        | The exact checked 119-file client is mirrored and 118 served assets match. All five generated inventories change source hashes only. The complete final packaged backend gate and all four current backend CI jobs pass at `fcf3cc66`; earlier gates are retained separately.                                                                                                                               |
+| Gallery campaign       | Nine cached cases now have current native outputs; two additional Klein cases have recovered historical functional evidence; nine other cached cases still lack current native outputs. The prior eight current cases have human visual/listening acceptance, including the quick-concept handle limitation. New style-image visual review is pending. All 20 retain separate release qualification limits. |
+| Missing models         | The 43 user-held cases remain held, with no model restoration or download. The original 73-error public Gallery report remains a retained baseline, not a fresh pass.                                                                                                                                                                                                                                       |
+| Hardware/publication   | Conditional AMD observations remain scoped to their original recipes. Unavailable or untested physical targets and media publication remain unapproved/unverified.                                                                                                                                                                                                                                          |
 
-The packaged backend's complete gate passes 9,049 tests and 13,194 subtests with
-761 skips; all four CI jobs pass at `d917ae5d`. The deployed product's full browser
-CI passes 16 shared plus 329 editor cases. The later `3da7736a` source has fresh
-local full-client and affected-browser proof; do not present the earlier full
-browser run as a fresh pass on that newer source.
+The complete final `fcf3cc66` backend gate passes 9,049 tests and 13,194 subtests
+with 761 skips and 33 warnings; pytest takes 1,471.48 seconds. All four current
+backend and all four current client CI jobs pass. The hosted client checks report
+16 shared cases plus 329 editor passes and one audio-preview case that passes on
+retry. Its first failure after Remove media remains retained; this is not a claim
+of an entirely clean first-attempt browser suite. The CI synthetic merge has the
+exact same tree as client `3da7736a`.
 
-The saved style-LoRA workflow has not run. Its preallocation preservation check
-detects the opening-induced client ID, revision and timestamp rewrite while the
-complete snapshot remains exact. The original hold and both bodies are retained;
-no Run or guard allocation occurs. Normal QA close and read-only audit preserve
-all prior media/output records, 107 other workflow bodies and the original worker.
-The one new empty draft and style echo are bound to genuine browser PUTs. Do not
-restore old metadata or force a model run past that hold. Deploy and verify the
-narrow opening fix before a new admission.
+The original style preallocation hold remains unchanged and unrun. After the
+diagnosed opening fix was deployed and verified, a new case ran the unchanged
+saved graph and all 47 creator fields through ordinary UI Run. It completes in
+59.64 native seconds with a 1024-square output, exact base/adapter revisions,
+activated adapter scale 0.8, version-2 primary-model summary and strict native
+task/source/media joins. The maintainer provenance reader reports zero blockers
+without rewriting missing raw template/candidate identities or granting public
+qualification. The image remains photographic, but the radio-detail panel is
+wider and the scar is on the cheek rather than above the eyebrow; human review
+of those limitations is pending.
+
+Normal scoped releases clear all seven owned cached nodes and preserve all 205
+current files and durable media. A separate post-run audit preserves 109 other
+original workflow bodies and all 34 prior output records; the sole new output
+and one owned workflow update match the genuine task and browser request. No
+model files are deleted and the original LTX/Wan worker remains untouched.
 
 ## Earlier Gallery and hardware follow-up
 
