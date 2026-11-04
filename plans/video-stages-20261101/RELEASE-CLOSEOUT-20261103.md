@@ -13,13 +13,13 @@ retain their original source, timing and proof scope.
 
 | Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                   |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Running Linux app            | Backend `8ead4a09`, client `d77d17f2`. Protected idle adoption preserves all 269 current app files except expected queue process/timestamp fields, all 149 workflow bodies, runtime, packages and configuration. All 119 disk files and 118 served assets match. The original LTX/Wan worker remains untouched.                                                 |
+| Running Linux app            | Backend `8ead4a09`, client `d77d17f2`. The protected source adoption is complete, with unchanged runtime/packages/configuration and 119 disk / 118 served files. The latest native rocket closeout preserves 278 files and 154 workflow bodies; subsequent unarmed authoring records are tracked separately. The original LTX/Wan worker is untouched.          |
 | Running Windows app          | Remains the previously verified `12a61082` / `d59d5e1e` pair. Large models run only on Linux.                                                                                                                                                                                                                                                                   |
 | CPU-offload cache accounting | Real CPU weights retained by exact official Accelerate hooks are counted even when visible parameters are meta tensors. Aliases are deduplicated; invalidated owners get no reuse credit. Inspection never executes custom hooks/mappings or lazy disk readers. This does not change loading preference, working-memory declarations or hardware qualification. |
-| Required current gates       | Exact packaged backend: 9,066 tests and 13,198 subtests pass, 761 skips and 33 warnings, plus lint/dependencies/preflight. Complete paired client check and all three affected browser cases pass. Current hosted backend lint passes; three platform jobs were still running at the recorded observation. No whole-matrix pass is claimed.                     |
+| Required current gates       | Exact packaged backend: 9,066 tests / 13,198 subtests pass, plus lint/dependencies/preflight. Complete paired client check and three affected browser cases pass. All four hosted backend jobs pass on docs-only `fa275b6e`, with exact executable/bundle equality to deployed `8ead4a09`. No physical model-hardware coverage is inferred.                     |
 | Preserved video delivery     | The accepted photographic Pika and MiniMax clips, portable templates, rejected paper-boat originals, preview/upload repairs and Service CLI evidence remain intact. No extra H3 run tests this cache-reader fix.                                                                                                                                                |
-| Gallery campaign             | Fourteen unique cached examples have current outputs; twelve have human visual/listening acceptance. Two additional Klein examples have recovered historical functional evidence; four other cached examples lack current successful outputs. All 20 retain separate release qualification limits.                                                              |
-| Requested nine               | Klein, rainy rail and ACE repaint are accepted: three closed, six unclosed. Boardwalk and car have completed sequential Expert diagnostics, with visual review pending and original Auto holds retained. Rocket, lyric composite, Wan seed vault and ACE variation's absent melody-codec capability remain.                                                     |
+| Gallery campaign             | Fifteen unique cached examples have current outputs; twelve have human visual/listening acceptance, with boardwalk, car and rocket review pending. Two additional Klein examples have recovered historical functional evidence; three cached examples lack current successful outputs. All 20 retain separate release qualification limits.                     |
+| Requested nine               | Klein, rainy rail and ACE repaint are accepted: three closed, six unclosed. Boardwalk, car and rocket have completed Expert diagnostics, with visual review pending and original Auto scope open. Lyric composite, Wan seed vault and ACE variation's absent melody-codec capability remain.                                                                    |
 | Missing models               | All 43 user-held cases remain held without downloads. The original 73-error public Gallery report is a retained baseline, not a fresh pass.                                                                                                                                                                                                                     |
 | Hardware/publication         | Exact AMD observations are scoped to their recipe and host. Unavailable physical targets, release-wide hardware claims, public locks and media publication remain separate.                                                                                                                                                                                     |
 
@@ -32,7 +32,7 @@ cached media joins pass. The output is 1536×1024, 161 decoded frames at 16 FPS,
 frames or errors. Three scoped releases and normal QA closure preserve all 269
 files, 40 earlier output records and 147 unrelated earlier workflow bodies.
 One startup draft was already protected before allocation and binds to its genuine
-ordinary PUT; it is included in the current 149-body preservation baseline.
+ordinary PUT; it is included in that car closeout's 149-body baseline.
 
 The clip has immediate acceleration, tire spray and recession, but the car body
 changes shape during its turn. Visual acceptance is pending; technical success
@@ -42,13 +42,17 @@ offload storage stay zero. Peak GTT is recorded separately, never added to RAM
 as independent capacity. This exact Expert success does not qualify original
 Auto or establish the cause of the earlier model-CPU safety cancellations.
 
-Next, prepare the unchanged rocket through ordinary Normalize/replan, then use a
-fresh admission and independent guard for its exact workload. Separately finish
-a conservative LTX Auto selection and working-memory diagnosis. Its current
+The rocket remaster now also passes its complete 81-frame Expert native,
+provenance, playback and preservation checks. Its visual review and original
+Auto scope remain open. Next, create the full lyric composite through ordinary
+managed editor authoring with model dispatch blocked, then admit the complete
+workload under a fresh guard. Separately finish a conservative LTX Auto selection
+and working-memory diagnosis. Its current
 machine-capacity declaration lacks a bounded video working-demand contract;
 changing a saved offload field under Auto still selects model CPU offload. No
 blind capability-list reordering, weaker guards, workload reduction or unchanged
-retry is permitted. Boardwalk/car review can proceed while that work continues.
+retry is permitted. Boardwalk/car/rocket review can proceed while that work
+continues.
 
 ## Earlier Gallery and hardware follow-up
 
@@ -1024,3 +1028,60 @@ boardwalk/car visual questions and original Auto holds remain distinct from
 rocket/lyric/Wan execution and ACE's absent melody-codec capability. All 43
 missing-model cases stay held without downloads. No public lock, media upload,
 whole-app release or unavailable-hardware qualification is inferred.
+
+### 4 November UTC — rocket remaster delivered; complete hosted checks recovered
+
+The original rocket video-to-video workload completes through one explicitly
+admitted Expert sequential-offload Run in **1,187.66 native seconds**. It retains
+the original source clip, prompt, 768×512 generation, 81 frames / 16 FPS, eight
+steps, seed 8313, BF16, automatic attention and 2× delivery. Original Condition
+strength is 1 from `conditioningScale`; denoise strength is 0.6 from `strength`.
+Both controls remain distinct and unchanged. The original 25-frame, 7 FPS source
+is resampled through its existing cover/81-frame Normalize node. No guessed frame
+count replaces actual execution evidence.
+
+Strict checks join the actual task, attempt, session, workflow, 10-node graph,
+all 47 authored fields, 253 source files and consumed controls. Encode Inputs
+records 81 genuine normalized frames and their pixel-sequence digest through the
+actual connected Normalize port. The input file's byte hash is a separate domain;
+Video Load's absent file-hash receipt is not invented. Durable, served and cached
+media match. Output checks pass **1536×1024 / 81 frames / 16 FPS / 5.0625 seconds**,
+video-only; whole ordinary playback shows all 81 frames with zero drops/errors.
+Three scoped releases and normal QA closure preserve **278 app files, 154 workflow
+bodies and 41 earlier output records**. The additional startup draft is bound to
+its genuine ordinary PUT and preallocation bytes. No model is deleted or rerun.
+
+Twelve source/output samples retain the single rigid rocket, rising trajectory,
+plume, terrain and upward following camera without an obvious new cut or body
+change. The source already has a generated/illustrative appearance; photorealism
+and the remaster's visual quality await human review. Original Auto remains open;
+this exact Expert result is not an Auto or hardware qualification. An inherited
+private audit incorrectly required two inputs for all non-image tasks. Its original
+failure is retained; the corrected video-specific reader requires the one original
+video/immutable hash and strengthens the connected frame/pixel-port bindings.
+Only the reader changes, and no model is rerendered to correct it.
+
+The hosted backend run on docs-only `fa275b6e` now passes **all four jobs**: lint,
+Ubuntu, Windows and Mac. Its Python, dependency, scripts and client bundle delta
+from tested/deployed `8ead4a09` is empty. The original `8ead4a09` hosted run was
+cancelled as the later status head superseded it; those cancellations remain
+recorded separately. Existing full local paired gates are reused, and no manual
+broad rerun occurs for this documentation checkpoint. CI operating-system checks
+do not establish physical GPU model acceptance.
+
+A loader-default-only VAE hypothesis is also corrected using the actual boardwalk,
+car and rocket receipts. Each selected execution recipe already requests VAE
+slicing and tiling, and the LTX loader applies the shared recipe through official
+VAE methods before offload. Merely enabling those flags is therefore not a new
+mitigation hypothesis. The literal receipts do not directly inspect all effective
+VAE internals; further performance investigation must distinguish spatial and
+temporal work and preserve that uncertainty. No runtime policy changes or extra
+render is used for this correction.
+
+Fifteen unique cached examples now have current outputs, twelve with human
+acceptance. Three requested cases remain accepted and six unclosed, including
+three visual/original-Auto scopes, the full lyric and Wan composites, and ACE's
+unavailable melody-codec capability. Preparation of the full lyric composite uses
+ordinary current-editor authoring with graph dispatch blocked; no bare-audio
+substitute, reduced shot count, hidden E2E state injection or model run is used
+during preparation. All 43 missing-model cases remain held without downloads.
