@@ -808,3 +808,33 @@ no model file or resource floor changes. No duplicate model run is submitted.
 
 The **43 missing-model cases remain held**, without downloads. Public Gallery
 locks/media, whole-app release coverage and unavailable hardware remain separate.
+
+### 4 November — rainy-rail video accepted; original multi-reference case started
+
+The unchanged LTX rainy-rail workflow completes in **1,692.46 native seconds**:
+101.26 seconds denoising, 1,503.67 decoding, 75.86 upscaling and 7.17 exporting.
+The exact 2× output is 1536×1024, **121 decoded frames at 24 FPS / 5.041667
+seconds**, with no audio as intended. Actual whole-video muted browser playback
+ends normally with all 121 frames and zero dropped frames or errors. Samples
+show forward travel, foreground parallax and a gradual tunnel approach; rain is
+subtle. The user accepts the clip.
+
+The source-bound audit retains the actual encoder normalizations independently
+of authored controls: an empty negative prompt is consumed as `None`, and the
+shared 512-token setting is clamped to this adapter's declared 128-token bound.
+The original literal-reader hold remains preserved. No prompt, native receipt,
+source or output is rewritten, and no model rerender closes a reader issue.
+Both generating and upscaler identities remain present; the raw ambiguous repo
+summary and missing public template/resource-candidate identities are retained.
+
+Normal scoped releases and browser close clear all eight cached nodes while
+preserving all **225 app files**, **36 prior output records** and **121 unrelated
+workflow bodies**. The new output and owned document update match the genuine
+task and UI request. The original LTX/Wan worker remains unchanged. Two of the
+nine requested cached cases now have local native and human visual acceptance;
+seven remain open, including ACE variation's separate missing-codec capability.
+The original two-reference boardwalk workflow is now running serially on Linux:
+81 frames / 16 FPS / eight steps / seed 8304, the exact two cached input images,
+and the same reviewed 2× upscaler. Its immutable weight-body proof is reused only
+after matching current inode, size, modification time and original LFS identity.
+Public Gallery locks, qualification and publication remain separate.
