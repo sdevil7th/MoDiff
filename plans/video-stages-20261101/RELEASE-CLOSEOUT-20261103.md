@@ -1,6 +1,6 @@
 # Current video delivery and remaining release work
 
-Updated 4 November 2026. This checkpoint supersedes older pending-work summaries;
+Updated 5 November 2026. This checkpoint supersedes older pending-work summaries;
 historical recipes, verdicts and raw receipts remain unchanged. Source changes
 stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existing
 [backend PR7](https://github.com/sdevil7th/MoDiff/pull/7) and
@@ -10,6 +10,12 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 
 This section is authoritative for current status. The dated checkpoints below
 retain their original source, timing and proof scope.
+
+Fresh lyric-composite authoring is now corrected and fully checked at client
+`e12980eb`. The source package below is ready for protected Linux adoption; the
+running application still uses `8ead4a09` / `d77d17f2`. No lyric model task has
+started. A fresh idle preservation snapshot covers all 281 app files and 157
+workflow bodies, including the original unarmed lyric authoring records.
 
 | Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                   |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -22,6 +28,65 @@ retain their original source, timing and proof scope.
 | Requested nine               | Klein, rainy rail and ACE repaint are accepted: three closed, six unclosed. Boardwalk, car and rocket have completed Expert diagnostics, with visual review pending and original Auto scope open. Lyric composite, Wan seed vault and ACE variation's absent melody-codec capability remain.                                                                    |
 | Missing models               | All 43 user-held cases remain held without downloads. The original 73-error public Gallery report is a retained baseline, not a fresh pass.                                                                                                                                                                                                                     |
 | Hardware/publication         | Exact AMD observations are scoped to their recipe and host. Unavailable physical targets, release-wide hardware claims, public locks and media publication remain separate.                                                                                                                                                                                     |
+
+### Fresh lyric-composite authoring
+
+Ordinary creation previously retained a managed primary audio binding, so later
+finalization replaced the stored 100-BPM soundtrack prompt with the advisory
+96-BPM root prompt and reapplied historical forced-math attention. Fresh creation
+now uses the existing backend audio authoring recipe and the actual visual
+sequence, composition, upscaling, lyric overlay, timeline fit and AV-export nodes.
+The primary audio task selects its immutable model independently of the final
+video media type. The fourteen-node graph owns its ordinary editable values;
+Save, library reopening and page reload preserve them. Existing saved documents,
+registered definitions, historical specifications and creative briefs remain
+unchanged. This is authoring behavior, not Auto or live-model qualification.
+
+Validation at `e12980eb`:
+
+- The original failing regression is retained. Focused audio/receipt checks pass
+  41 tests; three current browser cases pass in 2.2 minutes, covering ordinary
+  composite creation/Save/reopen/reload, existing managed families and audio
+  adapter controls, with no model submission.
+- The complete client `npm run check` passes in 496.74 seconds, including the
+  production build and module-identity checks. All 119 packaged files match the
+  checked client. Startup limits, dependency/build rules and the 94 JavaScript
+  asset memberships remain unchanged. Shared construction removes duplicated
+  node/edge setup; the measured policy records only 600 additional deferred gzip
+  bytes, retaining 274 bytes of headroom. The earlier size-gate failure is retained.
+- Fresh backend source-inventory checks pass **71 tests / 890 subtests** in
+  16.91 seconds. The five dependent inventories admit one explicit fresh lyric
+  authoring declaration and otherwise source-hash changes only; pins, creator
+  values and qualification flags remain exact. Backend Python, dependencies and
+  runtime code have no delta from the actual 9,066-test / 13,198-subtest gate at
+  `8ead4a09`; that complete gate is reused with its original scope, rather than
+  described as a new full backend run.
+
+Exact fresh commands include:
+
+```text
+node --test scripts/audio-authoring.test.mjs scripts/controlled-execution-receipt.test.mjs
+playwright test tests/e2e/studio-mocked/studio-mocked.spec.ts --grep "fresh lyric template preserves|controlled workflow families seal|ACE selected max-one" --workers=1
+npm run check
+python -X utf8 -B -m pytest -q tests/test_upstream_coverage.py tests/test_upstream_coverage_exact_closure.py tests/test_template_candidate_contracts.py tests/test_template_authoring_specs.py tests/test_comfy_contract_resolution.py tests/test_comfy_evidence_resolution.py
+npm run gallery:verify
+npm run gallery:coverage
+```
+
+The fresh public Gallery verification remains blocked with **74 errors**. Its
+original 73-error baseline remains unchanged; the additional current error is
+the accepted rear-view contact sheet's stale public prompt lock. Coverage also
+remains blocked. No public lock or media is refreshed to pass either command.
+These public holds do not convert the local accepted outputs into release proof.
+
+Protected adoption and a new complete native lyric composite remain next. Keep
+the five original 81-frame visual shots, 16 FPS, eight steps, CFG 1, 0.35-second
+transitions, 381-frame composition and 2× delivery, plus the full 30-second
+100-BPM soundtrack, six lyrics, LRC, FitDuration and joined AV export. Record the
+advisory root prompt separately from the consumed branch override. Expert
+sequential diagnostics retain the original Auto holds and require fresh guard
+admission. Wan's full composite and ACE variation's absent melody codecs remain
+separate; no reduced workload, missing-model restoration or extra H3 run occurs.
 
 The car diagnostic preserves the original 161-frame workload, prompt, input,
 seed, strength and resolution while explicitly selecting Custom/Expert sequential

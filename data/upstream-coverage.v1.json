@@ -2458,7 +2458,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:3a45c389766f5c6c653b1166f038f5398342c78d611fd6b014bb976e1bf16261",
+  "contentHash": "sha256:538d3bd222ec7aafe970edd872190f9729ce8758c8cef28aee0d2a2147cbfca3",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7843,15 +7843,31 @@
     },
     {
       "canonicalWorkflowId": "AceStepAudioPipeline:text_to_audio",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-audio-recipe:v1",
+        "bindingSpec": {
+          "mode": "text_to_audio",
+          "modelType": "AceStepAudioPipeline"
+        },
+        "executionProfileId": "ace-step-audio:direct",
+        "implementation": "whole_pipeline",
+        "note": "Model Setup owns configuration and the reviewed adapter; Generate Audio remains the real integrated pipeline action.",
+        "pipelineClass": "AceStepPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_audio"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "ace_step_lyric_music_video",
       "mode": "text_to_audio",
       "modelType": "AceStepAudioPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -10260,7 +10276,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "27497c5a23a36d49f660efd355eaf359e155a60de4efa2a58cd359c647d748bb",
+    "templateBundleSha256": "c0545cfd5cd7946367f9c979bb5fff5477989bc7ef45c71c21024a81ea3e0d46",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
