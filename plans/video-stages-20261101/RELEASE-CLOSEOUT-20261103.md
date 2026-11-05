@@ -11,6 +11,33 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 This section is authoritative for current status. The dated checkpoints below
 retain their original source, timing and proof scope.
 
+A separately admitted **group CPU / no device-map** night version now completes
+in **149.01 native seconds**, retaining the exact prompt, reference, sampler,
+seed, precision, dimensions, 81 frames /16 FPS and 2× delivery. Only declared
+loading policy changes through the ordinary saved graph. Read-only inspection
+also shows that parallel weight loading was already disabled; it is not blamed
+for the earlier cancellation. The unchanged conservative cold-overlap admission,
+20 GiB reserve, 1 GiB owned-swap limit and other safety bounds remain enforced.
+Its independent guard records **298 samples**, minimum available RAM
+**78,445,510,656 bytes**, zero owned-worker swap growth and zero scratch.
+
+Strict nine-node /69-field /253-source-file task, consumed group-offload controls,
+derived-reference file/loaded-pixel and cache/durable/served checks pass at
+**1536×1024 /81 frames /16 FPS**, video-only. Whole actual editor playback shows
+81 frames with zero drops/errors. Two normal releases and QA closure preserve
+**556 files, 338 workflow bodies, 87 earlier outputs, 82 earlier preview slots
+and both video aliases**. Allocated/reserved counters return to zero; available
+119,878,631,424 bytes meet the unchanged 116,731,254,216-byte cold admission
+without another cleanup or restart. Samples retain coherent attached flowers
+and neutral low-light exposure, with restrained motion and a nearly fixed camera.
+This is a quiet candidate insert, not final human approval or a diagnosis of the
+resident failure. That original zero-output cancellation, Auto/hardware holds
+and all earlier reader errors remain preserved. A local playback-result writer
+refuses an inherited filename after the native playback succeeds; its existing
+exact-task receipt is recovered read-only without repeating playback or inference.
+Eight candidate clips are retained; dawn motion and the actual 45-second edit
+and human review remain. Source deployment and case-acceptance counts do not change.
+
 The stars-and-lawn scene is now technically closed in **120.81 native seconds**.
 Its independent guard, strict nine-node /69-field /253-source-file task, input,
 consumed-control and cache/durable/served checks pass at **1536×1024 /81 frames /
