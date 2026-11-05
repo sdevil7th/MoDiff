@@ -14,8 +14,8 @@ retain their original source, timing and proof scope.
 Linux now runs tested backend `a8fa7258` / client `9760be6b`. Protected idle
 adoption completed at 08:42 UTC on 5 November, preserving all 377 then-current
 files, 225 workflow bodies, runtime, packages and configuration, with 119 disk /
-118 served assets exact. Subsequent ordinary rocket authoring and execution
-preserve the current 383-file / 229-body set. The original LTX/Wan application
+118 served assets exact. Subsequent rocket delivery, a bounded speech diagnostic
+and first-shot authoring preserve the current 391-file / 236-body set. The original LTX/Wan application
 and worker remain untouched. Earlier `6cdde314` / `e12980eb` lyric-authoring
 delivery remains source-scoped historical evidence.
 
@@ -200,9 +200,29 @@ The original Auto holds, rejected prior versions and three-of-nine acceptance
 count remain unchanged. Next is photographic Moonflower video production around
 the accepted, unchanged 45-second song and its actual lyric timing.
 
+An independent cached **CTC** speech diagnostic completes through one ordinary
+CPU Run. Its strict task/source/input/transcript/media checks and visible editor
+result pass; two scoped releases and QA closure preserve 388 files, 57 earlier
+output records, 50 slots and 232 unrelated workflow bodies. Its 35 word candidates
+mishear lyrics, so they support only provisional onset investigation alongside
+the earlier transcript. They are not forced alignment, final LRC or a reason to
+rerender the accepted song.
+
+The first photographic Moonflower opening workflow now passes ordinary import,
+Arrange, Save/reload, exact nine-node API and all 69 form fields, with Run enabled
+and zero model submissions. Its source image binds to the closed photographic
+anchor task. The full original per-shot 768×512 / 81-frame / 16-FPS / eight-step /
+seed-1201047366 / BF16 / 2× Expert sequential workload is retained. The pinned
+official tokenizer verifies all 126 prompt tokens fit the actual 128-token source
+cap. Fresh read-only preservation verifies all 391 files / 236 bodies, empty
+cache, no offload files/downloads and the untouched original worker. This is
+prepared opening material only: no first-shot task has run and the final
+45-second photographic video remains open. A new independent guard and genuine
+UI admission must precede allocation.
+
 | Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Running Linux app            | Tested backend `a8fa7258`, client `9760be6b`; protected adoption and subsequent rocket closeout complete. Current 383 files / 229 workflow bodies, runtime/packages/configuration and 119 disk / 118 served assets remain preserved. Original LTX/Wan worker untouched. |
+| Running Linux app            | Tested backend `a8fa7258`, client `9760be6b`; protected adoption, rocket and CTC closeouts complete. First Moonflower shot prepared without Run. Current 391 files / 236 workflow bodies, runtime/packages/configuration and 119 disk / 118 served assets remain preserved. Original LTX/Wan worker untouched. |
 | Running Windows app          | Remains the previously verified `12a61082` / `d59d5e1e` pair. Large models run only on Linux.                                                                                                                                                                                                                                                                                                                                                                    |
 | CPU-offload cache accounting | Real CPU weights retained by exact official Accelerate hooks are counted even when visible parameters are meta tensors. Aliases are deduplicated; invalidated owners get no reuse credit. Inspection never executes custom hooks/mappings or lazy disk readers. This does not change loading preference, working-memory declarations or hardware qualification.                                                                                                  |
 | Required current gates       | Complete client check at `9760be6b`, 245 focused tests, two affected browser scenarios and 71 backend inventory tests / 890 subtests pass. Complete packaged backend gate at `a8fa7258`: 9,066 tests / 13,198 subtests. All four hosted backend and all four client jobs pass at these exact sources. No physical hardware qualification inferred. |
