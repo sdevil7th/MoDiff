@@ -11,6 +11,36 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 This section is authoritative for current status. The dated checkpoints below
 retain their original source, timing and proof scope.
 
+The next path version uses the same full computation with two ordered image
+guides and completes in **118.85 native seconds**. The ending guide is explicitly
+a deterministic crop/reframe of the same garden photograph, not a newly generated
+physical viewpoint. Strict nine-node /69-field /253-source-file task, consumed
+control, ordered input-file and actual loaded-pixel checks pass, along with
+cache/durable/served media at **1536×1024 /81 frames /16 FPS**. Whole ordinary
+editor playback has 81 frames and zero drops/errors. Twelve samples show a modest
+coherent push-in and lateral reframe. This is candidate footage, without final
+human film approval or a claim of physical 3D parallax.
+
+Its independent monitor fails before the native task starts because an AST
+variable shadows its HTTP function. Initial admission is valid, but **independent
+runtime resource coverage remains held**. The original error and absent guard
+summary are preserved. An actual HTTP terminal response and the original browser
+terminal agree on the task and immutable output identities; output checks do not
+fill the monitoring gap. A separate offline regression reproduces the function
+shadowing and verifies the future-helper correction. No monitor summary is
+fabricated and no model is rerendered to repair the observer.
+
+Two ordinary scoped releases and normal QA closure preserve **494 app files,
+300 workflow bodies, 76 earlier outputs, 70 earlier preview slots and both
+actual native video aliases**. The resource-coverage hold remains explicit after
+closure. The earlier generated ending-view still is technically closed but
+locally rejected because its viewpoint barely changes; it is not used as an
+input. The accepted 45-second song and all earlier originals stay exact. Four
+of nine requested cases remain privately accepted, with five unclosed and all
+43 missing-model cases user-held. The unchanged application reuses the completed
+backend and paired-client checks below; no gate, deployment or closed model is
+repeated for this recipe, reader and documentation checkpoint.
+
 Linux now runs tested backend `22fdbc4e` / client `9760be6b`. Its protected idle
 adoption completed at 18:11 UTC on 5 November, preserving all 458 then-current
 files and 279 workflow bodies. The following vine-motion run and ordinary scoped
