@@ -88,10 +88,51 @@ The cached model, eight steps, guidance 1, shift 3, BF16, model CPU offload,
 automatic attention and physical guard floors stay unchanged. Ordinary
 import/Arrange/Save/reload preserves all 347 prior files and 205 prior workflow
 bodies before the fresh guarded Run. The unchanged 30-minute task bound is not
-extended. There is no download, package change or product deployment. New audio
-must pass its own technical checks and listening review before photographic
-scenes and captions are built around its actual timing. No rejected soundtrack
-or old-song diagnostic timing is treated as accepted replacement material.
+extended. There is no download, package change or product deployment. This run
+completes in **351.91 native seconds**. Strict task/attempt/session/workflow,
+five-node graph, 69-field form, immutable source/model and durable/served/cache
+checks pass for **2,160,000 PCM frames / 45 seconds / stereo 48 kHz PCM16**.
+Full ordinary 1× muted playback, scoped release and normal QA closure preserve
+353 files, 51 earlier output records and 207 unrelated workflow bodies. A stale
+30-second human-readable guard label is retained with the actual frozen controls
+and decoded 45-second duration; no render is repeated for that label.
+
+The new song is delivered for a **separate listening review, still pending**.
+The latest rejection of the second 30-second version is not assigned to this
+new artifact. Its own cached CPU speech diagnostic returns 33 word candidates,
+including more of the opening verse, but still mishears words and assigns an
+unreliable 0–11.56-second first token. These are neither certified intelligibility
+nor final lyric alignment. The diagnostic's strict input/task/source/text joins,
+normal scoped releases and QA closure preserve all 359 files, 52 earlier output
+records and 211 unrelated workflow bodies. Its cached JSON and serialized text
+are distinct byte domains and both original hashes remain retained. No replacement
+video or final captions use an unapproved song or old-song timing.
+
+An independent photographic input anchor then completes in **270.18 native
+seconds** through the current five ordinary **direct** image nodes, rather than
+relabeling the older six-node Modular evidence. The existing immutable Z weights
+are verified by streaming all 32 cached bodies and checking their original Git/LFS
+identities; no model is downloaded. The 1024×576, eight-step, seed-20261108 Expert
+run passes actual task/attempt/session/workflow, all 69 saved form fields, consumed
+controls, 253 source files and exact durable/served/cache image joins. The actual
+editor displays the full-resolution original. Local inspection shows plausible
+white funnel-shaped moonflowers and heart-shaped leaves in a consistent twilight
+garden, with one lower flower partly cropped. This is a prospective photographic
+input, not an accepted animated scene or a replacement-video success claim.
+
+One normal scoped release and QA closure preserve **365 current files, 53 earlier
+output records, 46 earlier preview slots and 215 unrelated workflow bodies**.
+Both declared durable image aliases are preserved byte-for-byte. Private reader
+holds remain: typed numeric enum comparison, three normalized root-form metadata
+values, an imported draft mistakenly assumed empty, and the image record's two
+explicit durable paths. The corrected readers bind the exact already-authored
+execution API, complete saved form, genuine owned PUTs and both declared file
+hashes; no graph, model, old data or safety floor is changed to pass preservation.
+The new song still needs human listening before video production and actual lyric
+timing. Rocket realism/motion revisions and the other previously declared holds
+remain open. These preparatory outputs do not change the three-of-nine acceptance
+count, the sixteen base examples/twelve human approvals, or the 43 missing-model
+holds.
 
 | Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
