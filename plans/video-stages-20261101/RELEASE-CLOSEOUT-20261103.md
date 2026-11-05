@@ -11,6 +11,45 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 This section is authoritative for current status. The dated checkpoints below
 retain their original source, timing and proof scope.
 
+The stars-and-lawn scene is now technically closed in **120.81 native seconds**.
+Its independent guard, strict nine-node /69-field /253-source-file task, input,
+consumed-control and cache/durable/served checks pass at **1536×1024 /81 frames /
+16 FPS**, video-only. Whole actual editor playback has all 81 frames with zero
+drops/errors. Two normal releases and QA closure preserve **526 app files,
+319 workflow bodies, 82 earlier outputs, 76 earlier preview slots and both video
+aliases**. Samples show an upward camera, pale stars, attached flowers and one
+coherent garden support. It is candidate footage, without final human approval.
+
+A subsequent night still is technically closed but has a strong blue cast.
+A deterministic reference revision contracts chroma around a neutral petal patch
+while preserving luminance and geometry; it does not recover missing color
+information. The original missing-red white-balance refusal is retained.
+Ordinary picker upload and Save/reload preserve the original media, and neither
+the derivation nor upload runs a model. The subsequent full-setting resident
+night attempt is **safety-cancelled with zero outputs during pipeline loading**,
+before denoising. Actual owned-worker swap growth of **1,147,600,896 bytes**
+crosses the unchanged 1 GiB limit while available RAM is **78,224,900,096 bytes**.
+The original last sample after worker disappearance remains separate from the
+actual threshold crossing. Normal supervisor recovery and cancelled QA closure
+preserve **542 files, 330 workflow bodies, all 85 earlier output records and all
+79 earlier preview slots**, with one new empty cancelled slot and expected queue
+changes only. Runtime, packages, configuration and 119 disk /118 served assets
+remain exact. No success-only audit/release or unchanged resident retry follows.
+The loading cause and original Auto/hardware claims remain unresolved.
+
+An independent early-dawn reference then completes in **18.58 native seconds**
+through the existing cached image-edit route. Strict seven-node /69-field /
+253-source-file task, source-pixel, consumed-control and both-preview media checks,
+actual editor views, two normal scoped releases and QA closure pass. All **550
+current files, 334 workflow bodies, 85 earlier output records, 80 earlier preview
+slots and four new image aliases** are preserved. The image is a locally useful
+garden input with neutral open flowers and pale early light; it is not a motion
+scene or final creative approval. Seven candidate clips are retained; night/dawn
+motion, the actual 45-second edit and human review remain open. The accepted
+soundtrack stays byte-exact and unstretched. Four of nine requested cases remain
+accepted, five unclosed, and all 43 missing-model cases remain user-held. These
+recipe/evidence changes do not repeat gates or deploy application source.
+
 The next path version uses the same full computation with two ordered image
 guides and completes in **118.85 native seconds**. The ending guide is explicitly
 a deterministic crop/reframe of the same garden photograph, not a newly generated
