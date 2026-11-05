@@ -41,6 +41,29 @@ of nine requested cases remain privately accepted, with five unclosed and all
 backend and paired-client checks below; no gate, deployment or closed model is
 repeated for this recipe, reader and documentation checkpoint.
 
+A distinct wall-detail still passes its technical checks in **16.43 native
+seconds**, but its edited image duplicates the support and blossoms. It is
+locally rejected and never used as a motion input. Both original previews,
+their four durable aliases and all prior records remain preserved. A changed
+reference uses a documented crop of the original photographic anchor instead;
+deterministic derivation and ordinary picker upload/Save/reload make no model or
+graph submission and preserve all earlier media and workflow bytes.
+
+The resulting full-compute wall-detail motion completes in **107.75 native
+seconds** under a fresh independent guard. Its actual terminal has no safety
+stop; 218 resource samples record a minimum 75,837,423,616 available RAM bytes,
+zero owned-worker swap growth and zero owned scratch. Strict task, nine-node /
+69-field /253-source-file, consumed-control and derived-input file/pixel checks
+pass, including the actual loaded PNG pixel buffer. Output is **1536×1024 /
+81 frames /16 FPS**, video-only, with full actual editor playback at zero
+drops/errors. Two normal scoped releases and QA closure preserve **512 files,
+311 workflow bodies, 79 earlier outputs, 73 earlier preview slots and both
+actual video aliases**. Samples retain one coherent support and attached
+flowers with restrained movement. This is a quiet candidate scene; it does not
+retroactively repair the earlier task's monitoring gap or grant final human,
+Auto, hardware, template or publication approval. Six scene candidates are
+retained; three distinct proposed roles and the measured 45-second edit remain.
+
 Linux now runs tested backend `22fdbc4e` / client `9760be6b`. Its protected idle
 adoption completed at 18:11 UTC on 5 November, preserving all 458 then-current
 files and 279 workflow bodies. The following vine-motion run and ordinary scoped
