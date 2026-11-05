@@ -260,15 +260,17 @@ solely to switch transports.
 
 Cleanup can release MoDiff's node cache, managed Diffusers components, memory-manager entries, and accelerator cache. It cannot free memory owned by another process, and it does not guarantee that the same workflow fits afterward.
 
-On an initialized ROCm device, the existing cleanup callback also synchronizes
-and releases Torch's reusable BLAS workspaces before clearing unused allocator
+With one visible, initialized ROCm device, the existing cleanup callback also
+synchronizes and releases Torch's reusable BLAS workspaces before clearing unused allocator
 blocks, but only when no task or cached node remains. A small workspace can pin
 a larger split allocator block. The compiled workspace cleanup is feature-detected;
 if it is absent, ordinary allocator cleanup remains available. Cleanup failures
 are reported by the existing best-effort cleanup response. This does not change
 offload selection, safety floors or model-fit qualification, and does not release
 workspaces belonging to an active task or surviving cached owner. CPU, NVIDIA
-and MPS cleanup retain their existing behavior.
+and MPS cleanup retain their existing behavior. Multiple visible accelerators
+keep the previous cleanup path: the compiled primitive clears global workspaces,
+while synchronization here covers the current device only.
 
 Automatic planning refreshes available host RAM between runs, including after
 cache release. Runtime identity remains cached separately from this capacity

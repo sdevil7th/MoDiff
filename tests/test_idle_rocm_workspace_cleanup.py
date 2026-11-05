@@ -17,6 +17,7 @@ def cleanup(monkeypatch):
     cuda = SimpleNamespace(
         is_available=lambda: True,
         is_initialized=lambda: True,
+        device_count=lambda: 1,
         synchronize=record("synchronize"),
         empty_cache=record("empty_cache"),
         ipc_collect=record("ipc_collect"),
@@ -50,7 +51,7 @@ def test_live_ownership_preserves_workspaces(cleanup, ownership):
     assert calls == ["empty_cache", "ipc_collect"]
 
 
-@pytest.mark.parametrize("unsupported", ["nvidia", "missing_version", "missing_binding", "missing_C", "uninitialized"])
+@pytest.mark.parametrize("unsupported", ["nvidia", "missing_version", "missing_binding", "missing_C", "uninitialized", "multiple_devices", "no_devices"])
 def test_unsupported_or_uninitialized_runtime_retains_existing_cleanup(cleanup, unsupported):
     app, torch, calls = cleanup
     if unsupported == "nvidia":
@@ -61,13 +62,15 @@ def test_unsupported_or_uninitialized_runtime_retains_existing_cleanup(cleanup, 
         del torch._C._cuda_clearCublasWorkspaces
     elif unsupported == "missing_C":
         del torch._C
-    else:
+    elif unsupported == "uninitialized":
         torch.cuda.is_initialized = lambda: False
+    else:
+        torch.cuda.device_count = lambda: 2 if unsupported == "multiple_devices" else 0
     assert WebServer._best_effort_device_cache_clear(app) == []
     assert calls == ["empty_cache", "ipc_collect"]
 
 
-@pytest.mark.parametrize("failing", ["synchronize", "workspace_clear"])
+@pytest.mark.parametrize("failing", ["device_count", "synchronize", "workspace_clear"])
 def test_workspace_cleanup_failure_preserves_allocator_fallback(cleanup, failing):
     app, torch, calls = cleanup
 
@@ -75,7 +78,11 @@ def test_workspace_cleanup_failure_preserves_allocator_fallback(cleanup, failing
         calls.append(failing)
         raise RuntimeError("workspace unavailable")
 
-    if failing == "synchronize":
+    if failing == "device_count":
+        torch.cuda.device_count = fail
+        expected = ["device_count", "empty_cache", "ipc_collect"]
+        label = "torch.cuda.device_count"
+    elif failing == "synchronize":
         torch.cuda.synchronize = fail
         expected = ["synchronize", "empty_cache", "ipc_collect"]
         label = "torch.cuda.synchronize"

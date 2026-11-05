@@ -14256,15 +14256,19 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             # workspace can pin a much larger split allocator block even after
             # all graph owners are gone. Use Torch's own cleanup primitive only
             # at that idle boundary; never disturb an active or cached owner.
+            # It clears global workspaces, so a current-device synchronization
+            # is sufficient only with one visible accelerator.
             clear_workspaces = getattr(getattr(torch, "_C", None), "_cuda_clearCublasWorkspaces", None)
             if (getattr(getattr(torch, "version", None), "hip", None)
                     and self.current_task is None and not self.node_cache
                     and torch.cuda.is_initialized() and callable(clear_workspaces)):
-                label = "torch.cuda.synchronize"
+                label = "torch.cuda.device_count"
                 try:
-                    torch.cuda.synchronize()
-                    label = "torch._C._cuda_clearCublasWorkspaces"
-                    clear_workspaces()
+                    if torch.cuda.device_count() == 1:
+                        label = "torch.cuda.synchronize"
+                        torch.cuda.synchronize()
+                        label = "torch._C._cuda_clearCublasWorkspaces"
+                        clear_workspaces()
                 except Exception as e:
                     logger.debug(f"{label} failed during accelerator cleanup", exc_info=True)
                     errors.append(f"{label}: {e}")

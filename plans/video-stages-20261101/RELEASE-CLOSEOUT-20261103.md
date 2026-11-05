@@ -177,6 +177,21 @@ and the first new vine-motion run/release must verify actual application behavio
 before calling the retention issue repaired. No safety floor, recipe, graph,
 model artifact or public qualification changes.
 
+Review then identifies a multi-device boundary: the [pinned Torch implementation](https://github.com/pytorch/pytorch/blob/7e1940d4b11fd6128be4c42ba41567ec5ab87102/aten/src/ATen/cuda/CublasHandlePool.cpp#L98-L110)
+clears global workspaces, whereas synchronization covers the current device. A focused
+controlled test reproduces the missing restriction. Before editing the frozen
+source, the original backend gate is deliberately cancelled and its actual exit
+15 is preserved; it is not reported as a complete pass or a native model failure.
+The completed client check and all three release/cleanup browser cases pass,
+with all 119 bundle files unchanged. The backend refinement restricts the new
+branch to one visible accelerator and preserves ordinary cleanup when the count
+is unavailable, zero or greater than one. Revised focused validation passes
+**220 tests and 76 subtests**, including sixteen workspace boundary cases; Ruff
+passes. A new complete frozen backend gate is required before any Linux adoption.
+The API/client contract and
+packaged client remain unchanged, so the completed compatible client proof is
+retained at its exact source rather than repeated.
+
 The full lyric composite has completed its **Expert** native, strict media,
 provenance, playback and preservation checks. Its actual run takes 785.55 seconds,
 with all 381 frames retained. The user rejects its visual relevance, glitches and
