@@ -20,14 +20,43 @@ served assets exact. The original LTX/Wan application remains untouched.
 The full lyric composite has completed its **Expert** native, strict media,
 provenance, playback and preservation checks. Its actual run takes 785.55 seconds,
 with all 381 frames retained. The user rejects its visual relevance, glitches and
-lyric timing; it requires a creative and synchronization revision. The user also
-rejects the rocket remaster and requests a visual revision. Their technical
+lyric timing; the user explicitly requests replacement of both song and video.
+The user also rejects the rocket remaster and requests photographic realism
+plus stronger ascent and camera movement. Their technical
 receipts remain preserved and do not establish creative acceptance.
 The complete original Wan seed-vault composite was cancelled at its fixed
 two-hour deadline at 02:21 UTC on 5 November, without a final output. Normal
 supervisor recovery and QA closure preserve all 297 current files, 44 earlier
-output records and saved workflows. No model is running. Neither diagnostic
+output records and saved workflows. A separately versioned replacement song is
+now running; the original Wan task is closed. Neither diagnostic
 qualifies the original Auto scopes or wider hardware claims.
+
+The first replacement song completed in **178.60 native seconds**. Its exact
+30-second, stereo 48 kHz PCM16 WAV passes task/attempt/session/workflow/source,
+five-node graph, all 69 authored form fields and durable/served/cache joins.
+Full ordinary editor playback at normal speed ends without error. One scoped
+release and normal QA closure preserve **317 current app files, 45 earlier
+output records, 38 earlier preview slots and 183 unrelated workflow bodies**;
+cache and temporary scratch are empty. The user rejects its vocal intelligibility.
+Technical success does not override that listening verdict, and this song will
+not be used for the replacement video. The old song and both rejected video/audio
+originals remain preserved. A private audit initially treated a backend-injected
+tensor output format as an authored parameter; its retained reader error is
+corrected by verifying the exact source AST literal, without another model run.
+
+The next creative version uses a concise, vocal-forward acoustic-pop caption,
+explicit verse/chorus phrasing for the same six lyric lines, 96 BPM, D major and
+seed 20261106. It retains the cached immutable ACE model, 30-second duration,
+eight Turbo steps, guidance 1, shift 3, BF16, model CPU offload and automatic
+attention. Ordinary import/Arrange/Save/reload retains the complete graph and
+form while preserving all 185 prior workflow bodies and 317 prior files, with
+zero model submissions during preparation. A fresh genuine editor Run is now
+active under an independent guard admitted before allocation. Physical safety
+floors and the fixed 30-minute task bound remain unchanged. There is no new
+download, package change or product deployment. This is a changed vocal/phrasing
+hypothesis, not a guarantee of intelligible singing. Fresh listening acceptance
+and actual vocal timing must precede the final replacement video; timestamps
+from the closed diagnostic of the old rejected song must not be reused.
 
 | Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
