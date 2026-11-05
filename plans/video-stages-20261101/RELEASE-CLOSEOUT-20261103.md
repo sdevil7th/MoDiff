@@ -27,8 +27,8 @@ receipts remain preserved and do not establish creative acceptance.
 The complete original Wan seed-vault composite was cancelled at its fixed
 two-hour deadline at 02:21 UTC on 5 November, without a final output. Normal
 supervisor recovery and QA closure preserve all 297 current files, 44 earlier
-output records and saved workflows. A separately versioned replacement song is
-now running; the original Wan task is closed. Neither diagnostic
+output records and saved workflows. The vocal replacement remains open;
+the original Wan task is closed. Neither diagnostic
 qualifies the original Auto scopes or wider hardware claims.
 
 The first replacement song completed in **178.60 native seconds**. Its exact
@@ -44,19 +44,54 @@ originals remain preserved. A private audit initially treated a backend-injected
 tensor output format as an authored parameter; its retained reader error is
 corrected by verifying the exact source AST literal, without another model run.
 
-The next creative version uses a concise, vocal-forward acoustic-pop caption,
+The second creative version uses a concise, vocal-forward acoustic-pop caption,
 explicit verse/chorus phrasing for the same six lyric lines, 96 BPM, D major and
 seed 20261106. It retains the cached immutable ACE model, 30-second duration,
 eight Turbo steps, guidance 1, shift 3, BF16, model CPU offload and automatic
 attention. Ordinary import/Arrange/Save/reload retains the complete graph and
 form while preserving all 185 prior workflow bodies and 317 prior files, with
-zero model submissions during preparation. A fresh genuine editor Run is now
-active under an independent guard admitted before allocation. Physical safety
-floors and the fixed 30-minute task bound remain unchanged. There is no new
-download, package change or product deployment. This is a changed vocal/phrasing
-hypothesis, not a guarantee of intelligible singing. Fresh listening acceptance
-and actual vocal timing must precede the final replacement video; timestamps
-from the closed diagnostic of the old rejected song must not be reused.
+zero model submissions during preparation. Its native run completes in 7.84
+seconds, followed by strict media checks, full playback, scoped release and
+normal QA closure. All 323 app files, 46 earlier output records and 187 unrelated
+workflow bodies are preserved. The user again rejects vocal clarity.
+
+A controlled Expert comparison then changes only the declared attention backend
+from `auto` to `_native_math`, retaining the complete 69-field creative form,
+prompt, lyric sections, seed, duration, model and other executable values. The
+accepted historical 75-second song used math attention, but other task/genre
+differences prevent a causal inference. This fresh comparison completes in
+8.33 seconds, passes its strict audit and full playback, and releases normally
+with all 329 files preserved. Its waveform cosine similarity to the rejected
+version is 0.9923; that does not establish an intelligibility fix or justify a
+product policy change. Expert evidence does not qualify Auto.
+
+A separately versioned source-conditioned repaint regenerates only seconds
+0–16 of the rejected second song. Its 155.50-second native run passes the exact
+30-second stereo audit; all 672,000 sample frames in seconds 16–30 match the
+documented PCM16 delivery requantization, with at most one original-source LSB
+of difference. Full playback and two scoped releases preserve all 341 files,
+49 prior output records and 199 unrelated workflow bodies. Retaining this tail
+does not grant it listening acceptance.
+
+Two ordinary cached CPU speech diagnostics inspect the rejected and repaired
+songs independently. Their actual task, input-byte, graph, source, transcript,
+cache and durable-text joins pass. Both return only eighteen word candidates,
+with missing opening lines and an implausibly long first-token span. These are
+unreliable singing timestamps, not final captions or certified quality scores.
+Both diagnostics release and close normally; the latest closure preserves all
+347 files, fifty prior output records and 203 unrelated workflow bodies. The
+repair is held rather than advertised as a vocal cure.
+
+The next version tests natural **45-second** phrasing with all six lines in one
+verse, retaining the second version's musical caption, 96 BPM, D major and seed.
+The cached model, eight steps, guidance 1, shift 3, BF16, model CPU offload,
+automatic attention and physical guard floors stay unchanged. Ordinary
+import/Arrange/Save/reload preserves all 347 prior files and 205 prior workflow
+bodies before the fresh guarded Run. The unchanged 30-minute task bound is not
+extended. There is no download, package change or product deployment. New audio
+must pass its own technical checks and listening review before photographic
+scenes and captions are built around its actual timing. No rejected soundtrack
+or old-song diagnostic timing is treated as accepted replacement material.
 
 | Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
