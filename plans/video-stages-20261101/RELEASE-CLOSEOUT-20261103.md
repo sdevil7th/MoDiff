@@ -97,16 +97,19 @@ Full ordinary 1× muted playback, scoped release and normal QA closure preserve
 30-second human-readable guard label is retained with the actual frozen controls
 and decoded 45-second duration; no render is repeated for that label.
 
-The new song is delivered for a **separate listening review, still pending**.
-The latest rejection of the second 30-second version is not assigned to this
-new artifact. Its own cached CPU speech diagnostic returns 33 word candidates,
+The user **accepts the 45-second song for private listening**, including vocal
+clarity, the opening verse and ending. This exact original soundtrack will be
+retained for the replacement video; publication and final video/timing acceptance
+remain separate. The rejection of the second 30-second version is not assigned
+to this artifact. Its own cached CPU speech diagnostic returns 33 word candidates,
 including more of the opening verse, but still mishears words and assigns an
 unreliable 0–11.56-second first token. These are neither certified intelligibility
 nor final lyric alignment. The diagnostic's strict input/task/source/text joins,
 normal scoped releases and QA closure preserve all 359 files, 52 earlier output
 records and 211 unrelated workflow bodies. Its cached JSON and serialized text
 are distinct byte domains and both original hashes remain retained. No replacement
-video or final captions use an unapproved song or old-song timing.
+video or final captions may infer certified alignment from this diagnostic or
+reuse the old song's timing.
 
 An independent photographic input anchor then completes in **270.18 native
 seconds** through the current five ordinary **direct** image nodes, rather than
@@ -128,11 +131,41 @@ values, an imported draft mistakenly assumed empty, and the image record's two
 explicit durable paths. The corrected readers bind the exact already-authored
 execution API, complete saved form, genuine owned PUTs and both declared file
 hashes; no graph, model, old data or safety floor is changed to pass preservation.
-The new song still needs human listening before video production and actual lyric
-timing. Rocket realism/motion revisions and the other previously declared holds
-remain open. These preparatory outputs do not change the three-of-nine acceptance
+The accepted song now permits replacement-video production around its natural
+45-second duration and actual lyric timing. Rocket realism/motion revisions and
+the other previously declared holds remain open. These preparatory outputs do not change the three-of-nine acceptance
 count, the sixteen base examples/twelve human approvals, or the 43 missing-model
 holds.
+
+The photographic rocket input completes in **42.75 native seconds** through
+eight ordinary nodes, using the first frame of the original rocket clip. Strict
+task/session/workflow/source/form/control joins and both source/edited preview
+media checks pass. The source-frame index is derived by exact cached RGB pixel
+equality against the original decoder's first frame; unavailable collection-cache
+responses remain preserved rather than being invented as native index receipts.
+Both actual editor image previews, two normal scoped releases and QA closure
+preserve **374 current files, 54 earlier output records, 47 earlier preview slots
+and 221 unrelated workflow bodies**. Both declared aliases of each image remain
+exact. Local inspection finds a useful photographic rocket/terrain input; the
+bright plume remains a limitation, and a still does not establish motion or
+human creative acceptance. Twenty-four finite original receipts are archived
+without reencoding; the larger historical native ledgers remain preserved.
+
+Ordinary preparation of its new full-size motion graph then exposes a client
+summary defect before Run: the finishing upscaler is mistaken for the generation
+model, changing the displayed task and offload summary while the execution API
+stays exact. Client `9760be6b` corrects recognized loader precedence and staged
+task/prompt/frame/settings inference without rewriting nodes or wires. Two red
+regressions reproduce the defect; **245 focused tests, two affected mocked
+browser import/Save/reload cases and the complete client check pass**. Standalone
+operations retain their own summaries. Only the measured 99/102 compressed
+startup bytes are added to the existing bundle allowance; dependency/loading
+rules and both deferred limits stay fixed. The original budget failure remains
+recorded. Packaged-backend checks and protected Linux adoption are next; the
+running Linux application remains `6cdde314` / `e12980eb` until that succeeds.
+No new motion task has been submitted. Fresh idle preservation verifies all
+**377 files / 225 workflow bodies**, including the three genuine preparation PUTs,
+with the earlier 374 files / 222 bodies exact and the original worker untouched.
 
 | Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
