@@ -79,15 +79,52 @@ without errors or model-cache retirement; subsequent available memory is
 114,974,814,208 bytes, still below admission. The idle accelerator process reports
 9,506,390,016 reserved bytes against 113,246,208 allocated bytes after cleanup;
 this observation does not establish the retention cause or authorize a weaker
-resource floor. No worker restart, source deployment or new model retry has
-occurred. Further process-lifetime diagnosis must preserve the idle application,
-original worker, runtime, packages, configuration and all saved work.
+resource floor. At that initial checkpoint, no worker restart, source deployment
+or model retry had occurred.
 
 The user-provided external NTFS SSD is mounted read/write. A small persisted
 write/read verification passes, with approximately **1.024 TB free** and a dedicated
 model-storage directory prepared. Existing model caches, application paths and
 saved media are unchanged. Additional disk capacity does not resolve the current
 RAM admission hold or reopen the 43 missing-model cases held by the user.
+
+Subsequent read-only kernel process accounting attributes approximately 9.94 GB
+of accelerator storage to the idle video worker. One newly admitted, graceful
+same-source supervisor/worker refresh preserves all **443 files / 270 workflow
+bodies / 67 prior outputs**, model artifacts, runtime, packages, configuration
+and exact 119 disk / 118 served assets. Only queue worker/timestamp metadata
+changes. Available memory becomes 126,496,645,120 bytes and satisfies the original
+admission; no floor changes, source deployment, forced kill or OS tuning occur.
+This demonstrates a process-lifetime effect, without establishing the internal
+retention cause, original Auto acceptance or broader hardware qualification.
+
+The first refresh observer lacks the required pidfd APIs in its selected Python
+and refuses before any app action. A separately bound observer uses the existing
+system Python with those capabilities. A later guard has a wrong archived-input
+path and refuses before Run; normal QA closure preserves all 444 files / 271
+workflow bodies. Another launcher retains old observer-directory checks and
+refuses before intent creation. All original failures remain retained. Corrected
+observers keep the archived source task, immutable input hash and every resource
+limit strict; no model is rerendered to repair these private readers.
+
+The genuine closed-silver-bud Run then completes in **106.39 native seconds**.
+Exact task, attempt, session, workflow, nine-node graph, 69-field form, 253 source
+files, source image, consumed controls and cache/durable/served media checks pass
+for **1536×1024 / 81 frames / 16 FPS / 5.0625 seconds**, video-only. Whole actual
+editor playback retains all 81 frames with zero drops/errors. Two normal scoped
+releases and QA closure preserve **447 files, 272 workflow bodies, all 67 earlier
+output records and 61 earlier preview slots**, including both actual media aliases.
+Samples retain a folded bud and stable anatomy; sway and camera travel remain
+slight. This is a quiet candidate insert, without final-film or human approval.
+The exact accepted 45-second song remains unchanged.
+
+After this new scene's normal release, read-only observation again finds about
+10.01 GB attributed to the idle worker, with 115,138,437,120 bytes available,
+below the original resident cold-overlap admission. No second cleanup, automatic
+refresh or new model allocation is used. Future scene admission must retain this
+observed capacity limit and distinguish process-lifetime operations from a
+diagnosed product repair. Coherent remaining footage and final editing remain
+open; a proposed timeline is not a completed movie or certified lyric alignment.
 
 The full lyric composite has completed its **Expert** native, strict media,
 provenance, playback and preservation checks. Its actual run takes 785.55 seconds,
@@ -99,7 +136,7 @@ receipts remain preserved and do not establish creative acceptance.
 The complete original Wan seed-vault composite was cancelled at its fixed
 two-hour deadline at 02:21 UTC on 5 November, without a final output. Normal
 supervisor recovery and QA closure preserve all 297 current files, 44 earlier
-output records and saved workflows. The vocal replacement remains open;
+output records and saved workflows. The final photographic movie remains open;
 the original Wan task is closed. Neither diagnostic
 qualifies the original Auto scopes or wider hardware claims.
 
