@@ -44,13 +44,30 @@ Read-only comparison finds the same loading controls as three earlier successful
 sequential-offload openings. Current cgroup observations have no high/max or OOM
 events, but cannot reconstruct the dead worker's page or NUMA state. Existing
 `low_cpu_mem_usage` is already true. This does not establish a product defect,
-global RAM shortage, hardware limit or reason to loosen the guard. A possible
-separately versioned Expert resident policy is being inspected through the
-existing official device-map route. Its root-component storage census excludes
-ten nested compatibility aliases of the same cached bodies; its conservative
-source/destination overlap plus the unchanged reserve fits the current observed
-available pool. Those static checks do not measure inference peak or admit a
-new run. No product edit, deployment or public qualification is inferred.
+global RAM shortage, hardware limit or reason to loosen the guard. A separately
+versioned Expert resident policy uses the existing official device-map route.
+Its root-component storage census excludes ten nested compatibility aliases of
+the same cached bodies; conservative source/destination overlap plus the
+unchanged reserve fits the observed available pool. These static checks do not
+measure inference peak. The separately admitted ordinary Expert resident version
+then completes in **125.90 native seconds**, with the same full scene computation
+and unchanged safety limits. Strict source, task, form, input and media checks
+pass for **1536×1024 / 81 frames / 16 FPS**; whole editor playback has zero
+drops/errors. Two ordinary scoped releases and normal QA closure preserve
+**439 files, 66 earlier outputs, 60 earlier preview slots and 266 workflow bodies**,
+including both actual native media aliases. No product edit, deployment, proven
+root cause or public qualification is inferred.
+
+The first resident audit incorrectly required a device-map field outside the
+ordinary capture allowlist. Its original failure is preserved. A separately
+versioned reader verifies the exact authored map and immutable implementation,
+and independently captured offload/device/attention controls. It does not invent
+a runtime object map receipt. All source, task, input, media and preservation
+checks remain strict; no model is rerendered to repair the reader. Twelve actual
+samples show progressive bud opening with stable stem attachment and framing.
+Camera travel is limited and the late petals have a strongly pleated appearance.
+This is a locally useful candidate insert, with full creative and final-film
+approval still open. The accepted 45-second song remains unchanged.
 
 The full lyric composite has completed its **Expert** native, strict media,
 provenance, playback and preservation checks. Its actual run takes 785.55 seconds,
@@ -168,9 +185,10 @@ execution API, complete saved form, genuine owned PUTs and both declared file
 hashes; no graph, model, old data or safety floor is changed to pass preservation.
 The accepted song now permits replacement-video production around its natural
 45-second duration and actual lyric timing. Rocket realism/motion revisions and
-the other previously declared holds remain open. These preparatory outputs do not change the three-of-nine acceptance
-count, the sixteen base examples/twelve human approvals, or the 43 missing-model
-holds.
+the other previously declared holds remain separate. Preparatory outputs do not
+inflate the sixteen base examples. The later photographic rocket verdict brings
+the requested acceptance count to four of nine and human-approved base examples
+to thirteen. All 43 missing-model cases remain held.
 
 The photographic rocket input completes in **42.75 native seconds** through
 eight ordinary nodes, using the first frame of the original rocket clip. Strict
@@ -228,9 +246,10 @@ bodies**. Both the managed media and native export alias bind to the actual
 task and its original output WebSocket artifact. No repeat or Stop probe runs.
 Local samples show a more photographic rigid body and much stronger ascent,
 but the rocket outruns the camera and exits the top of frame. The genuine
-candidate is delivered for human review; creative acceptance is not inferred.
-The original Auto holds, rejected prior versions and three-of-nine acceptance
-count remain unchanged. Next is photographic Moonflower video production around
+candidate is now **human-accepted with that explicit framing limitation**.
+The original Auto holds and rejected prior versions remain preserved; private
+acceptance does not qualify those scopes. Four requested cases are accepted,
+with five unclosed. Next is photographic Moonflower video production around
 the accepted, unchanged 45-second song and its actual lyric timing.
 
 An independent cached **CTC** speech diagnostic completes through one ordinary
@@ -351,13 +370,13 @@ no original receipt is overwritten, and no model rerun repairs these readers.
 
 | Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Running Linux app            | Tested backend `a8fa7258`, client `9760be6b`; three photographic openings and two malformed bud edits are technically closed without creative acceptance. A separate photographic bud macro is locally useful as an input. The full-compute unfolding insert is prepared without a model task, with 432 files / 261 bodies exact at idle. Runtime/packages/configuration and 119 disk / 118 served assets remain preserved. Original LTX/Wan worker untouched. |
+| Running Linux app            | Tested backend `a8fa7258`, client `9760be6b`; three subtle openings and two rejected bud edits remain preserved. A separate bud macro supplies the completed resident unfolding insert. Strict audit/playback, two releases and normal QA close preserve 439 files / 266 bodies, with empty cache/scratch and no downloads. Original sequential cancellation is retained. Runtime/packages/configuration and 119 disk / 118 served assets remain preserved; original LTX/Wan worker untouched. |
 | Running Windows app          | Remains the previously verified `12a61082` / `d59d5e1e` pair. Large models run only on Linux.                                                                                                                                                                                                                                                                                                                                                                    |
 | CPU-offload cache accounting | Real CPU weights retained by exact official Accelerate hooks are counted even when visible parameters are meta tensors. Aliases are deduplicated; invalidated owners get no reuse credit. Inspection never executes custom hooks/mappings or lazy disk readers. This does not change loading preference, working-memory declarations or hardware qualification.                                                                                                  |
 | Required current gates       | Complete client check at `9760be6b`, 245 focused tests, two affected browser scenarios and 71 backend inventory tests / 890 subtests pass. Complete packaged backend gate at `a8fa7258`: 9,066 tests / 13,198 subtests. All four hosted backend and all four client jobs pass at these exact sources. No physical hardware qualification inferred. |
 | Preserved video delivery     | The accepted photographic Pika and MiniMax clips, portable templates, rejected paper-boat originals, preview/upload repairs and Service CLI evidence remain intact. No extra H3 run tests this cache-reader fix.                                                                                                                                                                                                                                                 |
-| Gallery campaign             | Sixteen unique cached examples have current outputs; twelve have human visual/listening acceptance. Boardwalk/car review is pending. Rocket and lyric visuals are rejected and need revisions; lyric timing also fails human review. Two additional Klein examples retain historical functional evidence; Wan cancelled at its deadline without output and ACE variation lacks its melody-codec capability. All 20 retain separate release qualification limits. |
-| Requested nine               | Klein, rainy rail and ACE repaint are accepted: three closed, six unclosed. Boardwalk/car review is pending; rocket and lyric are rejected despite retained technical proofs. Original Auto scopes remain open. Wan has a recovered deadline cancellation with zero output; ACE variation's absent melody-codec capability remains held.                                                                                                                         |
+| Gallery campaign             | Sixteen unique cached examples have current outputs; thirteen have human visual/listening acceptance. The photographic rocket is accepted with its framing limitation; its rejected predecessor stays preserved. Boardwalk/car review and the replacement lyric film remain open. The exact 45-second song is accepted; the unfolding insert is technically closed and locally useful, with camera/texture limits. Wan cancelled at its deadline without output; ACE variation lacks melody codecs. All 20 retain separate release qualification limits. |
+| Requested nine               | Klein, rainy rail, ACE repaint and the photographic rocket replacement are privately accepted: four accepted, five unclosed. Boardwalk/car review, the final lyric film, Wan's deadline hold and ACE variation's absent-codec capability remain. Original Auto scopes remain open. No held scope is marked complete by private creative acceptance. |
 | Missing models               | All 43 user-held cases remain held without downloads. The original 73-error public Gallery report is a retained baseline, not a fresh pass.                                                                                                                                                                                                                                                                                                                      |
 | Hardware/publication         | Exact AMD observations are scoped to their recipe and host. Unavailable physical targets, release-wide hardware claims, public locks and media publication remain separate.                                                                                                                                                                                                                                                                                      |
 
