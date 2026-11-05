@@ -126,6 +126,57 @@ observed capacity limit and distinguish process-lifetime operations from a
 diagnosed product repair. Coherent remaining footage and final editing remain
 open; a proposed timeline is not a completed movie or certified lyric alignment.
 
+A separate photographic vine/leaf input then completes through the existing
+cached Klein edit route in **18.08 native seconds**. It uses the actual original
+garden photograph, four steps, guidance 1, BF16, model-CPU offload and automatic
+attention. Strict seven-node / 69-field / 253-source-file checks bind the task,
+session, workflow, consumed edit controls, original source-file hash and decoded
+source pixels to both edited/source previews and their four durable aliases.
+Both actual editor views pass. Two normal scoped releases and QA closure preserve
+**455 files, 276 workflow bodies, all 68 earlier output records and 62 earlier
+preview slots**. The edited still emphasizes attached vine and heart-shaped
+leaves while retaining recognizable wall, support, pot and path. Its cooler cast
+and large foreground leaf remain explicit limits. It is a locally useful input,
+without human approval of a finished scene or movie.
+
+The next motion graph is prepared through ordinary import, Arrange, complete
+Save/reload and exact API/form checks with zero model submissions, preserving
+all earlier work at **458 files / 279 workflow bodies**. It binds that actual
+edited image, retains the full 81-frame / 16 FPS / eight-step resident LTX recipe,
+and changes only the prompt and reference image. The complete new prompt passes
+the official cached tokenizer at **102 tokens**, within the source's 128-token
+limit without truncation. No motion task has started: a new read-only observation
+records 111,956,647,936 bytes available, below the unchanged 116,731,254,216-byte
+cold-overlap admission, while the idle accelerator reports 113,246,208 allocated
+and 9,575,596,032 reserved bytes. Further diagnosis/admission remains separate
+from creative approval; no additional cleanup, refresh, source edit, forced
+allocation or relaxed resource floor is used.
+
+A subsequent isolated Linux tensor control reproduces one retention mechanism
+without loading a model or changing either application worker. A deliberately
+cached 1 GiB allocator block plus one small matrix multiplication leaves a
+32 MiB BLAS workspace pinning that block after ordinary garbage collection and
+allocator cleanup. The installed Torch build's own compiled workspace-clear
+primitive, also used by its upstream test cleanup, returns both allocated and
+reserved counters to zero in that independent process. The original application's
+108 MiB allocation and roughly 9.58 GB reservation are different observations;
+this control does not establish their exact allocation history or cause. All
+458 app files and 279 workflow bodies remain exact, with no model run or worker
+restart. Thirteen finite diagnostic/source-inspection originals are archived.
+
+A focused backend change now uses that feature-detected primitive only for an
+already initialized ROCm device after synchronization, with no current task or
+remaining cached node. Active/retry work, surviving owners, NVIDIA, CPU and MPS
+retain their existing behavior. Missing support and cleanup failures keep the
+existing allocator fallback. The regression first fails four assertions on the
+original source; the corrected source passes **217 focused lifecycle/status
+tests and 76 subtests**, including all thirteen new boundary cases. Ruff passes.
+Complete frozen backend and compatible client/browser checks remain pending at
+this checkpoint. The running Linux source is unchanged; protected idle adoption
+and the first new vine-motion run/release must verify actual application behavior
+before calling the retention issue repaired. No safety floor, recipe, graph,
+model artifact or public qualification changes.
+
 The full lyric composite has completed its **Expert** native, strict media,
 provenance, playback and preservation checks. Its actual run takes 785.55 seconds,
 with all 381 frames retained. The user rejects its visual relevance, glitches and

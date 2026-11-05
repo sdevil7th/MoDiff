@@ -14252,6 +14252,22 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             return [f"torch import failed: {e}"]
 
         if torch.cuda.is_available():
+            # These cleanup callers own the model/cache lease. A ROCm BLAS
+            # workspace can pin a much larger split allocator block even after
+            # all graph owners are gone. Use Torch's own cleanup primitive only
+            # at that idle boundary; never disturb an active or cached owner.
+            clear_workspaces = getattr(getattr(torch, "_C", None), "_cuda_clearCublasWorkspaces", None)
+            if (getattr(getattr(torch, "version", None), "hip", None)
+                    and self.current_task is None and not self.node_cache
+                    and torch.cuda.is_initialized() and callable(clear_workspaces)):
+                label = "torch.cuda.synchronize"
+                try:
+                    torch.cuda.synchronize()
+                    label = "torch._C._cuda_clearCublasWorkspaces"
+                    clear_workspaces()
+                except Exception as e:
+                    logger.debug(f"{label} failed during accelerator cleanup", exc_info=True)
+                    errors.append(f"{label}: {e}")
             for label, callback in (
                 ("torch.cuda.empty_cache", torch.cuda.empty_cache),
                 ("torch.cuda.ipc_collect", torch.cuda.ipc_collect),
