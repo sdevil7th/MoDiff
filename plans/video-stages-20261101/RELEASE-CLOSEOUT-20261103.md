@@ -11,11 +11,13 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 This section is authoritative for current status. The dated checkpoints below
 retain their original source, timing and proof scope.
 
-Fresh lyric-composite authoring is corrected and fully checked at client
-`e12980eb`. Protected Linux adoption of backend `6cdde314` / client `e12980eb`
-completed at 22:59 UTC on 4 November. All 281 prior app files, 157 workflow
-bodies, runtime packages and configuration are preserved, with 119 disk / 118
-served assets exact. The original LTX/Wan application remains untouched.
+Linux now runs tested backend `a8fa7258` / client `9760be6b`. Protected idle
+adoption completed at 08:42 UTC on 5 November, preserving all 377 then-current
+files, 225 workflow bodies, runtime, packages and configuration, with 119 disk /
+118 served assets exact. Subsequent ordinary rocket authoring and execution
+preserve the current 383-file / 229-body set. The original LTX/Wan application
+and worker remain untouched. Earlier `6cdde314` / `e12980eb` lyric-authoring
+delivery remains source-scoped historical evidence.
 
 The full lyric composite has completed its **Expert** native, strict media,
 provenance, playback and preservation checks. Its actual run takes 785.55 seconds,
@@ -161,18 +163,49 @@ browser import/Save/reload cases and the complete client check pass**. Standalon
 operations retain their own summaries. Only the measured 99/102 compressed
 startup bytes are added to the existing bundle allowance; dependency/loading
 rules and both deferred limits stay fixed. The original budget failure remains
-recorded. Packaged-backend checks and protected Linux adoption are next; the
-running Linux application remains `6cdde314` / `e12980eb` until that succeeds.
-No new motion task has been submitted. Fresh idle preservation verifies all
-**377 files / 225 workflow bodies**, including the three genuine preparation PUTs,
-with the earlier 374 files / 222 bodies exact and the original worker untouched.
+recorded. The complete packaged-backend gate at `a8fa7258` then passes **9,066
+tests / 13,198 subtests**, 761 skips and 33 warnings in 1,543.38 pytest seconds,
+plus Ruff, dependency and preflight checks. All four backend hosted jobs at
+`a8fa7258` and all four client jobs at `9760be6b` now pass; these operating-system
+checks do not qualify physical GPU hardware.
+
+The first protected-adoption helper holds before stopping the app because its
+queue-reader limit is below the existing 2,381,029-byte history. Exact read-only
+diagnosis preserves the original hold and verifies the unchanged worker, source
+and all 377 files / 225 bodies. A separately versioned reader binds that exact
+retained queue size and bytes; no model safety limit changes. Protected adoption
+then succeeds with runtime, packages, configuration and 119 disk / 118 served
+assets preserved. No broad gate or deployment is repeated for private readers.
+
+The photographic rocket replacement completes in **141.88 native seconds**
+through one ordinary saved-workflow Run. It retains the complete 768×512 / 81-frame
+/ 16-FPS / eight-step / seed-8313 / BF16 / automatic-attention / 2× Expert
+sequential workload, using the photographic first-frame anchor. Strict checks
+join all nine nodes, 69 form fields, 253 source files, task/attempt/session,
+workflow, actual image conditioning and durable/served/cache media. Output is
+**1536×1024 / 81 decoded frames / 16 FPS / 5.0625 seconds**, video-only. Image
+conditioning strength is 1; the authored denoise-strength field is inactive for
+this image-to-video route and is not misrepresented as consumed. Authored token
+limit 512 and the actual source cap 128 remain distinct.
+
+Full ordinary editor playback retains all 81 frames with zero drops/errors.
+Two scoped releases and normal QA closure preserve all **383 current files,
+56 earlier output records, 49 earlier preview slots and 228 unrelated workflow
+bodies**. Both the managed media and native export alias bind to the actual
+task and its original output WebSocket artifact. No repeat or Stop probe runs.
+Local samples show a more photographic rigid body and much stronger ascent,
+but the rocket outruns the camera and exits the top of frame. The genuine
+candidate is delivered for human review; creative acceptance is not inferred.
+The original Auto holds, rejected prior versions and three-of-nine acceptance
+count remain unchanged. Next is photographic Moonflower video production around
+the accepted, unchanged 45-second song and its actual lyric timing.
 
 | Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Running Linux app            | Backend `6cdde314`, client `e12980eb`, protected adoption complete. All 281 prior files / 157 workflow bodies, runtime/packages/configuration and 119 disk / 118 served assets are exact. New ordinary lyric preparation separately preserves its 284-file / 160-body baseline. The original LTX/Wan worker is untouched.                                                                                                                                        |
+| Running Linux app            | Tested backend `a8fa7258`, client `9760be6b`; protected adoption and subsequent rocket closeout complete. Current 383 files / 229 workflow bodies, runtime/packages/configuration and 119 disk / 118 served assets remain preserved. Original LTX/Wan worker untouched. |
 | Running Windows app          | Remains the previously verified `12a61082` / `d59d5e1e` pair. Large models run only on Linux.                                                                                                                                                                                                                                                                                                                                                                    |
 | CPU-offload cache accounting | Real CPU weights retained by exact official Accelerate hooks are counted even when visible parameters are meta tensors. Aliases are deduplicated; invalidated owners get no reuse credit. Inspection never executes custom hooks/mappings or lazy disk readers. This does not change loading preference, working-memory declarations or hardware qualification.                                                                                                  |
-| Required current gates       | Complete local client check, 41 focused tests, three affected browser cases and 71 backend inventory tests / 890 subtests pass. Reuse the unchanged Python/dependency gate at `8ead4a09`: 9,066 tests / 13,198 subtests. All four hosted backend jobs pass at `6cdde314`; all four client jobs pass at `e12980eb`. No physical hardware qualification is inferred.                                                                                               |
+| Required current gates       | Complete client check at `9760be6b`, 245 focused tests, two affected browser scenarios and 71 backend inventory tests / 890 subtests pass. Complete packaged backend gate at `a8fa7258`: 9,066 tests / 13,198 subtests. All four hosted backend and all four client jobs pass at these exact sources. No physical hardware qualification inferred. |
 | Preserved video delivery     | The accepted photographic Pika and MiniMax clips, portable templates, rejected paper-boat originals, preview/upload repairs and Service CLI evidence remain intact. No extra H3 run tests this cache-reader fix.                                                                                                                                                                                                                                                 |
 | Gallery campaign             | Sixteen unique cached examples have current outputs; twelve have human visual/listening acceptance. Boardwalk/car review is pending. Rocket and lyric visuals are rejected and need revisions; lyric timing also fails human review. Two additional Klein examples retain historical functional evidence; Wan cancelled at its deadline without output and ACE variation lacks its melody-codec capability. All 20 retain separate release qualification limits. |
 | Requested nine               | Klein, rainy rail and ACE repaint are accepted: three closed, six unclosed. Boardwalk/car review is pending; rocket and lyric are rejected despite retained technical proofs. Original Auto scopes remain open. Wan has a recovered deadline cancellation with zero output; ACE variation's absent melody-codec capability remains held.                                                                                                                         |
