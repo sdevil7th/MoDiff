@@ -15,7 +15,7 @@ Linux now runs tested backend `a8fa7258` / client `9760be6b`. Protected idle
 adoption completed at 08:42 UTC on 5 November, preserving all 377 then-current
 files, 225 workflow bodies, runtime, packages and configuration, with 119 disk /
 118 served assets exact. Subsequent rocket delivery, a bounded speech diagnostic
-and first-shot authoring preserve the current 391-file / 236-body set. The original LTX/Wan application
+and photographic-opening work preserve the current 403-file / 244-body set. The original LTX/Wan application
 and worker remain untouched. Earlier `6cdde314` / `e12980eb` lyric-authoring
 delivery remains source-scoped historical evidence.
 
@@ -214,15 +214,50 @@ and zero model submissions. Its source image binds to the closed photographic
 anchor task. The full original per-shot 768×512 / 81-frame / 16-FPS / eight-step /
 seed-1201047366 / BF16 / 2× Expert sequential workload is retained. The pinned
 official tokenizer verifies all 126 prompt tokens fit the actual 128-token source
-cap. Fresh read-only preservation verifies all 391 files / 236 bodies, empty
+cap. At that preparation checkpoint, read-only preservation verifies all 391 files / 236 bodies, empty
 cache, no offload files/downloads and the untouched original worker. This is
-prepared opening material only: no first-shot task has run and the final
-45-second photographic video remains open. A new independent guard and genuine
-UI admission must precede allocation.
+prepared opening material only at that checkpoint, before any first-shot Run.
+The final 45-second photographic video remains open. Subsequent Runs use separate guards
+and genuine ordinary UI admission.
+
+Both photographic-opening variants now complete their native technical checks in
+**133.85 and 133.82 seconds**, retaining the full original per-shot workload. Each
+produces 1536×1024 / 81 frames / 16 FPS / 5.0625 seconds, video-only, with exact
+task/attempt/session/workflow/source/form/input/durable/served/cache joins and
+whole 81-frame editor playback with zero drops/errors. Both originals remain
+independently durable. Two scoped releases per Run and normal QA closure preserve
+394 then 400 app files, with all earlier output records, preview slots, workflow
+bodies and media exact. Neither result grants original Auto qualification.
+
+Whole-duration samples retain photographic flowers and stable plant anatomy,
+but visible camera travel and wind remain too subtle. The second variant changes
+only the prompt; it does not resolve that creative limitation. These candidates
+are not promoted to final-video acceptance or templates. The accepted 45-second
+song stays unchanged, and final assembly/timing remains open.
+
+Read-only tracing verifies the selected active Diffusers provider and its actual
+installed source. MoDiff authors one frame-zero video condition; inspected
+upstream code initializes the remaining conditioning mask to zero and writes the
+conditioned latent prefix. No authored whole-video repetition or product root
+cause is established. A separately versioned diagnostic changes only image
+condition strength from 1 to 0.7, retaining the second prompt, seed, source image,
+all computational settings and safety floors. Its ordinary nine-node import,
+Save/reload, 69-field form and Run-enabled preparation pass, with 403 files / 244
+bodies preserved. No diagnostic model task, guard or controller has started;
+fresh guarded admission is still required. The unchanged 112-token prompt reuses
+its exact pinned-tokenizer proof.
+
+Private reader holds remain retained. Normal asynchronous browser enrichment
+changes output presentation metadata between terminal GETs while the entire
+native task, dispatch inputs, creator snapshot and media identities stay exact.
+The audit binds both original observations and validates the documented merge.
+Optional artifact size fields are null; separately measured encoded metadata and
+full decode establish dimensions and frame counts. No absent values are invented,
+no original receipt is overwritten, and no model rerun repairs these readers.
 
 | Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Running Linux app            | Tested backend `a8fa7258`, client `9760be6b`; protected adoption, rocket and CTC closeouts complete. First Moonflower shot prepared without Run. Current 391 files / 236 workflow bodies, runtime/packages/configuration and 119 disk / 118 served assets remain preserved. Original LTX/Wan worker untouched. |
+| Running Linux app            | Tested backend `a8fa7258`, client `9760be6b`; two photographic-opening technical closeouts complete, motion still unaccepted. A 0.7-strength diagnostic is prepared without Run. Current 403 files / 244 workflow bodies, runtime/packages/configuration and 119 disk / 118 served assets remain preserved. Original LTX/Wan worker untouched. |
 | Running Windows app          | Remains the previously verified `12a61082` / `d59d5e1e` pair. Large models run only on Linux.                                                                                                                                                                                                                                                                                                                                                                    |
 | CPU-offload cache accounting | Real CPU weights retained by exact official Accelerate hooks are counted even when visible parameters are meta tensors. Aliases are deduplicated; invalidated owners get no reuse credit. Inspection never executes custom hooks/mappings or lazy disk readers. This does not change loading preference, working-memory declarations or hardware qualification.                                                                                                  |
 | Required current gates       | Complete client check at `9760be6b`, 245 focused tests, two affected browser scenarios and 71 backend inventory tests / 890 subtests pass. Complete packaged backend gate at `a8fa7258`: 9,066 tests / 13,198 subtests. All four hosted backend and all four client jobs pass at these exact sources. No physical hardware qualification inferred. |
