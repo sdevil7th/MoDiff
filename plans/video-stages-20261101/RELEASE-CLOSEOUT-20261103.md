@@ -69,6 +69,26 @@ Camera travel is limited and the late petals have a strongly pleated appearance.
 This is a locally useful candidate insert, with full creative and final-film
 approval still open. The accepted 45-second song remains unchanged.
 
+The following closed-silver-bud scene is saved with its complete original graph
+and form, but its new resource admission refuses before Run: available memory
+does not meet the unchanged **116,731,254,216-byte** conservative cold-overlap
+and reserve requirement. There is no submitted task, model allocation or new
+output. Normal browser closure preserves **443 files, 270 workflow bodies and
+all 67 prior output records/media**. One supported idle allocator cleanup completes
+without errors or model-cache retirement; subsequent available memory is
+114,974,814,208 bytes, still below admission. The idle accelerator process reports
+9,506,390,016 reserved bytes against 113,246,208 allocated bytes after cleanup;
+this observation does not establish the retention cause or authorize a weaker
+resource floor. No worker restart, source deployment or new model retry has
+occurred. Further process-lifetime diagnosis must preserve the idle application,
+original worker, runtime, packages, configuration and all saved work.
+
+The user-provided external NTFS SSD is mounted read/write. A small persisted
+write/read verification passes, with approximately **1.024 TB free** and a dedicated
+model-storage directory prepared. Existing model caches, application paths and
+saved media are unchanged. Additional disk capacity does not resolve the current
+RAM admission hold or reopen the 43 missing-model cases held by the user.
+
 The full lyric composite has completed its **Expert** native, strict media,
 provenance, playback and preservation checks. Its actual run takes 785.55 seconds,
 with all 381 frames retained. The user rejects its visual relevance, glitches and
