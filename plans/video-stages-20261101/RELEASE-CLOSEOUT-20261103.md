@@ -21,10 +21,36 @@ originals, with 410 files / 249 bodies before native admission. Its separate
 photographic bud edit closes with 415 files / 250 bodies preserved. The next
 prompt-only bud version closes with 423 files / 254 bodies preserved; a separate
 photographic macro input then closes with 429 files / 258 bodies preserved.
-Its unfolding-shot preparation now verifies 432 files / 261 bodies at idle.
+Its unfolding-shot preparation verifies 432 files / 261 bodies at idle. The
+subsequent single guarded unfolding attempt is safety-cancelled with zero
+outputs; normal supervisor recovery and browser closure preserve **433 files,
+66 prior output records, 59 prior preview slots and 262 workflow bodies**.
 The original LTX/Wan application
 and worker remain untouched. Earlier `6cdde314` / `e12980eb` lyric-authoring
 delivery remains source-scoped historical evidence.
+
+The unfolding attempt crosses the unchanged **1 GiB owned-worker swap-growth**
+limit at 1,142,575,104 bytes while global available RAM remains 94,946,119,680
+bytes. Its genuine guard, task and browser originals agree on cancellation with
+no output. Detailed WebSocket frames correct the initial loading-phase
+interpretation: the loader and input encoder had succeeded, and Denoise was
+running before the stop. The exact internal allocation responsible is unknown.
+The original worker is normally replaced; no manual restart, changed guard,
+unchanged retry or success-only media audit is used. Recovery preserves source,
+runtime, packages, configuration and all 119 disk / 118 served assets; cache,
+scratch and downloads are empty, and ordinary QA closure is complete.
+
+Read-only comparison finds the same loading controls as three earlier successful
+sequential-offload openings. Current cgroup observations have no high/max or OOM
+events, but cannot reconstruct the dead worker's page or NUMA state. Existing
+`low_cpu_mem_usage` is already true. This does not establish a product defect,
+global RAM shortage, hardware limit or reason to loosen the guard. A possible
+separately versioned Expert resident policy is being inspected through the
+existing official device-map route. Its root-component storage census excludes
+ten nested compatibility aliases of the same cached bodies; its conservative
+source/destination overlap plus the unchanged reserve fits the current observed
+available pool. Those static checks do not measure inference peak or admit a
+new run. No product edit, deployment or public qualification is inferred.
 
 The full lyric composite has completed its **Expert** native, strict media,
 provenance, playback and preservation checks. Its actual run takes 785.55 seconds,
