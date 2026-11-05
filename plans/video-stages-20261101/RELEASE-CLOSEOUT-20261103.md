@@ -19,22 +19,27 @@ served assets exact. The original LTX/Wan application remains untouched.
 
 The full lyric composite has completed its **Expert** native, strict media,
 provenance, playback and preservation checks. Its actual run takes 785.55 seconds,
-with all 381 frames retained. Human visual/listening review remains pending.
-The complete original Wan seed-vault composite started at 00:21 UTC on 5 November
-under a separate guard; its terminal outcome is pending. Neither diagnostic
+with all 381 frames retained. The user rejects its visual relevance, glitches and
+lyric timing; it requires a creative and synchronization revision. The user also
+rejects the rocket remaster and requests a visual revision. Their technical
+receipts remain preserved and do not establish creative acceptance.
+The complete original Wan seed-vault composite was cancelled at its fixed
+two-hour deadline at 02:21 UTC on 5 November, without a final output. Normal
+supervisor recovery and QA closure preserve all 297 current files, 44 earlier
+output records and saved workflows. No model is running. Neither diagnostic
 qualifies the original Auto scopes or wider hardware claims.
 
-| Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                      |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Running Linux app            | Backend `6cdde314`, client `e12980eb`, protected adoption complete. All 281 prior files / 157 workflow bodies, runtime/packages/configuration and 119 disk / 118 served assets are exact. New ordinary lyric preparation separately preserves its 284-file / 160-body baseline. The original LTX/Wan worker is untouched.                                          |
-| Running Windows app          | Remains the previously verified `12a61082` / `d59d5e1e` pair. Large models run only on Linux.                                                                                                                                                                                                                                                                      |
-| CPU-offload cache accounting | Real CPU weights retained by exact official Accelerate hooks are counted even when visible parameters are meta tensors. Aliases are deduplicated; invalidated owners get no reuse credit. Inspection never executes custom hooks/mappings or lazy disk readers. This does not change loading preference, working-memory declarations or hardware qualification.    |
-| Required current gates       | Complete local client check, 41 focused tests, three affected browser cases and 71 backend inventory tests / 890 subtests pass. Reuse the unchanged Python/dependency gate at `8ead4a09`: 9,066 tests / 13,198 subtests. All four hosted backend jobs pass at `6cdde314`; all four client jobs pass at `e12980eb`. No physical hardware qualification is inferred. |
-| Preserved video delivery     | The accepted photographic Pika and MiniMax clips, portable templates, rejected paper-boat originals, preview/upload repairs and Service CLI evidence remain intact. No extra H3 run tests this cache-reader fix.                                                                                                                                                   |
-| Gallery campaign             | Sixteen unique cached examples have current outputs; twelve have human visual/listening acceptance. Boardwalk, car, rocket and the new lyric composite await review. Two additional Klein examples retain historical functional evidence; Wan is running and ACE variation lacks its melody-codec capability. All 20 retain separate release qualification limits. |
-| Requested nine               | Klein, rainy rail and ACE repaint are accepted: three closed, six unclosed. Boardwalk, car and rocket have completed Expert diagnostics, with visual review pending and original Auto scope open. Lyric is technically delivered with visual/listening review pending; Wan is running; ACE variation's absent melody-codec capability remains held.                |
-| Missing models               | All 43 user-held cases remain held without downloads. The original 73-error public Gallery report is a retained baseline, not a fresh pass.                                                                                                                                                                                                                        |
-| Hardware/publication         | Exact AMD observations are scoped to their recipe and host. Unavailable physical targets, release-wide hardware claims, public locks and media publication remain separate.                                                                                                                                                                                        |
+| Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Running Linux app            | Backend `6cdde314`, client `e12980eb`, protected adoption complete. All 281 prior files / 157 workflow bodies, runtime/packages/configuration and 119 disk / 118 served assets are exact. New ordinary lyric preparation separately preserves its 284-file / 160-body baseline. The original LTX/Wan worker is untouched.                                                                                                                                        |
+| Running Windows app          | Remains the previously verified `12a61082` / `d59d5e1e` pair. Large models run only on Linux.                                                                                                                                                                                                                                                                                                                                                                    |
+| CPU-offload cache accounting | Real CPU weights retained by exact official Accelerate hooks are counted even when visible parameters are meta tensors. Aliases are deduplicated; invalidated owners get no reuse credit. Inspection never executes custom hooks/mappings or lazy disk readers. This does not change loading preference, working-memory declarations or hardware qualification.                                                                                                  |
+| Required current gates       | Complete local client check, 41 focused tests, three affected browser cases and 71 backend inventory tests / 890 subtests pass. Reuse the unchanged Python/dependency gate at `8ead4a09`: 9,066 tests / 13,198 subtests. All four hosted backend jobs pass at `6cdde314`; all four client jobs pass at `e12980eb`. No physical hardware qualification is inferred.                                                                                               |
+| Preserved video delivery     | The accepted photographic Pika and MiniMax clips, portable templates, rejected paper-boat originals, preview/upload repairs and Service CLI evidence remain intact. No extra H3 run tests this cache-reader fix.                                                                                                                                                                                                                                                 |
+| Gallery campaign             | Sixteen unique cached examples have current outputs; twelve have human visual/listening acceptance. Boardwalk/car review is pending. Rocket and lyric visuals are rejected and need revisions; lyric timing also fails human review. Two additional Klein examples retain historical functional evidence; Wan cancelled at its deadline without output and ACE variation lacks its melody-codec capability. All 20 retain separate release qualification limits. |
+| Requested nine               | Klein, rainy rail and ACE repaint are accepted: three closed, six unclosed. Boardwalk/car review is pending; rocket and lyric are rejected despite retained technical proofs. Original Auto scopes remain open. Wan has a recovered deadline cancellation with zero output; ACE variation's absent melody-codec capability remains held.                                                                                                                         |
+| Missing models               | All 43 user-held cases remain held without downloads. The original 73-error public Gallery report is a retained baseline, not a fresh pass.                                                                                                                                                                                                                                                                                                                      |
+| Hardware/publication         | Exact AMD observations are scoped to their recipe and host. Unavailable physical targets, release-wide hardware claims, public locks and media publication remain separate.                                                                                                                                                                                                                                                                                      |
 
 ### Fresh lyric-composite authoring
 
@@ -122,17 +127,24 @@ remains untouched. There is no repeat, Stop probe or rerender for reader fields.
 The retained MIME-only private reader hold was corrected by accepting the two
 standard WAV MIME labels while keeping exact PCM decoding and all hashes.
 
-The original joined video and 30-second soundtrack are available for private
-human review. Several sampled shots retain brighter lighting than the moonlit
-brief. Human visual quality, vocal/lyric timing and listening acceptance are
-pending. Per-shot library-call records and some processing-literal records are
+The original joined video and 30-second soundtrack remain preserved. The user
+rejects the video as unrelated to its lyrics, glitchy and mistimed. Static source
+inspection confirms that five independently generated shots have no measured
+alignment with six sung lines. The authored LRC is fixed, while FitDuration
+compresses the 30-second song to 23.8125 seconds. Those exact processing controls
+are technically verified; they do not establish alignment with actual vocals.
+The whole-duration samples also show inconsistent flower anatomy and lighting.
+A revision must inspect the actual sung timing and correct scene relevance and
+temporal continuity before another render. No corrected timing, new output or
+human acceptance is inferred. Per-shot library-call records and some
+processing-literal records are
 absent from the current receipt schema; the frozen graph, cached prompts/LRC,
 source trace, genuine five-shot progress and actual media are recorded at their
 true proof levels. They do not grant public qualification or original Auto
 acceptance. The LTX loading policy is explicit Expert sequential; ACE retains
 model CPU loading.
 
-### Full original Wan composite in progress
+### Full original Wan composite: deadline cancellation and recovery
 
 The separately guarded Wan Run starts at **00:21 UTC on 5 November**, after
 ordinary import, Arrange, Save, reload and exact twelve-node API checks. All
@@ -156,12 +168,31 @@ reader detail, never a model-memory allowance.
 The independent guard is ready before the genuine editor Run. It retains
 100 GiB initial available RAM, a 20 GiB reserve, 75 GB free disk, 25 GB maximum
 scratch, 1 GiB maximum owned swap growth, 2 GiB free swap and pressure limits.
-The two-hour bound is fixed before the first allocation of this complete task.
+The two-hour bound was fixed before the first allocation and was not extended.
+The task is still sampling when that bound expires at **02:21 UTC on 5 November**;
+the guard requests normal cancellation, producing **zero final outputs**. The
+last observed step before cancellation is 40 of 50. Available RAM remains above
+the reserve, and no owned swap/scratch limit triggers. This is a deadline hold,
+not evidence of a model-memory failure. The initial runtime estimate was too
+short for this full workload; the original run, time bound and receipts remain
+unchanged. There is no automatic identical retry or guard relaxation.
+
+The same supervisor replaces its worker normally. Read-only recovery checks
+confirm the exact source, runtime, packages, configuration, **119 disk / 118 served
+assets**, all **297 current files** and all **44 earlier output records**. Only
+the expected queue and empty cancelled preview-slot state change. All 169 current
+saved workflow bodies are retained; 167 earlier unrelated bodies remain exact.
+The actual browser terminal agrees with the independent HTTP detail, then closes
+normally. Cache is empty, scratch and downloads are zero, and the original
+LTX/Wan worker is untouched. The guard's original compact control terminal is
+retained separately from the later HTTP detail; a missing raw guard HTTP body is
+not fabricated. Success-only media audits and release helpers do not run.
+
 No reduced geometry, fewer steps, Pika sampler assumption, LTX prompt cap or
-original Auto qualification is substituted. Native terminal output, strict
-Wan-specific AV/audio/timeline checks, whole playback, preservation/release and
-human review remain pending. ACE variation's absent melody codecs and the
-43 missing-model holds remain separate.
+original Auto qualification is substituted. Any next attempt needs a separate
+diagnosis and admission; a longer measured runtime is not silently applied to the
+closed attempt. ACE variation's absent melody codecs and the 43 missing-model
+holds remain separate.
 
 The car diagnostic preserves the original 161-frame workload, prompt, input,
 seed, strength and resolution while explicitly selecting Custom/Expert sequential
@@ -182,11 +213,11 @@ offload storage stay zero. Peak GTT is recorded separately, never added to RAM
 as independent capacity. This exact Expert success does not qualify original
 Auto or establish the cause of the earlier model-CPU safety cancellations.
 
-The rocket remaster now also passes its complete 81-frame Expert native,
-provenance, playback and preservation checks. Its visual review and original
-Auto scope remain open. The full lyric composite is technically delivered, and
-the full Wan composite is now running through its independently guarded graph
-described above. Separately finish a
+The rocket remaster passes its complete 81-frame Expert native, provenance,
+playback and preservation checks, but the user rejects its visuals and requests
+a revision. Its original Auto scope remains open. The full lyric composite is
+also creatively rejected, and the full Wan composite has a deadline cancellation
+with verified recovery, as described above. Separately finish a
 conservative LTX Auto selection
 and working-memory diagnosis. Its current
 machine-capacity declaration lacks a bounded video working-demand contract;
