@@ -11,6 +11,47 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 This section is authoritative for current status. The dated checkpoints below
 retain their original source, timing and proof scope.
 
+All **nine photographic Moonflower scene candidates** are technically closed.
+The final dawn scene completes in **147.26 native seconds**, with strict
+nine-node /69-field /253-source-file task, input, consumed-control and
+cache/durable/served checks at **1536×1024 /81 frames /16 FPS**, video-only.
+Whole actual editor playback has all 81 frames with zero drops/errors. Two normal
+releases and QA closure preserve **562 files, 342 workflow bodies, 88 earlier
+outputs, 83 earlier preview slots and both video aliases**. Its 298 resource
+samples record minimum 67,993,305,088 bytes available RAM, zero owned-worker swap
+growth and zero scratch under the unchanged limits. The garden remains coherent,
+with restrained camera motion and a partly cropped foreground flower. These
+are candidate shots, without final human film approval.
+
+The ordinary **14-node final edit** imports, arranges, saves and reloads with its
+exact 69-field form and execution graph, borrowing the nine original clips and
+accepted 45-second soundtrack. Run then incorrectly reports no connected output
+after `ExportWithAudio` has been renamed. No task or model starts. Read-only
+closure preserves all 562 prior files /342 bodies and the resulting 574 files /
+345 bodies, including all original media and templates. The twelve additions
+are three ordinary saved/draft workflow files and nine browser-preview cache
+files bound to the original clips and existing conversion options.
+
+The client repair recognizes a declared media/text preview whose `dataSource`
+names an actual output port, independently of its editable label. Input players
+and label widgets alone do not establish an output; connection, disabled-node,
+required-input and resource checks remain. **22 focused tests, two relevant
+mocked browser cases, typecheck and the complete client check pass** at
+`5817c710`. The first full check's bundle-size failure remains preserved. Exact
+review measures only 106/107 startup gzip bytes and 19 deferred bytes; 119 asset
+names, 94 JavaScript names and four startup/90 deferred memberships remain exact.
+The measured adjustment retains 4/11 startup bytes of headroom, both deferred
+caps, dependencies and loading rules. New packaging mirrors 119 verified files;
+five dependent ledgers change fingerprints only, without public media, model
+pins or qualification changes. Fresh dependent-inventory checks pass **70 tests /
+860 subtests**, with reviewed source/wheel/Gallery inputs supplied for the exact
+source-closure check. The packaged backend gate and protected Linux adoption
+are still pending. The actual 45-second export and final human visual/
+listening review follow that adoption, with no further model inference needed.
+Four of nine cases remain privately accepted; the other creative, Auto,
+capability, public Gallery and hardware holds remain unchanged.
+
+The preceding night checkpoint is retained below with its original proof scope.
 A separately admitted **group CPU / no device-map** night version now completes
 in **149.01 native seconds**, retaining the exact prompt, reference, sampler,
 seed, precision, dimensions, 81 frames /16 FPS and 2× delivery. Only declared
