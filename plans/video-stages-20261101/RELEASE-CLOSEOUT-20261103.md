@@ -15,7 +15,15 @@ Linux now runs tested backend `22fdbc4e` / client `9760be6b`. Its protected idle
 adoption completed at 18:11 UTC on 5 November, preserving all 458 then-current
 files and 279 workflow bodies. The following vine-motion run and ordinary scoped
 release preserve 461 files / 280 bodies and return allocated/reserved accelerator
-counters to zero without another restart. Earlier `a8fa7258` protected idle
+counters to zero without another restart. A distinct photographic path/lawn
+input then closes in **19.76 native seconds**, with strict seven-node /69-field /
+253-source-file task, source-image pixel, consumed-control and two-preview media
+joins. Both actual editor views and two normal scoped releases preserve **469
+files, 284 workflow bodies, 71 earlier output records and 65 earlier preview
+slots**, including all four declared durable image aliases. The wider garden
+context retains its stone wall, pot, white flowers and curved path, with a
+stronger blue twilight cast. This is an input candidate, without final-film or
+human approval; the accepted 45-second song remains exact. Earlier `a8fa7258` protected idle
 adoption completed at 08:42 UTC on 5 November, preserving all 377 then-current
 files, 225 workflow bodies, runtime, packages and configuration, with 119 disk /
 118 served assets exact. Subsequent rocket delivery, a bounded speech diagnostic
@@ -32,6 +40,27 @@ outputs; normal supervisor recovery and browser closure preserve **433 files,
 The original LTX/Wan application
 and worker remain untouched. Earlier `6cdde314` / `e12980eb` lyric-authoring
 delivery remains source-scoped historical evidence.
+
+The path photograph's first full-compute motion scene completes in **119.41
+native seconds**. Strict nine-node /69-field /253-source-file task, input,
+consumed-control and cache/durable/served checks pass at **1536×1024 /81 frames /
+16 FPS /5.0625 seconds**, video-only. Full ordinary editor playback has 81 frames
+and zero drops/errors. Two normal owned releases and QA closure preserve **475
+files, 288 workflow bodies, 73 earlier outputs, 67 earlier preview slots and both
+actual native video aliases**. Same-worker allocated/reserved counters return
+to zero; 121,427,628,032 available bytes meet the unchanged cold-overlap admission.
+No additional cleanup, restart, Stop or model repeat is used.
+
+Its twelve samples show coherent photographic garden context, but forward camera
+travel is very limited. The original camera brief remains unaccepted; technical
+success is not creative approval. Read-only tracing still shows one opening-frame
+condition through the official provider, with no authored whole-video repetition.
+The actual VAE condition-latent count is not present in the retained ordinary
+receipts, so no internal cause or product fix is asserted. Further motion work
+requires an explicit changed guidance hypothesis rather than another unchanged
+prompt-only retry. Final photographic editing, actual phrase timing and human
+movie review remain open; none of these preparatory scenes changes the four of
+nine privately accepted cases or reopens the 43 user-held missing-model cases.
 
 The unfolding attempt crosses the unchanged **1 GiB owned-worker swap-growth**
 limit at 1,142,575,104 bytes while global available RAM remains 94,946,119,680
