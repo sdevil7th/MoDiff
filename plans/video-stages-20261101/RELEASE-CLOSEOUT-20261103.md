@@ -11,7 +11,11 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 This section is authoritative for current status. The dated checkpoints below
 retain their original source, timing and proof scope.
 
-Linux now runs tested backend `a8fa7258` / client `9760be6b`. Protected idle
+Linux now runs tested backend `22fdbc4e` / client `9760be6b`. Its protected idle
+adoption completed at 18:11 UTC on 5 November, preserving all 458 then-current
+files and 279 workflow bodies. The following vine-motion run and ordinary scoped
+release preserve 461 files / 280 bodies and return allocated/reserved accelerator
+counters to zero without another restart. Earlier `a8fa7258` protected idle
 adoption completed at 08:42 UTC on 5 November, preserving all 377 then-current
 files, 225 workflow bodies, runtime, packages and configuration, with 119 disk /
 118 served assets exact. Subsequent rocket delivery, a bounded speech diagnostic
@@ -191,6 +195,54 @@ passes. A new complete frozen backend gate is required before any Linux adoption
 The API/client contract and
 packaged client remain unchanged, so the completed compatible client proof is
 retained at its exact source rather than repeated.
+
+The final cleanup source then passes the complete frozen backend gate:
+**9,082 tests / 13,198 subtests**, 761 skips and 33 warnings, plus Ruff,
+dependency consistency and preflight. All four hosted backend jobs pass at
+`22fdbc4e`; all four client jobs pass at `9760be6b`. The completed full client
+check and three affected release/cleanup browser scenarios retain their original
+`49699919` backend pairing. A byte-accurate UTF-8 AST comparison verifies every
+server construct outside the cleanup body, including its signature, unchanged
+by the refinement, and all 119 client/bundle files remain exact. No raw receipt
+is relabelled and no broad gate is repeated for subsequent documentation.
+
+Two protected-admission reader holds remain recorded. Windows' default text
+decoding initially mismatches Git's UTF-8 source; explicit UTF-8 comparison passes.
+Another helper expects a full model list from a compact image-cache record. It
+stops before any shutdown intent, signal or source fast-forward. A fresh read-only
+diagnosis verifies every 458 app file and 279 workflow body, the same worker and
+original application. The corrected observer separately validates the completed
+video-cache record and the image record's exact 25-file immutable body proof,
+including current size, inode, timestamp, metadata and original Git/LFS aliases.
+No model payload is reread or redownloaded. The new protected adoption then
+completes at **18:11 UTC**, preserving all data, configuration, runtime, packages,
+selected cache identities and **119 disk / 118 served assets**. Only the queue's
+worker/timestamp metadata changes. The original application remains untouched.
+
+The first affected new vine-motion task completes in **109.03 native seconds**,
+retaining the original full 81-frame / 16 FPS / eight-step resident LTX recipe
+and the actual edited photographic input. Strict nine-node / 69-field /
+253-source-file checks bind the task, attempt, session, workflow, consumed
+controls, input hashes and cache/durable/served media. Output is **1536×1024 /
+81 frames / 16 FPS / 5.0625 seconds**, video-only. Whole actual editor playback
+has 81 frames and zero drops/errors. Native and frontend records retain identical
+actual task and immutable output/media controls; later frontend labels, optional
+geometry and supplemental provenance remain separate observations rather than
+execution authority. The reader is corrected before its first audit, preserving
+both raw documents; no inference or audit is rerun to repair those labels.
+
+Twelve duration samples retain attached leaves, vine, white flower and coherent
+garden context. Leaf/petal movement and framing shift are modest; cool color and
+curled detail remain limitations. This is a useful quiet insert, with final film
+and human approval still open. Two normal owned releases and ordinary QA closure
+preserve **461 files, 280 workflow bodies, all 70 earlier outputs and 64 earlier
+preview slots**, including both genuine video aliases. On that same worker,
+post-release allocated and reserved counters both read **zero**, with
+**124,420,186,112 bytes available**, above the unchanged **116,731,254,216-byte**
+cold-overlap admission. No extra cleanup, restart, Stop or repeat probe is used.
+This verifies the cleanup change for this exact Linux sequence; original Auto,
+other loading-policy failures, working-memory budgets, broader hardware and
+publication holds remain separate. The exact accepted 45-second song is unchanged.
 
 The full lyric composite has completed its **Expert** native, strict media,
 provenance, playback and preservation checks. Its actual run takes 785.55 seconds,
