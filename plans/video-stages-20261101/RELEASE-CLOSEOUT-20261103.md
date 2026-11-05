@@ -15,7 +15,12 @@ Linux now runs tested backend `a8fa7258` / client `9760be6b`. Protected idle
 adoption completed at 08:42 UTC on 5 November, preserving all 377 then-current
 files, 225 workflow bodies, runtime, packages and configuration, with 119 disk /
 118 served assets exact. Subsequent rocket delivery, a bounded speech diagnostic
-and photographic-opening work preserve the current 403-file / 244-body set. The original LTX/Wan application
+and photographic-opening work preserve 406 files / 245 bodies at the third
+opening's closeout. Subsequent closed-bud preparation preserves all of those
+originals, with 410 files / 249 bodies before native admission. Its separate
+photographic bud edit closes with 415 files / 250 bodies preserved. The next
+prompt-only bud version is prepared with 418 files / 253 bodies exact and no
+model task yet. The original LTX/Wan application
 and worker remain untouched. Earlier `6cdde314` / `e12980eb` lyric-authoring
 delivery remains source-scoped historical evidence.
 
@@ -243,9 +248,45 @@ cause is established. A separately versioned diagnostic changes only image
 condition strength from 1 to 0.7, retaining the second prompt, seed, source image,
 all computational settings and safety floors. Its ordinary nine-node import,
 Save/reload, 69-field form and Run-enabled preparation pass, with 403 files / 244
-bodies preserved. No diagnostic model task, guard or controller has started;
-fresh guarded admission is still required. The unchanged 112-token prompt reuses
-its exact pinned-tokenizer proof.
+bodies preserved. Its unchanged 112-token prompt reuses the exact pinned-tokenizer
+proof. The guarded diagnostic then completes in **133.89 native seconds**, with
+actual consumed conditioning strength **0.7** distinct from inactive authored
+denoise strength 1. Strict nine-node / 69-field / source / task / input / media
+checks pass for 1536×1024 / 81 frames / 16 FPS / 5.0625 seconds, video-only.
+Whole ordinary editor playback retains all 81 frames with zero drops/errors.
+Two scoped releases and QA closure preserve **406 files, 60 earlier output
+records, 53 earlier slots and 244 unrelated bodies**. No owned swap growth or
+temporary offload allocation occurs.
+
+The third version still has insufficient camera travel and parallax. All three
+opening originals remain preserved and creatively unaccepted; technical success
+does not promote them to templates or a finished movie. No fourth blind prompt
+or strength change repeats the opening. An independent closed-bud photographic
+input now targets the accepted song's silver-buds scene while retaining the same
+garden reference. Its ordinary seven-node import, library reopening, reload and
+complete 69-field form pass with zero model dispatch during preparation. Exact
+current image-contract metadata is inspected separately from executable values;
+all other inputs, wires and controls remain unchanged. The saved document may
+need zero metadata PUTs when it is already exact; the original private reader
+holds remain preserved. The separately guarded cached image edit completes in
+**18.40 native seconds**. Strict seven-node / 69-field / source / task / input /
+consumed-control checks bind both full-resolution previews, including exact
+loaded source pixels and both durable aliases of each output. Actual editor
+views pass; two normal scoped releases and QA closure preserve **415 files, 61
+earlier output records, 54 earlier slots and 249 unrelated bodies**.
+
+Local inspection rejects this edit for the intended input: it narrows the two
+side flowers but leaves the dominant foreground bloom open and adds a cyan
+cast. It is preserved and will not be animated as a successful closed-bud scene.
+A separately versioned, prompt-only correction identifies the center-left disc
+and every open blossom explicitly, retaining the original photographic reference,
+seed, all other 68 form fields and compute settings. Its fit and creative result
+remain unmeasured. Ordinary import, Arrange, Save/reload, all 69 form fields,
+seven-node API and visible Run-enabled checks now pass for that new version,
+with zero graph dispatch. A fresh idle observation verifies **418 files / 253
+bodies**, empty cache, no scratch/downloads and the unchanged source/worker.
+No new model controller, guard or task exists yet. No model is rerun to repair
+private readers. The accepted 45-second soundtrack is unchanged.
 
 Private reader holds remain retained. Normal asynchronous browser enrichment
 changes output presentation metadata between terminal GETs while the entire
@@ -257,7 +298,7 @@ no original receipt is overwritten, and no model rerun repairs these readers.
 
 | Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Running Linux app            | Tested backend `a8fa7258`, client `9760be6b`; two photographic-opening technical closeouts complete, motion still unaccepted. A 0.7-strength diagnostic is prepared without Run. Current 403 files / 244 workflow bodies, runtime/packages/configuration and 119 disk / 118 served assets remain preserved. Original LTX/Wan worker untouched. |
+| Running Linux app            | Tested backend `a8fa7258`, client `9760be6b`; three photographic-opening technical closeouts complete, motion still unaccepted. The separate bud edit closes technically but misses its creative target. Its prompt-only successor is prepared without a model task; all 418 files / 253 bodies are exact at the latest idle check. Runtime/packages/configuration and 119 disk / 118 served assets remain preserved. Original LTX/Wan worker untouched. |
 | Running Windows app          | Remains the previously verified `12a61082` / `d59d5e1e` pair. Large models run only on Linux.                                                                                                                                                                                                                                                                                                                                                                    |
 | CPU-offload cache accounting | Real CPU weights retained by exact official Accelerate hooks are counted even when visible parameters are meta tensors. Aliases are deduplicated; invalidated owners get no reuse credit. Inspection never executes custom hooks/mappings or lazy disk readers. This does not change loading preference, working-memory declarations or hardware qualification.                                                                                                  |
 | Required current gates       | Complete client check at `9760be6b`, 245 focused tests, two affected browser scenarios and 71 backend inventory tests / 890 subtests pass. Complete packaged backend gate at `a8fa7258`: 9,066 tests / 13,198 subtests. All four hosted backend and all four client jobs pass at these exact sources. No physical hardware qualification inferred. |
