@@ -1,6 +1,6 @@
 # Current video delivery and remaining release work
 
-Updated 5 November 2026. This checkpoint supersedes older pending-work summaries;
+Updated 6 November 2026. This checkpoint supersedes older pending-work summaries;
 historical recipes, verdicts and raw receipts remain unchanged. Source changes
 stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existing
 [backend PR7](https://github.com/sdevil7th/MoDiff/pull/7) and
@@ -45,11 +45,52 @@ caps, dependencies and loading rules. New packaging mirrors 119 verified files;
 five dependent ledgers change fingerprints only, without public media, model
 pins or qualification changes. Fresh dependent-inventory checks pass **70 tests /
 860 subtests**, with reviewed source/wheel/Gallery inputs supplied for the exact
-source-closure check. The packaged backend gate and protected Linux adoption
-are still pending. The actual 45-second export and final human visual/
-listening review follow that adoption, with no further model inference needed.
-Four of nine cases remain privately accepted; the other creative, Auto,
-capability, public Gallery and hardware holds remain unchanged.
+source-closure check. The complete packaged backend gate at `19a732a4` passes
+**9,082 tests /13,198 subtests**, with 761 skips and 33 warnings, plus Ruff,
+dependency consistency and preflight. Its four hosted backend jobs pass;
+the paired client has quality, Windows and Mac passes, with its browser job
+still pending at the latest observation. The raw full-client receipt retains
+its original backend pairing and an explicit unchanged-executable-code review.
+
+Protected Linux adoption closes at **00:06 UTC on 6 November**, preserving
+**574 files /345 workflow bodies /89 earlier output records /84 preview slots**,
+configuration, runtime, packages, selected cache identities and **119 disk /
+118 served assets**. Only queue worker/timestamp metadata changes. The saved
+final graph then ordinarily reopens and reloads with Run enabled and all
+14 nodes /69 settings unchanged; no import, Save or model execution repeats.
+
+The media-only final edit completes in **22.18 native seconds** through one
+ordinary UI Run. Strict task/attempt/session/workflow/source/input/control/
+cache/durable/served checks pass for **720 decoded frames /1536×1024 /16 FPS /
+45 seconds /48 kHz stereo AAC**. All 720 frames independently match the intended
+nine-clip order, with minimum PSNR **41.58 dB** and maximum mean absolute RGB
+error **1.614** under the predeclared 30 dB /4 limits. Zero-offset audio
+correlations exceed **0.99978** in both channels. The accepted original WAV
+remains byte-identical, unstretched and uncompressed; AAC delivery is a separate
+lossy domain. Both native video aliases match.
+
+Whole actual editor playback shows **720 frames /zero drops/errors**, at 1×
+muted. Ten normal scoped data-cache releases, including one earlier successful
+release that is not repeated, finish with an empty cache and no scratch.
+Final QA closure preserves **581 files /350 workflow bodies**, all 89 earlier
+output records and 84 earlier slots, media, templates and verdicts. The final
+candidate is delivered for human visual/listening review. Restrained camera
+movement, abrupt exposure cuts and pleated late petals remain creative limits;
+word alignment, final captions and publication are not approved.
+
+Preserved closeout observer failures distinguish actual media success from
+document/UI inspection. Ordinary pan/zoom legitimately changes the saved
+viewport. A video input preview can also overlap a neighbouring node and
+obscure its footer or context target when selected. Normal context-menu
+releases with ordinary deselection close the cache without forced clicks,
+graph changes, model reruns or weaker checks. A separate preview-layout
+regression fix remains open; an earlier interrupted observer's missing
+QA-close receipt remains a hold, with its absent processes independently
+verified. Successful final QA closure is recorded separately.
+
+Four of nine cases remain privately accepted; the final film awaits its own
+human verdict. Other creative, Auto, capability, public Gallery and hardware
+holds remain unchanged, including the 43 user-held missing-model cases.
 
 The preceding night checkpoint is retained below with its original proof scope.
 A separately admitted **group CPU / no device-map** night version now completes
