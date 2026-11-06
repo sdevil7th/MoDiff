@@ -2780,6 +2780,13 @@ def _declared_profile_candidates(
     )
     if full_residency_ready:
         preferred_offload = OFFLOAD_MODE_NONE
+    from modiff.direct_video_auto_resource import shared_video_policy
+    if shared_video_policy(form, hardware):
+        # The shared-pool video policy is separately declared, not an ordering
+        # change to the shared capability list. Exact header/storage validation
+        # below must still succeed before this candidate can be ready.
+        preferred_offload = OFFLOAD_MODE_GROUP_CPU
+        full_residency_ready = False
     candidates: list[dict[str, Any]] = []
 
     lower_memory = requirements.get("lowerMemory") if isinstance(requirements.get("lowerMemory"), dict) else None
@@ -3663,6 +3670,20 @@ def build_auto_resource_plan(
         reason = "; ".join(candidate["requirementsMissing"])
         candidate.update(canAutoRun=False, readiness="skipped", healthBadge="Not suitable locally", skipReason=reason)
         candidate["proof"] = {**(candidate.get("proof") or {}), "status": "skipped", "message": reason}
+
+    from modiff.direct_video_auto_resource import shared_video_policy, shared_video_storage
+    if shared_video_policy(form, hardware):
+        # Revalidate after history/qualification and every census path. Neither
+        # stored quantization nor an early non-native path may waive this scope.
+        for candidate in candidates:
+            candidate.pop('directVideoStorage', None)
+            try:
+                candidate['directVideoStorage'] = shared_video_storage(candidate, form, hardware)
+            except ValueError as error:
+                candidate['requirementsMissing'] = list(dict.fromkeys([*(candidate.get('requirementsMissing') or []), str(error)]))
+                reason = '; '.join(candidate['requirementsMissing'])
+                candidate.update(canAutoRun=False, readiness='skipped', skipReason=reason)
+                candidate['proof'] = {**candidate['proof'], 'status': 'skipped', 'message': reason}
 
     # Unknown layouts retain the historical original candidate and proof level.
     # Publishing ready alternatives without the dense census would also let

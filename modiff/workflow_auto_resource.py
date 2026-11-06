@@ -1137,6 +1137,15 @@ def _build_workflow_auto_plan(
                 requirements = {**requirements, 'systemRamBytes': max(
                     requirements['systemRamBytes'], conversion['systemRamBytes'],
                 )}
+            from modiff.direct_video_auto_resource import shared_video_storage
+            video_storage = shared_video_storage(candidate, form, hardware)
+            if video_storage:
+                parameter_residency = {'systemRamBytes': video_storage['systemRamBytes'], 'vramBytes': 0}
+                parameter_phase = 'cpu_resident'
+                conversion = {'systemRamBytes': video_storage['coldSystemRamBytes'], 'vramBytes': 0}
+                conversion_additional = conversion['systemRamBytes'] - parameter_residency['systemRamBytes']
+                requirements = {**requirements, 'systemRamBytes': max(
+                    requirements['systemRamBytes'], conversion['systemRamBytes'])}
             if gpu_loading:
                 requirements = {**requirements, 'vramBytes': max(requirements['vramBytes'], gpu_loading['vramBytes'])}
             working_additional = {}

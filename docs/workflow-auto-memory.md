@@ -212,7 +212,45 @@ exact revision, dtype, per-component byte counts, total and largest component,
 with `proofScope: parameter_storage_lower_bound_only`. Reading these headers
 does not construct a model or grant artifact, runtime or memory qualification.
 Unsupported quantization, missing headers and unknown layouts retain the existing
-unknown-demand policy. Audio and video host-memory admission is unchanged.
+unknown-demand policy. Audio and other video routes retain their existing
+host-memory admission. The separately scoped direct-video contract below
+requires complete headers instead of admitting an unknown layout.
+
+### Direct video on Linux shared-memory ROCm
+
+`ltx-direct-shared-rocm-storage-v1` covers the declared `ltx-video:direct`
+execution profile, BF16 `Lightricks/LTX-Video-0.9.8-13B-distilled` at
+`7c64400e1861cc0d7b98d570a1926d5408ec60cd`, on the primary Linux AMD ROCm
+shared/unified-memory CUDA device. Auto selects the existing official group CPU
+offload path and no device map. This loads on CPU before attaching group hooks;
+it does not repeat direct CUDA loading or whole-component model CPU offload.
+The shared supported-mode list remains a capability list, and saved Expert
+choices and stored optimization selections cannot waive this loading contract.
+CPU, dedicated CUDA, MPS, XPU, Windows and other pipelines keep their policy.
+
+Auto requires bounded headers for all three neural components: T5 encoder,
+LTX transformer and LTX VAE. Host parameter storage is their sum at the selected
+dtype. Conservative cold host storage is twice the larger of the complete
+source-payload sum and requested-storage sum. It does not assume component load
+order, serial loading, streaming, or zero-copy conversion. Missing/changed
+components, another pin, dtype, quantization or placement refuse this Auto
+route. No weight payload or model code is loaded during planning.
+
+The covered workload is one video, at most 768×512, eight steps and guidance 1;
+frame limits are 161 for image-to-video, 121 for text-to-video and 81 for
+reference/video-to-video. Auto preserves the requested workload within those
+limits and refuses larger requests rather than reducing them. Connected
+execution recipes retain the ordinary inspection, quantization, device-map,
+attention and VAE-policy boundaries.
+
+The whole-graph planner adds known cold host storage to its existing inference
+headroom, keeps host and accelerator demands in the same shared pool, and
+retains owner lifetimes, actual-storage-only warm credits and dispatch-time
+free-memory checks. GPU group storage, activations and total inference peaks
+remain unmeasured; `workingMemoryPolicy` stays `runtime_headroom_policy`.
+Passing static admission is not physical Auto execution, a diagnosis of prior
+swap growth, a working-set guarantee, creative acceptance or hardware
+qualification. Native verification must report those proof levels separately.
 
 For ordinary dense model-CPU offload on a reported shared/unified accelerator,
 the final parameter-capacity check uses the smallest of the known positive

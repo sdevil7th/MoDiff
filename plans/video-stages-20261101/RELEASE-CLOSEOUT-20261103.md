@@ -11,6 +11,30 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 This section is authoritative for current status. The dated checkpoints below
 retain their original source, timing and proof scope.
 
+### Boardwalk/car Auto continuation — 6 November
+
+The user authorizes continued boardwalk/car Auto work, with models only on Linux
+and changes in the same two PRs. Earlier Expert proofs, safety cancellations,
+creative limitations and all saved media remain preserved. No new native model
+has run for this continuation.
+
+Six no-model regressions reproduce Auto selecting whole-model CPU offload for
+every saved alternative and admitting an incomplete direct-video component
+census. The focused repair scopes the pinned BF16 direct LTX pipeline on Linux
+shared-memory AMD ROCm to the existing official group CPU path without a device
+map. It requires all neural component headers and reserves conservative source
+and destination host storage in whole-graph admission, above existing inference
+headroom. It preserves the original 81/161-frame workloads and refuses larger
+unreviewed controls without reducing them. Other platforms, pipelines and device
+boundaries retain their policy; the shared capability list is unchanged.
+
+Focused validation passes 539 tests /522 subtests; the final 30-case route file
+also passes, including source/requested dtype overlap and complete-versus-partial
+warm-owner credits. Ruff and diff checks pass. Complete paired gates, protected
+Linux adoption and genuine guarded Auto outputs remain pending. Static admission
+and earlier Expert success do not establish new Auto execution, the cause of
+prior swap growth, creative acceptance or hardware qualification.
+
 All **nine photographic Moonflower scene candidates** are technically closed.
 The final dawn scene completes in **147.26 native seconds**, with strict
 nine-node /69-field /253-source-file task, input, consumed-control and
