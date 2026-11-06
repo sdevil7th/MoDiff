@@ -11,6 +11,45 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 This section is authoritative for current status. The dated checkpoints below
 retain their original source, timing and proof scope.
 
+### Precise Run recovery implementation — 6 November
+
+The next product increment targets the actual correction when Run is blocked.
+Invalid layer/conditioning/offload values reveal their existing controls;
+unsupported model/task choices focus the supported selector without replacing
+the saved value. Required optional-runtime diagnostics retain the backend's
+declared profile alternatives and open the corresponding Setup entry. Auto
+planning failures open the existing read-only workflow resource inspector.
+Navigation installs nothing and submits no graph; real resource rejection,
+required inputs and platform capability checks stay enforced.
+
+Issue actions are bound to the workflow, canvas/form epochs and semantic graph
+inputs that produced them. A later edit or document switch invalidates the old
+action. Pending focus is volatile and cancelled on panel departure, including
+when runtime metadata arrives late. Runtime failure history retains its separate
+task/run ownership.
+
+Client `05225ce769a420681386da1da53d00b47b629b91` passes the complete client
+check in **557.21 seconds**, paired with documentation backend `c2d4b725`.
+Eight affected mocked browser scenarios pass, including four new recovery
+scenarios; the final named runtime region also passes its targeted browser
+check. These are automated UI/contract checks, not native or model evidence.
+The first full check's accessibility failure is preserved; explicit named
+region/group roles correct it without relaxing the style audit.
+
+The checked build retains **119 assets**, 94 JavaScript assets and the same four
+startup/90 deferred memberships. Measured compressed growth is 894 largest /
+896 total startup /1556 deferred bytes; only that cost is added while preserving
+the existing headroom and independent 64 KiB deferred-chunk cap. Dependencies,
+loading boundaries, minifier, backend execution and model contracts are unchanged.
+The five dependent inventories change fingerprints only. The complete packaged
+backend check and fresh head CI are required before calling this increment
+merge-ready; Linux adoption and native no-model recovery verification remain
+pending. The existing Linux deployment still serves `57811fc2` /`f84e7cdb`.
+
+This work does not repeat closed model proofs or resolve the separate creative,
+missing-model, Wan deadline, ACE melody-codec, public Gallery, hardware and
+publication holds recorded below.
+
 ### Paired PR review and manual-testing readiness — 6 November
 
 The review covers both PR7 diffs against `develop`, with detailed inspection of
@@ -115,10 +154,10 @@ single graceful refresh, and the earlier application remains untouched.
 
 One normal built-app Auto Run per workload then completes, serially on Linux:
 
-| Workload | Native execution | Delivered video | Actual editor playback |
-| --- | ---: | --- | --- |
-| Boardwalk, two original ordered images | 155.70 seconds | 81 frames /16 FPS /5.0625 seconds | 81 frames, zero drops/errors |
-| Car, one original image | 308.43 seconds | 161 frames /16 FPS /10.0625 seconds | 161 frames, zero drops/errors |
+| Workload                               | Native execution | Delivered video                     | Actual editor playback        |
+| -------------------------------------- | ---------------: | ----------------------------------- | ----------------------------- |
+| Boardwalk, two original ordered images |   155.70 seconds | 81 frames /16 FPS /5.0625 seconds   | 81 frames, zero drops/errors  |
+| Car, one original image                |   308.43 seconds | 161 frames /16 FPS /10.0625 seconds | 161 frames, zero drops/errors |
 
 Both preserve their complete prompts, inputs, 768×512 generation, eight steps,
 CFG 1, BF16, automatic attention, seeds and 2× delivery at **1536×1024**, video-only.
@@ -968,17 +1007,17 @@ Optional artifact size fields are null; separately measured encoded metadata and
 full decode establish dimensions and frame counts. No absent values are invented,
 no original receipt is overwritten, and no model rerun repairs these readers.
 
-| Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Running Linux app            | Tested backend `a8fa7258`, client `9760be6b`; three subtle openings and two rejected bud edits remain preserved. A separate bud macro supplies the completed resident unfolding insert. Strict audit/playback, two releases and normal QA close preserve 439 files / 266 bodies, with empty cache/scratch and no downloads. Original sequential cancellation is retained. Runtime/packages/configuration and 119 disk / 118 served assets remain preserved; original LTX/Wan worker untouched. |
-| Running Windows app          | Remains the previously verified `12a61082` / `d59d5e1e` pair. Large models run only on Linux.                                                                                                                                                                                                                                                                                                                                                                    |
-| CPU-offload cache accounting | Real CPU weights retained by exact official Accelerate hooks are counted even when visible parameters are meta tensors. Aliases are deduplicated; invalidated owners get no reuse credit. Inspection never executes custom hooks/mappings or lazy disk readers. This does not change loading preference, working-memory declarations or hardware qualification.                                                                                                  |
-| Required current gates       | Complete client check at `9760be6b`, 245 focused tests, two affected browser scenarios and 71 backend inventory tests / 890 subtests pass. Complete packaged backend gate at `a8fa7258`: 9,066 tests / 13,198 subtests. All four hosted backend and all four client jobs pass at these exact sources. No physical hardware qualification inferred. |
-| Preserved video delivery     | The accepted photographic Pika and MiniMax clips, portable templates, rejected paper-boat originals, preview/upload repairs and Service CLI evidence remain intact. No extra H3 run tests this cache-reader fix.                                                                                                                                                                                                                                                 |
+| Area                         | Actual status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Running Linux app            | Tested backend `a8fa7258`, client `9760be6b`; three subtle openings and two rejected bud edits remain preserved. A separate bud macro supplies the completed resident unfolding insert. Strict audit/playback, two releases and normal QA close preserve 439 files / 266 bodies, with empty cache/scratch and no downloads. Original sequential cancellation is retained. Runtime/packages/configuration and 119 disk / 118 served assets remain preserved; original LTX/Wan worker untouched.                                                           |
+| Running Windows app          | Remains the previously verified `12a61082` / `d59d5e1e` pair. Large models run only on Linux.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| CPU-offload cache accounting | Real CPU weights retained by exact official Accelerate hooks are counted even when visible parameters are meta tensors. Aliases are deduplicated; invalidated owners get no reuse credit. Inspection never executes custom hooks/mappings or lazy disk readers. This does not change loading preference, working-memory declarations or hardware qualification.                                                                                                                                                                                          |
+| Required current gates       | Complete client check at `9760be6b`, 245 focused tests, two affected browser scenarios and 71 backend inventory tests / 890 subtests pass. Complete packaged backend gate at `a8fa7258`: 9,066 tests / 13,198 subtests. All four hosted backend and all four client jobs pass at these exact sources. No physical hardware qualification inferred.                                                                                                                                                                                                       |
+| Preserved video delivery     | The accepted photographic Pika and MiniMax clips, portable templates, rejected paper-boat originals, preview/upload repairs and Service CLI evidence remain intact. No extra H3 run tests this cache-reader fix.                                                                                                                                                                                                                                                                                                                                         |
 | Gallery campaign             | Sixteen unique cached examples have current outputs; thirteen have human visual/listening acceptance. The photographic rocket is accepted with its framing limitation; its rejected predecessor stays preserved. Boardwalk/car review and the replacement lyric film remain open. The exact 45-second song is accepted; the unfolding insert is technically closed and locally useful, with camera/texture limits. Wan cancelled at its deadline without output; ACE variation lacks melody codecs. All 20 retain separate release qualification limits. |
-| Requested nine               | Klein, rainy rail, ACE repaint and the photographic rocket replacement are privately accepted: four accepted, five unclosed. Boardwalk/car review, the final lyric film, Wan's deadline hold and ACE variation's absent-codec capability remain. Original Auto scopes remain open. No held scope is marked complete by private creative acceptance. |
-| Missing models               | All 43 user-held cases remain held without downloads. The original 73-error public Gallery report is a retained baseline, not a fresh pass.                                                                                                                                                                                                                                                                                                                      |
-| Hardware/publication         | Exact AMD observations are scoped to their recipe and host. Unavailable physical targets, release-wide hardware claims, public locks and media publication remain separate.                                                                                                                                                                                                                                                                                      |
+| Requested nine               | Klein, rainy rail, ACE repaint and the photographic rocket replacement are privately accepted: four accepted, five unclosed. Boardwalk/car review, the final lyric film, Wan's deadline hold and ACE variation's absent-codec capability remain. Original Auto scopes remain open. No held scope is marked complete by private creative acceptance.                                                                                                                                                                                                      |
+| Missing models               | All 43 user-held cases remain held without downloads. The original 73-error public Gallery report is a retained baseline, not a fresh pass.                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Hardware/publication         | Exact AMD observations are scoped to their recipe and host. Unavailable physical targets, release-wide hardware claims, public locks and media publication remain separate.                                                                                                                                                                                                                                                                                                                                                                              |
 
 ### Fresh lyric-composite authoring
 
