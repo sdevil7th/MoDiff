@@ -15,8 +15,8 @@ retain their original source, timing and proof scope.
 
 The user authorizes continued boardwalk/car Auto work, with models only on Linux
 and changes in the same two PRs. Earlier Expert proofs, safety cancellations,
-creative limitations and all saved media remain preserved. No new native model
-has run for this continuation.
+creative limitations and all saved media remain preserved. Both full saved
+workloads now have new, technically closed native Auto proofs on Linux.
 
 Six no-model regressions reproduce Auto selecting whole-model CPU offload for
 every saved alternative and admitting an incomplete direct-video component
@@ -30,10 +30,9 @@ boundaries retain their policy; the shared capability list is unchanged.
 
 Focused validation passes 539 tests /522 subtests; the final 30-case route file
 also passes, including source/requested dtype overlap and complete-versus-partial
-warm-owner credits. Ruff and diff checks pass. Complete paired gates, protected
-Linux adoption and genuine guarded Auto outputs remain pending. Static admission
-and earlier Expert success do not establish new Auto execution, the cause of
-prior swap growth, creative acceptance or hardware qualification.
+warm-owner credits. Ruff and diff checks pass. The new Auto proofs below are
+separate from earlier Expert output. They do not establish the cause of prior
+whole-model CPU swap growth, creative acceptance or broad hardware qualification.
 
 The first complete backend attempt finishes with **9,111 passes /13,198
 subtests**, 761 skips and one lifecycle-test failure. Its existing fixture
@@ -47,8 +46,74 @@ The complete client check passes in **615.71 seconds** at the exact new Auto
 repair source, with the unchanged 119-file bundle. All three affected Auto
 browser scenarios pass across the original two successes and one isolated,
 warmed-server run with unchanged assertions and time limits. Its earlier
-blank-startup timeout remains preserved. A new complete backend gate is still
-required before protected adoption or native Auto execution.
+blank-startup timeout remains preserved.
+
+The complete packaged backend gate at `57811fc2` then passes **9,113 tests /
+13,198 subtests**, 761 skips and 33 warnings in 2,019.95 pytest seconds, plus Ruff,
+dependency consistency and preflight. The raw client receipt retains its actual
+`35b05d76` backend pairing; an explicit comparison proves that `57811fc2` changes
+only tests/documentation, with no executable, package or client-bundle delta.
+All four backend and all four client hosted jobs pass at `57811fc2` /`f84e7cdb`.
+The first hosted Windows job timed out while starting PowerShell to create a
+junction fixture, before its target assertion. Only that failed job was retried;
+the unchanged checks pass. The original failure and the earlier local fixture
+and browser-startup failures remain preserved, without weakened time limits.
+
+Protected idle Linux adoption of `57811fc2` /`f84e7cdb` preserves **584 files,
+353 workflow bodies, 90 outputs and 85 preview slots**, runtime, packages,
+configuration, selected cached artifacts and **119 disk /118 served assets**.
+Only expected queue worker/timestamp metadata changes. No models run during the
+single graceful refresh, and the earlier application remains untouched.
+
+One normal built-app Auto Run per workload then completes, serially on Linux:
+
+| Workload | Native execution | Delivered video | Actual editor playback |
+| --- | ---: | --- | --- |
+| Boardwalk, two original ordered images | 155.70 seconds | 81 frames /16 FPS /5.0625 seconds | 81 frames, zero drops/errors |
+| Car, one original image | 308.43 seconds | 161 frames /16 FPS /10.0625 seconds | 161 frames, zero drops/errors |
+
+Both preserve their complete prompts, inputs, 768×512 generation, eight steps,
+CFG 1, BF16, automatic attention, seeds and 2× delivery at **1536×1024**, video-only.
+The original .55/.7 image-conditioning controls and authored denoise-strength
+fields remain distinct. Actual submitted whole-workflow Auto plans and consumed
+owner fields prove the selected group CPU policy; saved form defaults and earlier
+Expert results are not substituted for that evidence. Strict task, attempt,
+session, workflow, all 69 observed fields, 254 source files, ordered input hashes,
+actual input pixels and cache/durable/served media joins pass. Authored 512 versus
+consumed 128 prompt-token limits and blank negative prompt versus `None` are
+retained as explicit source-backed normalizations. Absent runtime-map and public
+qualification identifiers are not invented.
+
+Independent guards retain all original resource floors and 60/90-minute task
+bounds. Their 317/618 actual samples show minimum available RAM of
+80,122,486,784 /70,384,672,768 bytes, **zero owned-worker swap growth and zero
+scratch**, without a stop. These are observations of two exact workloads on this
+target, not a general inference-peak or combined-fit qualification. Two ordinary
+owned releases per run and normal browser closure preserve every earlier output,
+media alias and unrelated workflow. The final state has **596 files, 361 workflow
+bodies, 92 outputs and 87 slots**, empty cache, no scratch/download and the same
+worker. Available RAM recovers above the unchanged cold-loading admission through
+normal release, without another cleanup, restart or OS change.
+
+The first private boardwalk audit compared FFmpeg WebP decoding with cached
+Pillow pixels and stopped at that reader assumption. The original hold/log remain
+unchanged. A read-only diagnosis using the app's actual Pillow/ImageOps path
+proves both input images match their cached PNG pixels exactly. A separately
+versioned strict reader then passes; car uses that corrected reader from its
+first audit. No model, input, graph or application source is rerun or altered to
+repair this evidence reader. The already-running boardwalk controller consumes
+an explicitly labelled projection of the actual version-two audit, retaining the
+original failed audit as a failure.
+
+The **Auto execution issues for these two saved full workloads are technically
+closed at this source**. Boardwalk still starts its travel late and develops soft,
+distorted posts/grass near the ending; the car's body styling changes during its
+turn. Their creative cases remain unaccepted. These results do not approve public
+templates/media, publication, other hardware, the unresolved old whole-model CPU
+mechanism, Wan's fixed-deadline hold or ACE's absent melody-codec capability. The
+43 missing-model cases remain user-held. Campaign human acceptance stays **five
+of nine**, with four creative/capability cases unclosed; new technical artifacts
+do not inflate those counts.
 
 All **nine photographic Moonflower scene candidates** are technically closed.
 The final dawn scene completes in **147.26 native seconds**, with strict
