@@ -35,6 +35,21 @@ Linux adoption and genuine guarded Auto outputs remain pending. Static admission
 and earlier Expert success do not establish new Auto execution, the cause of
 prior swap growth, creative acceptance or hardware qualification.
 
+The first complete backend attempt finishes with **9,111 passes /13,198
+subtests**, 761 skips and one lifecycle-test failure. Its existing fixture
+mocked planning RAM but left inactive CPU-cache eviction observing live host
+pressure; the unrelated fake owner could therefore be legitimately evicted.
+A deterministic forced-pressure regression reproduces this fixture defect.
+The test fixture now supplies the same fake RAM observation to both paths;
+production eviction and all model safety limits remain unchanged. Focused
+lifecycle, real pressure-policy and direct-video checks pass **95 tests**.
+The complete client check passes in **615.71 seconds** at the exact new Auto
+repair source, with the unchanged 119-file bundle. All three affected Auto
+browser scenarios pass across the original two successes and one isolated,
+warmed-server run with unchanged assertions and time limits. Its earlier
+blank-startup timeout remains preserved. A new complete backend gate is still
+required before protected adoption or native Auto execution.
+
 All **nine photographic Moonflower scene candidates** are technically closed.
 The final dawn scene completes in **147.26 native seconds**, with strict
 nine-node /69-field /253-source-file task, input, consumed-control and

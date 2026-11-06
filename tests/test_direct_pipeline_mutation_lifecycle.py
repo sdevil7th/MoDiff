@@ -203,6 +203,11 @@ def runtime(tmp_path, monkeypatch):
             "devices": [],
         },
     )
+    # Planning and inactive CPU-cache eviction must observe the same fake
+    # machine. Host pressure belongs to the dedicated memory-pressure tests.
+    monkeypatch.setattr('modiff.hardware.system_memory_snapshot', lambda: {
+        'total_bytes': 64 * 1024**3, 'available_bytes': 48 * 1024**3,
+    })
     monkeypatch.setattr("modiff.NodeBase.modelstore.is_hf_cached", lambda *args, **kwargs: True)
     monkeypatch.setattr("modiff.NodeBase.modelstore.is_local_cached", lambda *args, **kwargs: True)
     monkeypatch.setattr(image, "pipeline_class_from_name", lambda *args: StableDiffusionXLPipeline)
@@ -336,6 +341,25 @@ def test_mutation_control_edits_replace_only_the_affected_owner(runtime, field, 
     assert pipeline(server).active == [
         ("changed" if field == "adapter_name" else "style", 0.3 if field == "scale" else 0.7)
     ]
+
+
+def test_mutation_lifecycle_fixture_does_not_inherit_operator_ram_pressure(runtime, monkeypatch):
+    # This file models one fixed fake machine. A busy test host must not make
+    # its independent real pressure probe evict the unrelated fake owner.
+    monkeypatch.setattr('modiff.hardware._windows_memory_snapshot', lambda: {
+        'total_bytes': 64 * 1024**3, 'available_bytes': 0,
+    })
+    server, weight, _ = runtime
+    graph = make_graph(weight)
+    graph['nodes']['loader2'] = deepcopy(graph['nodes']['loader'])
+    graph['nodes']['generate2'] = deepcopy(graph['nodes']['generate'])
+    graph['nodes']['generate2']['params']['pipeline'] = source('loader2', 'pipeline')
+    graph['paths'][0].extend(['loader2', 'generate2'])
+    run(server, graph)
+    unrelated = pipeline(server, 'loader2')
+    graph['nodes']['adapter']['params']['replace_existing'] = literal(False)
+    run(server, graph)
+    assert pipeline(server, 'loader2') is unrelated
 
 
 def test_same_path_local_bytes_change_reconstructs_unhinted_owner(runtime):
