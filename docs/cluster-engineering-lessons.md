@@ -292,6 +292,13 @@ the original geometry assertions, then repeat the concurrent generation gesture.
 - Runtime-only failures need the same visible correction path, restricted to
   their exact active workflow/run. Keep them advisory after edits until a new
   execution verifies the correction; never fabricate an initial tensor or model.
+- Bind Run-blocked recovery actions to the document and effective inputs that
+  produced the diagnostic, not only whichever tab is active when clicked.
+  Preserve exact field and declared runtime targets. Prove ordinary navigation,
+  delayed metadata, panel departure and stale-action rejection without installing
+  packages or submitting a graph. Focus requests are volatile; progress and
+  presentation changes must not impersonate authored input changes. Keep actual
+  resource rejection and unsupported-platform checks intact.
 - Diagnose the effective bound iteration input, not only the enclosing loop's
   original Pipeline State. Report bounded type/shape summaries, never contents,
   and preserve the resource-error category for memory failures.

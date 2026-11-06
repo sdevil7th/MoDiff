@@ -29,6 +29,35 @@ accelerator extra; specialized AMD/vendor-wheel profiles use their guided repair
 command. Native installs do not require a historical installer receipt. Avoid
 replacing a working ROCm stack with a CPU/CUDA sync.
 
+## Run is blocked
+
+Open the Run readiness summary to review every issue. Use the action beside the
+specific problem instead of changing unrelated settings:
+
+- **Choose supported task** or **Choose supported model** opens that selector.
+  The current choice stays unchanged until you select another one. Expert does
+  not make an unsupported backend capability available.
+- **Edit setting** reveals the control, including a closed Advanced generation
+  or conditioning section. Correct the value there; merely opening it does not
+  change the workflow.
+- **Review runtime** opens the required Setup entry. Read its platform and
+  compatibility status before choosing an offered Install, Repair or Activate
+  action. Some requirements are unavailable on the connected platform.
+  Transformers and PEFT belong to ordinary base setup, not a separate optional
+  activation. Missing core packages need the matching base-environment repair.
+- **Review Auto options** opens Workflow resources. **Check Auto execution
+  plan** inspects the current graph without starting a run or changing its
+  settings. A memory shortfall stays blocked until a supported configuration
+  fits; a successful check does not qualify another recipe or platform.
+- **Inspect node** selects the relevant node and its available field controls.
+  Supply missing inputs or review model requirements there. Model installation
+  and resource-setting changes remain separate explicit actions.
+
+If the workflow changes while the dialog is open, close it and check the current
+issues again. Actions from an older document cannot install or change settings
+for the newly selected workflow. Leaving a recovery panel cancels its pending
+focus request, so late metadata does not reopen or focus an old target.
+
 ## The backend does not start
 
 1. Confirm Python 3.12 and the active executable reported by preflight.
