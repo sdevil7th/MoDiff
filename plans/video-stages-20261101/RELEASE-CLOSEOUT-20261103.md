@@ -84,9 +84,18 @@ viewport. A video input preview can also overlap a neighbouring node and
 obscure its footer or context target when selected. Normal context-menu
 releases with ordinary deselection close the cache without forced clicks,
 graph changes, model reruns or weaker checks. A separate preview-layout
-regression fix remains open; an earlier interrupted observer's missing
-QA-close receipt remains a hold, with its absent processes independently
-verified. Successful final QA closure is recorded separately.
+regression now reproduces the obstruction with late-loaded landscape and
+portrait fixtures: the landscape footer's actual pointer target belongs to
+the neighbouring audio node. The narrow client fix reserves a bounded video
+frame before metadata loads, with portrait content contained inside it.
+The same ordinary import/Arrange/browser test passes, including real pointer
+access, unchanged frame geometry, scoped release, Save/reload, audio clear/rebind,
+blocked Run while blank and zero graph submissions. Three related browser
+scenarios and **486 focused media/measurement/package tests** also pass.
+Full client validation, packaging, paired backend validation and protected
+native adoption remain pending for this new fix. The earlier interrupted
+observer's missing QA-close receipt remains a hold, with its absent processes
+independently verified. Successful final-film QA closure is recorded separately.
 
 Four of nine cases remain privately accepted; the final film awaits its own
 human verdict. Other creative, Auto, capability, public Gallery and hardware
