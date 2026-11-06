@@ -221,4 +221,3 @@ def test_only_complete_warm_loading_phase_receives_cold_overlap_credit(setup, co
     floor = int(128 * GIB * .1)
     assert warm['requirements']['systemRamBytes'] == floor + (0 if complete else 24)
     assert warm['requirements']['vramBytes'] == 2 * GIB
-
