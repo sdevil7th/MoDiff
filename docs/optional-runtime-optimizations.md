@@ -35,6 +35,12 @@ immutable revisions remain distinct. Install job completion is not activation,
 and every requested runtime profile must be supplied by the verified active
 environment, including only its explicitly declared composite aliases.
 
+A pending status read is shown as checking, not as missing setup or an
+unverified installation. A failed read reports that verification is unavailable;
+only a successful current observation supplies installation/profile conclusions.
+Checklist refresh reuses the existing model-index refresh once, which already
+refreshes runtime and optional-package status. It does not start another install.
+
 1. Setup and the runtime API show reviewed contracts and their qualification
    state; they must not imply that an unavailable package action can run.
 2. Read-only discovery, workflow browsing/opening, Auto planning, capability

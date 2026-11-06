@@ -26,6 +26,11 @@ execution, resource, model, hardware, template or publication qualification.
 Run independently repeats all existing guards. Specialized accelerator repair
 continues to use the appropriate native/guided installation profile.
 
+Pending runtime observations display checking. A failed read leaves verification
+unavailable rather than diagnosing missing installation; successful current
+metadata supplies the profile conclusion. Checklist refresh uses the existing
+single model-index batch, which already refreshes runtime and optional packages.
+
 At the first implementation checkpoint, focused backend and client tests and
 the selected checklist/browser lifecycle cases pass. Full paired gates, current
 hosted CI, packaging and a fresh protected Linux adoption/native no-model check
@@ -45,3 +50,21 @@ Existing accepted media, closed runtime/model proofs, original creative holds,
 absent codec capability, Wan deadline, public Gallery locks and broader physical
 hardware/publication qualification retain their original scope. This checklist
 does not clear those release limitations.
+
+The native checklist review identified one additional presentation defect: a
+pending runtime read displayed missing setup despite the actual worker being
+verified. The follow-up distinguishes checking, unavailable verification and
+successful current status, and removes a duplicate runtime refresh. The original
+failure is retained. Its expanded browser regression passes twice, 14 related
+browser scenarios and 75 focused unit contracts pass, and the complete client
+gate passes at `a745e4e7c9909eabd114c6c9ce7ce9567585846a` with the actual
+backend contract `054f50142f27efe232c3b25929b2912236cac0ec`.
+
+The exact 119 rebuilt assets retain four startup and 90 deferred JavaScript
+memberships. This follow-up adds 3 largest-chunk, 4 startup and 118 deferred gzip
+bytes within the existing budgets; dependencies, loading rules and the separate
+64 KiB chunk limit remain unchanged. Five generated inventories change
+fingerprints only. Packaged backend validation, hosted checks and the new
+protected Linux update/native status-freshness check have separate receipts;
+their current results remain in the same PR descriptions. This is setup UI
+work, with no model rerender or operator package installation.
