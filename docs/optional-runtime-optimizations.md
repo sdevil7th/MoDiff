@@ -26,6 +26,15 @@ permissions: the wheel assembler still emits the exact reviewed metadata bytes.
 
 ## Product contract
 
+Setup's workflow checklist observes the concrete Run export through the read-only
+`POST /runtime/workflow-setup` inspection endpoint. Each scoped node uses the
+ordinary loader/runtime requirement resolver; connected inputs are not executed.
+The client separates base libraries, model artifacts, additional runtimes and
+system prerequisites. Exact shared selections deduplicate, while different
+immutable revisions remain distinct. Install job completion is not activation,
+and every requested runtime profile must be supplied by the verified active
+environment, including only its explicitly declared composite aliases.
+
 1. Setup and the runtime API show reviewed contracts and their qualification
    state; they must not imply that an unavailable package action can run.
 2. Read-only discovery, workflow browsing/opening, Auto planning, capability

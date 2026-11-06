@@ -1500,6 +1500,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 web.get("/runtime/optimizations/receipts", self.runtime_optimization_receipts),
                 web.post("/runtime/optimizations/qualify", self.runtime_optimization_qualify),
                 web.get("/runtime/optional-runtimes", self.runtime_optional_runtimes),
+                web.post("/runtime/workflow-setup", self.runtime_workflow_setup),
                 web.post("/runtime/optional-runtimes/install", self.runtime_optional_runtime_install),
                 web.get(
                     "/runtime/optional-runtimes/jobs/{job_id}",
@@ -12840,6 +12841,50 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             lambda: self._json_response_bytes(self._optional_runtime_catalog_snapshot()),
         )
         return web.Response(body=body, content_type="application/json")
+
+    async def runtime_workflow_setup(self, request):
+        """Inspect the submitted execution closure without preparing or running it.
+
+        This is advisory, not graph admission. The ordinary execution boundary
+        independently resolves the same declarations again before loading code.
+        Connected values are unknown here; never execute their suppliers.
+        """
+        from modiff.workflow_auto_resource import graph_material, workflow_graph_hash
+
+        try:
+            body = await self._strict_runtime_control_json(
+                request, allowed={"schemaVersion", "graph"}, required={"schemaVersion", "graph"},
+                max_bytes=8 * 1024 * 1024 + 1024,
+            )
+            if type(body["schemaVersion"]) is not int or body["schemaVersion"] != 1 or not isinstance(body["graph"], dict):
+                raise ValueError("Workflow setup requires schema version 1 and a concrete graph.")
+            graph = graph_material(body["graph"])
+            if any(not node_id or len(node_id) > 1024 for node_id in graph["nodes"]):
+                raise ValueError("Workflow setup node identifiers must be bounded.")
+        except (ValueError, TypeError, KeyError, RecursionError):
+            return web.json_response({"error": True, "message": "Workflow setup needs a valid, bounded execution scope."}, status=400)
+        requirements = {}
+        catalog = None
+
+        def catalog_resolver():
+            nonlocal catalog
+            if catalog is None:
+                catalog = public_optional_runtime_catalog()
+            return catalog
+
+        for node_id in dict.fromkeys(node_id for path in graph["paths"] for node_id in path):
+            node = graph["nodes"][node_id]
+            values = {key: param.get("value") for key, param in node["params"].items()
+                      if not param.get("sourceId")}
+            requirement = loader_optional_runtime_requirement(
+                node["module"], node["action"], values, catalog_resolver=catalog_resolver,
+            )
+            identity = json.dumps(requirement, sort_keys=True, separators=(",", ":"))
+            row = requirements.setdefault(identity, {"nodeIds": [], "requirement": requirement})
+            row["nodeIds"].append(node_id)
+        return web.json_response({"schemaVersion": 1, "instance": self.instance,
+                                  "graphHash": workflow_graph_hash(graph),
+                                  "requirements": list(requirements.values())})
 
     def _optional_runtime_catalog_snapshot(self):
         catalog = public_optional_runtime_catalog()

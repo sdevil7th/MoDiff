@@ -154,6 +154,25 @@ those output folders; traversal and resolved symlink escapes remain rejected.
 
 ### Runtime status
 
+`POST /runtime/workflow-setup` is a read-only prerequisite inspection, not graph
+admission or an execution endpoint. Send `{schemaVersion: 1, graph: {nodes,
+paths, loops?}}` using the ordinary lowered API export and selected Run scope.
+The body is limited to 8 MiB plus 1 KiB; duplicate JSON keys, unsupported outer
+keys, non-finite values, malformed dependency ordering and scopes exceeding
+2,048 nodes/paths or 32,768 total path entries return HTTP 400. The existing
+workflow graph material also retains its own 8 MiB limit.
+
+The response contains `schemaVersion: 1`, the current `instance`, `graphHash`
+(the existing workflow hash), and `requirements: [{nodeIds, requirement}]`.
+`requirement` is the existing seven-field optional runtime contract. Exact
+contracts are grouped; connected values are omitted from static inspection,
+not executed or replaced with authored defaults. Client runtime hints cannot
+authorize a package or execution path. Discovery consults no custom suppliers,
+performs no installation and creates no task. Base-environment status, current
+model-cache observations and system prerequisites retain their existing APIs.
+Run independently repeats its ordinary guards; this response grants no resource,
+model, hardware or publication qualification.
+
 `GET /health` and `GET /runtime/status` use the same readiness handler. The response includes:
 
 - `ready` and `error` summary flags.

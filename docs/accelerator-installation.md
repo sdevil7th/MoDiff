@@ -1,5 +1,12 @@
 # Accelerator installation
 
+After either native or guided installation, Setup → Workflow setup checklist
+shows the current base, selected model artifacts, additional feature packages
+and system prerequisites together. Initial setup already includes Transformers
+and PEFT. Model weights and gated-model access remain separate; optional runtime
+installation and worker activation retain separate, explicit actions and verified
+progress. See the [checklist and recovery guide](developer-setup.md#workflow-setup-checklist).
+
 Developers can install with native `uv sync --extra cpu`, `--extra cuda`, or `--extra xpu`; Apple Silicon uses `uv sync` without an extra. Use the same extra on `uv run python main.py`. Users who prefer guided setup can use the installation scripts below. Both paths install Transformers and PEFT as mandatory base dependencies. See [developer setup](developer-setup.md) for direct commands, repair, and upgrades. The browser never installs drivers or mutates Python during discovery or planning.
 
 Run `./install.sh` on Linux/macOS or `.\install.ps1` on Windows. The guided installer explains every action before it runs, uses the operator's uv and provisions Python 3.12, stages the backend, validates a real device tensor, and preserves the previous environment for rollback. When a sibling client is present and the build is not skipped, it downloads the verified Node 24 toolchain, downloads and SHA-256 verifies the complete pinned Template Gallery, and bundles those assets into the local client build. Hybrid NVIDIA/AMD machines must explicitly choose a profile.

@@ -130,6 +130,32 @@ request/proxy unit tests also launch a browser. A fresh Linux host may additiona
 need `npx playwright install-deps chromium`. See [CONTRIBUTING](../CONTRIBUTING.md) for backend test dependencies and
 mirroring a validated production bundle while preserving `web/user/`.
 
+## Workflow setup checklist
+
+In the app, open Setup → Workflow setup checklist. Select the whole workflow,
+Run Block, or Run through a node to inspect the same enabled dependency scope
+used by Run. The checklist groups the base environment, selected model artifacts,
+extra feature packages and system prerequisites. Inspection never installs
+packages, downloads weights, executes connected suppliers or submits a run.
+Computed selections remain unresolved until their ordinary execution boundary.
+
+Transformers and PEFT belong to initial setup. Repair a damaged base using the
+same accelerator installation procedure; do not install a historical core-only
+overlay or run generic CPU sync over specialized ROCm wheels. Model weights and
+gated-repository access are separate from Python setup. Existing complete model
+selections are recognized; incomplete snapshots retain their repair action.
+An unknown download size is displayed as unknown.
+
+Additional managed runtimes use explicit Install/Repair, then explicit Activate
+when offered. Installation finishes in a staged environment; activation restarts
+the worker, and readiness requires verification of its exact active profile.
+Setup follows the same durable job after reload or connection loss. Retry status
+reads that job; it does not start another install. Only one optional environment
+is active at a time. Several separate installs do not establish a compatible
+combined environment: use a backend-declared combined profile when available.
+Unavailable targets retain their support explanation rather than an Install
+button. Driver/admin/reboot steps remain explicit system actions.
+
 ## Upgrades and repair
 
 Standalone uv installations support `uv self update`; package-manager installs

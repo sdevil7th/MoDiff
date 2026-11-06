@@ -299,6 +299,13 @@ the original geometry assertions, then repeat the concurrent generation gesture.
   packages or submitting a graph. Focus requests are volatile; progress and
   presentation changes must not impersonate authored input changes. Keep actual
   resource rejection and unsupported-platform checks intact.
+- Setup must inspect the same lowered and selected Run closure without authoring
+  a graph, executing suppliers or randomizing seeds. Keep base packages, exact
+  model artifacts, optional environments and system steps distinct in one
+  checklist. A staged install is not activation, and each requested profile
+  needs a verified active identity. Deduplicate exact selections and durable
+  jobs; a file count cannot prove download-file identity. Lost status reads
+  must not create duplicate installs or turn last-known progress into readiness.
 - Diagnose the effective bound iteration input, not only the enclosing loop's
   original Pipeline State. Report bounded type/shape summaries, never contents,
   and preserve the resource-error category for memory failures.
