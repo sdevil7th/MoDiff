@@ -11,6 +11,54 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
 This section is authoritative for current status. The dated checkpoints below
 retain their original source, timing and proof scope.
 
+### Paired PR review and manual-testing readiness — 6 November
+
+The review covers both PR7 diffs against `develop`, with detailed inspection of
+execution/resource admission, immutable runtime artifacts, HTTP/WebSocket and
+media boundaries, workflow persistence, output provenance, input-preview layout,
+CI pairing and release evidence. It is a risk-based source review, not a formal
+security audit or a claim that every possible execution path is qualified.
+No new blocking product defect is found in the inspected paths.
+
+Three review corrections stay in the same PRs: both client CI jobs now select
+the tested backend `57811fc2`, the privacy/architecture documentation correctly
+describes page-owned session checkpoints and backend output history, and one
+extra blank line is removed from an Auto regression test. The Python test AST
+and both application implementations are unchanged. The full client gate at
+`b57ea95f` passes in **565.96 seconds**, paired with backend `54610c86`;
+all **119 built assets** match the deployed `f84e7cdb` product byte-for-byte.
+Repository diff checks, 39 local documentation links and the mirrored cluster
+guide pass. No dependency, model pin, qualification, public media or budget changes.
+
+The complete backend gate at `57811fc2` remains applicable to the unchanged
+implementation and test AST. All four hosted jobs also pass on its earlier
+documentation descendant `8fc302ec`. Earlier client `f84e7cdb` hosted jobs used
+backend `19f003f7`; those must not be described as hosted browser coverage of the
+new Auto fix. Client `b57ea95f` now runs the complete hosted quality/browser jobs
+against `57811fc2`. Fresh head CI must finish successfully before merge; running
+jobs are not approvals. These are development PRs, not a release-ready claim.
+
+A fresh GET-only Linux observation confirms the tested `57811fc2` /`f84e7cdb`
+app is ready and idle, with an empty queue/cache, no downloads and the earlier
+application untouched. The existing deployment is ready for scoped manual
+testing: use a separate QA workflow to check input-preview geometry and pointer
+access, audio/video clear-rebind, Save/reopen/reload and isolated page checkpoints.
+Inspect existing boardwalk/car Auto outputs separately for creative quality.
+No new model, browser mutation, deployment or closed proof is repeated by this
+review. Manual testing does not require changing the deployed source for these
+documentation/CI-only corrections.
+
+The current release checks still **fail honestly**. Gallery verification reports
+**74 errors**: 63 recipe locks, three prompt locks, two old published audio-duration
+mismatches and six provenance checks. The exact release-candidate report retains
+five gates: 89 incomplete templates, 202 incomplete workflows, 89 incomplete
+qualification receipts, 60 unqualified resource recipes, and absent physical
+qualification for the advertised CPU/NVIDIA CUDA/Apple MPS profiles. Private
+accepted replacements do not silently repair published evidence or grant
+publication. The 43 missing-model cases remain user-held; boardwalk/car creative,
+Wan deadline and ACE melody-codec holds remain separate. No full-release or
+all-hardware approval is claimed.
+
 ### Boardwalk/car Auto continuation — 6 November
 
 The user authorizes continued boardwalk/car Auto work, with models only on Linux
