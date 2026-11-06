@@ -92,8 +92,15 @@ The same ordinary import/Arrange/browser test passes, including real pointer
 access, unchanged frame geometry, scoped release, Save/reload, audio clear/rebind,
 blocked Run while blank and zero graph submissions. Three related browser
 scenarios and **486 focused media/measurement/package tests** also pass.
-Full client validation, packaging, paired backend validation and protected
-native adoption remain pending for this new fix. The earlier interrupted
+The complete client check passes at `f84e7cdb` in **492.70 seconds**, retaining
+all 119 asset names, 94 JavaScript names and four startup /90 deferred members.
+Only the preview-containing JavaScript and its CSS change after immutable URL
+normalization. Largest-startup gzip grows one byte, aggregate startup falls one
+byte and deferred gzip falls 111 bytes; every existing budget passes unchanged.
+Exact packaging and five fingerprint-only ledger updates pass **70 inventory
+tests /860 subtests**, with qualification and immutable model pins unchanged.
+The new packaged backend gate and protected native adoption remain pending.
+The earlier interrupted
 observer's missing QA-close receipt remains a hold, with its absent processes
 independently verified. Successful final-film QA closure is recorded separately.
 
