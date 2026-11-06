@@ -74,9 +74,10 @@ muted. Ten normal scoped data-cache releases, including one earlier successful
 release that is not repeated, finish with an empty cache and no scratch.
 Final QA closure preserves **581 files /350 workflow bodies**, all 89 earlier
 output records and 84 earlier slots, media, templates and verdicts. The final
-candidate is delivered for human visual/listening review. Restrained camera
-movement, abrupt exposure cuts and pleated late petals remain creative limits;
-word alignment, final captions and publication are not approved.
+film is privately accepted by the user with its stated limits: restrained camera
+movement, abrupt exposure cuts and pleated late petals. The accepted original
+45-second song remains unchanged. Word alignment, final captions, template
+approval and publication remain separate holds; rejected originals are preserved.
 
 Preserved closeout observer failures distinguish actual media success from
 document/UI inspection. Ordinary pan/zoom legitimately changes the saved
@@ -99,14 +100,40 @@ normalization. Largest-startup gzip grows one byte, aggregate startup falls one
 byte and deferred gzip falls 111 bytes; every existing budget passes unchanged.
 Exact packaging and five fingerprint-only ledger updates pass **70 inventory
 tests /860 subtests**, with qualification and immutable model pins unchanged.
-The new packaged backend gate and protected native adoption remain pending.
+The complete packaged backend gate at `366fd1cf` passes **9,082 tests /13,198
+subtests**, with 761 skips and 33 warnings, plus Ruff, dependency consistency and
+preflight. All four hosted backend jobs and all four client jobs pass at the
+exact `366fd1cf` /`f84e7cdb` pair. Protected Linux adoption preserves **581 files /
+350 workflow bodies /90 output records /85 slots**, configuration, runtime,
+packages, selected model artifacts and **119 disk /118 served assets**. Only
+queue worker/timestamp metadata changes; the original application stays untouched.
+
+A new ordinary five-node, no-model QA graph verifies real late-loaded input
+previews, unchanged frame geometry, actual pointer access, video/audio clear and
+rebind, blocked Run while required media is blank, and exact Save/reload of its
+API graph, 69-field form and positions. It submits no graph and runs no model.
+All 581 earlier files, 350 bodies, 90 outputs and 85 slots remain exact; three
+new workflows are bound to genuine owned PUTs, for **584 files /353 bodies**.
+Normal QA closure leaves the application idle with empty cache and no scratch.
+The final film and all nine scene proofs are not rerun for this verification.
+
+Preserved precheck-reader holds distinguish an exited updater's normal supervisor
+reparenting from process replacement. One delayed final-workflow viewport Save
+also finishes after the earlier snapshot: its full snapshot and single revision
+increment match the already-recorded last ordinary PUT, while all execution
+settings, media, 580 other files and 349 unrelated bodies remain exact. The fresh
+current baseline, including that owned viewport, is then preserved through the
+update. Original network and launcher-path observer failures remain retained.
 The earlier interrupted
 observer's missing QA-close receipt remains a hold, with its absent processes
 independently verified. Successful final-film QA closure is recorded separately.
 
-Four of nine cases remain privately accepted; the final film awaits its own
-human verdict. Other creative, Auto, capability, public Gallery and hardware
-holds remain unchanged, including the 43 user-held missing-model cases.
+Five of nine requested cases are privately accepted, including the final film
+with its stated limits. Four remain unclosed: boardwalk/car creative and original
+Auto scopes, Wan's fixed-deadline zero-output hold, and ACE variation's absent
+melody-codec capability. Sixteen base outputs now include fourteen human
+acceptances. Public Gallery, public locks, wider hardware and publication holds
+remain unchanged, including all 43 user-held missing-model cases.
 
 The preceding night checkpoint is retained below with its original proof scope.
 A separately admitted **group CPU / no device-map** night version now completes
