@@ -32,6 +32,15 @@ hosted CI, packaging and a fresh protected Linux adoption/native no-model check
 are still required before describing R02 as delivered. Retain the original RED
 results and distinguish mocks, software gates, native UI and model proof.
 
+The complete client gate then passed in 515.38 seconds at client
+`e307bc937adaf456cc538979de79034c7bd681b6` with backend API contract
+`09f377f54f975ffbfa8705ac4535905f0481f54f`. Its exact119 assets are mirrored;
+the five generated inventories change bundle/source fingerprints only, preserving
+qualification, model pins and public media. This is software/build evidence;
+the complete packaged backend gate, current hosted checks and protected Linux
+adoption/native no-model UI checks retain their separate requirements. Current
+verification and deployment status is recorded in the existing PR7 descriptions.
+
 Existing accepted media, closed runtime/model proofs, original creative holds,
 absent codec capability, Wan deadline, public Gallery locks and broader physical
 hardware/publication qualification retain their original scope. This checklist
