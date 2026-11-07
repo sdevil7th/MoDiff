@@ -13,6 +13,18 @@ import tomllib
 PROJECT_METADATA = Path(__file__).resolve().parents[1] / "pyproject.toml"
 
 
+def _valid_distribution_version(value: object) -> bool:
+    from packaging.version import InvalidVersion, Version
+
+    if not isinstance(value, str):
+        return False
+    try:
+        Version(value)
+    except InvalidVersion:
+        return False
+    return True
+
+
 def base_model_runtime_contract() -> dict:
     """Declare model-library requirements without observing/importing packages.
 
@@ -36,6 +48,8 @@ def base_runtime_status(*, version_resolver=None, distribution_resolver=None) ->
 
     Installation is always an explicit uv operation. This observation is also
     suitable for graph inspection: it never imports Transformers, PEFT or Torch.
+    Missing, unreadable and invalid version metadata remain distinct issues;
+    none grants readiness or starts a repair.
     """
     from packaging.requirements import Requirement
     from packaging.specifiers import SpecifierSet
@@ -74,8 +88,17 @@ def base_runtime_status(*, version_resolver=None, distribution_resolver=None) ->
         except metadata.PackageNotFoundError:
             issues.append(f"Missing required package: {requirement.name}.")
             continue
+        except (OSError, UnicodeError, KeyError):
+            issues.append(f"Cannot read required package metadata: {requirement.name}.")
+            continue
+        if not _valid_distribution_version(version):
+            issues.append(f"Invalid required package version metadata: {requirement.name}.")
+            continue
         packages[requirement.name] = version
         checked_version = underlying["version"] if underlying is not None and requirement.name.lower() == "diffusers" else version
+        if not _valid_distribution_version(checked_version):
+            issues.append(f"Invalid required package version metadata: {requirement.name}.")
+            continue
         if provider is not None and requirement.name.lower() == "diffusers" and version != provider["version"]:
             issues.append("The selected Diffusers provider version changed.")
         if requirement.specifier and not requirement.specifier.contains(checked_version, prereleases=bool(evaluation and requirement.name.lower() == "diffusers")):

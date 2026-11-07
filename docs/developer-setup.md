@@ -184,6 +184,12 @@ activation, with progress through verification and worker replacement. Failed
 or stale overlays must be repaired through their own runtime action; deleting
 models, workflows, or output history is unnecessary.
 
+Missing, unreadable or invalid package-version metadata leaves the base unverified
+and names the affected package. Use the existing repair command for that
+accelerator/profile, then verify the restarted worker. Inspecting the problem
+does not install packages or alter the environment. Keep a specialized ROCm
+installation on its reviewed repair path rather than running a generic CPU sync.
+
 ## Allocator and optional compilation
 
 MoDiff uses PyTorch's default allocator on Windows, macOS and Linux ROCm. Linux
