@@ -132,6 +132,14 @@ toolbar download navigation opens it, while Clear keeps its separate meaning.
 No sidebar redesign, graph format, saved values, node layout, execution, cache,
 dependency or model-policy change was needed.
 
+Production inspection also reproduced a selected-node toolbar covering the
+activity heading after a viewport resize. Its existing placement now avoids
+the measured activity rectangle, keeping both controls reachable as the list
+folds, disappears or returns. Scheduled layout observations reposition only
+the floating toolbar; selection and authored graph state stay unchanged.
+The paired PR checkpoints distinguish the original held native journey from
+the corrected software checks and subsequent delivery.
+
 Checks cover ordinary pointer access to the previously covered field, Enter and
 Space, all retained history, active work/failures/downloads, and unchanged graph
 and viewport. The scaled Chromium checks use the corresponding CSS viewport and
