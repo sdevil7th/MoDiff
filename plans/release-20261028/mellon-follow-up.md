@@ -19,7 +19,7 @@ establish editing effort, developer usability or runtime correctness.
 | 2 | R03-D stage-editing discoverability | Implemented; exact validation and delivery checkpoints are recorded in the same paired PR descriptions. Visible Edit stages and Expand block actions reuse existing transactions. Saved Blocks and Python code have distinct creation/save descriptions. Original browser RED and focused GREEN are retained. |
 | 3 | R03-T same-model task continuity | Bounded editor acceptance verified without a product change. Same-model Klein modular text-to-image/image-conditioned round trip preserves authored controls, source wire, Resize branch, layout, Cancel, Undo/Redo and Save/reopen. Direct/grouped software probes supplement the native editor check. Runtime reuse remains R04; see the [acceptance checkpoint](r03t-task-continuity.md). |
 | 4 | R03-V usable canvas space | Bounded viewport matrix verified: 3840×2160 at pixel ratio 1, 2560×1440 at 1.5, 1920×1080 at 2, plus compact 1280×720. A reproduced activity-shelf obstruction has a narrow fold-away control that retains history. Arranged stage actions and Save/export remain reachable with both side panels. Complete gate and Linux delivery results belong to the same paired PR checkpoints; physical OS scaling and arbitrary graph usability are not inferred. |
-| 5 | R04 setup and repeated generation | Open; constrained Windows generation externally held. Complete the separate setup and cold/reuse/recompute matrix below at its actual platform and workload scope. |
+| 5 | R04 setup and repeated generation | Setup metadata repair delivered; bounded Linux cold/reuse/edit/adapter/recompute/release paths verified. Original constrained Windows, fresh GPU setup, different-artifact replacement and formal cached-adapter ownership remain held. See the [R04 acceptance checkpoint](r04-setup-repeat.md). |
 | 6 | R05 original transport symptom | Open; original emitter unconfirmed. Attribute any remaining refresh error to its genuine emitting process and stack; retain targeted disconnect/recovery coverage. |
 | 7 | R06 release and capability disposition | Open with explicit holds. Record each creative, access, runtime, hardware, provenance and publication limitation separately. Held cases are not passes. |
 
@@ -152,6 +152,13 @@ accepted model/media evidence remain closed; no model run is needed for this
 presentation repair. R04–R06 retain their separate acceptance requirements.
 
 ## R04: setup and repeat-generation acceptance remains required
+
+The [R04 checkpoint](r04-setup-repeat.md) records the delivered metadata repair,
+complete paired gates, actual CI scope and nine ordinary Linux UI runs. Reuse
+those closed results. It distinguishes the first scope's idle time-bound closure
+from the subsequent completed lifecycle scope, and retains missing ownership
+telemetry and external acceptance as holds. Do not rerun closed models, gates or
+deployment to change labels or repair private readers.
 
 1. Review native uv/npm and guided setup against the executable contracts.
    Transformers and PEFT belong to initial setup. Browsing, discovery and Auto
