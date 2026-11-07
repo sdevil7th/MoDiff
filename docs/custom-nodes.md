@@ -1,5 +1,21 @@
 # Developing custom nodes
 
+## Canvas Blocks or Python code
+
+Use a **reusable Block** to keep a group of canvas nodes, their settings and
+configured inputs/outputs for another workflow. Select nodes and choose **Create
+block**, or use **Save as reusable Block…** on a compact stage group. **Edit
+nodes** expands a saved Block for ordinary canvas editing. **Edit stages** on a
+compact stage group exposes its individual nodes through the existing separation
+action; Undo restores the group. Common exposed controls remain editable directly.
+
+Use a **custom Python node** when you need new executable behavior. Add/Load/Reload
+authorizes that source; saving or opening a Block does not grant new code
+permissions. A Block containing Python nodes still requires their existing source
+and dependency approvals. See the [client authoring guide](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/docs/developer-first-node-ux.md).
+
+## Add a Python node
+
 Choose **Nodes → Add custom node**. The full-width yellow button opens three
 sources: **Local**, **Hugging Face**, and **Git**. Adding code does not replace
 your workflow. Intentional Add/Load imports and enables it in one action.

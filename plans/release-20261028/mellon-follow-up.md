@@ -16,7 +16,7 @@ establish editing effort, developer usability or runtime correctness.
 | Order | Scope | Current state and required outcome |
 | --- | --- | --- |
 | 1 | R03-C custom-code developer loop | Bounded native text-processor loop checked, with the limits below. Ordinary import, typed discovery, connection, execution, installed-source edit, explicit Reload and saved-workflow reopen worked without rebuilding. |
-| 2 | R03-D stage-editing discoverability | Next. Make the existing inspection, expansion and separation paths understandable; keep common controls accessible and distinguish a reusable canvas Block from executable user-written Python. Reproduce ambiguity before a product change. |
+| 2 | R03-D stage-editing discoverability | Implemented; full packaged gates and native delivery pending. Direct Edit stages/Edit nodes actions reuse the existing transactions. Saved Blocks and Python code have distinct creation/save descriptions. Original browser RED and focused GREEN are retained; broader review is still required. |
 | 3 | R03-T same-model task continuity | Planned. Review and apply a supported same-model text-to-image/image-conditioned transition while retaining compatible authored values, custom branches, input sources, layout, Cancel and Undo. Reuse existing runtime evidence first. |
 | 4 | R03-V usable canvas space | Bounded two-node viewport check passed; broader obstruction checks remain conditional. Check effective CSS viewports representing 4K at 100%, 150% and 200% scaling, alongside compact-screen coverage. Change layout only for a reproduced obstruction. |
 | 5 | R04 setup and repeated generation | Open; constrained Windows generation externally held. Complete the separate setup and cold/reuse/recompute matrix below at its actual platform and workload scope. |
@@ -74,6 +74,16 @@ This does not establish that every larger graph avoids an overlay. Treat the
 canvas concern as conditional verification, not an assumed redesign.
 
 ## R03-D and R03-T next increments
+
+R03-D's original browser regressions established that compact stages had no
+visible direct editing action and that the library did not explain the two
+authoring paths. The focused repair exposes **Edit stages** using the existing
+separation/Undo transaction, labels collapsed reusable Blocks **Edit nodes**
+using their existing expansion action, and calls reusable saves **Blocks**.
+Library, Create Block, save and Python-import descriptions explain their purposes.
+No graph format, executor, approval, node parameters or resource policy changes.
+Focused browser checks preserve controls, source wires, Undo and Save/reload;
+complete paired gates, exact packaging and native delivery remain pending.
 
 Trace the current common-control and stage-editing paths before changing them.
 Keep task-level simplicity and real stage-level editing available together.
