@@ -33,3 +33,15 @@ All43 missing-model cases remain user-held. This UI-only change needs no model
 run, installation, download, cache retirement or modification of accepted media.
 Original Auto/creative, codec, Wan deadline, Gallery/public-lock, physical hardware
 and publication limitations retain their separate scope.
+
+The complete client gate subsequently passed in 518.50 seconds at client
+`e5c787ebd89c2467e431b47d4ceaf8df865a5d04` and actual backend contract
+`4936a0408b6ee0f87576fefce8d72e826653d0d6`. All119 assets are mirrored;
+the five generated inventories change source/bundle fingerprints only. Exact
+generator checks and71tests/890subtests pass with reviewed source fixtures.
+The measured largest/startup/deferred gzip totals are497985/676473/335647.
+Only the deferred model picker changes after import-URL normalization; the
+largest startup file's four-byte fingerprint growth has an exact reviewed
+allowance. Aggregate startup/deferred, separate64KiB, dependency and loading
+limits remain unchanged. Packaged backend validation, hosted jobs, protected
+Linux adoption and native authoring retain their separate requirements.
