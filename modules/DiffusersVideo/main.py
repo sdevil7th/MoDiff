@@ -286,6 +286,14 @@ VIDEO_PIPELINE_ADAPTERS = {
         modes=("image_to_video",),
         max_prompt_tokens=512,
     ),
+    "WanTI2VImageToVideoPipeline": VideoPipelineAdapter(
+        id="wan-2.2-ti2v-5b-image",
+        pipeline_class="WanTI2VImageToVideoPipeline",
+        diffusers_class="WanImageToVideoPipeline",
+        default_repo="Wan-AI/Wan2.2-TI2V-5B-Diffusers",
+        modes=("image_to_video",),
+        max_prompt_tokens=512,
+    ),
     "WanAnimatePipeline": VideoPipelineAdapter(
         id="wan-animate",
         pipeline_class="WanAnimatePipeline",
@@ -537,6 +545,11 @@ VIDEO_MODE_FIELD_CONTRACTS = {
     "WanPipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
     "Wan22Pipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
     "WanTI2VPipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
+    "WanTI2VImageToVideoPipeline": {
+        "image_to_video": _video_field_contract(
+            "reference_images", "scheduler_flow_shift", required_fields=("reference_images",),
+        ),
+    },
     "WanImageToVideoPipeline": {
         "image_to_video": _video_field_contract(
             "reference_images",
@@ -670,6 +683,7 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "WanPipeline": "_load_wan_text_to_video",
     "Wan22Pipeline": "_load_wan_text_to_video",
     "WanTI2VPipeline": "_load_wan_text_to_video",
+    "WanTI2VImageToVideoPipeline": "_load_wan_image_to_video",
     "WanImageToVideoPipeline": "_load_wan_image_to_video",
     "WanAnimatePipeline": "_load_wan_animate",
     "LTXConditionPipeline": "_load_ltx",
@@ -701,6 +715,7 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "WanPipeline": "_execute_wan_text_to_video",
     "Wan22Pipeline": "_execute_wan_text_to_video",
     "WanTI2VPipeline": "_execute_wan_text_to_video",
+    "WanTI2VImageToVideoPipeline": "_execute_wan_image_to_video",
     "WanImageToVideoPipeline": "_execute_wan_image_to_video",
     "WanAnimatePipeline": "_execute_wan_animate",
     "LTXConditionPipeline": "_execute_ltx",
@@ -1044,12 +1059,18 @@ def get_video_operation_contracts(modules) -> list[dict]:
             actions = [("LoadPipeline", "diffusion.load_models"), ("Generate", "diffusion.generate_video")]
             if "audio" in adapter.output_media:
                 actions.append(("GenerateVideoAudio", "diffusion.generate_video_audio"))
+            from .stage_execution import PROFILE_CLASSES
+            if pipeline_class in PROFILE_CLASSES.values():
+                actions.extend((('EncodeInputs', 'diffusion.encode_video'),
+                                ('Denoise', 'diffusion.denoise'), ('DecodeLatents', 'diffusion.decode_latents')))
             for action, operation in actions:
                 record = build_pipeline_operation_contract(
                     modules, pipeline_class=pipeline_class, task=mode, operation_id=operation,
                     node_key=f"modules.DiffusersVideo.{action}",
                     field_overrides=fields if action != "LoadPipeline" else None,
                     loader=action == "LoadPipeline",
+                    stage_node_type={'EncodeInputs': 'video_encoder', 'Denoise': 'denoise',
+                                     'DecodeLatents': 'decoder'}.get(action),
                 )
                 if record is not None:
                     result.append(record)
@@ -1066,6 +1087,9 @@ def _adapter_signal(adapter: VideoPipelineAdapter) -> dict[str, Any]:
         actions["GenerateLTX2"] = list(adapter.modes)
     if "text_to_video" in adapter.modes:
         actions["GenerateSequence"] = ["text_to_video"]
+    from .stage_execution import PROFILE_CLASSES
+    if adapter.pipeline_class in PROFILE_CLASSES.values():
+        actions.update({action: list(adapter.modes) for action in ('EncodeInputs', 'Denoise', 'DecodeLatents')})
     return {
         "schemaVersion": 1,
         "library": "diffusers",
@@ -1651,7 +1675,10 @@ class LoadPipeline(WanVACELoadPipeline):
         values.setdefault("ic_lora_id", "")
         values.setdefault("ic_lora_revision", "")
         values.setdefault("ic_lora_weight_name", "")
-        return super().__call__(**values)
+        result = super().__call__(**values)
+        from .stage_execution import bind_owner
+        bind_owner(result['pipeline'], values)
+        return result
 
     def execute(self, **kwargs):
         adapter = get_video_pipeline_adapter(kwargs.get("pipeline_class"))
@@ -2518,6 +2545,10 @@ class LoadPipeline(WanVACELoadPipeline):
             torch_dtype=dtype,
             **common,
             **recipe_load_kwargs,
+            # The dense 5B checkpoint has no CLIP components. The official
+            # I2V pipeline declares these optional; its VAE handles the image.
+            **({"image_encoder": None, "image_processor": None}
+               if adapter.pipeline_class == "WanTI2VImageToVideoPipeline" else {}),
         )
         apply_execution_recipe_to_pipeline(pipeline, recipe)
         self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
@@ -2766,13 +2797,19 @@ class Generate(WanVACEGenerate):
         result.pop("_audio", None)
         return result
 
+    def _invoke_pipeline(self, pipeline, call_kwargs):
+        return pipeline(**call_kwargs)
+
     def update_adapter_modes(self, values, ref):
         values = values if isinstance(values, dict) else {}
         signal = values.get("video_contract")
         if not isinstance(signal, dict):
             raise ValueError("The connected video pipeline did not publish a valid adapter contract.")
         adapter = get_video_pipeline_adapter(signal.get("pipelineClass"))
-        if signal != _adapter_signal(adapter):
+        expected = _adapter_signal(adapter)
+        legacy = {**expected, 'actions': {key: value for key, value in expected['actions'].items()
+                                         if key not in {'EncodeInputs', 'Denoise', 'DecodeLatents'}}}
+        if signal not in (expected, legacy):
             raise ValueError("The connected video pipeline published a stale or mismatched adapter contract.")
         current_mode = values.get("mode")
         selected_mode = current_mode if current_mode in adapter.modes else adapter.modes[0]
@@ -4042,7 +4079,7 @@ class Generate(WanVACEGenerate):
             )
         self._active_pipeline = pipeline
         try:
-            result = pipeline(**call_kwargs)
+            result = self._invoke_pipeline(pipeline, call_kwargs)
         finally:
             self._active_pipeline = None
             if original_scheduler is not None:
@@ -4142,8 +4179,11 @@ class Generate(WanVACEGenerate):
         negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
         _validate_prompt_token_limit(pipeline, prompt, "prompt", adapter.max_prompt_tokens)
         _validate_prompt_token_limit(pipeline, negative_prompt, "negative prompt", adapter.max_prompt_tokens)
-        width = int(kwargs.get("width") or 832)
-        height = int(kwargs.get("height") or 480)
+        is_ti2v = adapter.pipeline_class == "WanTI2VImageToVideoPipeline"
+        if is_ti2v and kwargs.get("last_image") is not None:
+            raise ValueError("The reviewed dense Wan 5B route accepts exactly one opening image.")
+        width = int(kwargs.get("width") or (1280 if is_ti2v else 832))
+        height = int(kwargs.get("height") or (704 if is_ti2v else 480))
         vae_scale = int(getattr(pipeline, "vae_scale_factor_spatial", 8) or 8)
         transformer = getattr(pipeline, "transformer", None)
         patch_size = getattr(getattr(transformer, "config", None), "patch_size", (1, 2, 2))
@@ -4153,8 +4193,8 @@ class Generate(WanVACEGenerate):
             raise ValueError(
                 f"Wan image-to-video dimensions must be divisible by {spatial_multiple}; received {width}x{height}."
             )
-        num_frames = normalize_num_frames(int(kwargs.get("num_frames") or 81), pipeline)
-        if num_frames < 81:
+        num_frames = normalize_num_frames(int(kwargs.get("num_frames") or (121 if is_ti2v else 81)), pipeline)
+        if not is_ti2v and num_frames < 81:
             raise ValueError("Quality-first Wan shots need at least 81 frames (about five seconds at 16 fps).")
         import torch
 
@@ -4162,15 +4202,13 @@ class Generate(WanVACEGenerate):
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
         call_kwargs = {
             "image": references[0],
-            "last_image": kwargs.get("last_image"),
             "prompt": prompt,
             "negative_prompt": negative_prompt,
             "height": height,
             "width": width,
             "num_frames": num_frames,
             "num_inference_steps": int(kwargs.get("num_inference_steps") or 40),
-            "guidance_scale": float(_value_or_default(kwargs, "guidance_scale", 3.5)),
-            "guidance_scale_2": float(_value_or_default(kwargs, "secondary_guidance_scale", 3.5)),
+            "guidance_scale": float(_value_or_default(kwargs, "guidance_scale", 5.0 if is_ti2v else 3.5)),
             "num_videos_per_prompt": 1,
             "generator": generator,
             "latents": none_if_blank(kwargs.get("latents")),
@@ -4185,11 +4223,24 @@ class Generate(WanVACEGenerate):
             ),
             "max_sequence_length": min(int(kwargs.get("max_sequence_length") or 512), 512),
         }
+        if not is_ti2v:
+            call_kwargs.update(
+                last_image=kwargs.get("last_image"),
+                guidance_scale_2=float(_value_or_default(kwargs, "secondary_guidance_scale", 3.5)),
+            )
+        original_scheduler = None
+        requested_shift = float(kwargs.get("scheduler_flow_shift") or 0) if is_ti2v else 0
+        if requested_shift > 0:
+            from diffusers import UniPCMultistepScheduler
+            original_scheduler = pipeline.scheduler
+            pipeline.scheduler = UniPCMultistepScheduler.from_config(original_scheduler.config, flow_shift=requested_shift)
         self._active_pipeline = pipeline
         try:
-            result = pipeline(**call_kwargs)
+            result = self._invoke_pipeline(pipeline, call_kwargs)
         finally:
             self._active_pipeline = None
+            if original_scheduler is not None:
+                pipeline.scheduler = original_scheduler
         frames = getattr(result, "frames", result)
         if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
             frames = frames[0]
@@ -4302,7 +4353,7 @@ class Generate(WanVACEGenerate):
         scheduler_patch = _install_ltx_dynamic_shift(pipeline, width, height, num_frames)
         self._active_pipeline = pipeline
         try:
-            result = pipeline(**call_kwargs)
+            result = self._invoke_pipeline(pipeline, call_kwargs)
         finally:
             if scheduler_patch is not None:
                 scheduler, original_set_timesteps = scheduler_patch
@@ -4926,24 +4977,17 @@ class GenerateSequence(NodeBase):
                 message=f"Generating shot {index + 1} of {len(shots)}",
             )
 
-            # Preserve interruption, timeout and Diffusers callback behavior,
-            # then remap the current shot's denoising percentage onto the full
-            # sequence. Without this wrapper every new shot made progress jump
-            # back to zero, which was especially misleading for 30-second jobs.
+            # Keep cancellation/timeout/CFG behavior on local shot indices, but
+            # emit one progress update with the sequence's step count and ETA.
             def sequence_pipe_callback(pipe, step_index, timestep, callback_kwargs, *, shot_index=index):
-                result = self.pipe_callback(pipe, step_index, timestep, callback_kwargs)
                 shot_steps = max(1, int(pipe._num_timesteps))
                 completed_in_shot = step_index + 1
-                total_steps = len(shots) * shot_steps
-                completed_steps = shot_index * shot_steps + completed_in_shot
-                self.progress(
-                    int(completed_steps / total_steps * 100),
-                    phase="denoising",
-                    message=(f"Shot {shot_index + 1}/{len(shots)}: denoising {completed_in_shot}/{shot_steps}"),
-                    current_step=completed_steps,
-                    total_steps=total_steps,
+                return self.pipe_callback(
+                    pipe, step_index, timestep, callback_kwargs,
+                    progress_step_offset=shot_index * shot_steps,
+                    progress_total_steps=len(shots) * shot_steps,
+                    progress_message=f"Shot {shot_index + 1}/{len(shots)}: denoising {completed_in_shot}/{shot_steps}",
                 )
-                return result
 
             shot_generator.pipe_callback = sequence_pipe_callback
             values = dict(
@@ -5182,3 +5226,8 @@ class PlanLongVideo(NodeBase):
             "planned_seconds": planned_frames / fps,
             "overlap_frames": overlap_frames,
         }
+
+
+# The existing executor and metadata callbacks resolve registered actions from
+# the module main entry point. Keep these ordinary stage classes visible there.
+from .stage_nodes import EncodeInputs, Denoise, DecodeLatents  # noqa: E402,F401

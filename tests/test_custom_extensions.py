@@ -165,6 +165,134 @@ def test_add_source_failure_keeps_canvas_registry_and_queue_isolation(backend, s
     asyncio.run(scenario())
 
 
+def test_offline_hub_add_still_requires_the_exact_cached_snapshot(backend, store, monkeypatch):
+    import asyncio
+    from huggingface_hub.errors import LocalEntryNotFoundError
+
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", True)
+    monkeypatch.setattr("huggingface_hub.HfApi.model_info", lambda *a, **k: pytest.fail("No metadata request"))
+    calls = []
+
+    def missing_snapshot(repository, **kwargs):
+        calls.append((repository, kwargs))
+        raise LocalEntryNotFoundError("Exact source snapshot is not cached")
+
+    monkeypatch.setattr("huggingface_hub.snapshot_download", missing_snapshot)
+
+    async def scenario():
+        result = await backend.custom_modules_add(request({
+            "kind": "hub", "source": "owner/repo", "revision": "a" * 40,
+            "name": "Example", "consent": True,
+        }))
+        assert result.status == 400, result.text
+        assert calls == [("owner/repo", {
+            "revision": "a" * 40, "local_files_only": True,
+            "allow_patterns": ["*.py", "*.json", "*.toml", "*.txt", "*.md"],
+        })]
+        assert not store.path("Example").exists()
+        assert "custom.Example" not in backend.modules
+        assert "custom.Example.main" not in sys.modules
+
+    asyncio.run(scenario())
+
+
+def test_offline_one_action_hub_add_preserves_source_pin_and_content_approval(backend, store, tmp_path, monkeypatch):
+    import asyncio
+
+    revision = "a" * 40
+    snapshot = source_node(tmp_path / "models--owner--repo" / "snapshots" / revision)
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", True)
+    monkeypatch.setattr("huggingface_hub.HfApi.model_info", lambda *a, **k: pytest.fail("No metadata request"))
+    calls = []
+
+    def cached_snapshot(repository, **kwargs):
+        calls.append((repository, kwargs))
+        return str(snapshot)
+
+    monkeypatch.setattr("huggingface_hub.snapshot_download", cached_snapshot)
+
+    async def scenario():
+        body = {"kind": "hub", "source": "owner/repo", "revision": revision,
+                "name": "Example", "consent": False}
+        denied = await backend.custom_modules_add(request(body))
+        assert denied.status == 400 and not calls
+        body["consent"] = True
+        added = await backend.custom_modules_add(request(body))
+        assert added.status == 200, added.text
+        item = json.loads(added.text)["module"]
+        assert item["enabled"] and item["revision"] == revision
+        assert item["codeHash"] == store.inspect("Example")["codeHash"]
+        assert calls == [("owner/repo", {
+            "revision": revision, "local_files_only": True,
+            "allow_patterns": ["*.py", "*.json", "*.toml", "*.txt", "*.md"],
+        })]
+        backend.execute_node("offline-hub", {"module": "custom.Example", "action": "Echo",
+                             "params": {"text": {"value": "cached"}}}, "test", quiet=True)
+        assert backend.node_cache["offline-hub"].output == {"out": "CACHED"}
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("cached_revision", ["a" * 40, "b" * 40])
+def test_offline_hub_add_uses_the_official_cached_snapshot_without_tree_requests(backend, store, tmp_path, monkeypatch, cached_revision):
+    import asyncio
+
+    revision = "a" * 40
+    cache = tmp_path / "hub"
+    source_node(cache / "models--owner--repo" / "snapshots" / cached_revision)
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_CACHE", str(cache))
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", True)
+
+    def no_remote_metadata(*args, **kwargs):
+        pytest.fail("An exact offline cached source must not request remote metadata or a file tree")
+
+    # Exercise the installed official snapshot_download implementation. A stub
+    # returning the cached directory would hide its exact-commit tree lookup.
+    for method in ("model_info", "repo_info", "list_repo_tree"):
+        monkeypatch.setattr(f"huggingface_hub.HfApi.{method}", no_remote_metadata)
+
+    async def scenario():
+        added = await backend.custom_modules_add(request({
+            "kind": "hub", "source": "owner/repo", "revision": revision,
+            "name": "Example", "consent": True,
+        }))
+        if cached_revision != revision:
+            assert added.status == 400, added.text
+            assert not store.path("Example").exists()
+            assert "custom.Example" not in backend.modules
+            return
+        assert added.status == 200, added.text
+        item = json.loads(added.text)["module"]
+        assert item["enabled"] and item["revision"] == revision
+        assert item["codeHash"] == store.inspect("Example")["codeHash"]
+        backend.execute_node("offline-cached-hub", {
+            "module": "custom.Example", "action": "Echo", "params": {"text": {"value": "cached"}},
+        }, "test", quiet=True)
+        assert backend.node_cache["offline-cached-hub"].output == {"out": "CACHED"}
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("offline", [False, True])
+def test_hub_staging_preserves_the_current_online_or_cache_only_mode(store, tmp_path, monkeypatch, offline):
+    revision = "a" * 40
+    snapshot = source_node(tmp_path / "models--owner--repo" / "snapshots" / revision)
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", offline)
+    calls = []
+
+    def downloaded(repository, **kwargs):
+        calls.append((repository, kwargs))
+        return str(snapshot)
+
+    monkeypatch.setattr("huggingface_hub.snapshot_download", downloaded)
+    item = store.stage(kind="hub", source="owner/repo", name="Example", revision=revision)
+    assert calls == [("owner/repo", {
+        "revision": revision, "local_files_only": offline,
+        "allow_patterns": ["*.py", "*.json", "*.toml", "*.txt", "*.md"],
+    })]
+    assert item["revision"] == revision and not item["enabled"]
+
+
 def test_file_add_allows_real_node_size_without_relaxing_other_control_limits(backend, store, tmp_path):
     import asyncio
     from types import SimpleNamespace

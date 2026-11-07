@@ -140,96 +140,155 @@ def _field_label(name):
     return " ".join(part.capitalize() for part in str(name).strip("_").split("_") if part) or str(name)
 
 
+# Only this cross-block type collision has an exact projection review. Other
+# preexisting union coercions retain their reviewed behavior pending separate work.
+_EXACT_REVIEWED_FIELD_SCHEMAS = frozenset({"img_ids"})
+
+
+def _reviewed_field_param(name, fields):
+    type_names = " ".join(str(field.get("type", "opaque")) for field in fields).lower()
+    param = {"label": _field_label(name)}
+    if name == "generator":
+        param.update({"display": "input", "type": "generator"})
+    elif "latent" in name or "tensor" in type_names:
+        param.update({"display": "input", "type": "latent"})
+    elif name in {"video", "driving_video"}:
+        # Upstream video processors may annotate a sequence of PIL frames.
+        # Preserve the video socket that supplies that decoded sequence.
+        param.update({"display": "input", "type": "video"})
+    elif "pil.image" in type_names or name == "image" or name.endswith("_image") or name.endswith("_images"):
+        param.update({"display": "input", "type": "image"})
+    elif name in {"audio", "audios"}:
+        param.update({"display": "input", "type": "audio"})
+    elif "builtins.bool" in type_names and "opaque" not in type_names:
+        param["type"] = "boolean"
+    elif "builtins.int" in type_names and "opaque" not in type_names:
+        param["type"] = "int"
+    elif "builtins.float" in type_names and "opaque" not in type_names:
+        param["type"] = "float"
+    elif "builtins.str" in type_names and "opaque" not in type_names:
+        param["type"] = "string"
+        if "prompt" in name or name == "lyrics":
+            param["display"] = "textarea"
+    else:
+        param["type"] = "object"
+
+    defaults = [field.get("default") for field in fields if "default" in field]
+    if defaults and all(value == defaults[0] for value in defaults):
+        try:
+            json.dumps(defaults[0])
+        except (TypeError, ValueError, OverflowError, RecursionError):
+            pass
+        else:
+            param["default"] = deepcopy(defaults[0])
+    descriptions = [field.get("description") for field in fields if isinstance(field.get("description"), str)]
+    if descriptions:
+        param["description"] = descriptions[0]
+    return param
+
+
 def _reviewed_block_input_params(field_kind="inputs"):
-    """Publish the pinned Modular block input union through one generic node.
+    """Publish the union plus exact alternatives only for conflicting types.
 
-    The client still instantiates only the fields declared by the selected
-    immutable block. Publishing the union here makes those per-placement
-    fields backend-authored instead of client-invented and lets ordinary
-    canvas edges carry media/state values into a reviewed block.
+    The union remains the discovery schema. A selected immutable block owns
+    its socket type when the same upstream name has incompatible meanings.
+    Same-type descriptions/defaults retain the existing union behavior.
     """
-
-    definitions = reviewed_modular_block_snapshot()["blockDefinitions"]
+    ordinary = reviewed_modular_block_snapshot()["blockDefinitions"]
+    conditional = reviewed_modular_conditional_snapshot()["blockDefinitions"]
+    definitions = ordinary
     if field_kind == "outputs":
-        definitions = [*definitions, *reviewed_modular_conditional_snapshot()["blockDefinitions"]]
+        definitions = [*ordinary, *conditional]
     fields_by_name = {}
     for block in definitions:
         for field in block.get(field_kind, ()):
             name = field.get("name")
             if not isinstance(name, str) or not name or (name == "generator" and field_kind == "inputs"):
                 continue
-            fields_by_name.setdefault(name, []).append(field)
+            fields_by_name.setdefault(name, []).append((block, field))
+
+    alternative_fields_by_name = {}
+    for block in [*ordinary, *conditional]:
+        for field in block.get(field_kind, ()):
+            name = field.get("name")
+            if name in fields_by_name:
+                alternative_fields_by_name.setdefault(name, []).append((block, field))
 
     result = {}
-    for name, fields in sorted(fields_by_name.items()):
-        type_names = " ".join(str(field.get("type", "opaque")) for field in fields).lower()
-        param = {"label": _field_label(name)}
-        if name == "generator":
-            param.update({"display": "input", "type": "generator"})
-        elif "latent" in name or "tensor" in type_names:
-            param.update({"display": "input", "type": "latent"})
-        elif name in {"video", "driving_video"}:
-            # Upstream video processors may annotate a sequence of PIL frames.
-            # Preserve the video socket that supplies that decoded sequence.
-            param.update({"display": "input", "type": "video"})
-        elif "pil.image" in type_names or name == "image" or name.endswith("_image") or name.endswith("_images"):
-            param.update({"display": "input", "type": "image"})
-        elif name in {"audio", "audios"}:
-            param.update({"display": "input", "type": "audio"})
-        elif "builtins.bool" in type_names and "opaque" not in type_names:
-            param["type"] = "boolean"
-        elif "builtins.int" in type_names and "opaque" not in type_names:
-            param["type"] = "int"
-        elif "builtins.float" in type_names and "opaque" not in type_names:
-            param["type"] = "float"
-        elif "builtins.str" in type_names and "opaque" not in type_names:
-            param["type"] = "string"
-            if "prompt" in name or name == "lyrics":
-                param["display"] = "textarea"
-        else:
-            param["type"] = "object"
-
-        defaults = [field.get("default") for field in fields if "default" in field]
-        if defaults and all(value == defaults[0] for value in defaults):
-            try:
-                json.dumps(defaults[0])
-            except (TypeError, ValueError, OverflowError, RecursionError):
-                pass
-            else:
-                param["default"] = deepcopy(defaults[0])
-        descriptions = [field.get("description") for field in fields if isinstance(field.get("description"), str)]
-        if descriptions:
-            param["description"] = descriptions[0]
+    for name, entries in sorted(fields_by_name.items()):
+        param = _reviewed_field_param(name, [field for _block, field in entries])
+        if name not in _EXACT_REVIEWED_FIELD_SCHEMAS:
+            result[name] = param
+            continue
+        alternatives = {}
+        for block, field in alternative_fields_by_name[name]:
+            candidate = {
+                "blockDefinitionId": block["id"],
+                "blockContractHash": block["contentHash"],
+                "params": _reviewed_field_param(name, [field]),
+            }
+            previous = alternatives.setdefault(block["id"], candidate)
+            if (previous["blockContractHash"] != candidate["blockContractHash"] or
+                    previous["params"]["type"] != candidate["params"]["type"]):
+                raise ValueError("One immutable reviewed block has conflicting field schemas.")
+        if len({item["params"]["type"] for item in alternatives.values()}) > 1:
+            # Each validated source snapshot permits at most 2048 block IDs;
+            # output fields may use the union of ordinary and conditional IDs.
+            if len(alternatives) > 4096:
+                raise ValueError("Reviewed block field schema alternatives exceed the finite limit.")
+            param["fieldOptions"] = {"reviewedBlockFieldSchemasV1": {
+                "schemaVersion": 1,
+                "alternatives": [alternatives[key] for key in sorted(alternatives)],
+            }}
         result[name] = param
+    return result
+
+
+def _project_reviewed_field_param(param, *, display, strip=(), loop_input=False, loop_output_label=None):
+    """Apply alias transport rules to both the union and exact alternatives."""
+    def project(value):
+        result = {key: deepcopy(item) for key, item in value.items() if key not in {*strip, "fieldOptions"}}
+        result["display"] = display
+        if loop_input:
+            values = result["type"] if isinstance(result["type"], list) else [result["type"]]
+            result["type"] = list(dict.fromkeys([*values, "modular_loop_value"]))
+            result["label"] = f"{result['label']} (each iteration)"
+        if loop_output_label is not None:
+            result = {"display": "output", "type": "modular_loop_value", "label": loop_output_label}
+        return result
+
+    result = project(param)
+    options = deepcopy(param.get("fieldOptions", {}))
+    schemas = options.get("reviewedBlockFieldSchemasV1")
+    if schemas is not None:
+        for item in schemas["alternatives"]:
+            item["params"] = project(item["params"])
+    if options:
+        result["fieldOptions"] = options
     return result
 
 
 _REVIEWED_BLOCK_INPUT_PARAMS = _reviewed_block_input_params()
 _REVIEWED_BLOCK_INPUT_ALIASES = {
-    f"state_input__{name}": {
-        key: value for key, value in {**param, "display": "input"}.items()
-        if key not in {"default", "value", "required", "options"}
-    }
-    for name, param in _REVIEWED_BLOCK_INPUT_PARAMS.items()
+    f"state_input__{name}": _project_reviewed_field_param(
+        param, display="input", strip=("default", "value", "required", "options")
+    ) for name, param in _REVIEWED_BLOCK_INPUT_PARAMS.items()
 }
+_REVIEWED_BLOCK_OUTPUT_SOURCE_PARAMS = _reviewed_block_input_params("outputs")
 _REVIEWED_BLOCK_OUTPUT_PARAMS = {
-    f"state_output__{name}": {
-        key: value for key, value in {**param, "display": "output"}.items()
-        if key not in {"default", "value", "required", "options"}
-    }
-    for name, param in _reviewed_block_input_params("outputs").items()
+    f"state_output__{name}": _project_reviewed_field_param(
+        param, display="output", strip=("default", "value", "required", "options")
+    ) for name, param in _REVIEWED_BLOCK_OUTPUT_SOURCE_PARAMS.items()
 }
 _REVIEWED_LOOP_PORT_PARAMS = {
-    **{f"iteration_input__{name}": {
-        **{key: value for key, value in param.items() if key not in {"default", "value", "required", "options"}},
-        "display": "input", "type": list(dict.fromkeys([*(param["type"] if isinstance(param["type"], list) else [param["type"]]), "modular_loop_value"])),
-        "label": f"{param.get('label', name)} (each iteration)",
-    } for name, param in _REVIEWED_BLOCK_INPUT_PARAMS.items()},
-    **{f"{prefix}{name}": {"display": "output", "type": "modular_loop_value", "label": f"{name} ({label})"}
-       for name in _reviewed_block_input_params("outputs")
+    **{f"iteration_input__{name}": _project_reviewed_field_param(
+        param, display="input", strip=("default", "value", "required", "options"), loop_input=True
+    ) for name, param in _REVIEWED_BLOCK_INPUT_PARAMS.items()},
+    **{f"{prefix}{name}": _project_reviewed_field_param(
+        param, display="output", loop_output_label=f"{name} ({label})"
+    ) for name, param in _REVIEWED_BLOCK_OUTPUT_SOURCE_PARAMS.items()
        for prefix, label in (("iteration_output__", "this iteration"), ("iteration_previous__", "previous iteration"))},
 }
-
 
 class _ReviewedWorkflowState:
     __slots__ = (

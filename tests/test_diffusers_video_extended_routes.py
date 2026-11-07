@@ -1,7 +1,6 @@
 from source_contract_helpers import source_sha256
 
 import ast
-from pathlib import Path
 import sys
 import unittest
 from types import SimpleNamespace
@@ -35,19 +34,19 @@ UPSTREAM_PIPELINE_SOURCES = (
     (
         "pipelines/pag/pipeline_pag_sd_animatediff.py",
         "AnimateDiffPAGPipeline",
-        "d9605b43ba0f33046289d08b679a085074152e87c06f8e49f7e2c8f0528462fe",
+        "32d1c70a4434b7d576876bec844f4ad447bfac4ab2d86ee1a7046d0a2a5d3ff3",
         {"prompt", "num_frames", "pag_scale", "pag_adaptive_scale"},
     ),
     (
         "pipelines/animatediff/pipeline_animatediff_video2video.py",
         "AnimateDiffVideoToVideoPipeline",
-        "8863ad938101c7bc3b7cb282f38b624ce3335ca80eb7cc70e58763eb758fb462",
+        "8f86b17d0d95e56d6514c78af950ea9aeba7d676cb3fa338296f270799079fb4",
         {"video", "prompt", "strength", "enforce_inference_steps"},
     ),
     (
         "pipelines/animatediff/pipeline_animatediff_controlnet.py",
         "AnimateDiffControlNetPipeline",
-        "1259f90db01892213c538af3774aca423981aeb0e531b8bf05fe776403f2641c",
+        "2900bf67951e325eed4da7d2d56a581f4ce7322b5f8dd491c8ed991b2f832437",
         {
             "prompt",
             "num_frames",
@@ -58,7 +57,7 @@ UPSTREAM_PIPELINE_SOURCES = (
     (
         "pipelines/animatediff/pipeline_animatediff_video2video_controlnet.py",
         "AnimateDiffVideoToVideoControlNetPipeline",
-        "7e02f650cf690561e3ddc4c0148837ece0dc793e0c1137c3cdf6ed941d131cbb",
+        "349c661b834cb1342ec83be8b293a7562ce1826d1589ebfe8b00f17b61c17fba",
         {
             "video",
             "prompt",
@@ -100,12 +99,14 @@ class RecordingVideoPipeline:
 class DiffusersVideoExtendedRouteTests(unittest.TestCase):
     def test_exact_pinned_upstream_sources_and_call_signatures_are_preserved(self):
         import diffusers
+        import inspect
+        from modiff.upstream_coverage import reviewed_diffusers_source
 
         self.assertEqual(
             PINNED_DIFFUSERS_REVISION,
-            "fbf49e7f35857f76bc57b177e26f12b03687c668",
+            "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         )
-        diffusers_root = Path(diffusers.__file__).resolve().parent
+        diffusers_root = reviewed_diffusers_source()
         for relative_path, class_name, expected_digest, required_parameters in (
             UPSTREAM_PIPELINE_SOURCES
         ):
@@ -137,6 +138,8 @@ class DiffusersVideoExtendedRouteTests(unittest.TestCase):
                     )
                 }
                 self.assertTrue(required_parameters.issubset(parameters))
+                installed = getattr(diffusers, class_name)
+                self.assertTrue(required_parameters.issubset(inspect.signature(installed.__call__).parameters))
 
     def test_extended_routes_are_additive_exact_class_adapters_with_generic_modes(self):
         expected = {

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "repository": "diffusers-modular/flux3-tarot-lora",
+  "revision": "96fe1071462ed2e95c96035625e9f217d7f61f48",
+  "weightSha256": "b5adac5ac7232708c2b3b55b1bb7a69c06c0c3e929f96073b7c5c7f3722c946a",
+  "scope": "Exact publisher metadata fixture only; no execution or qualification grant",
+  "metadata": {
+    "lora_adapter_metadata": "{\n  \"transformer.alora_invocation_tokens\": null,\n  \"transformer.alpha_pattern\": {},\n  \"transformer.arrow_config\": null,\n  \"transformer.auto_mapping\": null,\n  \"transformer.base_model_name_or_path\": null,\n  \"transformer.bias\": \"none\",\n  \"transformer.corda_config\": null,\n  \"transformer.ensure_weight_tying\": false,\n  \"transformer.eva_config\": null,\n  \"transformer.exclude_modules\": null,\n  \"transformer.fan_in_fan_out\": false,\n  \"transformer.inference_mode\": false,\n  \"transformer.init_lora_weights\": \"gaussian\",\n  \"transformer.layer_replication\": null,\n  \"transformer.layers_pattern\": null,\n  \"transformer.layers_to_transform\": null,\n  \"transformer.loftq_config\": {},\n  \"transformer.lora_alpha\": 16,\n  \"transformer.lora_bias\": false,\n  \"transformer.lora_dropout\": 0.0,\n  \"transformer.megatron_config\": null,\n  \"transformer.megatron_core\": \"megatron.core\",\n  \"transformer.modules_to_save\": null,\n  \"transformer.peft_type\": \"LORA\",\n  \"transformer.peft_version\": \"0.18.1\",\n  \"transformer.qalora_group_size\": 16,\n  \"transformer.r\": 16,\n  \"transformer.rank_pattern\": {},\n  \"transformer.revision\": null,\n  \"transformer.target_modules\": [\n    \"ff.linear_out\",\n    \"to_q\",\n    \"to_out.0\",\n    \"to_v\",\n    \"ff.linear_in\",\n    \"to_k\"\n  ],\n  \"transformer.target_parameters\": null,\n  \"transformer.task_type\": null,\n  \"transformer.trainable_token_indices\": null,\n  \"transformer.use_dora\": false,\n  \"transformer.use_qalora\": false,\n  \"transformer.use_rslora\": false\n}",
+    "format": "pt"
+  }
+}

@@ -1,4 +1,5 @@
 import json
+import pytest
 
 from modiff.execution_input_provenance import (
     apply_resolved_execution_inputs,
@@ -9,6 +10,130 @@ from modiff.execution_input_provenance import (
 
 def node(params=None):
     return {"module": "modules.Diffusers", "action": "Encode", "params": params or {}}
+
+
+@pytest.mark.parametrize('module,action', [
+    ('ModularDiffusers', 'Lora'), ('DiffusersImage', 'LoadAdapter'), ('DiffusersAudio', 'LoadAdapter'),
+])
+@pytest.mark.parametrize('adapter_id', ['a-adapter', 'z-adapter'])
+def test_adapter_revision_stays_in_its_node_without_obscuring_primary_model(module, action, adapter_id):
+    loader = {'module': 'modules.DiffusersImage', 'action': 'LoadPipeline', 'params': {}}
+    adapter = {'module': 'modules.' + module, 'action': action, 'params': {
+        'pipeline': {'sourceId': 'loader', 'sourceKey': 'pipeline'},
+    }}
+    preview = node({'image': {'sourceId': adapter_id, 'sourceKey': 'output'}})
+    graph = {'nodes': {'loader': loader, adapter_id: adapter, 'preview': preview}}
+    records = {
+        'loader': capture_generation_inputs('loader', loader, {'model_id': 'owner/model', 'revision': 'a' * 40}),
+        adapter_id: capture_generation_inputs(adapter_id, adapter, {'revision': 'b' * 40}),
+        'preview': capture_generation_inputs('preview', preview, {}),
+    }
+    receipt = build_resolved_execution_inputs(graph, records, task_id='run', attempt_index=0, node_id='preview')
+    assert receipt['summary'] == {'repo': 'owner/model', 'revision': 'a' * 40}
+    assert receipt['summaryScopeVersion'] == 2
+    assert receipt['ambiguousFields'] == []
+    assert next(r for r in receipt['nodes'] if r['nodeId'] == adapter_id) == records[adapter_id]
+    # An unavailable descriptor pin is not an unavailable base-model pin.
+    records[adapter_id] = capture_generation_inputs(adapter_id, adapter, {'revision': object()})
+    omitted = build_resolved_execution_inputs(graph, records, task_id='run', attempt_index=0, node_id='preview')
+    assert omitted['summary']['revision'] == 'a' * 40
+    assert omitted['unavailableFields'] == []
+    assert next(r for r in omitted['nodes'] if r['nodeId'] == adapter_id)['omittedFields'] == {
+        'revision': 'unsupported-value',
+    }
+
+
+@pytest.mark.parametrize('module,action', [
+    ('custom.ModularDiffusers', 'Lora'), ('ModularDiffusers', 'CustomLora'),
+    ('DiffusersImage', 'LoadPipeline'), ('DiffusersAudio', 'LoadPipeline'),
+])
+def test_scoped_adapter_summary_never_exempts_custom_or_other_model_owners(module, action):
+    graph = {'nodes': {
+        'a': node(),
+        'b': {'module': 'modules.' + module, 'action': action, 'params': {
+            'pipeline': {'sourceId': 'a', 'sourceKey': 'pipeline'},
+        }},
+    }}
+    records = {key: capture_generation_inputs(key, value, {'revision': ('a' if key == 'a' else 'b') * 40})
+               for key, value in graph['nodes'].items()}
+    receipt = build_resolved_execution_inputs(graph, records, task_id='run', attempt_index=0, node_id='b')
+    assert 'summaryScopeVersion' not in receipt
+    assert receipt['summary'] == {}
+    assert receipt['ambiguousFields'] == ['revision']
+
+
+def test_scoped_adapter_summary_preserves_ambiguity_between_real_primary_owners():
+    graph = {'nodes': {
+        'first': node(),
+        'second': node(),
+        'adapter': {'module': 'ModularDiffusers', 'action': 'Lora', 'params': {
+            'a': {'sourceId': 'first', 'sourceKey': 'pipeline'},
+            'b': {'sourceId': 'second', 'sourceKey': 'pipeline'},
+        }},
+    }}
+    records = {key: capture_generation_inputs(key, value, {'revision': str(index) * 40})
+               for index, (key, value) in enumerate(graph['nodes'].items())}
+    receipt = build_resolved_execution_inputs(graph, records, task_id='run', attempt_index=0, node_id='adapter')
+    assert receipt['summaryScopeVersion'] == 2
+    assert receipt['summary'] == {}
+    assert receipt['ambiguousFields'] == ['revision']
+
+
+@pytest.mark.parametrize('module,action,values', [
+    ('Image', 'Resize', {'method': 'pad', 'interpolation': 'lanczos', 'multiple_of': 1}),
+    ('ImageOperations', 'ResizeImage', {'fit_mode': 'contain', 'resampling': 'bicubic'}),
+    ('ImageOperations', 'CropImage', {'x': 0, 'y': 165}),
+    ('ImageOperations', 'MaskComposite', {'mask_channel': 'luminance', 'invert_mask': False}),
+    ('Image', 'Save', {'filename': 'studio/outputs/accepted.png', 'quality': 100}),
+])
+def test_image_utility_receipts_capture_only_the_scoped_actual_controls(module, action, values):
+    record = capture_generation_inputs('utility', {'module': 'modules.'+module, 'action': action}, {
+        **values, 'token': 'not-evidence', 'image': object(), 'other_objects': object(),
+    })
+    assert {k: f['value'] for k, f in record['fields'].items()} == values
+    assert record['omittedFields'] == {}
+    assert 'not-evidence' not in json.dumps(record)
+    unrelated = capture_generation_inputs('other', node(), values)
+    assert unrelated['fields'] == {}
+
+
+def test_image_utility_evidence_keeps_existing_bounds_and_never_walks_media():
+    record = capture_generation_inputs('load', {'module': 'modules.Image', 'action': 'Load'}, {
+        'source_hashes': ['a' * 64] * 17, 'source_modes': [['RGB']],
+        'image': object(), 'alpha_channel': 'x' * 16385,
+    })
+    assert record['fields'] == {}
+    assert record['omittedFields'] == {
+        'source_hashes': 'oversize-list', 'source_modes': 'unsupported-value',
+        'alpha_channel': 'oversize-string',
+    }
+
+
+def test_native_and_connected_recipe_memory_policies_have_comparable_consumed_fields():
+    native = {"module": "modules.ModularDiffusers", "action": "ModelsLoader", "params": {}}
+    native_graph = {"nodes": {"loader": native}}
+    native_record = capture_generation_inputs("loader", native, {
+        "attention_backend": "_native_math", "vae_slicing": True, "vae_tiling": True,
+    })
+    native_receipt = build_resolved_execution_inputs(native_graph, {"loader": native_record},
+        task_id="native", attempt_index=0, node_id="loader")
+    recipe = {"module": "modules.DiffusersRuntime", "action": "DiffusersExecutionRecipe", "params": {}}
+    loader = {"module": "modules.DiffusersImage", "action": "LoadPipeline", "params": {
+        "execution_recipe": {"sourceId": "recipe", "sourceKey": "recipe"},
+    }}
+    legacy_graph = {"nodes": {"recipe": recipe, "loader": loader}}
+    legacy_records = {
+        "recipe": capture_generation_inputs("recipe", recipe, {
+            "attention_backend": "_native_math", "vae_slicing": True, "vae_tiling": True,
+        }),
+        "loader": capture_generation_inputs("loader", loader, {
+            "enable_vae_slicing": True, "enable_vae_tiling": True,
+        }),
+    }
+    legacy_receipt = build_resolved_execution_inputs(legacy_graph, legacy_records,
+        task_id="legacy", attempt_index=0, node_id="loader")
+    for key, expected in (("attentionBackend", "_native_math"), ("vaeSlicing", True), ("vaeTiling", True)):
+        assert native_receipt["summary"][key] == legacy_receipt["summary"][key] == expected
 
 
 def test_adapter_alias_origins_follow_the_consumed_control_and_overrides():
@@ -160,3 +285,28 @@ def test_json_equivalent_numbers_agree_but_booleans_do_not_and_mismatched_receip
     assert receipt["ambiguousFields"] == ["guidanceScale"]
     wrong = {"taskId": "other", "nodeId": "b", "resolvedExecutionInputs": receipt}
     assert "resolvedExecutionInputs" not in apply_resolved_execution_inputs(wrong, receipt)
+
+
+def test_shared_guider_receipt_distinguishes_scale_one_formulations_without_global_enabled_capture():
+    guide = {'module': 'modules.ModularDiffusers', 'action': 'Guider', 'params': {}}
+    encoder = node({'guider': {'sourceId': 'guide', 'sourceKey': 'guider_out'}})
+    graph = {'nodes': {'guide': guide, 'encode': encoder}}
+    consumed = {'guider': 'ClassifierFreeGuidance', 'guidance_scale': 1.0, 'enabled': True,
+                'use_original_formulation': True, 'guidance_rescale': 0.0, 'start': 0.0, 'stop': 1.0}
+    records = {'guide': capture_generation_inputs('guide', guide, consumed),
+               'encode': capture_generation_inputs('encode', encoder, {'enabled': False, 'prompt': 'actual'})}
+    receipt = build_resolved_execution_inputs(graph, records, task_id='run', attempt_index=0, node_id='encode')
+    assert receipt['summary'] == {
+        'guiderType': 'ClassifierFreeGuidance', 'guidanceScale': 1, 'guidanceEnabled': True,
+        'guidanceOriginalFormulation': True, 'guidanceRescale': 0, 'guidanceStart': 0,
+        'guidanceStop': 1, 'prompt': 'actual',
+    }
+    assert 'enabled' not in records['encode']['fields']
+    assert receipt['ambiguousFields'] == []
+    for field, summary in [('enabled', 'guidanceEnabled'), ('use_original_formulation', 'guidanceOriginalFormulation')]:
+        alternate = capture_generation_inputs('guide', guide, {**consumed, field: False})
+        changed = build_resolved_execution_inputs(graph, {**records, 'guide': alternate},
+                                                 task_id='run', attempt_index=0, node_id='encode')
+        assert changed['summary']['guidanceScale'] == 1
+        assert changed['summary'][summary] is False
+        assert changed['summary'] != receipt['summary']

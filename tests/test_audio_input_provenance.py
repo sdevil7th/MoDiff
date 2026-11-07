@@ -59,3 +59,52 @@ def test_audio_call_receipt_uses_consumed_controls_and_connected_origins(pipelin
     )
     assert bound["fields"]["num_inference_steps"]["sourceNodeId"] == "steps"
     assert bound["fields"]["guidance_scale"]["sourceNodeId"] == "guidance"
+
+
+@pytest.mark.parametrize("pipeline_class", ["AceStepPipeline", "StableAudioPipeline"])
+def test_audio_creative_receipt_matches_only_arguments_delivered_to_active_pipeline(pipeline_class):
+    node = Generate("audio-creative-receipt-test")
+    controls = {"lyrics": "[Chorus] MoDiff—keep the rhythm", "vocal_language": "en",
+                "shift": 3.0, "bpm": 170, "keyscale": "C# minor", "timesignature": "3"}
+    ace = pipeline_class == "AceStepPipeline"
+
+    class Pipeline:
+        _modiff_audio_pipeline_class = pipeline_class
+        _modiff_audio_mode = "text_to_audio"
+        device = "cpu"
+        sample_rate = 48000
+
+        def __call__(self, bpm=None, keyscale=None, timesignature=None, **kwargs):
+            fields = node._execution_input_record["fields"]
+            if ace:
+                actual = {**kwargs, "bpm": bpm, "keyscale": keyscale, "timesignature": timesignature}
+                for name, value in controls.items():
+                    assert fields[name]["value"] == actual[name] == value
+            else:
+                assert not set(controls).intersection(fields)
+                assert not set(controls).intersection(kwargs)
+            return SimpleNamespace(audios=np.zeros((1, 48000), dtype=np.float32))
+
+    node.execute(pipeline=Pipeline(), prompt="Metal in triple meter", audio_duration=1,
+                 sample_rate=48000, seed=91, **controls)
+
+
+def test_audio_creative_capture_is_scoped_bounded_and_keeps_connected_origins():
+    from modiff.execution_input_provenance import capture_generation_inputs
+
+    graph_node = {"module": "modules.DiffusersAudio", "action": "Generate", "params": {
+        "lyrics": {"sourceId": "text", "sourceKey": "text"},
+    }}
+    record = capture_generation_inputs("generate", graph_node, {
+        "lyrics": "MoDiff—三拍", "bpm": 170, "keyscale": "C# minor", "timesignature": "3",
+        "vocal_language": "x" * 16385, "shift": float("nan"), "src_audio": object(), "token": "secret",
+    })
+    assert record["fields"]["lyrics"] == {
+        "value": "MoDiff—三拍", "source": "connected", "sourceNodeId": "text", "sourcePortId": "text",
+    }
+    assert record["omittedFields"] == {"vocal_language": "oversize-string", "shift": "non-finite-or-unsafe-number"}
+    assert "src_audio" not in record["fields"] and "token" not in record["fields"]
+    unrelated = capture_generation_inputs("other", {"module": "modules.Image", "action": "Preview"}, {
+        "lyrics": "not global", "bpm": 170, "keyscale": "C# minor", "timesignature": "3",
+    })
+    assert unrelated["fields"] == {}

@@ -1230,7 +1230,7 @@
               }
             ],
             "type": "string",
-            "value": ""
+            "value": []
           },
           "resolved_artifact": {
             "display": "output",
@@ -1824,7 +1824,7 @@
               }
             ],
             "type": "string",
-            "value": false
+            "value": "none"
           },
           "device": {
             "default": "cuda:0",

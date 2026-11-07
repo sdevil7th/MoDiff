@@ -41,6 +41,7 @@ ROUTE_RESERVED_PIPELINE_INPUTS = frozenset(
         "generator",
         "processed_mask_image",
         "mask_overlay_kwargs",
+        "qwen_inpaint_compatibility_state",
         "mask",
     }
 )
@@ -404,6 +405,7 @@ class _QwenRoutePayload(_SealedRoutePayload):
         "_paired_latents_ref",
         "_paired_control_latents_ref",
         "_standalone_controlnet_binding",
+        "_inpaint_compatibility_state",
     )
 
     def __init__(
@@ -416,6 +418,7 @@ class _QwenRoutePayload(_SealedRoutePayload):
         paired_latents_ref,
         paired_control_latents_ref=None,
         standalone_controlnet_binding=None,
+        inpaint_compatibility_state=None,
     ):
         object.__setattr__(self, "_generator_snapshot", generator_snapshot)
         object.__setattr__(self, "_processed_mask_image", processed_mask_image)
@@ -424,6 +427,7 @@ class _QwenRoutePayload(_SealedRoutePayload):
         object.__setattr__(self, "_paired_latents_ref", paired_latents_ref)
         object.__setattr__(self, "_paired_control_latents_ref", paired_control_latents_ref)
         object.__setattr__(self, "_standalone_controlnet_binding", standalone_controlnet_binding)
+        object.__setattr__(self, "_inpaint_compatibility_state", inpaint_compatibility_state)
         object.__setattr__(self, "_sealed", True)
 
 
@@ -1314,7 +1318,10 @@ def validate_route_field_contract(kwargs, node_config):
 def _route_reserved_inputs(*, model_type, action):
     contract = route_contract_for_model_type(model_type)
     if contract != _SDXL_ROUTE_CONTRACT:
-        return ROUTE_RESERVED_PIPELINE_INPUTS, ROUTE_RESERVED_PIPELINE_INPUTS
+        reserved = ROUTE_RESERVED_PIPELINE_INPUTS
+        if action in {"denoise", "decoder"}:
+            reserved = reserved | {"inpaint_compatibility"}
+        return reserved, reserved
     common = frozenset({"generator", "processed_mask_image", "mask_overlay_kwargs"})
     if action == "denoise":
         return common | {"crops_coords"}, common | {"crops_coords", "mask", "masked_image_latents"}
@@ -3449,6 +3456,7 @@ def issue_encoder_route_state(
     vae_component=None,
     vae_latent_channels=None,
     vae_scale_factor=None,
+    inpaint_compatibility_state=None,
 ):
     """Seal post-VAE generator state and mask routing values for Denoise."""
 
@@ -3461,6 +3469,15 @@ def issue_encoder_route_state(
     if not isinstance(generator, torch.Generator) or generator.initial_seed() != seed:
         raise ValueError("The post-VAE generator does not match the validated Modular route seed.")
     contract = route_contract_for_model_type(binding._model_type)
+    if inpaint_compatibility_state is not None:
+        from .qwen_inpaint_compatibility import QwenInpaintCompatibilityState
+
+        if (
+            binding._model_type != "QwenImageEditModularPipeline"
+            or processed_mask_image is None
+            or type(inpaint_compatibility_state) is not QwenInpaintCompatibilityState
+        ):
+            raise ValueError("Qwen whole_v1 media state requires the exact Qwen Edit inpaint route.")
     if contract == _SDXL_ROUTE_CONTRACT:
         if processed_mask_image is not None or mask_overlay_kwargs is not None:
             raise ValueError("SDXL route state cannot contain Qwen processed-mask or overlay fields.")
@@ -3606,6 +3623,7 @@ def issue_encoder_route_state(
             processed_mask_image=processed_mask_image,
             mask_overlay_kwargs=dict(mask_overlay_kwargs) if mask_overlay_kwargs is not None else None,
             inpaint=processed_mask_image is not None,
+            inpaint_compatibility_state=inpaint_compatibility_state,
             paired_latents_ref=_paired_latents_reference(
                 image_latents,
                 label="VAE image latents",
@@ -3710,6 +3728,8 @@ def consume_encoder_route_state(
         "generator": _clone_generator(generator),
         "processed_mask_image": route_state._processed_mask_image,
     }
+    if route_state._contract == _QWEN_ROUTE_CONTRACT and route_state._payload._inpaint_compatibility_state is not None:
+        values["qwen_inpaint_compatibility_state"] = route_state._payload._inpaint_compatibility_state
     if route_state._contract == _SDXL_ROUTE_CONTRACT:
         values.update(
             mask=mask,
@@ -4056,6 +4076,8 @@ def consume_denoise_route_state(
         "generator": _clone_generator(generator),
         "processed_mask_image": route_state._processed_mask_image,
     }
+    if route_state._contract == _QWEN_ROUTE_CONTRACT and route_state._payload._inpaint_compatibility_state is not None:
+        values["qwen_inpaint_compatibility_state"] = route_state._payload._inpaint_compatibility_state
     if route_state._contract == _SDXL_ROUTE_CONTRACT:
         values.update(
             mask=mask,
@@ -4096,6 +4118,7 @@ def issue_decode_route_state(
             processed_mask_image=None,
             mask_overlay_kwargs=route_state._mask_overlay_kwargs,
             inpaint=actual_inpaint,
+            inpaint_compatibility_state=route_state._payload._inpaint_compatibility_state,
             paired_latents_ref=_paired_latents_reference(latents, label="Denoise latents"),
         )
     elif route_state._contract == _SDXL_ROUTE_CONTRACT:
@@ -4362,6 +4385,7 @@ def consume_decode_route_state(
         "contract": _QWEN_ROUTE_CONTRACT,
         "inpaint": route_state._inpaint,
         "decode_inputs": None,
+        "qwen_inpaint_compatibility_state": route_state._payload._inpaint_compatibility_state,
         "mask_overlay_kwargs": (
             dict(route_state._mask_overlay_kwargs) if route_state._mask_overlay_kwargs is not None else None
         ),

@@ -50,6 +50,8 @@ def test_dispatch_receipt_matches_effective_image_call(monkeypatch, action_name,
     else:
         assert result['latents_out'] is None and result['images'][0].size == (64, 64)
     fields = node._execution_input_record['fields']
+    expected_task = next(iter(adapter.modes)) if len(adapter.modes) == 1 else None
+    assert fields['executed_task']['value'] == expected_task
     assert fields['prompt']['value'] == (None if external else 'authored prompt')
     assert fields['seed']['value'] == (None if external else 7)
     assert fields['num_inference_steps']['value'] == (None if external else 5)

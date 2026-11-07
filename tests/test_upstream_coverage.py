@@ -1,9 +1,11 @@
 import hashlib
+from copy import deepcopy
 import json
 import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
@@ -13,6 +15,7 @@ from modiff.optional_runtimes import (
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
 )
 from modiff.studio_execution_specs import STUDIO_EXECUTION_SPEC_DEFINITIONS
+from modiff.source_text import canonical_python_source
 from modiff.upstream_coverage import (
     TRANSFORMERS_REVIEWED_MAIN_REVISION,
     TRANSFORMERS_REVIEWED_MAIN_VERSION,
@@ -21,6 +24,11 @@ from modiff.upstream_coverage import (
     UpstreamCoverageError,
     _load_reviewed_gallery_manifest,
     _load_public_templates,
+    _node_action_evidence,
+    _template_execution_coverage,
+    _workflow_and_template_coverage,
+    _transformers_coverage_scope,
+    _transformers_reference_contract,
     build_upstream_coverage,
     load_upstream_coverage,
     render_upstream_coverage,
@@ -57,33 +65,104 @@ class UpstreamCoverageTests(unittest.TestCase):
             with self.assertRaisesRegex(UpstreamCoverageError, "must not perform network"):
                 _load_public_templates(bundle)
 
+    def test_template_inventory_retains_the_actual_primary_artifact(self):
+        artifact = {"source": "hub", "value": "reviewed/model", "revision": "a" * 40}
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "catalog.mjs"
+            source.write_text("export const templates = " + json.dumps([{
+                "id": "example", "modelType": "ImagePipeline", "mode": "text_to_image",
+                "verificationStatus": "unverified", "modelArtifact": artifact,
+            }]) + ";", encoding="utf-8")
+            self.assertEqual(_load_public_templates(source)[0]["modelArtifact"], artifact)
+
+    def test_selected_native_template_binds_backend_recipe_without_promoting_historical_proof(self):
+        selection = {"schemaVersion": 1, "pipelineClass": "FluxModularPipeline", "task": "text_to_image",
+                     "executionProfileId": "flux-schnell:modular", "implementation": "native_stages",
+                     "bindingSpec": {"modelType": "FluxModularPipeline", "mode": "text_to_image"}}
+        result = _template_execution_coverage(selection)
+        self.assertEqual(result["executionSelection"], selection)
+        self.assertEqual(result["executionRecipeSource"], "backend_operation_starter")
+        self.assertEqual(result["canonicalWorkflowRole"], "historical_creator_recipe_reference")
+        self.assertEqual(result["galleryExecutionCompatibility"], "historical_reference_requires_new_execution_evidence")
+        self.assertEqual(_template_execution_coverage(None), {})
+        for field, value in (("pipelineClass", "FluxPipeline"), ("task", "inpaint"),
+                             ("executionProfileId", "not-reviewed"), ("implementation", "whole_pipeline")):
+            with self.subTest(field=field):
+                with self.assertRaises(UpstreamCoverageError):
+                    _template_execution_coverage({**selection, field: value})
+        wrong_binding = deepcopy(selection)
+        wrong_binding["bindingSpec"]["modelType"] = "FluxDevPipeline"
+        with self.assertRaises(UpstreamCoverageError):
+            _template_execution_coverage(wrong_binding)
+
+    def test_published_experimental_template_keeps_contract_only_canonical_scope(self):
+        template = {
+            "id": "reviewed-experimental-example",
+            "modelType": "Flux3DistilledModularPipeline", "mode": "text_to_image",
+            "verificationStatus": "unverified", "readinessPolicy": "runnable", "evidencePolicy": "strict",
+            "modelArtifact": {"source": "hub", "value": "black-forest-labs/flux-3-image-klein",
+                              "revision": "8454017f9ebaada30c998fccd9f67a80c7580f68"},
+            "executionSelection": {
+                "schemaVersion": 1, "pipelineClass": "Flux3DistilledModularPipeline", "task": "text_to_image",
+                "executionProfileId": "flux3-klein:official-provider:v1", "implementation": "native_stages",
+                "memoryPolicy": "custom_experimental",
+                "bindingSpec": {"modelType": "Flux3DistilledModularPipeline", "mode": "text_to_image"},
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            gallery = Path(directory) / "manifest.json"
+            gallery.write_text(json.dumps({"examples": [{"templateId": template["id"],
+                                "verificationStatus": "reviewed", "qualityReviewStatus": "approved_reviewed"}]}))
+            with patch("modiff.upstream_coverage._load_public_templates", return_value=[template]):
+                workflows, templates, _ = _workflow_and_template_coverage(ROOT, gallery_manifest=gallery)
+            self.assertEqual(templates[0]["status"], "contract-only")
+            self.assertTrue(templates[0]["reviewedGalleryExample"])
+            workflow = next(item for item in workflows if item["id"] == templates[0]["canonicalWorkflowId"])
+            self.assertEqual(workflow["status"], "contract-only")
+            self.assertEqual(sum(item["status"] == "executable" for item in workflows), 203)
+            for field, value in (("memoryPolicy", "auto"), ("executionProfileId", "private-fixture"),
+                                 ("schemaVersion", True), ("task", "edit_image"),
+                                 ("bindingSpec", {"modelType": template["modelType"], "mode": "edit_image"})):
+                changed = deepcopy(template)
+                changed["executionSelection"][field] = value
+                with self.subTest(field=field), patch("modiff.upstream_coverage._load_public_templates", return_value=[changed]):
+                    with self.assertRaises(UpstreamCoverageError):
+                        _workflow_and_template_coverage(ROOT, gallery_manifest=gallery)
+            for field, value in (("revision", "main"), ("value", "private/unreviewed-model")):
+                changed = deepcopy(template)
+                changed["modelArtifact"][field] = value
+                with self.subTest(field=field), patch("modiff.upstream_coverage._load_public_templates", return_value=[changed]):
+                    with self.assertRaises(UpstreamCoverageError):
+                        _workflow_and_template_coverage(ROOT, gallery_manifest=gallery)
+
     def test_checked_in_ledger_has_exact_reviewed_counts(self):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 200,
-                "canonicalWorkflowsWithPublicTemplates": 52,
-                "canonicalWorkflowsWithoutPublicTemplates": 148,
-                "diffusersPipelineSymbolCount": 334,
+                "canonicalWorkflowCount": 209,
+                "canonicalWorkflowsWithPublicTemplates": 60,
+                "canonicalWorkflowsWithoutPublicTemplates": 149,
+                "diffusersPipelineSymbolCount": 340,
                 "pipelineStatusCounts": {
                     "contract-only": 5,
-                    "equivalent": 10,
-                    "executable": 144,
+                    "equivalent": 8,
+                    "executable": 146,
                     "intentionally-excluded": 59,
                     "research-blocked": 116,
-                    "unreviewed": 0,
+                    "unreviewed": 6,
                 },
-                "publicTemplateCount": 78,
-                "reviewedGalleryTemplateCount": 70,
+                "publicTemplateCount": 90,
+                "reviewedGalleryTemplateCount": 80,
                 "templateStatusCounts": {
-                    "contract-only": 0,
+                    "contract-only": 10,
                     "equivalent": 0,
-                    "executable": 78,
+                    "executable": 80,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
                 },
                 "transformersProductionSupportedSemanticCount": 6,
+                "transformersReferenceSupportedSemanticCount": 6,
                 "transformersSemanticCount": 7,
                 "transformersSemanticStatusCounts": {
                     "contract-only": 0,
@@ -94,9 +173,9 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "unreviewed": 0,
                 },
                 "workflowStatusCounts": {
-                    "contract-only": 0,
+                    "contract-only": 6,
                     "equivalent": 0,
-                    "executable": 200,
+                    "executable": 203,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -109,7 +188,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         names = [item["name"] for item in items]
         self.assertEqual(names, sorted(names))
         self.assertEqual(len(names), len(set(names)))
-        self.assertEqual(len(names), 334)
+        self.assertEqual(len(names), 340)
         self.assertTrue({item["status"] for item in items}.issubset(UPSTREAM_COVERAGE_STATUSES))
 
         by_name = {item["name"]: item for item in items}
@@ -125,8 +204,8 @@ class UpstreamCoverageTests(unittest.TestCase):
             by_name["AltDiffusionPipeline"]["reviewDecision"],
             "pinned-diffusers-non-video-source-triage",
         )
-        self.assertEqual(by_name["Lumina2Text2ImgPipeline"]["status"], "equivalent")
-        self.assertEqual(by_name["Lumina2Text2ImgPipeline"]["equivalentTo"], ["Lumina2Pipeline"])
+        self.assertNotIn("Lumina2Text2ImgPipeline", by_name)
+        self.assertNotIn("LuminaText2ImgPipeline", by_name)
         self.assertEqual(by_name["ZImageOmniPipeline"]["status"], "research-blocked")
         self.assertEqual(
             by_name["ZImageOmniPipeline"]["reviewDecision"],
@@ -152,6 +231,8 @@ class UpstreamCoverageTests(unittest.TestCase):
         )
 
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values():
+            if definition["profile"].get("public") is False:
+                continue  # Private future definitions do not grant executable coverage.
             pipeline_class = definition["profile"]["pipeline_class"]
             if pipeline_class in by_name:
                 self.assertEqual(by_name[pipeline_class]["status"], "executable", pipeline_class)
@@ -174,7 +255,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual([spec["id"] for spec in item["exactExecutionSpecs"]], [spec_id])
             self.assertIsNone(item["reviewDecision"], pipeline_class)
 
-    def test_all_unreviewed_video_exports_have_conservative_decisions(self):
+    def test_existing_video_triage_and_exact_new_export_gaps_are_preserved(self):
         by_name = {item["name"]: item for item in self.ledger["diffusersPipelines"]}
         equivalent = {
             "LTX2ImageToVideoPipeline": ["LTX2ConditionPipeline"],
@@ -229,7 +310,10 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual({item["name"] for item in reviewed_video}, intentionally_excluded | research_blocked)
         self.assertEqual(
             {item["name"] for item in by_name.values() if item["status"] == "unreviewed"},
-            set(),
+            {
+                "EchoModularPipeline", "Kandinsky6SRPipeline", "Kandinsky6TI2VAPipeline",
+                "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline", "SanaWMPipeline",
+            },
         )
 
     def test_diffusers_scope_is_the_exact_dependency_pin(self):
@@ -239,7 +323,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(scope["version"], "0.41.0.dev0")
         self.assertRegex(scope["exportModuleSha256"], r"^[0-9a-f]{64}$")
 
-    def test_transformers_main_and_production_are_not_conflated(self):
+    def test_transformers_main_reference_and_current_base_are_not_conflated(self):
         scope = self.ledger["scope"]["transformers"]
         self.assertEqual(
             TRANSFORMERS_REVIEWED_MAIN_REVISION,
@@ -249,17 +333,41 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(scope["reviewedMainRevision"], TRANSFORMERS_REVIEWED_MAIN_REVISION)
         self.assertEqual(scope["reviewedMainVersion"], TRANSFORMERS_REVIEWED_MAIN_VERSION)
         self.assertFalse(scope["reviewedMainDeliveredInProduction"])
-        production = scope["productionRuntime"]
-        self.assertEqual(production["runtimeProfileId"], TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID)
-        self.assertEqual(production["version"], "5.14.1")
+        reference = scope["reviewedReferenceRuntime"]
+        self.assertEqual(scope["productionRuntime"], reference)
+        self.assertEqual(scope["legacyProductionFieldScope"], "historical_reference_wheel_only")
+        self.assertEqual(reference["evidenceScope"], "historical_reference_wheel")
+        self.assertFalse(reference["currentSetupDependency"])
+        self.assertFalse(scope["currentBaseCoverageVerified"])
+        self.assertEqual(scope["currentBaseRuntime"]["delivery"], "base")
+        self.assertIn("transformers>=5.18.0", scope["currentBaseRuntime"]["dependencies"])
+        self.assertIn("peft>=0.21.2", scope["currentBaseRuntime"]["dependencies"])
+        self.assertEqual(reference["runtimeProfileId"], TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID)
+        self.assertEqual(reference["version"], "5.14.1")
         self.assertEqual(
-            production["sha256"],
+            reference["sha256"],
             "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725",
         )
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID]
         package = next(item for item in profile.packages if item.distribution == "transformers")
-        self.assertEqual(package.version, production["version"])
-        self.assertEqual(profile.spec_digest, production["runtimeProfileSpecDigest"])
+        self.assertEqual(package.version, reference["version"])
+        self.assertEqual(profile.spec_digest, reference["runtimeProfileSpecDigest"])
+
+    def test_transformers_scope_declares_current_base_without_observing_installed_packages(self):
+        reference = _transformers_reference_contract()
+        with (
+            patch("importlib.metadata.version", side_effect=AssertionError("must not inspect installed versions")),
+            patch("importlib.metadata.distribution", side_effect=AssertionError("must not inspect installed packages")),
+        ):
+            scope = _transformers_coverage_scope(reference, main_version=TRANSFORMERS_REVIEWED_MAIN_VERSION)
+        self.assertEqual(scope["reviewedReferenceRuntime"], reference)
+        self.assertEqual(scope["productionRuntime"], reference)
+        self.assertEqual(reference["version"], "5.14.1")
+        self.assertFalse(reference["currentSetupDependency"])
+        self.assertFalse(scope["currentBaseCoverageVerified"])
+        self.assertIn("transformers>=5.18.0", scope["currentBaseRuntime"]["dependencies"])
+        self.assertIn("peft>=0.21.2", scope["currentBaseRuntime"]["dependencies"])
+        self.assertNotIn("transformers==5.14.1", scope["currentBaseRuntime"]["dependencies"])
 
     def test_transformers_semantic_inventory_is_finite_and_honest(self):
         items = self.ledger["transformersSemantics"]
@@ -295,9 +403,36 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertFalse(by_id["cosmos3-edge-reasoner-orchestration"]["productionWheelSupport"])
         self.assertTrue(all(not item["publicTemplateEligible"] for item in items))
         for item in items:
+            self.assertEqual(item["evidenceScope"], "historical_reference_wheel")
+            self.assertFalse(item["currentBaseCoverageVerified"])
+            self.assertEqual(item["referenceWheelSupport"], item["productionWheelSupport"])
+            self.assertEqual(item["referenceWheelEvidence"], item["productionWheelEvidence"])
+            self.assertEqual(item["referenceWheelAbsentPaths"], item["productionWheelAbsentPaths"])
             for evidence in item["nodeEvidence"]:
-                actual_hash = hashlib.sha256((ROOT / evidence["path"]).read_bytes()).hexdigest()
+                actual_hash = hashlib.sha256(
+                    canonical_python_source((ROOT / evidence["path"]).read_bytes())
+                ).hexdigest()
                 self.assertEqual(actual_hash, evidence["sha256"], item["id"])
+
+    def test_node_evidence_normalizes_newlines_and_retains_source_and_action_checks(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "modules" / "Example" / "main.py"
+            source.parent.mkdir(parents=True)
+            body = b"class LoadExample:\n    pass\n"
+            source.write_bytes(body)
+            expected = _node_action_evidence(root, ["modules.Example.LoadExample"])
+            for newline_body in (body.replace(b"\n", b"\r\n"), b"class LoadExample:\r\n    pass\n"):
+                source.write_bytes(newline_body)
+                self.assertEqual(_node_action_evidence(root, ["modules.Example.LoadExample"]), expected)
+                self.assertEqual(
+                    hashlib.sha256(canonical_python_source(source.read_bytes())).hexdigest(),
+                    expected[0]["sha256"],
+                )
+            source.write_bytes(body + b"EXTRA = True\n")
+            self.assertNotEqual(_node_action_evidence(root, ["modules.Example.LoadExample"]), expected)
+            with self.assertRaisesRegex(UpstreamCoverageError, "actions are missing"):
+                _node_action_evidence(root, ["modules.Example.MissingExample"])
 
     def test_all_canonical_workflows_and_public_templates_are_inventoried(self):
         manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))
@@ -312,11 +447,60 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(_canonical_json_sha256(graph_path), item["graphHash"], workflow_id)
 
         templates = self.ledger["publicTemplates"]
-        self.assertEqual(len({item["id"] for item in templates}), 78)
+        self.assertEqual(len({item["id"] for item in templates}), 90)
         self.assertTrue(all(item["canonicalWorkflowId"] in ledger_workflows for item in templates))
-        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 70)
-        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 70)
-        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 52)
+        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 80)
+        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 80)
+        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 60)
+        contract_only = [item for item in templates if item["status"] == "contract-only"]
+        self.assertEqual(len(contract_only), 10)
+        for item in contract_only:
+            self.assertIn(item["canonicalWorkflowId"], experimental)
+            self.assertEqual(item["verificationStatus"], "unverified")
+            self.assertEqual(item["executionSelection"]["memoryPolicy"], "custom_experimental")
+            self.assertTrue(item["reviewedGalleryExample"])
+
+        experimental_public_pairs = {
+            "flux2_dev_text_to_image": (
+                "Flux2ModularPipeline:text_to_image", "flux2:modular",
+            ),
+            "cosmos3_super_text_to_image": (
+                "Cosmos3OmniModularPipeline:text_to_image",
+                "cosmos3-super-text-to-image:official-modular-workflow",
+            ),
+        }
+        public_by_id = {item["id"]: item for item in templates}
+        historical_templates = [
+            item for item in templates if item["id"] not in experimental_public_pairs and item["status"] != "contract-only"
+        ]
+        self.assertEqual(len(historical_templates), 78)
+        self.assertEqual(
+            sum(supported[item["canonicalWorkflowId"]]["mediaKind"] == "image"
+                for item in historical_templates),
+            54,
+        )
+        self.assertEqual(
+            sum({**supported, **experimental}[item["canonicalWorkflowId"]]["mediaKind"] == "image"
+                for item in templates),
+            66,
+        )
+        for template_id, (workflow_id, profile_id) in experimental_public_pairs.items():
+            item = public_by_id[template_id]
+            self.assertEqual(item["canonicalWorkflowId"], workflow_id)
+            self.assertEqual(item["verificationStatus"], "unverified")
+            self.assertFalse(item["galleryExamplePresent"])
+            self.assertFalse(item["reviewedGalleryExample"])
+            self.assertEqual(item["executionSelection"]["executionProfileId"], profile_id)
+            self.assertEqual(item["executionSelection"]["implementation"], "native_stages")
+            self.assertEqual(item["executionSelection"]["memoryPolicy"], "custom_experimental")
+            self.assertEqual(item["executionRecipeSource"], "backend_operation_starter")
+            self.assertEqual(
+                ledger_workflows[workflow_id]["qualificationStatus"],
+                "graph-qualified-execution-pending",
+            )
+            self.assertEqual(supported[workflow_id]["runtimeQualificationStatus"], "unqualified")
+            self.assertEqual(supported[workflow_id]["optimizationQualificationStatus"], "unqualified")
+            self.assertEqual(supported[workflow_id]["qualifiedRuntimeProfiles"], [])
 
     def test_template_and_gallery_source_fingerprints_remain_current(self):
         expected_bundle_hash = hashlib.sha256(TEMPLATE_BUNDLE.read_bytes()).hexdigest()
@@ -331,7 +515,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(source["mode"], "huggingface")
             self.assertRegex(source["revision"], r"^[0-9a-f]{40}$")
             self.assertRegex(source["assetSetId"], r"^sha256:canonical-json:[0-9a-f]{64}$")
-            self.assertEqual(len(ledger_gallery_ids), 70)
+            self.assertEqual(len(ledger_gallery_ids), 80)
 
     def test_remote_asset_build_requires_an_explicit_reviewed_gallery_manifest(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

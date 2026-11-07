@@ -70,7 +70,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "862638b4743d927ebeeb1a196902d635129460f83c88ebbbc1a1b256ea263009",
+    "positionHash": "fa2c2e22492adea8b3a90570b1fc5367107e264cde4160725a572a16461663ab",
     "verticalGap": 72
   },
   "nodes": [
@@ -151,7 +151,7 @@
       "id": "node-01",
       "position": {
         "x": 0,
-        "y": 318
+        "y": 374
       },
       "type": "custom"
     },
@@ -188,6 +188,14 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
               }
             },
             "type": "string",
@@ -206,10 +214,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -225,6 +232,16 @@
             ],
             "type": "string",
             "value": "float32"
+          },
+          "execution_profile_id": {
+            "default": "",
+            "fieldOptions": {
+              "noValidation": true
+            },
+            "hidden": true,
+            "label": "Execution Profile",
+            "type": "string",
+            "value": "whisper-tiny:direct"
           },
           "model": {
             "display": "output",
@@ -260,6 +277,16 @@
               "value": "openai/whisper-tiny"
             }
           },
+          "pipeline_class": {
+            "default": "AutoModelForSpeechSeq2Seq",
+            "fieldOptions": {
+              "noValidation": true
+            },
+            "hidden": true,
+            "label": "Pipeline Class",
+            "type": "string",
+            "value": "AutoModelForSpeechSeq2Seq"
+          },
           "resolved_artifact": {
             "display": "output",
             "isConnected": false,
@@ -283,7 +310,8 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "uiState": {}
       },
       "id": "node-02",
       "position": {
@@ -438,7 +466,7 @@
       "id": "node-03",
       "position": {
         "x": 440,
-        "y": 103
+        "y": 131
       },
       "type": "custom"
     },
@@ -489,7 +517,7 @@
       "id": "node-04",
       "position": {
         "x": 880,
-        "y": 215
+        "y": 243
       },
       "type": "custom"
     }

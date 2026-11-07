@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "kind": "video_motion_recipe_candidates",
+  "revision": 2,
+  "status": "authored_candidates_native_motion_acceptance_pending",
+  "scope": "Creative settings for the seven existing H3/Pika/Wan image routes and one additional Pika multishot variation. These descriptors are not another graph executor, a public template admission or model output evidence.",
+  "revisionReason": "The user found the original four H3/Pika clips visually good but nearly static. Their prompts explicitly requested steady framing and gentle drifting. Preserve those originals as baselines; use these separate versioned motion candidates.",
+  "sources": [
+    "https://pika.art/learn/pika-h3-flex-prompt-guide",
+    "https://github.com/Pika-Labs/Pika-H3-Flex/blob/64d81b2e98aa8aa1cf078b07a6ef3aaeae1033da/docs/prompt-guidance.md",
+    "https://huggingface.co/docs/diffusers/main/api/pipelines/pika_h3_flex",
+    "https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/42ed227ee7df40d41602854ae760620d6eb651fe/docs/VIDEO_PROMPT_WRITING_GUIDE_base_en.md",
+    "https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/42ed227ee7df40d41602854ae760620d6eb651fe/docs/VIDEO_PROMPT_WRITING_GUIDE_ref_en.md"
+  ],
+  "modelBindings": {
+    "h3": {
+      "pipelineClass": "MiniMaxH3ModularPipeline",
+      "executionProfileId": "minimax-h3:official-provider:v1",
+      "modelId": "MiniMaxAI/MiniMax-H3",
+      "revision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+      "width": 960,
+      "height": 544,
+      "dtype": "bfloat16",
+      "offloadMode": "group_disk",
+      "numInferenceSteps": 50,
+      "samplerDescription": "Existing official 50-point sigma grid; 49 model evaluations."
+    },
+    "pika": {
+      "pipelineClass": "PikaH3FlexModularPipeline",
+      "executionProfileId": "pika-h3-flex:official-provider:v1",
+      "modelId": "Pika-Labs/Pika-H3-Flex",
+      "revision": "3ff166447d5edb1406107ab8370c42000ce173e4",
+      "width": 832,
+      "height": 480,
+      "dtype": "bfloat16",
+      "offloadMode": "group_disk",
+      "samplerDescription": "Official package-owned six evaluations and task-specific scale-one adapter. Do not submit Steps, CFG or negative-prompt overrides."
+    },
+    "wan5b": {
+      "pipelineClass": "WanTI2VImageToVideoPipeline",
+      "executionProfileId": "wan-22-ti2v-5b:image-direct:v1",
+      "modelId": "Wan-AI/Wan2.2-TI2V-5B-Diffusers",
+      "revision": "b8fff7315c768468a5333511427288870b2e9635",
+      "width": 512,
+      "height": 320,
+      "dtype": "bfloat16",
+      "offloadMode": "none",
+      "numInferenceSteps": 50,
+      "guidanceScale": 5
+    }
+  },
+  "commonSettings": {
+    "fps": 24,
+    "seed": 20261102,
+    "randomizeSeed": false,
+    "quantization": "none",
+    "resourceMode": "expert",
+    "audioPolicy": "Preserve original generated audio and all decoded video frames through the ordinary joined exporter. Wan remains video-only."
+  },
+  "prompts": {
+    "camera_action": "integrated_multimodal_description: [Shot 1] Live-action cinematic footage in bright morning light, one continuous shot. An adult cyclist in a red windbreaker and black helmet pedals a blue bicycle briskly along a seaside boardwalk from left to right. Both wheels keep rotating; the rider's knees pump rhythmically and the jacket flutters. Start in a side-on, full-body view with the whole bicycle visible. The camera tracks right for ten metres at the rider's speed, then arcs forty-five degrees toward the front during the final two seconds, ending in a front three-quarter view. Nearby railing posts sweep across the foreground while the distant ocean shifts more slowly, creating strong parallax. The rider leans through a gentle bend and continues riding at the end. Keep the rider, bicycle and moving background clearly visible throughout.\n\noverall_soundscape: Rolling tyres on wooden boards, rhythmic chain and pedal sounds, jacket fabric fluttering and sea wind. The sounds follow the visible pedalling and movement. No dialogue.\n\nnon_diegetic_music: N/A",
+    "two_scene": "integrated_multimodal_description: [Shot 1] Live-action cinematic action in clear daylight. An adult cyclist in a red windbreaker and black helmet rides a blue bicycle from left to right along a forest trail. The rider pedals strongly, leans around a tree and rolls over a small root; the front wheel rises briefly and lands while both wheels keep spinning. A low camera tracks alongside for several metres. Tree trunks sweep across the foreground with clear parallax. [Shot 2] At 00:04.000, the camera cuts to a distinctly different location: a wide, sunlit city plaza with pale stone paving and a fountain. The same rider, red jacket, black helmet and blue bicycle enter from the left and ride across the plaza toward the right. The camera begins behind the rider and sweeps through a ninety-degree arc to a side view as the rider makes a broad turn around the fountain and keeps pedalling. Establish both locations clearly. Make one clean cut at four seconds, with no dissolve; maintain the same cyclist and bicycle across the cut.\n\noverall_soundscape: In the forest, tyre crunch, chain movement, wind and a brief wheel impact at the root. At the cut, the sound changes to tyres on stone, flowing fountain water and open plaza ambience. No dialogue.\n\nnon_diegetic_music: N/A",
+    "first_frame": "For the target video, at 0.00 seconds into the target video, <Picture 1> (from [Shot 1]) is fully referenced.\n\nintegrated_multimodal_description: [Shot 1] Begin with the red toy sailboat, pond, colours and framing shown in <Picture 1>. One continuous shot. After the opening moment, a gust fills the red sail and the boat heels visibly, then accelerates to the right across the water by at least three hull lengths. The bow rises and settles over a small ripple and a clear V-shaped wake spreads behind the moving hull. The sail flexes as the boat turns. The camera tracks right for one metre and smoothly arcs sixty degrees around the moving boat, ending on a closer three-quarter view. Shoreline plants and pond-edge details shift across the background with visible parallax. Keep the red sail, hull design and toy proportions consistent as the boat moves. End while the boat is still travelling.\n\noverall_soundscape: A gust of wind, sail flutter, moving water and a distinct small splash as the bow crosses the ripple. Keep these effects aligned with the visible action. No speech.\n\nnon_diegetic_music: N/A",
+    "reference_motion": "subject_definitions: <Subject 1> is the red toy sailboat shown in <Picture 1>. The picture supplies its sail colour, hull design and toy proportions.\n\nsummary: [reference generation] Create a moving, low-angle tracking shot of <Subject 1> sailing across a garden pond, with clear subject movement and a changing camera viewpoint.\n\nretention_analysis: Preserve the red triangular sail, hull design and toy proportions from <Picture 1>. Use that picture as an identity reference. Create a new moving composition, changing viewing angle and visible wake throughout the shot.\n\ndetailed_description: [Shot 1] Live-action, cinematic, one continuous shot. <Subject 1> sails from left to right across a garden pond by several hull lengths. A gust bends the sail and the boat heels before straightening; the bow bobs over a ripple and throws a small splash, leaving a widening V-shaped wake. The camera begins low over the water in a front three-quarter view, tracks beside the moving boat for one metre and orbits ninety degrees clockwise, finishing with a view from behind the stern. Pond-edge plants and a small wooden jetty sweep through the background with clear parallax. Keep the whole boat readable as its heading and the camera angle change. The boat continues forward at the ending.\n\noverall_soundscape: Wind in the sail, water moving along the hull, a small bow splash and garden ambience. Match the splash to the visible bow movement. No dialogue.\n\nnon_diegetic_music: N/A",
+    "wan_image": "Begin with the red toy sailboat and pond shown in the input image. In one continuous cinematic shot, a gust fills the red sail, the boat heels visibly and accelerates across the pond to the right by several hull lengths. The sail flexes, the bow bobs over a ripple and a clear V-shaped wake spreads behind the moving hull. The camera tracks alongside and arcs sixty degrees from a side view to a closer front three-quarter view. Pond-edge details and plants shift across the background with visible parallax. Preserve the red sail, hull design and toy proportions. Finish while the boat is still sailing."
+  },
+  "recipes": [
+    {
+      "id": "pika_camera_action_v2",
+      "title": "Pika — Camera tracking and cyclist action",
+      "binding": "pika",
+      "workflowId": "t2va",
+      "task": "text_to_video_with_audio",
+      "promptKey": "camera_action",
+      "numFrames": 124,
+      "inputs": [],
+      "motionChecks": [
+        "continuous lateral camera travel and changing view angle",
+        "foreground/background parallax",
+        "visible pedalling and rotating wheels",
+        "rider continues moving at the end"
+      ]
+    },
+    {
+      "id": "pika_two_scene_v2",
+      "title": "Pika — Two scenes with a timed cut",
+      "binding": "pika",
+      "workflowId": "t2va",
+      "task": "text_to_video_with_audio",
+      "promptKey": "two_scene",
+      "numFrames": 192,
+      "inputs": [],
+      "motionChecks": [
+        "visible cyclist action in both shots",
+        "a clear cut near four seconds",
+        "forest and plaza are distinct locations",
+        "consistent red jacket, black helmet and blue bicycle across the cut",
+        "camera travel in both shots and matching location sound"
+      ]
+    },
+    {
+      "id": "pika_first_frame_v2",
+      "title": "Pika — First-frame boat action and camera arc",
+      "binding": "pika",
+      "workflowId": "fl2va",
+      "task": "first_last_frame_to_video_with_audio",
+      "promptKey": "first_frame",
+      "numFrames": 124,
+      "inputs": [
+        {
+          "role": "first_frame",
+          "type": "image",
+          "source": "operator_supplied",
+          "description": "A red toy sailboat on a pond. The local test uses the retained input; a reusable example accepts the operator's own matching image."
+        }
+      ],
+      "lastFrame": "omitted_intentionally",
+      "motionChecks": [
+        "opening matches the supplied image",
+        "boat travels several hull lengths and heels",
+        "sail, bow and wake visibly change",
+        "camera tracks and changes view angle"
+      ]
+    },
+    {
+      "id": "pika_reference_motion_v2",
+      "title": "Pika — Referenced boat with tracking and orbit",
+      "binding": "pika",
+      "workflowId": "ref2va",
+      "task": "reference_to_video_with_audio",
+      "promptKey": "reference_motion",
+      "numFrames": 124,
+      "inputs": [
+        {
+          "role": "reference_image",
+          "type": "image",
+          "source": "operator_supplied",
+          "description": "A red toy sailboat used as an identity reference; it does not fix the first or last frame."
+        }
+      ],
+      "motionChecks": [
+        "recognizable referenced sail and hull",
+        "boat travels and creates a wake",
+        "front-to-stern camera view change",
+        "clear background parallax"
+      ]
+    },
+    {
+      "id": "h3_camera_action_v2",
+      "title": "MiniMax H3 — Camera tracking and cyclist action",
+      "binding": "h3",
+      "workflowId": "t2va",
+      "task": "text_to_video_with_audio",
+      "promptKey": "camera_action",
+      "numFrames": 124,
+      "inputs": [],
+      "motionChecks": [
+        "continuous camera tracking and changing view angle",
+        "visible pedalling and wheel rotation",
+        "clear foreground/background parallax"
+      ]
+    },
+    {
+      "id": "h3_first_frame_v2",
+      "title": "MiniMax H3 — First-frame boat action and camera arc",
+      "binding": "h3",
+      "workflowId": "fl2va",
+      "task": "first_last_frame_to_video_with_audio",
+      "promptKey": "first_frame",
+      "numFrames": 124,
+      "inputs": [
+        {
+          "role": "first_frame",
+          "type": "image",
+          "source": "operator_supplied",
+          "description": "A red toy sailboat on a pond; supply one opening image."
+        }
+      ],
+      "lastFrame": "omitted_intentionally",
+      "motionChecks": [
+        "opening matches the input",
+        "boat heels, travels and creates a wake",
+        "visible camera tracking and view change"
+      ]
+    },
+    {
+      "id": "h3_reference_motion_v2",
+      "title": "MiniMax H3 — Referenced boat with tracking and orbit",
+      "binding": "h3",
+      "workflowId": "ref2va",
+      "task": "reference_to_video_with_audio",
+      "promptKey": "reference_motion",
+      "numFrames": 124,
+      "inputs": [
+        {
+          "role": "reference_image",
+          "type": "image",
+          "source": "operator_supplied",
+          "description": "A red toy sailboat as an identity reference."
+        }
+      ],
+      "motionChecks": [
+        "recognizable reference identity",
+        "boat movement and wake",
+        "front-to-stern camera view change"
+      ]
+    },
+    {
+      "id": "wan_image_motion_v2",
+      "title": "Wan 5B — Image-driven boat action and camera arc",
+      "binding": "wan5b",
+      "workflowId": "image_to_video",
+      "task": "image_to_video",
+      "promptKey": "wan_image",
+      "numFrames": 121,
+      "inputs": [
+        {
+          "role": "first_frame",
+          "type": "image",
+          "source": "operator_supplied",
+          "description": "A red toy sailboat on a pond."
+        }
+      ],
+      "motionChecks": [
+        "opening follows the input",
+        "boat heels and moves across the frame",
+        "visible wake and camera arc"
+      ]
+    }
+  ],
+  "executionPolicy": {
+    "first": ["pika_camera_action_v2", "pika_two_scene_v2"],
+    "admission": "Finish the already running H3 reference baseline without changing its graph. Close its technical audit and scoped release. Then use the existing reviewed Linux runtime, normal saved workflows and unchanged resource guards. Admit the eight-second workload after the short camera/action case; it is not yet a measured fit or quality claim.",
+    "remainingCandidates": "Prepare matching first-frame/reference/Wan/H3 candidates now. Schedule their native work from the updated acceptance ledger after the first Pika motion results; avoid an automatic broad rerun of completed large-model baselines.",
+    "acceptance": "Technical completion, unique frames or a playing file do not establish motion quality. Inspect actual subject action, camera/parallax and the requested cut/scene change separately, then review original audio. Preserve failed variants and original static baselines.",
+    "publicationApproved": false,
+    "autoQualified": false,
+    "newModelDownloadsRequired": false
+  }
+}

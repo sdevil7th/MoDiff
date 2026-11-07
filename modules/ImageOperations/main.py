@@ -9,6 +9,7 @@ from typing import Any
 from PIL import Image, ImageChops, ImageEnhance, ImageFilter, ImageOps
 
 from modiff.NodeBase import NodeBase
+from utils.image import has_transparency
 
 
 MAX_IMAGE_COUNT = 64
@@ -85,8 +86,10 @@ def _collapse(values: list[Image.Image], singular: bool) -> Image.Image | list[I
 
 
 def _split_color_alpha(image: Image.Image) -> tuple[Image.Image, Image.Image | None]:
-    alpha = image.getchannel("A") if "A" in image.getbands() else None
-    return image.convert("RGB"), alpha
+    if has_transparency(image):
+        rgba = image.convert("RGBA")
+        return rgba.convert("RGB"), rgba.getchannel("A")
+    return image.convert("RGB"), None
 
 
 def _restore_alpha(image: Image.Image, alpha: Image.Image | None) -> Image.Image:
@@ -566,7 +569,7 @@ class StitchImages(NodeBase):
         if output_width > 8192 or output_height > 8192 or output_pixels > MAX_TOTAL_PIXELS:
             raise ValueError("Stitch output exceeds the 8192-side or total-pixel execution limit.")
 
-        preserve_alpha = background == "transparent" or any("A" in image.getbands() for image in images)
+        preserve_alpha = background == "transparent" or any(has_transparency(image) for image in images)
         mode = "RGBA" if preserve_alpha else "RGB"
         fill = {
             "white": (255, 255, 255, 255) if preserve_alpha else (255, 255, 255),
@@ -677,7 +680,7 @@ class MaskComposite(NodeBase):
         if bool(kwargs.get("invert_mask", False)):
             mask = ImageOps.invert(mask)
 
-        output_mode = "RGBA" if "A" in background_image.getbands() or "A" in foreground_image.getbands() else "RGB"
+        output_mode = "RGBA" if has_transparency(background_image) or has_transparency(foreground_image) else "RGB"
         output = Image.composite(
             foreground_image.convert(output_mode),
             background_image.convert(output_mode),
@@ -774,6 +777,7 @@ class ProcessImage(NodeBase):
         operation = str(kwargs.get("operation") or "image_adjustment")
         if operation not in IMAGE_OPERATION_MODES:
             raise ValueError(f"Unsupported built-in image operation {operation!r}.")
+        self.record_generation_inputs({**kwargs, 'pipeline_class': 'BuiltinImageOperationV1', 'executed_task': operation})
         image = kwargs.get("image")
         if operation == "image_adjustment":
             fields = (

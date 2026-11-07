@@ -5,10 +5,13 @@ import hashlib
 import json
 import importlib.util
 import os
+import threading
 from pathlib import Path
 from typing import Any
 
 from modiff.NodeBase import NodeBase
+from modiff.runtime_compilation import cached_compilation_status, require_compilation
+from modiff.modular_runtime_policy import ROCM_BF16_VISION_MATH
 from modiff.model_artifact_catalog import (
     catalog_artifact_file,
     catalog_repository_pin,
@@ -90,18 +93,16 @@ def _normalize_optional_quantization_config(value: Any):
 
 
 def enable_parallel_weight_loading() -> bool:
-    """Enable Hugging Face's supported sharded-loader fast path.
+    """Apply shared loader defaults and report the selected parallel flag.
 
-    Diffusers recommends pairing parallel shard loading with a direct CUDA
-    device map so the allocator can reserve the destination up front. Respect
-    an explicit environment choice; otherwise enable the upstream default
-    worker count for complete pipelines that opt into direct loading.
+    Ordinary launch applies these defaults before Diffusers imports. Direct
+    loader callers use the same Windows serial/non-Windows parallel policy;
+    neither path overwrites an explicit operator choice or worker count.
     """
+    from modiff.runtime_environment import configure_model_loading
 
-    configured = os.environ.get("HF_ENABLE_PARALLEL_LOADING")
-    if configured is None:
-        os.environ["HF_ENABLE_PARALLEL_LOADING"] = "YES"
-        return True
+    configure_model_loading()
+    configured = os.environ["HF_ENABLE_PARALLEL_LOADING"]
     return configured.strip().upper() in {"1", "ON", "TRUE", "YES"}
 
 
@@ -342,10 +343,30 @@ def _restore_diffusers_attention_registry_default() -> str:
     return default_backend.value
 
 
+def native_flash_attention_available(torch_module: Any) -> bool:
+    """Check compiled support without allocating a model or invoking a kernel."""
+    cuda_backend = getattr(getattr(torch_module, "backends", None), "cuda", None)
+    probe = getattr(cuda_backend, "is_flash_attention_available", None)
+    try:
+        return bool(probe()) if callable(probe) else False
+    except Exception:
+        return False
+
+
+def require_attention_backend(backend: str) -> None:
+    if backend != "_native_flash":
+        return
+    import torch
+
+    if not native_flash_attention_available(torch):
+        raise RuntimeError("Native flash SDPA is unavailable in this Torch build. Select auto attention.")
+
+
 def apply_attention_backend(pipeline: Any, backend: str, components: Any = None) -> dict[str, Any]:
     requested = str(backend or "auto")
     if requested not in ATTENTION_BACKENDS:
         raise ValueError(f"Unsupported attention backend {requested!r}.")
+    require_attention_backend(requested)
 
     requested_components = _string_list(components)
     candidate_names = requested_components or list(ATTENTION_COMPONENTS)
@@ -548,6 +569,7 @@ def configure_regional_compile(
     pipeline: Any,
     *,
     enabled: bool,
+    device: str | None = None,
     components: Any = None,
     backend: str = "inductor",
     mode: str = "default",
@@ -556,6 +578,14 @@ def configure_regional_compile(
 ) -> dict[str, Any]:
     if not enabled:
         return {"requested": False, "applied": []}
+    # Loader recipes are applied before placement/offload hooks. Their target
+    # must take precedence over a freshly loaded pipeline's CPU device.
+    execution_device = device or getattr(pipeline, "_execution_device", None)
+    if execution_device is None:
+        import torch
+
+        execution_device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    require_compilation(device=str(execution_device), backend=str(backend or "inductor"))
     requested_components = _string_list(components) or ["transformer", "transformer_2", "unet", "prior"]
     applied = []
     unsupported = []
@@ -917,6 +947,7 @@ def loader_runtime_options(
     if not isinstance(recipe, dict):
         raise TypeError("Execution Recipe must come from a Diffusers Execution Recipe node.")
     device = str(recipe.get("device") or kwargs.get("device") or default_device)
+    require_attention_backend(str(recipe.get("attention_backend") or "auto"))
     recipe_offload = recipe.get("offload_mode")
     auto_offload = bool(kwargs.get("auto_offload", True))
     if recipe_offload is not None:
@@ -1025,25 +1056,114 @@ def assert_runtime_quantization_full_residency(
     return {"source_weight_bytes": source_bytes, "required_bytes": required, "free_bytes": free_bytes}
 
 
-def configure_rocm_vision_attention(pipeline: Any, *, torch_module: Any = None) -> list[str]:
-    """Keep ROCm vision SDPA failures out of multimodal prompt embeddings.
+_ROCM_BF16_VISION_MATH = ROCM_BF16_VISION_MATH
+_ROCM_VISION_MATH_LOCK = threading.RLock()
 
-    Use Transformers' public subconfig setter, leaving text and Diffusers
-    denoiser attention alone. Only the default SDPA vision implementation is
-    replaced; explicit alternate implementations and non-ROCm hosts are retained.
+
+def _rocm_bf16_vision_math_attention(module, query, key, value, attention_mask=None, *args, **kwargs):
+    """Delegate to HF SDPA with a scoped, finite BF16 math implementation.
+
+    The native ROCm fused kernel can produce non-finite large vision results;
+    eager/FP32 math instead materializes oversized score workspaces. Keep the
+    model's BF16 arithmetic and official mask semantics without changing its
+    reference geometry. The supported graph worker serializes model execution;
+    the lock additionally protects nested/concurrent calls to this adapter.
     """
+    import torch
+    from torch.nn.attention import SDPBackend, sdpa_kernel
+    from transformers.integrations.sdpa_attention import sdpa_attention_forward
+
+    if getattr(query, "dtype", None) != torch.bfloat16:
+        raise RuntimeError("The reviewed ROCm vision math policy requires bfloat16 inputs.")
+    with _ROCM_VISION_MATH_LOCK:
+        previous = torch.backends.cuda.fp16_bf16_reduction_math_sdp_allowed()
+        try:
+            torch.backends.cuda.allow_fp16_bf16_reduction_math_sdp(True)
+            with sdpa_kernel([SDPBackend.MATH]):
+                result = sdpa_attention_forward(module, query, key, value, attention_mask, *args, **kwargs)
+                if not torch.isfinite(result[0]).all().item():
+                    raise RuntimeError("Non-finite ROCm vision attention output; generation was not continued.")
+                return result
+        finally:
+            torch.backends.cuda.allow_fp16_bf16_reduction_math_sdp(previous)
+
+
+def _register_rocm_bf16_vision_math():
+    # Both public registries are required: registering attention alone must not
+    # cause Transformers to omit a model's normal attention-mask construction.
+    from transformers import AttentionInterface
+    from transformers.masking_utils import AttentionMaskInterface, sdpa_mask
+
+    AttentionInterface.register(_ROCM_BF16_VISION_MATH, _rocm_bf16_vision_math_attention)
+    AttentionMaskInterface.register(_ROCM_BF16_VISION_MATH, sdpa_mask)
+
+
+def _rocm_vision_attention_target(component, torch_module):
+    vision = getattr(getattr(component, "config", None), "vision_config", None)
+    cuda = getattr(getattr(torch_module, "backends", None), "cuda", None)
+    bfloat16 = getattr(torch_module, "bfloat16", None)
+    if (
+        getattr(vision, "model_type", None) in {"qwen3_vl", "qwen3_vl_vision"}
+        and bfloat16 is not None
+        and getattr(component, "dtype", None) == bfloat16
+        and callable(getattr(cuda, "allow_fp16_bf16_reduction_math_sdp", None))
+        and callable(getattr(cuda, "fp16_bf16_reduction_math_sdp_allowed", None))
+    ):
+        return _ROCM_BF16_VISION_MATH
+    return "eager"
+
+
+def rocm_vision_attention_requires_configuration(component: Any, *, torch_module: Any = None) -> bool:
+    """Inspect the same default vision boundary without changing source ownership."""
     if torch_module is None:
         import torch as torch_module
     if not getattr(getattr(torch_module, "version", None), "hip", None):
+        return False
+    vision = getattr(getattr(component, "config", None), "vision_config", None)
+    return getattr(vision, "_attn_implementation", None) == "sdpa" and callable(
+        getattr(component, "set_attn_implementation", None)
+    )
+
+
+def configure_rocm_vision_attention(pipeline: Any, *, torch_module: Any = None, component_policies=None) -> list[str]:
+    """Keep ROCm vision SDPA failures out of multimodal prompt embeddings.
+
+    Use Transformers' public subconfig setter, leaving text and Diffusers
+    denoiser attention alone. Only a declared reference-component policy selects
+    BF16 Qwen3-VL math SDPA; default eager fallbacks retain their behavior.
+    """
+    if torch_module is None:
+        import torch as torch_module
+    policies = {} if component_policies is None else component_policies
+    if type(policies) is not dict or any(
+        not isinstance(name, str) or policy != _ROCM_BF16_VISION_MATH for name, policy in policies.items()
+    ):
+        raise ValueError("ROCm vision attention needs a declared component policy.")
+    components = getattr(pipeline, "components", {})
+    if set(policies) - set(components):
+        raise ValueError("A declared ROCm vision policy must name a loaded component.")
+    if not getattr(getattr(torch_module, "version", None), "hip", None):
+        if policies:
+            raise ValueError("The reference vision math policy requires the reviewed ROCm runtime.")
         return []
     applied = []
-    for name, component in getattr(pipeline, "components", {}).items():
-        vision = getattr(getattr(component, "config", None), "vision_config", None)
-        setter = getattr(component, "set_attn_implementation", None)
-        if getattr(vision, "_attn_implementation", None) != "sdpa" or not callable(setter):
+    for name, component in components.items():
+        requested = policies.get(name)
+        needs_configuration = rocm_vision_attention_requires_configuration(component, torch_module=torch_module)
+        if not requested and not needs_configuration:
             continue
-        setter({"vision_config": "eager"})
-        if vision._attn_implementation != "eager":
+        vision = getattr(getattr(component, "config", None), "vision_config", None)
+        target = _rocm_vision_attention_target(component, torch_module) if requested else "eager"
+        if requested and target != requested:
+            raise RuntimeError("The reference vision math policy requires BF16 Qwen3-VL and Torch math controls.")
+        if requested and getattr(vision, "_attn_implementation", None) == requested:
+            continue
+        if requested and not needs_configuration:
+            raise RuntimeError("The declared reference vision policy differs from its model owner's attention choice.")
+        if target == _ROCM_BF16_VISION_MATH:
+            _register_rocm_bf16_vision_math()
+        component.set_attn_implementation({"vision_config": target})
+        if vision._attn_implementation != target:
             raise RuntimeError(f"Could not apply stable ROCm vision attention to {name}.")
         applied.append(name)
     return applied
@@ -1084,6 +1204,7 @@ def apply_execution_recipe_to_pipeline(pipeline: Any, recipe: dict[str, Any]) ->
     compile_result = configure_regional_compile(
         pipeline,
         enabled=bool(recipe.get("regional_compile", False)),
+        device=recipe.get("device"),
         components=recipe.get("compile_components"),
         backend=recipe.get("compile_backend") or "inductor",
         mode=recipe.get("compile_mode") or "default",
@@ -1132,6 +1253,11 @@ def build_runtime_capabilities(
         if backend == "xpu"
         else "cpu"
     )
+    compile_device = str((accelerator or {}).get("device") or "cpu")
+    if compile_device.startswith("cpu:"):
+        compile_device = "cpu"
+    compiler = cached_compilation_status(device=compile_device)
+    flex_compiler = cached_compilation_status(device=compile_device, require_flex=True)
 
     capability = None
     if backend == "cuda":
@@ -1176,12 +1302,17 @@ def build_runtime_capabilities(
     hub_kernels_available = vendor == "nvidia" and package_available("kernels")
     sage_available = backend == "cuda" and package_available("sageattention")
     xformers_available = vendor == "nvidia" and package_available("xformers")
+    native_flash_available = backend == "cuda" and native_flash_attention_available(torch_module)
     attention = {
         "native": {"available": True, "reason": "PyTorch SDPA fallback"},
         "_native_math": {"available": True, "reason": "Portable PyTorch math fallback"},
         "_native_flash": {
-            "available": backend == "cuda",
-            "reason": "PyTorch accelerator flash SDPA" if backend == "cuda" else "Requires a CUDA/ROCm torch backend",
+            "available": native_flash_available,
+            "reason": (
+                "PyTorch build includes accelerator flash SDPA"
+                if native_flash_available
+                else "Native flash SDPA is unavailable in this Torch build. Select auto attention."
+            ),
         },
         "_native_efficient": {
             "available": backend == "cuda",
@@ -1192,11 +1323,11 @@ def build_runtime_capabilities(
             "reason": "NVIDIA cuDNN attention" if vendor == "nvidia" else "Requires NVIDIA CUDA",
         },
         "flex": {
-            "available": backend == "cuda" and hasattr(getattr(torch_module, "nn", None), "attention"),
+            "available": backend == "cuda" and bool(flex_compiler.get("available")),
             "reason": (
-                "PyTorch FlexAttention is available"
-                if backend == "cuda" and hasattr(getattr(torch_module, "nn", None), "attention")
-                else "Requires a PyTorch accelerator build with FlexAttention"
+                "Compiled FlexAttention kernel executed successfully"
+                if backend == "cuda" and flex_compiler.get("available")
+                else "Requires a successful compiled FlexAttention probe on this accelerator"
             ),
         },
         "flash": {
@@ -1355,7 +1486,8 @@ def build_runtime_capabilities(
         "attention_backends": attention,
         "quantization_backends": quantization,
         "compile": {
-            "available": callable(getattr(torch_module, "compile", None)),
+            **compiler,
+            "api_available": callable(getattr(torch_module, "compile", None)),
             "regional_requires_model_probe": True,
         },
         "denoiser_cache": {
@@ -1691,11 +1823,17 @@ class PipelineQuantizationConfigV2(NodeBase):
             excluded_modules=kwargs.get("excluded_modules"),
             component_overrides=kwargs.get("component_overrides"),
         )
+        from modiff.execution_input_provenance import disabled_quantization_projection
+        result_config = config if config is not None else dict(NO_QUANTIZATION_CONFIG)
+        inactive = {'dtype': 'feature-disabled', 'excluded_modules': 'feature-disabled'} if config is None else {}
+        self.record_field_accounting(kwargs, consumed={key: value for key, value in kwargs.items() if key not in inactive},
+            inactive=inactive,
+            output_projections={'quantization_config': disabled_quantization_projection(result_config)})
         return {
             # Connected output sockets must carry a concrete value. A disabled
             # marker keeps the quantization flow visible and executable while
             # build_execution_recipe normalizes it back to no quantization.
-            "quantization_config": config if config is not None else dict(NO_QUANTIZATION_CONFIG),
+            "quantization_config": result_config,
             "summary": json.dumps(summary, sort_keys=True),
         }
 
@@ -2027,6 +2165,21 @@ class DiffusersExecutionRecipe(NodeBase):
             cache_threshold=float(kwargs.get("cache_threshold", 0.05)),
             cache_options=kwargs.get("cache_options"),
         )
+        from modiff.execution_input_provenance import disabled_quantization_projection, execution_recipe_projection
+        inactive = {}
+        for enabled, fields in (
+            (recipe['layerwise_casting'], ('layerwise_casting_components', 'layerwise_storage_dtype', 'layerwise_compute_dtype')),
+            (recipe['channels_last'], ('channels_last_components',)),
+            (recipe['regional_compile'], ('compile_components', 'compile_backend', 'compile_mode', 'compile_fullgraph', 'compile_dynamic')),
+            (recipe['denoiser_cache'] != 'none', ('cache_threshold', 'cache_options')),
+            (recipe['device_map_strategy'] == 'manual', ('device_map_overrides',)),
+        ):
+            if not enabled:
+                inactive.update({key: 'feature-disabled' for key in fields})
+        self.record_field_accounting(kwargs, consumed={key: value for key, value in kwargs.items() if key not in inactive},
+            inactive=inactive,
+            input_projections={'quantization_config': disabled_quantization_projection(kwargs.get('quantization_config'))},
+            output_projections={'execution_recipe': execution_recipe_projection(recipe)})
         return {
             "execution_recipe": recipe,
             "summary": json.dumps(execution_recipe_summary(recipe), sort_keys=True),

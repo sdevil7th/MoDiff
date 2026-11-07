@@ -5,6 +5,17 @@ from tempfile import TemporaryDirectory
 import pytest
 
 
+@pytest.fixture
+def portable_cpu_bfloat16_math():
+    # Numerical contracts retain real BF16 forwards and exact assertions; they
+    # do not qualify optimized CPU kernels. Hosted Windows terminated inside
+    # BF16 Linear in both timestep and condition-matching Flux tests.
+    import torch
+
+    with torch.backends.mkldnn.flags(enabled=False):
+        yield
+
+
 def pytest_configure(config):
     # This runs before collection: several test modules import the node registry
     # at module scope, before any autouse fixture could isolate discovery.

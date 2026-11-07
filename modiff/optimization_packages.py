@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.metadata
+import importlib.util
 import json
 import math
 import os
@@ -24,6 +25,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import sysconfig
 import threading
 import time
 import uuid
@@ -36,6 +38,7 @@ from typing import Any
 from modiff.optional_runtimes import (
     OPTIONAL_RUNTIME_PROFILES,
     TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
     optional_runtime_base_contracts,
     public_optional_runtime_profiles,
 )
@@ -48,6 +51,8 @@ from modiff.runtime_overlays import (
     binding_matches,
     cache_locked_artifacts,
     current_base_binding,
+    declared_diffusers_provider,
+    register_verified_diffusers_provider,
     ensure_managed_directory,
     flush_managed_directory,
     normalize_locked_wheel_install,
@@ -69,7 +74,7 @@ from modiff.runtime_source_builds import (
     source_build_output_artifact,
     validate_source_build_contract,
 )
-from modiff.tool_locks import UV_TOOL_LOCKS
+from modiff.tool_locks import resolve_uv
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -679,6 +684,7 @@ def _expected_contracts_for_specs(
                 base_contracts,
                 list(record["spec"].get("basePackages") or []),
             )
+    declared_diffusers_provider(package_contracts, specs)
     return package_contracts, base_contracts
 
 
@@ -945,6 +951,40 @@ def activate_runtime_overlay() -> str | None:
         if environment_id is None:
             os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "base"
             return None
+        # Standard model dependencies now belong to the base environment.
+        # Inspect records without importing any overlay bytes: historical core
+        # overlays must not shadow the newer operator-installed libraries.
+        from modiff.base_runtime import base_runtime_status
+        if base_runtime_status()["verified"]:
+            recorded = _environment_inspection(environment_id, verify_integrity=False)
+            contracts = recorded.get("manifest", {}).get("packageContracts", [])
+            core_packages = {"transformers", "peft"}
+            if any(item.get("distribution") in core_packages for item in contracts):
+                specs = recorded["manifest"].get("specs", [])
+                core_only = bool(specs) and all(
+                    item.get("kind") == "optional_runtime"
+                    and str(item.get("id") or "").startswith("huggingface-transformers-")
+                    and not any(
+                        package.role == "runtime_root" and package.distribution not in core_packages
+                        for package in OPTIONAL_RUNTIME_PROFILES[item["id"]].packages
+                    )
+                    for item in specs
+                    if item.get("id") in OPTIONAL_RUNTIME_PROFILES
+                )
+                if core_only:
+                    state["previousEnvironmentId"] = environment_id
+                    state["previousTrustClass"] = state["activeTrustClass"]
+                    state["activeEnvironmentId"] = None
+                    state["activeTrustClass"] = None
+                    _write_state(state)
+                    os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "base"
+                else:
+                    os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "repair_required"
+                    os.environ["MODIFF_RUNTIME_OVERLAY_MESSAGE"] = (
+                        "The selected optimization overlay contains obsolete base model libraries. "
+                        "MoDiff is using the base environment; reset the optional runtime to base before repairing the optimization."
+                    )
+                return None
         try:
             active_trust_class = state.get("activeTrustClass")
             if active_trust_class != "artifact_locked_optional":
@@ -963,11 +1003,28 @@ def activate_runtime_overlay() -> str | None:
         # Never use site.addsitedir: wheel-supplied .pth files can execute
         # code. Hold the cross-process lease through the final plain-path
         # insertion so state cannot race validation.
+        try:
+            recorded = _environment_inspection(environment_id, verify_integrity=False)
+            if recorded.get("status") != "recorded" or recorded.get("sitePackages") != site_packages:
+                raise RuntimeError("The selected runtime metadata changed before import-path selection.")
+            manifest = recorded["manifest"]
+            provider = declared_diffusers_provider(manifest["packageContracts"], manifest["specs"])
+        except (OSError, RuntimeError, TypeError, ValueError, KeyError):
+            os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "repair_required"
+            return None
         sys.dont_write_bytecode = True
         normalized = str(site_packages)
         if normalized in sys.path:
             sys.path.remove(normalized)
         sys.path.insert(0, normalized)
+        if provider is not None:
+            try:
+                register_verified_diffusers_provider(site_packages, manifest["packageContracts"], manifest["specs"],
+                                                     recorded["validation"]["binding"]["diffusers"])
+            except (OSError, RuntimeError, TypeError, ValueError, KeyError):
+                sys.path.remove(normalized)
+                os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "repair_required"
+                return None
         os.environ["MODIFF_OPTIMIZATION_ENVIRONMENT"] = str(environment_id)
         os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "active"
         return str(environment_id)
@@ -1241,6 +1298,70 @@ def _public_sha256_digest(value: Any) -> str | None:
     )
 
 
+def _bitsandbytes_package_root(version: str | None) -> Path | None:
+    """Observe package/metadata co-location without importing the distribution."""
+    if version != "0.50.0":
+        return None
+    try:
+        distribution = importlib.metadata.distribution("bitsandbytes")
+        if distribution.version != version:
+            return None
+        metadata_path = Path(distribution._path).resolve(strict=True)
+        spec = importlib.util.find_spec("bitsandbytes")
+        if not metadata_path.is_dir() or spec is None or not isinstance(spec.origin, str):
+            return None
+        root = metadata_path.parent
+        package = (root / "bitsandbytes").resolve(strict=True)
+        origin = Path(spec.origin).resolve(strict=True)
+        locations = [Path(path).resolve(strict=True) for path in spec.submodule_search_locations or ()]
+        if origin != package / "__init__.py" or locations != [package]:
+            return None
+        return root
+    except (AttributeError, ImportError, OSError, TypeError, ValueError):
+        return None
+
+
+def _bitsandbytes_overlay_current(package_root, profile, catalog, state) -> bool:
+    """Join the current sealed startup selection to its metadata-only catalog."""
+    declared = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID]
+    target = declared.contract_for_target()
+    environment_id = _public_environment_id(state.get("activeEnvironmentId"))
+    if (package_root is None or not isinstance(profile, dict) or not isinstance(catalog, dict)
+            or catalog.get("schemaVersion") != 1 or environment_id is None
+            or state.get("_storageStatus") != "ok" or state.get("activeTrustClass") != "artifact_locked_optional"
+            or os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS") != "active"
+            or os.environ.get("MODIFF_OPTIMIZATION_ENVIRONMENT") != environment_id
+            or target.contract_state != "qualified" or not target.cutover_ready
+            or profile.get("specDigest") != declared.spec_digest
+            or profile.get("status") != "present_unqualified" or profile.get("contractState") != "qualified"
+            or any(profile.get(key) is not True for key in ("cutoverReady", "installActionAvailable", "activationAvailable"))
+            or (profile.get("platform"), profile.get("machine")) != (target.platform, target.machine)
+            or profile.get("overlayStatus") != "active"):
+        return False
+    overlay = catalog.get("overlay")
+    selection = overlay.get("state") if isinstance(overlay, dict) else None
+    if (not isinstance(selection, dict) or overlay.get("processLoadStatus") != "active"
+            or selection.get("activeEnvironmentId") != environment_id or selection.get("activeStatus") != "active"):
+        return False
+    try:
+        environments = _verified_existing_managed_directory(ENVIRONMENTS_DIR, managed_root=MANAGED_ROOT)
+        expected_root = (environments / environment_id / "site-packages").resolve(strict=True)
+        if package_root != expected_root:
+            return False
+        inspection = _environment_inspection(environment_id, verify_integrity=False)
+        manifest = inspection.get("manifest", {})
+        return bool(
+            inspection.get("status") in {"ready", "recorded"}
+            and Path(inspection["sitePackages"]).resolve(strict=True) == expected_root
+            and manifest.get("trustClass") == "artifact_locked_optional"
+            and inspection.get("validation", {}).get("status") == "passed"
+            and any(_environment_spec_satisfies_optional_profile(item, profile)
+                    for item in manifest.get("specs", ()))
+        )
+    except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError):
+        return False
+
+
 def public_catalog(
     *,
     runtime_profile: dict[str, Any] | None = None,
@@ -1257,6 +1378,8 @@ def public_catalog(
     accelerators = hardware.get("accelerators") if isinstance(hardware.get("accelerators"), list) else []
     device_count = len(devices or accelerators)
     enabled = {str(item) for item in state.get("enabledCapabilities") or []}
+    if optional_runtime_catalog is None:
+        optional_runtime_catalog = public_optional_runtime_catalog()
     optional_profiles = {
         item.get("id"): item
         for item in (
@@ -1309,14 +1432,21 @@ def public_catalog(
             reason = "The upstream feature is documented, but MoDiff has not qualified a safe execution contract yet."
         installed_version = _package_version(str(item.get("distribution"))) if item.get("distribution") else None
         installed = bool(installed_version) if item.get("distribution") else implemented
+        package_root = _bitsandbytes_package_root(installed_version) if capability_id == "bitsandbytes" else None
+        native_roots = set()
+        if package_root is not None:
+            try:
+                native_roots = {Path(sysconfig.get_path(key)).resolve(strict=True) for key in ("purelib", "platlib")}
+            except (OSError, TypeError, ValueError):
+                pass
         base_profile_delivered = bool(
-            capability_id == "bitsandbytes"
-            and profile_id == "nvidia-cuda"
-            and installed_version == "0.50.0"
+            capability_id == "bitsandbytes" and profile_id == "nvidia-cuda" and package_root in native_roots
         )
         optional_runtime_profile_id = (
             TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID
             if capability_id == "optimum_quanto"
+            else TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID
+            if capability_id == "bitsandbytes"
             else None
         )
         optional_profile = optional_profiles.get(optional_runtime_profile_id)
@@ -1328,6 +1458,10 @@ def public_catalog(
             and optional_profile.get("cutoverReady") is True
             and optional_profile.get("overlayStatus") == "active"
         )
+        if capability_id == "bitsandbytes":
+            optional_profile_delivered = _bitsandbytes_overlay_current(
+                package_root, optional_profile, optional_runtime_catalog, state,
+            )
         delivery_qualified = base_profile_delivered or optional_profile_delivered
         can_enable = compatible and (
             item.get("kind") == "runtime" or (item.get("kind") in {"package", "profile", "external"} and installed)
@@ -1349,7 +1483,7 @@ def public_catalog(
                     else "unqualified"
                 ),
                 "availableForExecution": bool(delivery_qualified and compatible),
-                "optionalRuntimeProfileId": optional_runtime_profile_id,
+                "optionalRuntimeProfileId": optional_runtime_profile_id if not base_profile_delivered else None,
                 "canInstall": item.get("kind") == "package" and compatible,
                 "canEnable": can_enable,
                 "requiresRestart": item.get("kind") == "package",
@@ -1367,6 +1501,8 @@ def public_catalog(
             item["disabledReason"] = (
                 reason or "No generally safe app-managed wheel matches every supported ROCm device and Torch ABI."
             )
+        if capability_id == "bitsandbytes" and delivery_qualified and not compatible:
+            item["disabledReason"] = reason
         capabilities.append(item)
     environments = []
     environment_scan = {
@@ -1482,47 +1618,7 @@ def public_catalog(
 
 
 def _verified_uv_executable() -> str:
-    tool_root = _verified_existing_managed_directory(
-        MANAGED_ROOT / "tools" / "uv",
-        managed_root=MANAGED_ROOT,
-    )
-    receipt = _read_json(tool_root / "receipt.json", {}, root=tool_root)
-    machine = _machine_name()
-    reviewed = UV_TOOL_LOCKS.get((_platform_name(), machine))
-    if not reviewed:
-        raise RuntimeError(
-            "MoDiff has no reviewed immutable uv executable lock for this platform."
-        )
-    expected_archive = reviewed.get("archiveSha256")
-    expected_executable = reviewed.get("executableSha256")
-    relative = receipt.get("executable")
-    if (
-        receipt.get("schemaVersion") != 1
-        or receipt.get("archiveSha256") != expected_archive
-        or not isinstance(relative, str)
-        or not relative
-        or len(relative) > 256
-    ):
-        raise RuntimeError("MoDiff's managed uv executable has no verified receipt.")
-    executable = (tool_root / relative).resolve(strict=True)
-    try:
-        executable.relative_to(tool_root)
-    except ValueError as exc:
-        raise RuntimeError("The managed uv receipt escapes its tool directory.") from exc
-    if not executable.is_file() or executable.is_symlink():
-        raise RuntimeError("The managed uv executable is unavailable or linked.")
-    hasher = hashlib.sha256()
-    with executable.open("rb") as source:
-        while chunk := source.read(1024 * 1024):
-            hasher.update(chunk)
-    if (
-        not isinstance(expected_executable, str)
-        or len(expected_executable) != 64
-        or hasher.hexdigest() != expected_executable
-        or receipt.get("executableSha256") != expected_executable
-    ):
-        raise RuntimeError("The managed uv executable failed its integrity check.")
-    return str(executable)
+    return resolve_uv(MANAGED_ROOT, platform_name=_platform_name(), machine=_machine_name())
 
 
 def _platform_name() -> str:
@@ -1662,6 +1758,8 @@ def validate_optional_runtime_install_request(
         raise ValueError("The optional runtime specDigest does not match the reviewed catalog.")
     if profile.contract_for_target().install_action_available is not True:
         raise RuntimeError("This optional runtime is not qualified for installation.")
+    from modiff.optional_runtimes import assert_optional_runtime_distribution_compatibility
+    assert_optional_runtime_distribution_compatibility(profile)
     base_contracts = list(optional_runtime_base_contracts([profile_id]))
     # Establish constraints, exact observed versions/origins, accelerator lock,
     # and Diffusers identity before a lease or staging directory can exist.
@@ -1694,6 +1792,8 @@ def validate_optional_runtime_activation_request(
         raise ValueError("The optional runtime specDigest does not match the reviewed catalog.")
     if profile.contract_for_target().activation_available is not True:
         raise RuntimeError("This optional runtime is not qualified for activation.")
+    from modiff.optional_runtimes import assert_optional_runtime_distribution_compatibility
+    assert_optional_runtime_distribution_compatibility(profile)
     return spec
 
 
@@ -1816,6 +1916,7 @@ def _install_reviewed_overlay(
         ]
         specs.append(deepcopy(spec))
         packages = _merge_contracts(existing_packages, package_contracts)
+        declared_diffusers_provider(packages, specs)
         base_packages = _merge_contracts(existing_base, base_contracts)
         binding = current_base_binding(base_packages)
         selected_artifacts = [dict(item) for item in (artifact_locks or [])]
@@ -2181,6 +2282,13 @@ def public_optional_runtime_catalog() -> dict[str, Any]:
             )
     profiles = public_optional_runtime_profiles()
     for profile in profiles:
+        roots = [package for package in OPTIONAL_RUNTIME_PROFILES[profile["id"]].packages if package.role == "runtime_root"]
+        profile["baseIncluded"] = bool(
+            roots and all(package.distribution in {"transformers", "peft"} for package in roots)
+        )
+        if profile["baseIncluded"]:
+            profile["installActionAvailable"] = False
+            profile["activationAvailable"] = False
         matching = [
             environment
             for environment in environments
@@ -2284,6 +2392,39 @@ def rollback_optional_runtime_environment(*, consent: Any) -> dict[str, Any]:
     if consent is not True:
         raise ValueError("Explicit consent=true is required to roll back an optional runtime.")
     return _rollback_environment_transaction(expected_trust_class="artifact_locked_optional")
+
+
+def reset_optional_runtime_to_base(*, consent: Any) -> dict[str, Any]:
+    """Clear optional selections without deleting any environment artifacts."""
+    if consent is not True:
+        raise ValueError("Explicit consent=true is required to reset optional runtimes to base.")
+    from modiff.base_runtime import base_runtime_status
+    if not base_runtime_status()["verified"]:
+        raise RuntimeError("Repair the required base packages with uv before resetting optional runtimes.")
+    lease = reserve_install("rollback", "base_environment")
+    try:
+        _reconcile_promotion(lease)
+        if not base_runtime_status()["verified"]:
+            raise RuntimeError("The base packages changed while reserving recovery. Repair them with uv before retrying.")
+        state = read_state()
+        if state.get("_storageStatus") != "ok":
+            enabled_capabilities = state.get("enabledCapabilities", [])
+            state = _reset_state_to_base()
+            state["enabledCapabilities"] = enabled_capabilities
+            state = _write_state(state)
+            restart_required = bool(os.environ.get("MODIFF_OPTIMIZATION_ENVIRONMENT"))
+        else:
+            restart_required = bool(state.get("activeEnvironmentId") or os.environ.get("MODIFF_OPTIMIZATION_ENVIRONMENT"))
+            state["activeEnvironmentId"] = None
+            state["activeTrustClass"] = None
+            state["previousEnvironmentId"] = None
+            state["previousTrustClass"] = None
+            state = _write_state(state)
+        os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "restart_required" if restart_required else "base"
+        os.environ.pop("MODIFF_RUNTIME_OVERLAY_MESSAGE", None)
+        return {"state": state, "restartRequired": restart_required, "target": "base"}
+    finally:
+        release_install(lease)
 
 
 def install_capability(
@@ -2625,7 +2766,6 @@ import torch
 from diffusers.hooks import FirstBlockCacheConfig, apply_layerwise_casting
 capability = __CAPABILITY__
 checks = {
-    "regional_compile": callable(getattr(torch, "compile", None)),
     "denoiser_cache": FirstBlockCacheConfig is not None,
     "layerwise_casting": callable(apply_layerwise_casting) and hasattr(torch, "float8_e4m3fn"),
     "channels_last": hasattr(torch, "channels_last"),
@@ -2642,22 +2782,43 @@ print(json.dumps({
 if not supported:
     raise SystemExit(2)
 """.replace("__CAPABILITY__", repr(capability_id))
+        if capability_id == "regional_compile":
+            from modiff.runtime_compilation import compilation_probe_script
+
+            script = compilation_probe_script()
         started = time.monotonic()
-        result = subprocess.run(
-            [sys.executable, "-c", script],
-            capture_output=True,
-            text=True,
-            timeout=120,
-            check=False,
-            env=os.environ.copy(),
-        )
+        try:
+            result = subprocess.run(
+                # Probes must not add bytecode to an exact evaluated package.
+                [sys.executable, "-B", "-c", script],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
+                env=os.environ.copy(),
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            return record_probe_receipt(
+                capability_id=capability_id,
+                runtime_fingerprint=runtime_fingerprint,
+                result={"status": "failed", "detail": {"supported": False}, "stderr": str(error),
+                        "elapsedSeconds": time.monotonic() - started},
+                environment_id=read_state().get("activeEnvironmentId"),
+            )
         detail = None
         try:
             detail = json.loads(result.stdout.strip().splitlines()[-1]) if result.stdout.strip() else None
         except ValueError:
             detail = {"stdout": result.stdout.strip()[-4000:]}
+        passed = result.returncode == 0
+        if capability_id == "regional_compile":
+            passed = passed and isinstance(detail, dict) and detail.get("executed") is True
+            if passed:
+                from modiff.runtime_compilation import remember_compilation_probe
+
+                remember_compilation_probe(detail)
         validation = {
-            "status": "passed" if result.returncode == 0 else "failed",
+            "status": "passed" if passed else "failed",
             "returnCode": result.returncode,
             "detail": detail,
             "stderr": result.stderr.strip()[-4000:],

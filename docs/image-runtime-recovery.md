@@ -37,3 +37,30 @@ failure, queue recovery and restart exhaustion without exhausting host RAM or
 deliberately destabilizing the GPU driver. These are not Windows/ROCm/CUDA/MPS
 hardware-OOM qualification. No software can guarantee recovery from every OS,
 driver or hardware failure.
+
+Auto also rejects a dense native placement when the exact installed safetensors
+metadata proves that its parameter storage cannot fit the accelerator. Full
+residency requires all selected components; model CPU offload still requires one
+whole component at a time. Group offload uses a different residency contract.
+These read-only dtype-aware lower bounds execute no model code and never prove
+fit, activation demand, or hardware qualification. Unknown layouts retain the
+existing requirement checks; a cached success cannot override an impossible
+current placement.
+
+Forced math attention on a native Modular loader requires an explicit working
+memory budget when its Auto recipe otherwise declares only machine capacity.
+Automatic attention remains available through the ordinary Diffusers API.
+New Z-Image recipes select automatic attention; saved graphs retain their authored
+policy and can use Custom memory. An earlier forced-math failure and a successful
+automatic-attention run are different consumed recipes, not output parity proof.
+Native flash SDPA requires compiled support in the installed Torch build. A CUDA
+device alone does not establish that support. Capability discovery checks Torch's
+build API, and explicit unsupported flash recipes fail before standard pipeline
+loading. Fresh generic bindings use automatic attention unless the authored form
+or reviewed candidate specifies a backend; saved recipes retain their policy.
+
+For a reviewed image-conditioned Modular graph, inferred `edit_image` and
+`multi_image_reference_edit` task aliases use their declared image-conditioned
+resource mode, preferring the conservative multi-reference mode when offered.
+This does not rewrite the graph or input order,
+grant qualification, or admit explicitly conflicting task selections.

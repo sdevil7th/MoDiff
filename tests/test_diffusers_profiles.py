@@ -120,6 +120,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "WanVideoPipeline",
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
+            "PikaH3FlexModularPipeline",
             "Wan22Pipeline",
             "WanAnimatePipeline",
             "WanImage2VideoModularPipeline",
@@ -157,6 +158,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "FluxKontextModularPipeline",
             "Flux2KleinModularPipeline",
             "Flux2KleinBaseModularPipeline",
+            "Flux3ModularPipeline",
+            "Flux3DistilledModularPipeline",
             "Flux2ModularPipeline",
             "Flux2Pipeline",
             "FluxKreaPipeline",
@@ -364,6 +367,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "wan-vace:direct",
             "wan-22-image-to-video:direct",
             "wan-22-ti2v-5b:direct",
+            "wan-22-ti2v-5b:image-direct:v1",
             "wan-text-to-video:direct",
             "wan-video-to-video:direct",
             "ltx-video:direct",
@@ -400,7 +404,12 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
         }
         for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
             expected = (
-                ("bnb_4bit",)
+                ()
+                if profile_id in {
+                    "flux3-klein-base:modular", "flux3-klein:modular",
+                    "flux3-klein-base:official-provider:v1", "flux3-klein:official-provider:v1",
+                }
+                else ("bnb_4bit",)
                 if profile_id in qwen_ids
                 else flux_modes
                 if profile.model_type.startswith("Flux") and profile.model_type not in {

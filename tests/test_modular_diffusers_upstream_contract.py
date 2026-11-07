@@ -931,10 +931,22 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         self.assertIn("vae", wan_config["model_input_names"])
         self.assertTrue(wan_config["params"]["vae"]["label"].endswith(" *"))
 
-        self.assertEqual(
-            set(get_model_type_metadata("FluxModularPipeline")["node_params"]["denoise"]["model_input_names"]),
-            {"unet", "scheduler"},
-        )
+        # The pinned upstream Flux blueprints have no CFG component. MoDiff's
+        # reviewed adapter adds only exact, initially disabled CFG to these two
+        # families; it must not modify their upstream class-level blueprints.
+        for model_type in ("FluxModularPipeline", "FluxKontextModularPipeline"):
+            with self.subTest(app_owned_guidance=model_type):
+                pipeline_class = getattr(diffusers, model_type)
+                upstream = pipeline_class().blocks.sub_blocks["denoise"]
+                self.assertNotIn("guider", upstream.component_names)
+                blocks, config = require_modiff_node_contract(pipeline_class, "denoise")
+                self.assertEqual(set(blocks.component_names), {*upstream.component_names, "guider"})
+                self.assertEqual(set(config["model_input_names"]), {"unet", "guider", "scheduler"})
+                self.assertFalse(config["params"]["guider"].get("hidden", False))
+                guider_spec = next(spec for spec in blocks.expected_components if spec.name == "guider")
+                self.assertIs(guider_spec.type_hint, diffusers.ClassifierFreeGuidance)
+                self.assertEqual(dict(guider_spec.config), {"enabled": False, "guidance_scale": 1.0})
+                self.assertNotIn("guider", pipeline_class().blocks.sub_blocks["denoise"].component_names)
         self.assertEqual(
             set(get_model_type_metadata("WanModularPipeline")["node_params"]["denoise"]["model_input_names"]),
             {"unet", "guider", "scheduler"},
@@ -1420,7 +1432,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
     def test_every_split_node_publishes_its_registry_derived_signal_compatibility(self):
         expected = {}
-        for model_type in set(get_all_model_types()) - {"", "DummyCustomPipeline"}:
+        from modules.ModularDiffusers.modular_utils import declared_optional_pipeline_configs
+        model_types = (set(get_all_model_types()) | set(declared_optional_pipeline_configs())) - {"", "DummyCustomPipeline"}
+        for model_type in model_types:
             metadata = get_model_type_metadata(model_type)
             for action, action_config in metadata["node_params"].items():
                 if isinstance(action_config, dict):
@@ -1470,7 +1484,10 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         expected = {
             **{model_type: all_options for model_type in full_models},
             **{model_type: non_layer_options for model_type in non_layer_models},
+            "FluxModularPipeline": ["ClassifierFreeGuidance"],
+            "FluxKontextModularPipeline": ["ClassifierFreeGuidance"],
             "Flux2KleinBaseModularPipeline": ["ClassifierFreeGuidance"],
+            "Flux3ModularPipeline": ["ClassifierFreeGuidance"],
         }
 
         self.assertEqual(get_modular_guider_options(), expected)
@@ -1618,7 +1635,26 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
                 node.updateNode({"guider": "SkipLayerGuidance"}, None)
 
-        for model_type in (None, {}, "FluxModularPipeline", "FutureModularPipeline"):
+        for model_type in ("FluxModularPipeline", "FluxKontextModularPipeline"):
+            with (
+                self.subTest(model_type=model_type),
+                patch.object(Guider, "get_signal_value", return_value=model_type),
+            ):
+                node.send_node_definition.reset_mock()
+                node.updateNode({"guider": "ClassifierFreeGuidance"}, None)
+                node.send_node_definition.assert_called_once_with({})
+                output = node.execute("ClassifierFreeGuidance", enabled=False, guidance_scale=1.0)
+                self.assertIs(type(output["guider_out"]), diffusers.ClassifierFreeGuidance)
+                self.assertFalse(output["guider_out"].get_state()["enabled"])
+                self.assertEqual(output["guider_out"].guidance_scale, 1.0)
+                for unsupported in ("SkipLayerGuidance", "AdaptiveProjectedMixGuidance", "MagnitudeAwareGuidance"):
+                    with self.subTest(unsupported=unsupported):
+                        with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
+                            node.updateNode({"guider": unsupported}, None)
+                        with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
+                            node.execute(unsupported)
+
+        for model_type in (None, {}, "Flux2ModularPipeline", "FutureModularPipeline"):
             with (
                 self.subTest(model_type=model_type),
                 patch.object(

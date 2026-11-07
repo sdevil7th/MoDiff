@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "kind": "flux3_catalog_only_gate_review",
+  "proofScope": "Inactive source/artifact review; no installed runtime, trained execution, Auto, template or live qualification",
+  "catalogSourceRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+  "artifactReview": {
+    "path": "data/flux3-artifact-review.v1.json",
+    "sha256": "f354dee5870a85b80a77bc8a39b7793238ff7d7583faee2cfffdf73cea96bc76"
+  },
+  "pipelineClasses": [
+    "Flux3DistilledModularPipeline",
+    "Flux3ModularPipeline"
+  ],
+  "admission": {
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "unresolvedGates": [
+      "published_runtime",
+      "selected_weight_headers",
+      "pretrained_execution",
+      "adapter_artifacts",
+      "offload_and_resource_qualification"
+    ]
+  }
+}

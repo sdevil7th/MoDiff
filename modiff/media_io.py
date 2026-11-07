@@ -303,13 +303,19 @@ def _ffmpeg_probe(path: Path) -> tuple[str | None, str]:
     return None, detail
 
 
-def probe_media_file(path: str | Path, expected_kind: str | None = None) -> dict[str, Any]:
-    """Decode enough of a file to classify its real content, not its suffix."""
+def probe_media_file(
+    path: str | Path,
+    expected_kind: str | None = None,
+    *,
+    allow_audio_from_video: bool = False,
+) -> dict[str, Any]:
+    """Classify real content; explicit soundtrack extraction retains the video kind."""
 
     source = Path(path).expanduser().resolve()
     if not source.is_file():
         raise FileNotFoundError(f"Media file does not exist: {source}")
     expected = str(expected_kind or "").rstrip("s").lower() or None
+    has_audio = False
     metadata: dict[str, Any] = {
         "filename": source.name,
         "extension": source.suffix.lower(),
@@ -331,6 +337,7 @@ def probe_media_file(path: str | Path, expected_kind: str | None = None) -> dict
             )
     except (UnidentifiedImageError, OSError, ValueError):
         kind, detail = _ffmpeg_probe(source)
+        has_audio = bool(re.search(r"Stream #.*Audio:", detail))
         if kind is None:
             if expected == "text":
                 try:
@@ -355,7 +362,8 @@ def probe_media_file(path: str | Path, expected_kind: str | None = None) -> dict
             if dimensions:
                 metadata["width"] = int(dimensions.group(1))
                 metadata["height"] = int(dimensions.group(2))
-    if expected and metadata["kind"] != expected:
+    soundtrack = allow_audio_from_video and expected == "audio" and metadata["kind"] == "video" and has_audio
+    if expected and metadata["kind"] != expected and not soundtrack:
         raise ValueError(f"The selected file contains {metadata['kind']} data, not {expected} data.")
     return metadata
 
@@ -499,7 +507,12 @@ def export_media_file(
     normalized_kind = str(kind).rstrip("s").lower()
     format_value = str(format_id).lower()
     options = dict(options or {})
-    metadata = probe_media_file(source_path, normalized_kind)
+    # Conversion may extract an actual soundtrack, but original-file delivery
+    # and ordinary probing/import classification must retain strict kinds.
+    metadata = probe_media_file(
+        source_path, normalized_kind,
+        allow_audio_from_video=normalized_kind == "audio" and format_value != "original",
+    )
     if format_value == "original":
         mime_type = metadata.get("mimeType") or "application/octet-stream"
         return source_path, str(mime_type), source_path.name

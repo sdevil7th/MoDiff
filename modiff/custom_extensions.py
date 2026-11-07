@@ -539,13 +539,16 @@ class ExtensionStore:
                     files[relative] = git("-C", str(checkout), "cat-file", "blob", object_id)
                     total += size
             elif kind == "hub":
-                from huggingface_hub import snapshot_download
+                from huggingface_hub import constants, snapshot_download
                 from huggingface_hub.utils import validate_repo_id
 
                 validate_repo_id(source)
+                # Even exact commits can trigger an upstream tree lookup.
+                # Offline staging must explicitly request cached files only.
                 snapshot = Path(
                     snapshot_download(
-                        source, revision=revision, allow_patterns=["*.py", "*.json", "*.toml", "*.txt", "*.md"]
+                        source, revision=revision, local_files_only=constants.HF_HUB_OFFLINE,
+                        allow_patterns=["*.py", "*.json", "*.toml", "*.txt", "*.md"]
                     )
                 )
                 if (

@@ -11,7 +11,7 @@ from modiff.modular_workflow_contracts import (
     PINNED_MODULAR_REPOSITORY_VARIANTS,
 )
 from modiff.studio_execution_specs import (
-    studio_capability_definitions,
+    STUDIO_EXECUTION_SPEC_DEFINITIONS,
     studio_execution_profile_definitions,
     studio_execution_spec_for_pair,
 )
@@ -119,7 +119,9 @@ class MiniMaxH3StructuralAdmissionTests(unittest.TestCase):
                 self.assertIn(("videoExport", "fps", "fps"), specification["bindings"])
 
     def test_capability_preserves_creator_defaults_and_all_authority_gates(self):
-        capability = studio_capability_definitions()[PIPELINE]
+        # This immutable structural candidate retains its source-era recipe;
+        # fresh shared-stage authoring has a separately versioned default.
+        capability = STUDIO_EXECUTION_SPEC_DEFINITIONS['minimax-h3:modular-text-to-video-with-audio:v1']['capability']
         profile = studio_execution_profile_definitions()["minimax-h3:official-modular-workflow"]
         self.assertEqual(capability["defaultSize"], {"width": 1344, "height": 768, "aspectRatio": "16:9"})
         self.assertEqual(capability["recommendedFrames"], 124)
@@ -144,6 +146,21 @@ class MiniMaxH3StructuralAdmissionTests(unittest.TestCase):
             self.assertNotIn("max", node.params["width"])
             self.assertNotIn("max", node.params["height"])
         self.assertNotIn("max", WorkflowMiniMaxH3Denoise.params["num_inference_steps"])
+
+    def test_joint_decoder_precision_is_explicit_and_reaches_native_component_kwargs(self):
+        import torch
+        from modules.ModularDiffusers.loaders import reviewed_component_dtypes, component_load_kwargs_for
+        from modules.ModularDiffusers.pipeline_schema import MoDiffPipelineConfig
+
+        precision = reviewed_component_dtypes(PIPELINE, torch.bfloat16)
+        self.assertEqual(precision, {"default": torch.bfloat16, "vae": torch.float32, "audio_vae": torch.float32})
+        for name in ("text_encoder", "transformer", "transformer_ref"):
+            self.assertIs(component_load_kwargs_for(name, {"torch_dtype": precision})["torch_dtype"], torch.bfloat16)
+        for name in ("vae", "audio_vae"):
+            self.assertIs(component_load_kwargs_for(name, {"torch_dtype": precision})["torch_dtype"], torch.float32)
+        exported = MINIMAX_H3_PIPELINE_CONFIG.to_dict()
+        self.assertEqual(exported["component_dtype_overrides"], [["vae", "float32"], ["audio_vae", "float32"]])
+        self.assertEqual(MoDiffPipelineConfig.from_dict(exported).to_dict(), exported)
 
     def test_loader_closure_requires_the_exact_repository_revision_and_workflow_partition(self):
         self.assertNotIn(PIPELINE, CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME)

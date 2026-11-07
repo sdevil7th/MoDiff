@@ -1,7 +1,10 @@
 """Task projections shared by operation discovery and executable graph inspection."""
 
 from modiff.huggingface_node_library import graph_adapter_contracts
-from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
+from modiff.modular_whole_workflow_contracts import (
+    reviewed_whole_workflow_graph_adapter,
+    SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS,
+)
 from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
 
 
@@ -14,9 +17,11 @@ def _with_reviewed_reference_tasks(pipeline, adapters):
     return list(result.items())
 
 
-def modular_task_adapters(pipeline, workflow):
+def modular_task_adapters(pipeline, workflow, *, authoring=False):
     adapters = graph_adapter_contracts(pipeline, workflow["id"], workflow)
     whole = reviewed_whole_workflow_graph_adapter(pipeline, workflow["id"])
+    if authoring:
+        whole = SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS.get((pipeline, workflow['id']), whole)
     if whole:
         truth = PINNED_MODULAR_WORKFLOW_TRUTH.get(pipeline)
         tasks = (

@@ -123,6 +123,19 @@ def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revisi
 
 
 class DiffusersImageRegistryTests(unittest.TestCase):
+    def test_missing_base_transformers_quantization_error_requests_setup_repair(self):
+        from modules.DiffusersImage.main import build_qwen_pipeline_quantization_config
+
+        with patch('importlib.util.find_spec', side_effect=lambda name: None if name == 'transformers' else object()):
+            with self.assertRaises(RuntimeError) as raised:
+                build_qwen_pipeline_quantization_config(
+                    components=['text_encoder'], quantization_mode='bnb_4bit', compute_dtype='bfloat16')
+        message = str(raised.exception)
+        self.assertIn('required', message)
+        self.assertIn('repair', message.lower())
+        self.assertNotIn('optional runtime', message)
+        self.assertNotIn('activate', message.lower())
+
     def test_prequantized_transformer_is_an_optional_loader_input(self):
         # Ordinary pipelines load their own transformer. Graph repair must not
         # invent a connection to an unrelated `any` output for this override.
@@ -1890,6 +1903,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     {"_execution_device": "cpu", "__call__": call},
                 )
                 pipeline = tag_test_image_pipeline(fake_type(), pipeline_name, mode)
+                if adapter.resize_reference_to_output:
+                    from diffusers.image_processor import VaeImageProcessor
+                    pipeline.image_processor = VaeImageProcessor(vae_scale_factor=8)
                 # This is a signature fixture, not a model proof. Mirror the
                 # explicit mixed-dtype encoder boundary used by current adapters.
                 if adapter.prompt_embedding_dtype_component is not None:
@@ -4985,6 +5001,59 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         self.assertEqual(calls["prior"]["prompt_embeds_scale"], [1.0, 0.2])
         self.assertEqual(calls["prior"]["pooled_prompt_embeds_scale"], [1.0, 0.2])
+
+    def test_flux_redux_legacy_denoising_strength_is_not_forwarded_to_prior_or_base(self):
+        import torch
+
+        calls = []
+
+        class Prior:
+            def __call__(self, **kwargs):
+                calls.append(("prior", kwargs))
+                return SimpleNamespace(
+                    prompt_embeds=torch.ones(1, 1, 2), pooled_prompt_embeds=torch.ones(1, 2)
+                )
+
+        class Base:
+            def __call__(self, **kwargs):
+                calls.append(("base", kwargs))
+                return SimpleNamespace(images=[Image.new("RGB", (8, 8))])
+
+        images = [Image.new("RGB", (8, 8)), Image.new("RGB", (8, 8))]
+        bundle = FluxReduxPipelineBundle(Prior(), Base())
+        for strength in (0.1, 0.9):
+            bundle(image=images, strength=strength, reference_strength=0.25)
+        for role, kwargs in calls:
+            self.assertNotIn("strength", kwargs, role)
+            if role == "prior":
+                self.assertEqual(kwargs["prompt_embeds_scale"], [1.0, 0.25])
+                self.assertEqual(kwargs["pooled_prompt_embeds_scale"], [1.0, 0.25])
+
+    def test_reference_edit_strength_is_filtered_using_the_reviewed_upstream_signature(self):
+        import inspect
+        import diffusers
+
+        for model_type in ("FluxKontextPipeline", "Flux2KleinPipeline"):
+            with self.subTest(model_type=model_type):
+                call = getattr(diffusers, model_type).__call__
+                self.assertNotIn("strength", inspect.signature(call).parameters)
+                # Inspect the actual callable without constructing a pipeline
+                # or loading weights. This is the normal argument adapter.
+                pipeline = SimpleNamespace(__call__=call)
+                for strength in (0.1, 0.9):
+                    target = {}
+                    IMAGE_PIPELINE_ADAPTERS[model_type].apply_generation_parameters(
+                        pipeline, {"num_inference_steps": 4, "strength": strength}, target
+                    )
+                    self.assertNotIn("strength", target)
+
+        call = diffusers.FluxImg2ImgPipeline.__call__
+        self.assertIn("strength", inspect.signature(call).parameters)
+        target = {}
+        IMAGE_PIPELINE_ADAPTERS["FluxImg2ImgPipeline"].apply_generation_parameters(
+            SimpleNamespace(__call__=call), {"num_inference_steps": 4, "strength": 0.8}, target
+        )
+        self.assertEqual(target["strength"], 0.8)
 
     def test_flux_kontext_stitches_multiple_references_through_generic_edit(self):
         received = {}

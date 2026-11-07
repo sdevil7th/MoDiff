@@ -157,9 +157,9 @@ def test_selected_defaults_do_not_copy_unrelated_model_capabilities(contracts):
     target = {"defaultDtype": "float32", "recommendedSteps": 4, "recommendedGuidance": 8.5,
               "defaultSize": {"width": 512, "height": 512}}
     definitions = {
-        "old": {"modelType": "LatentConsistencyModelPipeline", "capability": {"recommendedSteps": 1}},
-        "other": {"modelType": "UnrelatedModel", "capability": UnrelatedCapability()},
-        "selected": {"modelType": "LatentConsistencyModelPipeline", "capability": target},
+        "old": {"profile": {"id": "old"}, "modelType": "LatentConsistencyModelPipeline", "capability": {"recommendedSteps": 1}},
+        "other": {"profile": {"id": "other"}, "modelType": "UnrelatedModel", "capability": UnrelatedCapability()},
+        "selected": {"profile": {"id": "selected"}, "modelType": "LatentConsistencyModelPipeline", "capability": target},
     }
     with patch("modiff.studio_execution_specs.STUDIO_EXECUTION_SPEC_DEFINITIONS", definitions):
         node = resolve_operation(MODULE_MAP, contracts, {
@@ -279,7 +279,7 @@ def test_video_and_three_d_operations_initialize_from_reviewed_defaults(contract
             "pipelineClass": pipeline, "task": task, "executionProfileId": profile,
         })
     loader = next(n for n in starter["nodes"] if n["action"] == "LoadPipeline")
-    generate = next(n for n in starter["nodes"] if n["action"] != "LoadPipeline")
+    generate = next(n for n in starter["nodes"] if n["action"] in ("Generate", "Denoise", "GenerateRenderedArtifact"))
     assert loader["params"]["dtype"]["value"] == dtype
     for key, value in values.items():
         assert generate["params"][key]["value"] == value

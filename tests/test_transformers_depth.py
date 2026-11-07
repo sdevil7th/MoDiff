@@ -59,7 +59,10 @@ def handle(model=None, processor=None):
 @pytest.mark.parametrize("kind,near_is_larger", [("relative", True), ("metric", False)])
 def test_native_depth_is_not_replaced_by_its_normalized_preview(kind, near_is_larger):
     selected = handle(DepthModel(kind))
-    result = PredictDepth.execute(None, pipeline=selected, image=Image.new("RGB", (28, 28)))
+    node = PredictDepth('depth')
+    result = node.execute(pipeline=selected, image=Image.new("RGB", (28, 28)))
+    assert node._execution_input_record['fields']['executed_task'] == {
+        'source': 'literal', 'value': 'depth_estimation'}
     native = result["native_depth"]
     assert native.shape == (28, 28)
     assert float(native.min()) == 2 and float(native.max()) == 22
@@ -74,7 +77,7 @@ def test_native_depth_is_not_replaced_by_its_normalized_preview(kind, near_is_la
 def test_output_resolution_uses_official_postprocessing_and_keeps_model_reusable():
     selected = handle()
     for size, match in [((56, 28), True), ((112, 56), False)]:
-        output = PredictDepth.execute(None, pipeline=selected, image=Image.new("RGB", size), match_input_resolution=match)
+        output = PredictDepth('depth').execute(pipeline=selected, image=Image.new("RGB", size), match_input_resolution=match)
         assert output["native_depth"].shape == ((size[1], size[0]) if match else (28, 56))
     assert len(selected["model"].inputs) == 2
 
@@ -90,7 +93,7 @@ def test_invalid_geometry_is_rejected_before_preprocessing_or_forward():
 @pytest.mark.parametrize("image", [None, [], [Image.new("RGB", (28, 28))] * 2])
 def test_exactly_one_source_image_is_required(image):
     with pytest.raises(ValueError):
-        PredictDepth.execute(None, pipeline=handle(), image=image)
+        PredictDepth('depth').execute(pipeline=handle(), image=image)
 
 
 def test_nonfinite_output_is_rejected():
@@ -100,7 +103,7 @@ def test_nonfinite_output_is_rejected():
         def __call__(self, **kwargs):
             return model.forward(**kwargs)
     with pytest.raises(RuntimeError, match="nonfinite"):
-        PredictDepth.execute(None, pipeline=handle(BadModel()), image=Image.new("RGB", (28, 28)))
+        PredictDepth('depth').execute(pipeline=handle(BadModel()), image=Image.new("RGB", (28, 28)))
 
 
 def test_unreviewed_depth_polarity_requires_an_explicit_choice():

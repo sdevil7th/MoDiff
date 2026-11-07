@@ -1,26 +1,23 @@
 # Optional runtime optimizations
 
-Last reviewed: 2026-08-15
+Transformers and PEFT are now required base dependencies on every supported
+platform. A verified base installation satisfies ordinary image and LoRA
+workflows without an optional Install or Activate step. Read-only discovery,
+template browsing, and Auto planning remain non-installing.
 
-MoDiff treats accelerator extensions and optional model libraries as reviewed
-runtime contracts, not as uncontrolled additions to the main Python
-environment. The backend includes a fail-closed, artifact-locked app-owned
-staged overlay with explicit per-platform qualification and delivery. Existing hashless
-optimization overlays are classified as `legacy_unqualified`; they are never
-loaded or activated, and an explicit rollback deactivates them to the base
-environment.
+Additional accelerator/quantization libraries retain the artifact-locked,
+operator-requested staged overlay boundary. Historical core-only overlays are
+migration state, not normal first-use prerequisites. Installation and activation
+report progress until the replacement worker verifies readiness; an installed
+directory or an accepted restart request alone is not completion.
 
-The optional model-library boundary now publishes two immutable profiles. The
-published-wheel profile moves Transformers `5.14.1` and PEFT `0.20.0` together
-with their eight overlay-owned transitive distributions; its lock covers ten
-Python 3.12 wheels for Linux, macOS, and Windows on x86-64 and ARM64. A separate
-profile delivers exact Transformers `main` commit
-`96fe6dce36cc929a5ffd3e34296554c4cb6b669e` (`5.16.0.dev0`) with the same PEFT
-version and reviewed transitive closure. Linux x86-64 execution is bound to that
-exact-main profile, while Windows x86-64 retains the published-wheel profile.
-Linux ARM64, Windows ARM64, and both macOS architectures remain
-`candidate_unqualified` and base-delivered. Merely finding the requested
-versions—or merely publishing the locks—does not make either profile runnable.
+See the [native auxiliary runtime checks](auxiliary-runtime-native-qualification.md)
+for the current GGUF, Quanto, and media installation evidence and its limits.
+
+The historical qualification sections below describe their exact recorded
+versions and hosts. They do not require current installations to use those
+Transformers/PEFT versions, a pinned uv executable, or a Transformers-free base.
+Current ordinary dependency resolution lives in `pyproject.toml` and `uv.lock`.
 
 Deterministic source extraction normalizes timestamps with non-following POSIX
 operations or validated Windows file handles, rejecting reparse points and
@@ -28,6 +25,21 @@ multiply linked files. Windows' limited `chmod` flags do not define wheel
 permissions: the wheel assembler still emits the exact reviewed metadata bytes.
 
 ## Product contract
+
+Setup's workflow checklist observes the concrete Run export through the read-only
+`POST /runtime/workflow-setup` inspection endpoint. Each scoped node uses the
+ordinary loader/runtime requirement resolver; connected inputs are not executed.
+The client separates base libraries, model artifacts, additional runtimes and
+system prerequisites. Exact shared selections deduplicate, while different
+immutable revisions remain distinct. Install job completion is not activation,
+and every requested runtime profile must be supplied by the verified active
+environment, including only its explicitly declared composite aliases.
+
+A pending status read is shown as checking, not as missing setup or an
+unverified installation. A failed read reports that verification is unavailable;
+only a successful current observation supplies installation/profile conclusions.
+Checklist refresh reuses the existing model-index refresh once, which already
+refreshes runtime and optional-package status. It does not start another install.
 
 1. Setup and the runtime API show reviewed contracts and their qualification
    state; they must not imply that an unavailable package action can run.
@@ -59,6 +71,15 @@ rollback contracts. Setup implements that lifecycle behind the backend-owned
 install or repair requires explicit consent, polls only the returned bounded job
 identity, supports cancellation, and keeps activation and rollback behind their
 own consent steps. Ambiguous staged environments do not expose activation.
+Activation returns a persisted job promptly, then validates the runtime and
+reports restart and verification progress. The catalog exposes `latestJob`, so
+Setup restores the same operation after a browser refresh or worker restart.
+Activation becomes ready only when the replacement worker verifies the exact
+loaded environment and profile digest, qualified cutover contract, and backend
+readiness. Unsupervised launches retain explicit restart instructions. A
+temporary connection failure retains progress instead of resetting to Activate;
+failed verification exposes a bounded failure state. Only installation jobs
+support cancellation.
 The status catalog includes the effective `platform` and `machine`, and the
 client names that target beside the runtime state. A pending target renders no
 package controls and rejects direct install or activation before a lease, job,
@@ -67,18 +88,65 @@ requires explicit consent for install, activation, and rollback. Runtime-only op
 features may still be explicitly selected or qualified when their existing
 capability contract permits it.
 
+## Declared optional Diffusers provider
+
+The separately named `huggingface-diffusers-flux3-7ecb1e1-bitsandbytes-0.50.0`
+candidate declares one locked Diffusers and bitsandbytes closure for workflows
+requiring both. It preserves the base Transformers and PEFT installation and
+pins the exact current requirements it can satisfy. Setup exposes this as an
+explicit runtime choice; selecting or opening a workflow never installs or
+switches it. The combined Windows x86_64 delivery is qualified; the other
+five targets remain unavailable. Qualification of either separate runtime does
+not qualify the pair.
+Execution also requires the sealed active provider, its current target, the
+exact declared Diffusers source and wheel, and the unchanged base identity.
+Its declared `cuda-nf4-v1` qualification workload is separate from ordinary
+package consent and requires a reviewed, explicit native-workload admission.
+The maintained run on clean source `ada881395bb4e51a6c2337919b6936defa8996fe`
+completed in 133.687 seconds. It exercised install, validation, activation and
+rollback, ten real official APIs, the tiny CLIP/PEFT CPU workload and a 64 by 64
+BF16-compute NF4 Linear4bit CUDA workload on an RTX 4080. Independent codebook and
+one-hot oracles passed; additional Torch allocation peaked at 43,008 bytes. The
+original base identity remained exact through rollback and no active overlay or
+staged packages remained. The pending source contract
+`sha256:50bd9406cc8b443f2e49255752312a56b6132ede91173ebed6e3d4f0085571ab`
+was projected to the qualified Windows contract
+`sha256:7f3fd36d78b104121e3f4253c2233a91f479a04814e994fb7b08034a7358eb1f`.
+This qualifies combined package delivery and tiny native NF4 compatibility, not
+FLUX 3 pretrained weights, image output, fused GEMM, model fit, Auto or templates.
+
+The candidate `huggingface-diffusers-flux3-7ecb1e1` contract assembles the exact
+reviewed official Hugging Face Diffusers source through the existing bounded,
+no-code wheel recipe. It does not execute `setup.py`, resolve new dependencies,
+or replace the base installation. The ordinary `diffusers==0.41.0` setup pin
+remains unchanged. Its package actions stay unavailable until each target's
+installation, activation and rollback checks qualify that exact delivery.
+Source and wheel verification alone are not model or hardware qualification.
+
+An explicit `providesDiffusers` declaration selects one sealed runtime root.
+Other overlays cannot shadow Diffusers, and the provider may not stage Torch,
+TorchVision, Transformers or PEFT. Multiple or conflicting provider declarations
+refuse before changing the import path. Activation uses the normal explicit
+consent, job, worker restart and rollback lifecycle. No browsing or Run action
+installs a runtime. Older optional runtime specifications omit this declaration
+and keep their original digests and behavior.
+
+The underlying base Diffusers installation and active provider have separate
+identities. The original metadata, record and actual base-only import spec are
+rechecked without importing base code over the provider or modifying the process
+path to inspect it. An existing explicit evaluation base retains its exact old
+wheel/census identity; it is not described as the ordinary base release. The
+replacement worker validates the selected provider's complete artifact seal,
+version, real classes and import origin before reporting ready. Preflight/status
+report both identities, while Auto, public workflow and Gallery admission remain
+separate. A provider update invalidates its own runtime fingerprint.
+
 ## First-use execution boundary
 
-Optional-runtime dependency metadata is intentionally separate from executable
-delivery. Every current Diffusers execution profile publishes a complete
-platform-delivery table: Linux and Windows x86-64 use `optional_overlay`, while
-pending architectures use `base`. A second explicit target table resolves the
-profile identity: Linux x86-64 requires exact Transformers `main`, Windows
-x86-64 requires the published `5.14.1` wheels, and the four pending targets
-remain base/candidate. The effective target is resolved from those reviewed
-tables rather than a hidden platform shortcut. Discovery, workflow
-browsing/opening, contract preview, and Auto planning remain non-installing on
-every target.
+Current core model-library requirements use `delivery: base` on every target.
+Readiness verifies the installed compatible Transformers/PEFT packages directly.
+It does not require an activated historical overlay. Additional optional runtime
+profiles still identify their delivery and activation state explicitly.
 
 Auto plans, workflow listings, model capabilities, and execution profiles
 publish the same seven-field `optionalRuntimeRequirement` contract:
@@ -92,9 +160,8 @@ runtime and one execution profile. States are `base_satisfied`, `missing`,
 Malformed or ambiguous contracts and status catalogs fail closed as
 `unavailable`.
 
-A base-delivered `base_satisfied` requirement is execution-ready. On qualified
-Linux/Windows x86-64 targets, when `requiredNow` is true, only `state: active`
-is ready. Active requires the
+A base-delivered `base_satisfied` requirement is execution-ready. A genuinely
+overlay-delivered requirement needs `state: active`. Active requires the
 current worker and status catalog to agree on the active overlay, and each
 required profile must have `contractState: qualified` and
 `cutoverReady: true`. An unqualified target cannot become overlay-runnable and
@@ -121,7 +188,7 @@ releases its completed mutation gate.
 | FlashAttention 2 | `flash-attn 2.8.3.post1` | Unavailable pending artifact/build locks | Exact qualified workload only |
 | TorchAO | `torchao 0.17.0` | Unavailable pending artifact locks | Exact qualified workload only |
 | Optimum Quanto | `optimum-quanto 0.2.7` | Unavailable pending artifact locks | Exact qualified workload only |
-| bitsandbytes | `bitsandbytes 0.50.0` | Unavailable pending artifact locks | Exact qualified workload only |
+| bitsandbytes | `bitsandbytes 0.50.0` | Explicit auxiliary install/activation on Windows x86-64; other auxiliary targets pending | Exact qualified workload only |
 | SageAttention | `sageattention 1.0.6` | Unavailable pending artifact locks | Manual experiment; never Auto |
 | xFormers | `0.0.32.post2` for the Torch 2.8 CUDA profile | Base NVIDIA profile | Exact qualified workload only |
 
@@ -148,6 +215,40 @@ quantization, or other workflow value. A backend/mask incompatibility is
 reported as `runtime_compatibility` / `attention_backend_mask_unsupported`
 with an Auto/native retry hint rather than being mislabeled as invalid user
 input.
+
+On ROCm, the ordinary modular model loaders apply the existing vision-attention
+helper to freshly loaded components before placement and publication. It changes
+an exposed default vision SDPA implementation through the component's public
+setter. Existing routes retain the eager fallback. Only the reviewed H3 and Pika
+`ref2va` routes loading BF16 Qwen3-VL on ROCm select
+`modiff_rocm_bf16_vision_math_v1`: a small adapter in Transformers' public
+attention and mask registries delegates to its official SDPA implementation,
+scoped to PyTorch's math backend with BF16 reduction enabled. The callback
+rejects non-finite output and restores the previous precision/backend settings
+on success and failure. Its lock protects calls to the adapter within MoDiff's
+serialized model worker. The selected component policy participates in cache
+identity and explicit sharing checks. Text/keyframe routes retain their old
+identities; text and denoiser attention keep their own policy.
+A shared component must already satisfy that boundary: downstream
+loaders reload a default-SDPA vision component or reject an explicit connection
+instead of changing its source owner's model. The standalone model loader applies
+the existing eager fallback to its own fresh loads. An explicitly shared encoder
+must match its owner's policy; a reference route rejects a conflicting choice.
+Other routes, text and denoiser attention, and non-ROCm components retain their settings.
+This policy alignment does not establish output quality or numerical parity.
+
+This uses the already required Transformers library and installed Torch; it
+installs nothing and changes no reference geometry, model revision, sampler or
+graph representation. See the official [Transformers attention interface](https://huggingface.co/docs/transformers/attention_interface)
+and [PyTorch 2.9 attention controls](https://docs.pytorch.org/docs/2.9/backends.html).
+The initial Linux H3 reference failed with a 40.64 GiB eager-softmax allocation.
+The installed fused kernel produced non-finite output in a bounded large-shape
+check, while CK was unavailable. The BF16 math path passed an exact 26,112-token,
+16-head, 72-wide attention check at 55.11 GB peak allocation with a 20 GiB host
+reserve. That random-weight numerical/allocation check is separate from actual
+pretrained reference workflow and output acceptance. Existing Qwen2.5 vision
+fallbacks, other dtypes, explicit alternate choices and non-ROCm hosts remain
+unchanged.
 
 ### Exact Transformers main source delivery
 
@@ -180,6 +281,27 @@ targets are actionable. The other four target records remain pending and
 base-delivered; their artifact locks alone do not make them eligible.
 
 ### Portable target qualification
+
+The Cosmos Guardrail 0.3.1 package profile has qualified delivery on Linux
+x86-64 with Python 3.12. The existing temporary qualifier installs its ten
+exact wheels, validates the staged imports and symbols, activates a fresh
+process, exercises tiny CPU CLIP/LoRA and PNG/Canny/scikit-image processing,
+then rolls back to the clean base. Installation and activation require explicit
+consent and a restart. Other targets remain pending.
+
+This profile uses `opencv-python` as the sole `cv2` provider. It conflicts with
+the Gallery media profile's headless provider and all OpenCV contrib providers;
+the inverse Gallery installation or activation is also rejected. Package
+delivery qualification does not qualify pretrained safety decisions, Cosmos
+model execution, GPU/ROCm memory or performance, Auto, or Gallery. The exact
+gated safety artifacts and each model's execution requirements remain separate
+prerequisites.
+
+The `cosmos-safety` project extra is an unqualified developer convenience.
+Ordinary app readiness requires the managed profile's ten exact wheels,
+explicit activation with its verified import paths and receipt seals, and the
+pinned gated safety snapshots. Installing the project extra alone does not
+establish that readiness.
 
 `scripts/qualify_optional_runtime.py` prepares the same bounded qualification
 on each supported operating-system/architecture pair without exposing a
@@ -235,11 +357,10 @@ workflow or a contributor-controlled Mac. Until then, its checked contract
 keeps both direct base dependencies and `delivery: base`; a passing reviewed
 run can promote only that target in a later commit.
 
-Qualification preparation now includes exact filename, URL, SHA-256, and size
-locks for all sixty platform-wheel records, plus one immutable uv `0.11.26`
-archive/executable pair for each supported target. The base installer writes a
-receipt only after rehashing the reviewed executable, and the overlay path
-rehashes it independently. Archive validation requires one matching METADATA,
+Optional artifact locks include exact filenames, URLs, hashes, and sizes.
+uv itself comes from the operator's installation and is not version-pinned by
+MoDiff. Update standalone uv with `uv self update`, or use its package manager.
+Archive validation requires one matching METADATA,
 WHEEL, and complete unique RECORD; every non-RECORD row must carry the exact
 SHA-256 and size of its archived file, and RECORD must cover the archive exactly.
 On Windows, the watchdog enters a non-breakaway Job Object with kill-on-close

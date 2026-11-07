@@ -27,7 +27,20 @@ PY
 )"
 fi
 
-export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
+# Use the same stdlib-only pre-import allocator policy as main.py. Both modern
+# and legacy operator variables take precedence, including an explicit empty
+# setting. Git Bash on Windows must not inject the Linux allocator default.
+if [[ -x "$MANAGED_PYTHON" ]]; then
+  ALLOCATOR_DEFAULT="$(cd -- "$PROJECT_ROOT" && "$MANAGED_PYTHON" - <<'PY'
+from modiff.runtime_environment import configure_allocator
+value = configure_allocator()
+print(f'{value["variable"]}={value["setting"]}' if value["source"] == "platform_default" else "")
+PY
+)"
+  if [[ -n "$ALLOCATOR_DEFAULT" ]]; then
+    export "$ALLOCATOR_DEFAULT"
+  fi
+fi
 
 if [[ "$RUNTIME_PROFILE" == "amd-rocm-linux" ]]; then
   ROCM_LIBRARY_PATHS=()

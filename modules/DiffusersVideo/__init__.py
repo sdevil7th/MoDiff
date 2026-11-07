@@ -1,4 +1,5 @@
 from .main import *  # noqa: F403
+from .stage_nodes import EncodeInputs, Denoise, DecodeLatents
 
 
 def _registry_entry(node_class, *, hidden=False):
@@ -25,6 +26,9 @@ MODULE_MAP = {
         GenerateShotJob,  # noqa: F405
         GenerateSequence,  # noqa: F405
         PlanLongVideo,  # noqa: F405
+        EncodeInputs,
+        Denoise,
+        DecodeLatents,
     )
 }
 

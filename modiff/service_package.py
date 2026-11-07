@@ -31,7 +31,8 @@ SECRET_KEY = re.compile(
     r"(?:^token$|password|secret|api[_-]?key|access[_-]?token|hf[_-]?token|authorization|credential)", re.I
 )
 AUTHORITY = re.compile(
-    r"revision|repo|model|pipeline|class|identity|code|token|secret|password|adapter|lora|reviewed_variant|execution_profile|workflow_id|block_path|subfolder|^variant$",
+    r"revision|repo|model|pipeline|class|identity|code|token|secret|password|adapter|lora|reviewed_variant|execution_profile|workflow_id|block_path|subfolder|^variant$"
+    r"|^source__[A-Za-z_][A-Za-z0-9_]{0,127}__variant\Z",
     re.I,
 )
 MODEL_KEY = re.compile(r"(?:repo_id|model_id|model_name|model_path|pretrained_model_name_or_path)\Z")
@@ -272,23 +273,41 @@ def model_pins(graph, registry):
                     pins.append({"location": f"{node_id}.{field}", **portable_upscaler_selection(param.get("value"))})
                     continue
                 display = fields.get(field, {}).get("display")
+                if (node["module"].startswith("custom.") and node["action"] == "LoadModels"
+                        and display == "modelselect"
+                        and re.fullmatch(r"source__[A-Za-z_][A-Za-z0-9_]{0,127}__repo", field)):
+                    # The approved supplier loads each component using its
+                    # sibling revision, never a base/catalog/selector revision.
+                    revision_field = field.removesuffix("repo") + "revision"
+                    revision_param = node["params"].get(revision_field)
+                    component_revision = revision_param.get("value") if isinstance(revision_param, dict) else None
+                    if (revision_field not in fields or not isinstance(revision_param, dict)
+                            or revision_param.get("sourceId") or not isinstance(component_revision, str)
+                            or not SHA.fullmatch(component_revision)):
+                        raise ValueError(
+                            f"{node_id}.{revision_field}: select a literal immutable 40-character component revision."
+                        )
+                    source = param.get("value")
+                    if (not isinstance(source, dict) or source.get("source") != "hub"
+                            or not isinstance(source.get("value"), str) or not source["value"]):
+                        raise ValueError(f"{node_id}.{field}: select an explicit Hub component repository.")
+                    walk(source["value"], "repo_id", f"{node_id}.{field}", component_revision)
+                    continue
                 key = "repo_id" if display in ("model", "hf_model", "model_select", "modelselect") else field
                 walk(param.get("value"), key, f"{node_id}.{field}", revision if MODEL_KEY.fullmatch(key) else None)
     return pins
 
 
 def runtime_contract(graph, source_identity, extension_store):
-    from modiff.runtime_profile import read_state, lock_digest, load_manifest, PROJECT_ROOT
+    from modiff.runtime_profile import runtime_profile
+    from modiff.hardware import get_hardware_snapshot
     from modiff.optional_runtime_execution import graph_optional_runtime_requirement
 
-    state = read_state(Path(sys.prefix)) or {}
-    profile = state.get("profile")
-    spec = load_manifest()["profiles"].get(profile)
-    if not spec:
-        raise ValueError("Service export requires a managed runtime profile. Use modiff.dev check.")
-    contract_hash = lock_digest(PROJECT_ROOT / spec["requirements"], profile=profile)
-    if state.get("lock_digest") != contract_hash:
-        raise ValueError("Managed dependency contract changed; check/repair the environment before exporting.")
+    observed = runtime_profile(get_hardware_snapshot(), venv=Path(sys.prefix))
+    if not observed["execution_ready"] or not observed["runtime_contract"]["verified"]:
+        raise ValueError("Service export requires a working runtime. Run preflight and follow its uv repair command.")
+    profile = observed["installed"]
+    contract_hash = observed["runtime_contract"]["current_digest"]
     custom = []
     for module in sorted({n["module"] for n in graph["nodes"].values() if n["module"].startswith("custom.")}):
         item = extension_store.require_enabled(module.removeprefix("custom."))

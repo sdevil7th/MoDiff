@@ -124,6 +124,24 @@ not evidence of harmless compilation. Inspect pressure promptly, distinguish a
 kernel OOM kill from an assumed driver failure, and verify supervisor/UI recovery
 before retrying a known failed or cancelled task.
 
+On Windows, freed CPU tensors can leave committed pages in Torch's bundled
+mimalloc allocator while the process is idle. Empty model registries, a small
+GC-visible tensor sample and `torch.cuda.empty_cache()` do not establish that
+host memory was returned. Compare a bounded allocate/free reproduction with
+process commit and OS availability, then repeat the original model sequence.
+The existing pre-import startup policy defaults `MIMALLOC_PURGE_DELAY=0` on
+Windows and preserves an explicit operator value. Document its allocation
+performance tradeoff; an allocator-only reproduction is not model fit proof.
+
+Immediate purge does not guarantee reclamation when short-lived loader threads
+allocate tensors that another thread later frees. Preserve thread ownership and
+pool lifetime in allocator controls. Windows startup defaults official Diffusers
+and Transformers loading to serial before imports, preserving each explicit
+operator flag; other platforms retain their loading defaults. Document the
+load-time tradeoff and require a fresh process when flags change. Repeat the
+original model, cache release and next run separately; a CPU control or one
+successful image cannot establish broad fit or repeatability.
+
 ## Native edits and dynamic input types
 
 A successful run seeded through numeric test data does not prove the same field
@@ -274,6 +292,20 @@ the original geometry assertions, then repeat the concurrent generation gesture.
 - Runtime-only failures need the same visible correction path, restricted to
   their exact active workflow/run. Keep them advisory after edits until a new
   execution verifies the correction; never fabricate an initial tensor or model.
+- Bind Run-blocked recovery actions to the document and effective inputs that
+  produced the diagnostic, not only whichever tab is active when clicked.
+  Preserve exact field and declared runtime targets. Prove ordinary navigation,
+  delayed metadata, panel departure and stale-action rejection without installing
+  packages or submitting a graph. Focus requests are volatile; progress and
+  presentation changes must not impersonate authored input changes. Keep actual
+  resource rejection and unsupported-platform checks intact.
+- Setup must inspect the same lowered and selected Run closure without authoring
+  a graph, executing suppliers or randomizing seeds. Keep base packages, exact
+  model artifacts, optional environments and system steps distinct in one
+  checklist. A staged install is not activation, and each requested profile
+  needs a verified active identity. Deduplicate exact selections and durable
+  jobs; a file count cannot prove download-file identity. Lost status reads
+  must not create duplicate installs or turn last-known progress into readiness.
 - Diagnose the effective bound iteration input, not only the enclosing loop's
   original Pipeline State. Report bounded type/shape summaries, never contents,
   and preserve the resource-error category for memory failures.
@@ -600,6 +632,11 @@ runtimes or rewrite graph inputs.
 - Test legacy NanoID prefixes, public wires, completed previews, mixed selections,
   missing destinations and Undo/Redo. Native evidence must use actual selection
   and drag gestures; a reducer test alone does not prove toolbar behavior.
+- Composing complete Blocks preserves each child's local primary preview. The
+  new outer Block keeps its own primary, or the first child primary in graph
+  order, and retains later child previews as secondary outer previews. Prove
+  sibling and mixed-node composition without weakening the one-primary schema
+  invariant or changing child definitions, values, hierarchy, or wires.
 
 ## Auto owner lifetimes and computed controls
 

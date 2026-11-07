@@ -29,12 +29,14 @@ METADATA_ACTIONS = {
         **{action: frozenset({"update_image_contract"}) for action in (
             "Generate", "Edit", "LayerDecompose", "Inpaint", "ControlGenerate",
             "ControlEdit", "ControlInpaint", "UnconditionalGenerate", "PredictMap",
+            "EncodeInputs", "Denoise",
         )},
     },
     "modules.DiffusersAudio": {action: frozenset({"update_audio_contract"}) for action in ("LoadPipeline", "Generate")},
     "modules.DiffusersThreeD": {action: frozenset({"update_three_d_contract"}) for action in ("LoadPipeline", "GenerateRenderedArtifact")},
     "modules.DiffusersVideo": {
         "LoadPipeline": frozenset({"select_adapter"}),
+        **{action: frozenset({"update_stage_contract"}) for action in ("EncodeInputs", "Denoise")},
         **{action: frozenset({"update_adapter_modes"}) for action in ("Generate", "GenerateVideoAudio", "GenerateLTX2", "GenerateSequence")},
     },
 }

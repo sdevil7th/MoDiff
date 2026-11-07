@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "proofScope": "Historical source receipt only; no video execution or qualification renewal",
+  "source": {
+    "repository": "https://github.com/huggingface/diffusers.git",
+    "revision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+    "comparisonDomain": "LF-normalized Git source bytes"
+  },
+  "files": [
+    {
+      "path": "src/diffusers/models/transformers/transformer_wan_animate_2.py",
+      "sha256": "7c7fa3565f269bb1e5321106d8a7a1b74f55d8c55aaf4c911f9b9b918f82d01d"
+    },
+    {
+      "path": "src/diffusers/modular_pipelines/wan_animate_2/before_denoise.py",
+      "sha256": "20d5ca649adc0105942690bea7a14466e516f585dd785fe03e7ea369013100ba"
+    },
+    {
+      "path": "src/diffusers/modular_pipelines/wan_animate_2/decoders.py",
+      "sha256": "707f7bdc56c0b5b0347d6180c21a48d4ca438e17a5f35c72542d4d6b5f645f99"
+    },
+    {
+      "path": "src/diffusers/modular_pipelines/wan_animate_2/denoise.py",
+      "sha256": "6e3b266ee50955cd65856bdd3c33e7fcc3b7c9945e3729f8d30e1fae92937d5d"
+    },
+    {
+      "path": "src/diffusers/modular_pipelines/wan_animate_2/encoders.py",
+      "sha256": "e236115b0eb435987d0a6b02b137d88330be419796cccfc3a1b0ba1961648b18"
+    },
+    {
+      "path": "src/diffusers/modular_pipelines/wan_animate_2/modular_blocks_wan_animate_2.py",
+      "sha256": "a53da73ef73c85c8b813b34163597a98d1046901f753625e7dd186c48e92ca2d"
+    },
+    {
+      "path": "src/diffusers/modular_pipelines/wan_animate_2/modular_blocks_wan_animate_2_distilled.py",
+      "sha256": "b9be04de1940b4cb3735bbf908a34069ba47e52b62ff5ca9a562a217d0e3820c"
+    },
+    {
+      "path": "src/diffusers/modular_pipelines/wan_animate_2/modular_pipeline.py",
+      "sha256": "d43c08be189805833efa14eee953cc5dbc1d9d5803b50af29713243a0623ef91"
+    },
+    {
+      "path": "src/diffusers/modular_pipelines/wan_animate_2/video_processor.py",
+      "sha256": "9e587e0d412c977e10341ce641625dbbf9698116de7c36db16cfc0664834a497"
+    }
+  ]
+}

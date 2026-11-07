@@ -20,7 +20,7 @@ MoDiff is designed to execute Python and model code:
 
 Install only sources you trust. Review repository ownership, code, dependencies, model licenses, and the exact revision before installation. Prefer immutable commit revisions over moving branches. Disabling a module after import does not undo code that has already run; restart the backend after changing trusted code.
 
-A package being part of the Hugging Face ecosystem is distinct from a model being hosted on the Hub. Do not treat a Hub namespace, model card, or `trust_remote_code` implementation as first-party library code. Optional model runtimes, including Transformers, require an explicit local install action and version verification; template browsing, registry discovery, and Auto planning must remain non-installing operations.
+A package being part of the Hugging Face ecosystem is distinct from a model being hosted on the Hub. Do not treat a Hub namespace, model card, or `trust_remote_code` implementation as first-party library code. Transformers and PEFT are required application libraries installed during setup. Additional optional runtimes require an explicit local install action and version verification; template browsing, registry discovery, and Auto planning must remain non-installing operations.
 
 ## Tokens and secrets
 

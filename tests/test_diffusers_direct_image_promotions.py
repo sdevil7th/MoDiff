@@ -3,7 +3,6 @@ from source_contract_helpers import source_sha256
 import ast
 from contextlib import nullcontext
 import json
-from pathlib import Path
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -44,7 +43,7 @@ PINNED_SOURCES = (
     (
         "pipelines/qwenimage/pipeline_qwenimage_edit.py",
         "QwenImageEditPipeline",
-        "791798e68e9e6d0c568cf0e244f2dff5cb20b8cf913963543ea18ee2838bff0d",
+        "6ceddbabf86d221477d91f2de6dbd3dfcc98864ba71f08bfabb98c4a3e323ac8",
         ("DiffusionPipeline", "QwenImageLoraLoaderMixin"),
         ("self", "scheduler", "vae", "text_encoder", "tokenizer", "processor", "transformer"),
         (
@@ -76,7 +75,7 @@ PINNED_SOURCES = (
     (
         "pipelines/qwenimage/pipeline_qwenimage_edit_plus.py",
         "QwenImageEditPlusPipeline",
-        "00962412f8fe6ec57ed6cc769e87c88d1d98990cfb0ac617bd123d51dd45b1b2",
+        "9ce666ed3e0029a35e8743e558f23fc8143d888f418d9fe924e05df43d46856f",
         ("DiffusionPipeline", "QwenImageLoraLoaderMixin"),
         ("self", "scheduler", "vae", "text_encoder", "tokenizer", "processor", "transformer"),
         (
@@ -108,7 +107,7 @@ PINNED_SOURCES = (
     (
         "pipelines/z_image/pipeline_z_image_inpaint.py",
         "ZImageInpaintPipeline",
-        "8be6d5f773c8035bb06ff6b017907ce6c1d9fc7ef52acf99ddc23ecba3c939ba",
+        "63eb921da8e34ae53a1509eeeeb9bf37d8484e09eb0740bd95b03c04357dc01d",
         ("DiffusionPipeline", "ZImageLoraLoaderMixin", "FromSingleFileMixin"),
         ("self", "scheduler", "vae", "text_encoder", "tokenizer", "transformer"),
         (
@@ -142,7 +141,7 @@ PINNED_SOURCES = (
     (
         "pipelines/flux/pipeline_flux_kontext_inpaint.py",
         "FluxKontextInpaintPipeline",
-        "993fbe87e9120d9cf6bf0540935b1c68d62473e7be9d57390fa50984f4b2158d",
+        "acde30d2b8e705a691f283ae39ca657fc13dc80f4e59001d2157af7068dfad9c",
         (
             "DiffusionPipeline",
             "FluxLoraLoaderMixin",
@@ -203,7 +202,7 @@ PINNED_SOURCES = (
     (
         "pipelines/flux2/pipeline_flux2_klein_inpaint.py",
         "Flux2KleinInpaintPipeline",
-        "6172f3ad4159c355b9fd59455a59dc78aeb428d4bc47eb0a266d09e83476d14c",
+        "85f642fe87bc73448dfcd92eb13593062bbf1e79dee641cd5df8fedc748b4143",
         ("DiffusionPipeline", "Flux2LoraLoaderMixin"),
         ("self", "scheduler", "vae", "text_encoder", "tokenizer", "transformer", "is_distilled"),
         (
@@ -315,12 +314,14 @@ class FakeRequest:
 class DiffusersDirectImagePromotionTests(unittest.IsolatedAsyncioTestCase):
     def test_exact_pinned_sources_bases_constructors_and_calls_are_preserved(self):
         import diffusers
+        import inspect
+        from modiff.upstream_coverage import reviewed_diffusers_source
 
         self.assertEqual(
             PINNED_DIFFUSERS_REVISION,
-            "fbf49e7f35857f76bc57b177e26f12b03687c668",
+            "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         )
-        diffusers_root = Path(diffusers.__file__).resolve().parent
+        diffusers_root = reviewed_diffusers_source()
         for relative_path, class_name, digest, bases, init_parameters, call_parameters in PINNED_SOURCES:
             with self.subTest(pipeline_class=class_name):
                 source_path = diffusers_root / relative_path
@@ -335,6 +336,24 @@ class DiffusersDirectImagePromotionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(tuple(ast.unparse(base) for base in class_node.bases), bases)
                 self.assertEqual(_method_parameters(class_node, "__init__"), init_parameters)
                 self.assertEqual(_method_parameters(class_node, "__call__"), call_parameters)
+                if class_name == "ZImageInpaintPipeline":
+                    # The reviewed source now forwards its declared attention kwargs.
+                    call = next(node for node in class_node.body
+                                if isinstance(node, ast.FunctionDef) and node.name == "__call__")
+                    self.assertTrue(any(
+                        isinstance(node, ast.Call)
+                        and isinstance(node.func, ast.Attribute)
+                        and isinstance(node.func.value, ast.Name)
+                        and node.func.value.id == "self"
+                        and node.func.attr == "transformer"
+                        and any(keyword.arg == "joint_attention_kwargs"
+                                and ast.unparse(keyword.value) == "self.joint_attention_kwargs"
+                                for keyword in node.keywords)
+                        for node in ast.walk(call)
+                    ))
+                installed = getattr(diffusers, class_name)
+                self.assertTrue(set(init_parameters).issubset(inspect.signature(installed.__init__).parameters))
+                self.assertTrue(set(call_parameters).issubset(inspect.signature(installed.__call__).parameters))
 
     def test_adapters_reuse_only_exact_immutable_safe_artifacts(self):
         expected_adapters = {

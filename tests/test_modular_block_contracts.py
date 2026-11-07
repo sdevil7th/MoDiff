@@ -26,10 +26,10 @@ class ModularBlockContractTests(unittest.TestCase):
         snapshot = load_reviewed_modular_block_snapshot()
         self.assertEqual(snapshot["schemaVersion"], 1)
         self.assertEqual(snapshot["diffusersRevision"], PINNED_DIFFUSERS_REVISION)
-        self.assertEqual(len(snapshot["workflows"]), 94)
-        self.assertEqual(len({item["pipelineClass"] for item in snapshot["workflows"]}), 34)
-        self.assertEqual(len(snapshot["blockDefinitions"]), 484)
-        self.assertEqual(sum(len(item["placements"]) for item in snapshot["workflows"]), 1238)
+        self.assertEqual(len(snapshot["workflows"]), 98)
+        self.assertEqual(len({item["pipelineClass"] for item in snapshot["workflows"]}), 36)
+        self.assertEqual(len(snapshot["blockDefinitions"]), 508)
+        self.assertEqual(sum(len(item["placements"]) for item in snapshot["workflows"]), 1286)
 
         definition_ids = {item["id"] for item in snapshot["blockDefinitions"]}
         self.assertTrue(all(item["rootBlockDefinitionId"] in definition_ids for item in snapshot["workflows"]))

@@ -873,6 +873,38 @@ def resample_audio_object(audio: dict[str, Any], target_sample_rate: int) -> dic
     }
 
 
+def _preserve_repaint_source(
+    audio: dict[str, Any],
+    source: ValidatedAudioInput,
+    interval: tuple[float, float],
+) -> dict[str, Any]:
+    """Replace only the half-open repaint interval on the delivery sample grid."""
+    sample_rate = int(audio["sample_rate"])
+    original = resample_audio_object({
+        "samples": source.samples,
+        "sample_layout": "channels_first",
+        "sample_rate": source.sample_rate,
+    }, sample_rate)["samples"]
+    generated = np.asarray(audio["samples"], dtype=np.float32)
+    if generated.ndim != 2 or generated.shape[0] != original.shape[0]:
+        raise ValueError("Decoded repaint audio must match the source channels.")
+    start, end = (int(seconds * sample_rate) for seconds in interval)
+    end = min(end, original.shape[-1])
+    if end <= start or generated.shape[-1] < end:
+        raise ValueError("Decoded repaint audio cannot fill the selected interval.")
+    if not np.isfinite(generated[:, start:end]).all():
+        raise ValueError("Decoded repaint audio in the selected interval must be finite.")
+    samples = original.copy()
+    samples[:, start:end] = generated[:, start:end]
+    return {
+        **audio,
+        "samples": samples,
+        "sample_layout": "channels_first",
+        "channels": int(samples.shape[0]),
+        "duration_seconds": float(samples.shape[-1] / sample_rate),
+    }
+
+
 def _audio_array_to_object(array: np.ndarray, sample_rate: int) -> dict[str, Any]:
     array = np.asarray(array, dtype=np.float32)
     if array.ndim == 2 and array.shape[0] <= 8 and array.shape[1] > array.shape[0]:
@@ -932,7 +964,9 @@ def crop_tail(audio: dict[str, Any], start_seconds: float, duration_seconds: flo
     }
 
 
-_AUDIO_LDM2_TRANSFORMERS_VERSION = "5.16.0.dev0"
+# The required base release retains the exact helper reviewed in the earlier
+# optional runtime. Accept those two releases only, still verifying source below.
+_AUDIO_LDM2_TRANSFORMERS_VERSIONS = frozenset({"5.16.0.dev0", "5.18.0"})
 _AUDIO_LDM2_GENERATION_UPDATE_SHA256 = "fb244c4da03341e837bbf50b900e70ea88a6fee722a43aa40c6172dfedfd15ef"
 
 
@@ -948,7 +982,7 @@ def _reviewed_audioldm2_generation_helper() -> tuple[type, Any]:
     helper = GenerationMixin._update_model_kwargs_for_generation
     helper_sha256 = hashlib.sha256(inspect.getsource(helper).encode("utf-8")).hexdigest()
     if (
-        transformers.__version__ != _AUDIO_LDM2_TRANSFORMERS_VERSION
+        transformers.__version__ not in _AUDIO_LDM2_TRANSFORMERS_VERSIONS
         or helper_sha256 != _AUDIO_LDM2_GENERATION_UPDATE_SHA256
     ):
         raise RuntimeError(
@@ -2180,6 +2214,8 @@ class Generate(NodeBase):
             # padding outputs that are genuinely shorter.
             audio = crop_tail(audio, 0.0, audio_duration)
         audio = resample_audio_object(audio, requested_sample_rate)
+        if task_type == "repaint":
+            audio = _preserve_repaint_source(audio, source, invocation.repaint_interval)
 
         return {
             "audio": audio,

@@ -1,0 +1,326 @@
+{
+  "sourceCommit": "c228f4fb33aeddf9e1d508b939916345dbbda8a5",
+  "specifications": [
+    {
+      "schemaVersion": 1,
+      "canonicalizationVersion": 1,
+      "id": "minimax-h3:modular-text-to-video-with-audio:v1",
+      "modelType": "MiniMaxH3ModularPipeline",
+      "mode": "text_to_video_with_audio",
+      "executionProfileId": "minimax-h3:official-modular-workflow",
+      "loaderModule": "modules.ModularDiffusers",
+      "loaderAction": "ModelsLoader",
+      "executionPath": "modular-diffusers",
+      "pipelineClass": "MiniMaxH3ModularPipeline",
+      "defaultRepo": "MiniMaxAI/MiniMax-H3",
+      "roles": [
+        ["models", "modules.ModularDiffusers.ModelsLoader", -760, -80],
+        [
+          "prompt",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3TextEncode",
+          -400,
+          -80
+        ],
+        [
+          "denoise",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3Denoise",
+          -40,
+          -80
+        ],
+        [
+          "decode",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3Decode",
+          320,
+          -80
+        ],
+        ["videoExport", "modules.Video.ExportWithAudio", 680, -80]
+      ],
+      "edges": [
+        ["models", "pipeline_components", "prompt", "pipeline_components"],
+        ["models", "pipeline_components", "denoise", "pipeline_components"],
+        ["models", "pipeline_components", "decode", "pipeline_components"],
+        ["prompt", "state_out", "denoise", "state_in"],
+        ["denoise", "state_out", "decode", "state_in"],
+        ["decode", "video", "videoExport", "video"],
+        ["decode", "audio", "videoExport", "audio"]
+      ],
+      "bindings": [
+        ["models", "model_type", "pipelineClass"],
+        ["models", "repo_id", "artifact"],
+        ["models", "revision", "defaultRevision"],
+        ["models", "workflow_id", "workflowId"],
+        ["models", "dtype", "dtype"],
+        ["models", "device", "device"],
+        ["models", "auto_offload", "autoOffload"],
+        ["models", "offload_mode", "offloadMode"],
+        ["models", "trust_remote_code", "false"],
+        ["prompt", "pipeline_class", "pipelineClass"],
+        ["prompt", "workflow_id", "workflowId"],
+        ["prompt", "block_path", "workflowTextEncoderBlock"],
+        ["prompt", "prompt", "prompt"],
+        ["denoise", "pipeline_class", "pipelineClass"],
+        ["denoise", "workflow_id", "workflowId"],
+        ["denoise", "block_path", "workflowDenoiseBlock"],
+        ["denoise", "num_inference_steps", "steps"],
+        ["denoise", "seed", "seed"],
+        ["decode", "pipeline_class", "pipelineClass"],
+        ["decode", "workflow_id", "workflowId"],
+        ["decode", "block_path", "workflowDecodeBlock"],
+        ["videoExport", "fps", "fps"],
+        ["denoise", "width", "width"],
+        ["denoise", "height", "height"],
+        ["denoise", "num_frames", "numFrames"]
+      ],
+      "autoFields": [
+        "resolvedArtifact",
+        "artifact",
+        "installTarget.repo",
+        "modelRepo",
+        "pipelineClass",
+        "dtype",
+        "offloadMode",
+        "quantizedComponents",
+        "attentionBackend",
+        "regionalCompile",
+        "denoiserCache",
+        "layerwiseCasting",
+        "channelsLast"
+      ],
+      "actions": [],
+      "contentHash": "studio-spec-v1-1b6aa7f7"
+    },
+    {
+      "schemaVersion": 1,
+      "canonicalizationVersion": 1,
+      "id": "minimax-h3:modular-first-last-frame-to-video-with-audio:v1",
+      "modelType": "MiniMaxH3ModularPipeline",
+      "mode": "first_last_frame_to_video_with_audio",
+      "executionProfileId": "minimax-h3:official-modular-workflow",
+      "loaderModule": "modules.ModularDiffusers",
+      "loaderAction": "ModelsLoader",
+      "executionPath": "modular-diffusers",
+      "pipelineClass": "MiniMaxH3ModularPipeline",
+      "defaultRepo": "MiniMaxAI/MiniMax-H3",
+      "roles": [
+        ["models", "modules.ModularDiffusers.ModelsLoader", -1080, -80],
+        [
+          "beforeEncode",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3BeforeEncode",
+          -720,
+          200
+        ],
+        [
+          "prompt",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3TextEncode",
+          -360,
+          -80
+        ],
+        [
+          "imageEncode",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3VaeEncode",
+          0,
+          200
+        ],
+        [
+          "denoise",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3Denoise",
+          360,
+          -80
+        ],
+        [
+          "decode",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3Decode",
+          720,
+          -80
+        ],
+        ["videoExport", "modules.Video.ExportWithAudio", 1080, -80]
+      ],
+      "edges": [
+        [
+          "models",
+          "pipeline_components",
+          "beforeEncode",
+          "pipeline_components"
+        ],
+        ["models", "pipeline_components", "prompt", "pipeline_components"],
+        ["models", "pipeline_components", "imageEncode", "pipeline_components"],
+        ["models", "pipeline_components", "denoise", "pipeline_components"],
+        ["models", "pipeline_components", "decode", "pipeline_components"],
+        ["beforeEncode", "state_out", "prompt", "state_in"],
+        ["prompt", "state_out", "imageEncode", "state_in"],
+        ["imageEncode", "state_out", "denoise", "state_in"],
+        ["denoise", "state_out", "decode", "state_in"],
+        ["decode", "video", "videoExport", "video"],
+        ["decode", "audio", "videoExport", "audio"]
+      ],
+      "bindings": [
+        ["models", "model_type", "pipelineClass"],
+        ["models", "repo_id", "artifact"],
+        ["models", "revision", "defaultRevision"],
+        ["models", "workflow_id", "workflowId"],
+        ["models", "dtype", "dtype"],
+        ["models", "device", "device"],
+        ["models", "auto_offload", "autoOffload"],
+        ["models", "offload_mode", "offloadMode"],
+        ["models", "trust_remote_code", "false"],
+        ["prompt", "pipeline_class", "pipelineClass"],
+        ["prompt", "workflow_id", "workflowId"],
+        ["prompt", "block_path", "workflowTextEncoderBlock"],
+        ["prompt", "prompt", "prompt"],
+        ["denoise", "pipeline_class", "pipelineClass"],
+        ["denoise", "workflow_id", "workflowId"],
+        ["denoise", "block_path", "workflowDenoiseBlock"],
+        ["denoise", "num_inference_steps", "steps"],
+        ["denoise", "seed", "seed"],
+        ["decode", "pipeline_class", "pipelineClass"],
+        ["decode", "workflow_id", "workflowId"],
+        ["decode", "block_path", "workflowDecodeBlock"],
+        ["videoExport", "fps", "fps"],
+        ["beforeEncode", "pipeline_class", "pipelineClass"],
+        ["beforeEncode", "workflow_id", "workflowId"],
+        ["beforeEncode", "block_path", "workflowBeforeEncodeBlock"],
+        ["beforeEncode", "width", "width"],
+        ["beforeEncode", "height", "height"],
+        ["imageEncode", "pipeline_class", "pipelineClass"],
+        ["imageEncode", "workflow_id", "workflowId"],
+        ["imageEncode", "block_path", "workflowVaeEncoderBlock"],
+        ["beforeEncode", "num_frames", "numFrames"],
+        ["beforeEncode", "image", "referenceImages"],
+        ["beforeEncode", "last_image", "lastImage"]
+      ],
+      "autoFields": [
+        "resolvedArtifact",
+        "artifact",
+        "installTarget.repo",
+        "modelRepo",
+        "pipelineClass",
+        "dtype",
+        "offloadMode",
+        "quantizedComponents",
+        "attentionBackend",
+        "regionalCompile",
+        "denoiserCache",
+        "layerwiseCasting",
+        "channelsLast"
+      ],
+      "actions": [],
+      "contentHash": "studio-spec-v1-b81dc131"
+    },
+    {
+      "schemaVersion": 1,
+      "canonicalizationVersion": 1,
+      "id": "minimax-h3:modular-reference-to-video-with-audio:v1",
+      "modelType": "MiniMaxH3ModularPipeline",
+      "mode": "reference_to_video_with_audio",
+      "executionProfileId": "minimax-h3:official-modular-workflow",
+      "loaderModule": "modules.ModularDiffusers",
+      "loaderAction": "ModelsLoader",
+      "executionPath": "modular-diffusers",
+      "pipelineClass": "MiniMaxH3ModularPipeline",
+      "defaultRepo": "MiniMaxAI/MiniMax-H3",
+      "roles": [
+        ["models", "modules.ModularDiffusers.ModelsLoader", -1080, -80],
+        [
+          "beforeEncode",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3BeforeEncode",
+          -720,
+          200
+        ],
+        [
+          "prompt",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3TextEncode",
+          -360,
+          -80
+        ],
+        [
+          "imageEncode",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3VaeEncode",
+          0,
+          200
+        ],
+        [
+          "denoise",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3Denoise",
+          360,
+          -80
+        ],
+        [
+          "decode",
+          "modules.ModularDiffusers.WorkflowMiniMaxH3Decode",
+          720,
+          -80
+        ],
+        ["videoExport", "modules.Video.ExportWithAudio", 1080, -80]
+      ],
+      "edges": [
+        [
+          "models",
+          "pipeline_components",
+          "beforeEncode",
+          "pipeline_components"
+        ],
+        ["models", "pipeline_components", "prompt", "pipeline_components"],
+        ["models", "pipeline_components", "imageEncode", "pipeline_components"],
+        ["models", "pipeline_components", "denoise", "pipeline_components"],
+        ["models", "pipeline_components", "decode", "pipeline_components"],
+        ["beforeEncode", "state_out", "prompt", "state_in"],
+        ["prompt", "state_out", "imageEncode", "state_in"],
+        ["imageEncode", "state_out", "denoise", "state_in"],
+        ["denoise", "state_out", "decode", "state_in"],
+        ["decode", "video", "videoExport", "video"],
+        ["decode", "audio", "videoExport", "audio"]
+      ],
+      "bindings": [
+        ["models", "model_type", "pipelineClass"],
+        ["models", "repo_id", "artifact"],
+        ["models", "revision", "defaultRevision"],
+        ["models", "workflow_id", "workflowId"],
+        ["models", "dtype", "dtype"],
+        ["models", "device", "device"],
+        ["models", "auto_offload", "autoOffload"],
+        ["models", "offload_mode", "offloadMode"],
+        ["models", "trust_remote_code", "false"],
+        ["prompt", "pipeline_class", "pipelineClass"],
+        ["prompt", "workflow_id", "workflowId"],
+        ["prompt", "block_path", "workflowTextEncoderBlock"],
+        ["prompt", "prompt", "prompt"],
+        ["denoise", "pipeline_class", "pipelineClass"],
+        ["denoise", "workflow_id", "workflowId"],
+        ["denoise", "block_path", "workflowDenoiseBlock"],
+        ["denoise", "num_inference_steps", "steps"],
+        ["denoise", "seed", "seed"],
+        ["decode", "pipeline_class", "pipelineClass"],
+        ["decode", "workflow_id", "workflowId"],
+        ["decode", "block_path", "workflowDecodeBlock"],
+        ["videoExport", "fps", "fps"],
+        ["beforeEncode", "pipeline_class", "pipelineClass"],
+        ["beforeEncode", "workflow_id", "workflowId"],
+        ["beforeEncode", "block_path", "workflowBeforeEncodeBlock"],
+        ["beforeEncode", "width", "width"],
+        ["beforeEncode", "height", "height"],
+        ["imageEncode", "pipeline_class", "pipelineClass"],
+        ["imageEncode", "workflow_id", "workflowId"],
+        ["imageEncode", "block_path", "workflowVaeEncoderBlock"],
+        ["beforeEncode", "num_frames", "requiredNumFrames"],
+        ["beforeEncode", "references", "references"]
+      ],
+      "autoFields": [
+        "resolvedArtifact",
+        "artifact",
+        "installTarget.repo",
+        "modelRepo",
+        "pipelineClass",
+        "dtype",
+        "offloadMode",
+        "quantizedComponents",
+        "attentionBackend",
+        "regionalCompile",
+        "denoiserCache",
+        "layerwiseCasting",
+        "channelsLast"
+      ],
+      "actions": [],
+      "contentHash": "studio-spec-v1-e53dff0e"
+    }
+  ]
+}
