@@ -47,6 +47,7 @@ def state_for(values, kontext):
     return BlockState(**values)
 
 
+@pytest.mark.usefixtures("portable_cpu_bfloat16_math")
 @pytest.mark.parametrize("pipeline", [FluxModularPipeline, FluxKontextModularPipeline])
 @pytest.mark.parametrize("enabled,original,rescale,step,start,stop", [
     (True, False, 0.0, 5, 0.0, 1.0), (True, True, 0.0, 5, 0.0, 1.0),
@@ -234,6 +235,7 @@ def test_missing_negative_condition_fails_before_any_model_forward(tiny_flux, pi
     forward.assert_not_called()
 
 
+@pytest.mark.usefixtures("portable_cpu_bfloat16_math")
 @pytest.mark.parametrize("pipeline", [FluxModularPipeline, FluxKontextModularPipeline])
 def test_failed_negative_forward_cleans_up_each_prepared_condition_and_next_run_resets(tiny_flux, pipeline):
     model, values = tiny_flux
