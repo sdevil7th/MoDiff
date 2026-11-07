@@ -1,5 +1,14 @@
 # R03 editable prototyping
 
+The original bounded R03 technical journey and human prototyping review are now
+closed at backend `996208fe` / client `e5c787eb`; exact paired software, hosted and
+native evidence remains recorded in the same PR descriptions. The user accepted
+that journey as simple enough for quick prototyping. The subsequent Mellon
+comparison adds separate developer/stage/task/viewport checks; it does not reopen
+that verdict or imply full parity. See the [updated follow-up and R04–R06 work
+plan](mellon-follow-up.md) for the current execution order and first actual
+custom-code lifecycle checkpoint. Historical requirements below remain retained.
+
 Continue in the same backend/client PR7 pair. The existing task-first chooser,
 native stage groups, inspectable Blocks, backend-declared model/task planners,
 typed socket suggestions and nested UserNodes supply the representative path.
