@@ -4,8 +4,8 @@
 
 Use a **reusable Block** to keep a group of canvas nodes, their settings and
 configured inputs/outputs for another workflow. Select nodes and choose **Create
-block**, or use **Save as reusable Block…** on a compact stage group. **Edit
-nodes** expands a saved Block for ordinary canvas editing. **Edit stages** on a
+block**, or use **Save as reusable Block…** on a compact stage group. **Expand
+block** shows a saved Block's contents for ordinary canvas editing. **Edit stages** on a
 compact stage group exposes its individual nodes through the existing separation
 action; Undo restores the group. Common exposed controls remain editable directly.
 
