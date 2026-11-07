@@ -51,6 +51,16 @@ def tiny_model_inputs():
     )
 
 
+@pytest.fixture
+def portable_cpu_bfloat16_math():
+    # This checks BF16 timestep math, not optimized CPU kernel qualification.
+    # Hosted Windows terminated inside BF16 Linear before pytest could report.
+    # Keep real BF16 forwards and exact assertions; restore backend flags per case.
+    with torch.backends.mkldnn.flags(enabled=False):
+        yield
+
+
+@pytest.mark.usefixtures("portable_cpu_bfloat16_math")
 @pytest.mark.parametrize("steps,dynamic,sequence_length,changed", [
     (4, False, 4096, 0), (24, True, 3072, 6), (28, True, 4096, 7), (30, True, 4096, 8),
 ])
