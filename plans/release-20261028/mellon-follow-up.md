@@ -18,7 +18,7 @@ establish editing effort, developer usability or runtime correctness.
 | 1 | R03-C custom-code developer loop | Bounded native text-processor loop checked, with the limits below. Ordinary import, typed discovery, connection, execution, installed-source edit, explicit Reload and saved-workflow reopen worked without rebuilding. |
 | 2 | R03-D stage-editing discoverability | Implemented; exact validation and delivery checkpoints are recorded in the same paired PR descriptions. Visible Edit stages and Expand block actions reuse existing transactions. Saved Blocks and Python code have distinct creation/save descriptions. Original browser RED and focused GREEN are retained. |
 | 3 | R03-T same-model task continuity | Bounded editor acceptance verified without a product change. Same-model Klein modular text-to-image/image-conditioned round trip preserves authored controls, source wire, Resize branch, layout, Cancel, Undo/Redo and Save/reopen. Direct/grouped software probes supplement the native editor check. Runtime reuse remains R04; see the [acceptance checkpoint](r03t-task-continuity.md). |
-| 4 | R03-V usable canvas space | Bounded two-node viewport check passed; broader obstruction checks remain conditional. Check effective CSS viewports representing 4K at 100%, 150% and 200% scaling, alongside compact-screen coverage. Change layout only for a reproduced obstruction. |
+| 4 | R03-V usable canvas space | Bounded viewport matrix verified: 3840×2160 at pixel ratio 1, 2560×1440 at 1.5, 1920×1080 at 2, plus compact 1280×720. A reproduced activity-shelf obstruction has a narrow fold-away control that retains history. Arranged stage actions and Save/export remain reachable with both side panels. Complete gate and Linux delivery results belong to the same paired PR checkpoints; physical OS scaling and arbitrary graph usability are not inferred. |
 | 5 | R04 setup and repeated generation | Open; constrained Windows generation externally held. Complete the separate setup and cold/reuse/recompute matrix below at its actual platform and workload scope. |
 | 6 | R05 original transport symptom | Open; original emitter unconfirmed. Attribute any remaining refresh error to its genuine emitting process and stack; retain targeted disconnect/recovery coverage. |
 | 7 | R06 release and capability disposition | Open with explicit holds. Record each creative, access, runtime, hardware, provenance and publication limitation separately. Held cases are not passes. |
@@ -120,6 +120,28 @@ No product defect was established, no model ran and no package changed.
 This does not establish live component reuse, arbitrary model/task or latent
 compatibility, a new human verdict or public qualification. R04 retains the
 separate runtime matrix; R03-V and R05–R06 remain at their stated scopes.
+
+## R03-V: recover canvas space without clearing history
+
+An ordinary pan can put a prompt field behind the fixed activity shelf even on
+an unscaled 4K canvas. The original browser regression retained the actual
+intercepting element at all four tested layout sizes. The narrow repair makes
+the Session activity heading a keyboard-accessible disclosure. Folding it keeps
+notifications and active-work status; opening it restores the same list. Explicit
+toolbar download navigation opens it, while Clear keeps its separate meaning.
+No sidebar redesign, graph format, saved values, node layout, execution, cache,
+dependency or model-policy change was needed.
+
+Checks cover ordinary pointer access to the previously covered field, Enter and
+Space, all retained history, active work/failures/downloads, and unchanged graph
+and viewport. The scaled Chromium checks use the corresponding CSS viewport and
+pixel ratio; they are browser emulation, not physical monitor or operating-system
+certification. Arranged multi-stage actions and Save/export were also checked
+with both side panels at the four CSS sizes. This is bounded technical evidence,
+not a new human verdict or a promise that every graph fits at a readable zoom.
+Use normal pan, zoom and Arrange for a larger workflow. Existing R03-C/D/T and
+accepted model/media evidence remain closed; no model run is needed for this
+presentation repair. R04–R06 retain their separate acceptance requirements.
 
 ## R04: setup and repeat-generation acceptance remains required
 
