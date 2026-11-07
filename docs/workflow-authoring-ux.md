@@ -180,6 +180,12 @@ Edited values, custom wiring or ambiguous outputs use the preservation/review
 planner. Schema or connection differences requiring review are shown before applying.
 Undo/Redo and saved workflow reload use the same graph history and persistence.
 
+Model-change **Needs attention** details open automatically for each selected
+model requiring review. Read the incompatible values before Apply; the operator
+can still collapse and reopen the section with the pointer or keyboard. Keeping
+the current model leaves the graph unchanged. This presentation does not resolve
+an incompatibility, waive validation or change the model-selection planner.
+
 Legacy managed Task changes apply the existing fallback for an unavailable
 default/CUDA device using the current backend runtime metadata before building
 the graph. CPU offload settings normalize through the ordinary form policy;
