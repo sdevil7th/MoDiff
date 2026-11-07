@@ -17,7 +17,7 @@ establish editing effort, developer usability or runtime correctness.
 | --- | --- | --- |
 | 1 | R03-C custom-code developer loop | Bounded native text-processor loop checked, with the limits below. Ordinary import, typed discovery, connection, execution, installed-source edit, explicit Reload and saved-workflow reopen worked without rebuilding. |
 | 2 | R03-D stage-editing discoverability | Implemented; exact validation and delivery checkpoints are recorded in the same paired PR descriptions. Visible Edit stages and Expand block actions reuse existing transactions. Saved Blocks and Python code have distinct creation/save descriptions. Original browser RED and focused GREEN are retained. |
-| 3 | R03-T same-model task continuity | Planned. Review and apply a supported same-model text-to-image/image-conditioned transition while retaining compatible authored values, custom branches, input sources, layout, Cancel and Undo. Reuse existing runtime evidence first. |
+| 3 | R03-T same-model task continuity | Bounded editor acceptance verified without a product change. Same-model Klein modular text-to-image/image-conditioned round trip preserves authored controls, source wire, Resize branch, layout, Cancel, Undo/Redo and Save/reopen. Direct/grouped software probes supplement the native editor check. Runtime reuse remains R04; see the [acceptance checkpoint](r03t-task-continuity.md). |
 | 4 | R03-V usable canvas space | Bounded two-node viewport check passed; broader obstruction checks remain conditional. Check effective CSS viewports representing 4K at 100%, 150% and 200% scaling, alongside compact-screen coverage. Change layout only for a reproduced obstruction. |
 | 5 | R04 setup and repeated generation | Open; constrained Windows generation externally held. Complete the separate setup and cold/reuse/recompute matrix below at its actual platform and workload scope. |
 | 6 | R05 original transport symptom | Open; original emitter unconfirmed. Attribute any remaining refresh error to its genuine emitting process and stack; retain targeted disconnect/recovery coverage. |
@@ -107,6 +107,19 @@ Apply, Undo/Redo and a return path. Preserve genuine whole-pipeline exceptions,
 guidance and conditioning requirements. A decoded-image socket is not proof of
 latent or component compatibility. Any genuinely missing cached-model runtime
 check requires fresh Linux-only serial admission and its own unchanged guard.
+
+The R03-T editor check is now complete for the declared Klein pair. Actual
+production-UI exports establish Cancel/Apply, a missing-image Run blocker,
+ordinary insertion and binding of an existing image source, a return to text
+and back, Undo/Redo, and Save/reload/library reopen. Compatible model identity,
+prompt, fixed denoising seed, dimensions, steps, loading choices, Resize branch
+and positions stay intact. A newly required image encoder retains its own
+declared seed default; independent seeds are not silently coupled. Existing
+direct/grouped planner checks supplement this bounded native modular case.
+No product defect was established, no model ran and no package changed.
+This does not establish live component reuse, arbitrary model/task or latent
+compatibility, a new human verdict or public qualification. R04 retains the
+separate runtime matrix; R03-V and R05–R06 remain at their stated scopes.
 
 ## R04: setup and repeat-generation acceptance remains required
 
