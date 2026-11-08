@@ -223,6 +223,10 @@ These findings do not authorize a public asset, lock, rights or model change.
 - Final human review, template acceptance, publication and PR merging are
   separate decisions. Closed song/film/rocket verdicts are not reasked.
 
+The [retained Gallery recovery tranche](gallery-evidence-recovery.md) preserves
+58 corroborated previous-recipe records, with missing-source, derivative and
+rights limits explicit. No current-recipe hash or public approval is inferred.
+
 ## Validation and operating boundaries
 
 Author source only in the canonical Windows checkouts and keep changes in the

@@ -118,6 +118,12 @@ reviewer's exact original session. Those limits are not silently closed by R06.
 
 ## Ordered follow-up and closure criteria
 
+The [first retained-evidence recovery tranche](gallery-evidence-recovery.md)
+corroborates 58 previous-recipe records and preserves their authority in private
+packets. It changes no current lock, public sidecar or qualification result.
+The two missing-model-set bundles and three genuinely changed recipes remain
+held under their own criteria.
+
 1. **Maintain the merge/manual-test candidate.** Keep current code checks green
    and inspect the documentation heads' actual CI before merging. A maintainer
    reviews and decides on merge; this checkpoint does not perform it.
