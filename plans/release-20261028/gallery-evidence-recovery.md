@@ -212,3 +212,86 @@ unchanged**; a prepared private candidate is not a completed public repair.
 3. Keep the two legacy Qwen complete-model-set holds and all broader R06 holds.
    All **43 missing-model cases remain user-held**. The same two existing PR7s
    carry this checkpoint; no new model campaign or public approval is implied.
+
+
+## ACE current Auto execution gaps — native technical closure
+
+This checkpoint supersedes the two **current-recipe Auto execution holds** above.
+It preserves the original accepted Expert recordings, their original policy and
+the old 75-second consumed-lyrics gap. Neither old run was relabelled or repeated
+to repair a reader field. Two separately declared current-template Auto runs
+were necessary because the retained Expert evidence could not establish Auto.
+
+| Current recipe                | New native task | Actual execution and delivery                                                                                                      |
+| ----------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 75-second text-to-audio       | `udHS8txXiAwZ`  | One ordinary UI Auto Run; 274.25167 native seconds; five nodes; 75 seconds, 48 kHz stereo PCM16.                                   |
+| Joined 90-second continuation | `kjDOnhLsP6hu`  | One ordinary UI Auto Run; 415.24778 native seconds; eight nodes; original bundled 75 seconds plus 15 seconds, 48 kHz stereo PCM16. |
+
+Both preserve the current prompt, lyrics, eight steps, seeds 8301/8303, BF16,
+unquantized modelCPU offload and immutable ACE revision
+`200ba991ae448051e14b0183157e35c2d27c9fb0`. Each genuine plan admitted automatic
+attention without patches. The old explicit native-math selection had no declared
+Auto working-memory budget; changing its label would not supply such a budget.
+The new cases use the admitted automatic selection, without changing product
+defaults, workload, guards, runtime, packages or deployed source.
+
+Strict audits bind source inventory, actual task/attempt/session/workflow,
+five/eight-node graph, all 69 form values, current 47-field creator authority,
+consumed creative controls including lyrics, installed model, exact durable and
+served media. The continuation uses the current template's exact bundled source,
+SHA-256 `3807d712e24a94c4b445c2fa950a784bba334f5f665e74964fe4d47a43856230`,
+not the different previously accepted private recording. Its retained prefix
+differs by at most one PCM16 unit outside the declared 0.01-second join fade.
+
+Both completed full ordinary muted 1x playback and normal scoped release/QA
+closure. Independent guards sampled zero owned swap growth and zero scratch;
+all original resource/time floors stayed unchanged. The final preservation check
+retains all 694 app files, 104 earlier output records, 90 earlier preview slots
+and 429 unrelated workflow bodies, with genuine owned PUTs bound separately.
+The same worker and the original independent worker are unchanged; cache is empty,
+queue idle and downloads zero. Model execution occurred only on Linux, serially.
+Cached weight hashes were reused only after exact stat/alias/LFS checks.
+
+### Maintainer reader and concrete private proposals
+
+A diagnosed failing regression showed that genuine whole-workflow direct-audio
+Auto runs lack a primary resource candidate ID. The narrow
+`observed-workflow-auto-audio-resource-v1` reader derives an **observed execution
+identity**, leaving raw candidate fields absent. It reuses the existing connected
+direct-audio graph checks and requires fresh completed native joins, one pinned
+installed model, exact backend-resolved/consumed controls and requested versus
+effective continuation duration. Missing, conflicting, patched, reused,
+quantized or unsupported observations remain held. Rehashed observations still
+have to match canonical controls, model and delivered duration/sample rate.
+This is maintainer tooling, not a new executor, Auto admission or hardware proof.
+
+The original focused regression failed three positive assertions before the
+implementation. The expanded related suite passed 184 tests; the new audio tests
+are included in the required full client gate. **`npm run check` PASS** in
+526.75 seconds. Backend executable source and the 119-file product bundle
+are unchanged, so the already completed backend gate retains its original source
+scope: 9140 tests/13202 subtests plus lint, dependency verification and preflight.
+No deployment or closed model proof was repeated for this reader.
+
+Both new private provenance packets validate with zero blockers. Their concrete
+current-entry/media/redacted-provenance proposals pass the isolated maintained
+Gallery verifier with **zero recipe/media/provenance errors** and **34 deliberately
+pending review diagnostics**. Listening questions concern these new Auto outputs
+only; earlier accepted recordings are not re-reviewed. Human listening, formal
+template review, exact-file rights and publication remain separate and pending.
+No numeric quality scores or duplicate exactness were invented.
+
+Original private path, release-capture, assertion and invocation failures remain
+preserved. The 75-second release capture omitted the response body after a
+successful ordinary release; its genuine request and independent empty-cache/
+byte-preservation checks remain available. That action was never repeated and
+no response was fabricated. Private metadata repairs did not rerun models,
+native audits, playback or releases.
+
+All **638 frozen release/asset/build inputs** remain byte-exact. Public Gallery's
+retained 74-error report, old media, source descriptor, Dataset pin and rights
+records are unchanged. The two legacy Qwen complete-model-set holds, ACE melody
+codec absence and broader resource/hardware/publication limits remain. All
+**43 missing-model cases stay user-held**; the SSD grants no download or cache
+move. Changes stay in the same two existing PR7s. Next is listening/template and
+publication disposition for these concrete candidates, not another model run.

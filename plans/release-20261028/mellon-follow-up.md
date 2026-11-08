@@ -254,3 +254,19 @@ Reuse completed gates for unchanged executable source. Plans, documentation and
 private readers do not justify repeating closed model, deployment or full-gate
 proofs. Maintain separate implementation, software, native, human and external
 hold states for every row; do not report the whole feedback set as closed.
+
+
+## ACE Auto follow-up checkpoint
+
+The [ACE current Auto checkpoint](gallery-evidence-recovery.md#ace-current-auto-execution-gaps--native-technical-closure)
+closes the missing native Auto execution/reader bindings for the current 75-second
+song and joined 90-second continuation. Two separately guarded ordinary UI Runs
+completed on Linux with strict audits, full playback, normal releases and exact
+preservation. The original accepted Expert recordings and absent old consumed
+fields remain unchanged. New private proposals have zero recipe/media/provenance
+errors; listening, formal template review and publication remain pending.
+
+The narrow maintainer observation reader passes the complete client gate and
+does not change Auto admission, the app bundle, backend runtime or qualification.
+Public Gallery 74 and all broader release holds remain; this is not public
+activation. All 43 missing-model cases remain user-held in the same two PR7s.
