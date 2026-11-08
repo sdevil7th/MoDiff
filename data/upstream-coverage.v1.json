@@ -2458,7 +2458,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:820e9309ea9eed78268774030b842fcc92960c6bfeb575930c47f4e07334e2c8",
+  "contentHash": "sha256:2ea80a979eb270e33633498b6b72014495c476c0f04f99a168308b0986130242",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -10130,8 +10130,8 @@
       },
       "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": "approved_exact",
-      "galleryVerificationStatus": null,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "z_image_cinematic_contact_sheet",
       "mode": "text_to_image",
       "modelType": "ZImageModularPipeline",
@@ -10276,7 +10276,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "bc7a7e890c04e2453214dca9264308a9b5950f1f34b1f4ac60b100e9f54e9dae",
+    "templateBundleSha256": "455511685a341b245ddcef3a015aba41bbf311ce9639e0f3d8109db2d62b24f6",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {

@@ -288,3 +288,34 @@ evidence, constrained setup/telemetry and historical-session limits. Closed Auto
 technical work does not decide boardwalk/car creative review, Wan performance
 or unavailable ACE melody codecs. All 43 missing-model cases stay held; accepted
 outputs are preserved and no new model execution is needed for these repairs.
+
+## Approved Gallery registration — 2026-11-09
+
+The user approved formal quality and per-file redistribution/publication for the
+accepted current-recipe Z contact sheet and the two current ACE Auto recordings,
+plus eight metadata-only WebP descriptor corrections. The existing public Dataset
+now contains that approved subset at immutable revision
+`5f453107d6ab88a21a6286323a269566823aa772`; the ordinary uploader and independent
+anonymous full-source verification both passed for all 391 included files.
+The complete inventory remains 395 records with the same four rights-held
+absences. No model run, download, local cache relocation or native source refresh
+was required for registration. Original media, verdicts and provenance remain
+preserved separately from the public redacted records.
+
+Current Gallery verification removes eight diagnosed errors from these three
+replacements, with no new errors: 66 errors across 60 other templates remain.
+Coverage is now 20 asset-backed supported templates of 89, with 69 uncovered;
+17 video templates still include ten missing motion previews. These counts are
+not a whole-Gallery pass, hardware qualification or duplicate-run exactness.
+The contact sheet is correctly recorded as human-reviewed rather than exact.
+The continuation retains its actual bundled 75-second source; it does not claim
+to consume the separately accepted new Auto recording.
+
+The client full check passed in 557.91 seconds, alongside 71 related asset tests
+and 71 inventory tests/890 subtests. The packaged 119-file bundle changes only
+the Gallery descriptor and its immutable source selection after import-version
+normalization; all dependency, loading, memory and model guards remain unchanged.
+Packaged backend and hosted CI qualification must bind their actual new heads.
+All 43 missing-model cases remain held. Further overnight candidates require
+their own actual Linux execution evidence and human review; the registration
+approval does not extend to new unreviewed outputs.
