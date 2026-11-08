@@ -259,8 +259,10 @@ separate. Validate upgrade instructions on a disposable selected-platform setup.
 
 **Plan and approach:** reproduce the disconnect category, clean up closed sockets
 and cancelled requests, preserve task identity across reconnect, and retain real
-upstream failure diagnostics. The original message had no stack identifying its
-emitting process, so its exact origin remains uncertain.
+upstream failure diagnostics. The original reviewer message had no stack
+identifying its emitting process. Independent archived Windows logs now identify
+an exact matching message from Vite's WebSocket proxy; they do not bind the
+reviewer's particular session.
 
 **Implemented:** Vite's proxy handling classifies known abort/reset/pipe errors
 only for owned disconnected browser sockets. Backend sends/callbacks are bounded
@@ -277,9 +279,18 @@ and Layered delivery checks recorded zero browser errors. One older deliberate
 Stop/replacement/retry journey retained five connection-refused diagnostics before
 successful recovery; that journey is not zero-console acceptance.
 
-**Remaining:** inspect Windows production and Vite startup/refresh records
-separately. Preserve any full stack for a remaining abort rather than suppressing
-all transport errors or assuming every timeout has the same cause.
+**Recorded trace:** archived Windows stacks show the exact write-abort message
+under Vite's proxy and browser-socket error loggers. The existing ownership-bound
+filter passes focused real-socket/browser checks; removing only that filter
+reproduces duplicate teardown diagnostics. Separate historical production and
+Vite idle records each cover 25 navigations without page/console errors or
+appended server abort/fault entries. Those records retain their original source
+scope and explicitly classified cancelled requests.
+
+**Remaining:** the original reviewer session remains unbound. Preserve the
+emitting process and bounded stack for any recurrence; do not suppress all
+transport errors or assume every timeout has the same cause. Production serving
+has no Vite proxy and needs its own attribution.
 
 ### 8. Missing Transformers/PEFT immediately produces UI errors
 

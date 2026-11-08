@@ -20,7 +20,7 @@ establish editing effort, developer usability or runtime correctness.
 | 3 | R03-T same-model task continuity | Bounded editor acceptance verified without a product change. Same-model Klein modular text-to-image/image-conditioned round trip preserves authored controls, source wire, Resize branch, layout, Cancel, Undo/Redo and Save/reopen. Direct/grouped software probes supplement the native editor check. Runtime reuse remains R04; see the [acceptance checkpoint](r03t-task-continuity.md). |
 | 4 | R03-V usable canvas space | Bounded viewport matrix verified: 3840×2160 at pixel ratio 1, 2560×1440 at 1.5, 1920×1080 at 2, plus compact 1280×720. A reproduced activity-shelf obstruction has a narrow fold-away control that retains history. Arranged stage actions and Save/export remain reachable with both side panels. Complete gate and Linux delivery results belong to the same paired PR checkpoints; physical OS scaling and arbitrary graph usability are not inferred. |
 | 5 | R04 setup and repeated generation | Setup metadata repair delivered; bounded Linux cold/reuse/edit/adapter/recompute/release paths verified. Original constrained Windows, fresh GPU setup, different-artifact replacement and formal cached-adapter ownership remain held. See the [R04 acceptance checkpoint](r04-setup-repeat.md). |
-| 6 | R05 original transport symptom | Open; original emitter unconfirmed. Attribute any remaining refresh error to its genuine emitting process and stack; retain targeted disconnect/recovery coverage. |
+| 6 | R05 original transport symptom | Historical matching Windows stacks identify Vite's WebSocket proxy; existing disconnect handling passes the bounded checks. The original reviewer's session remains unbound. See the [R05 trace](r05-refresh-transport.md). |
 | 7 | R06 release and capability disposition | Open with explicit holds. Record each creative, access, runtime, hardware, provenance and publication limitation separately. Held cases are not passes. |
 
 ## R03-C first increment: actual developer acceptance
@@ -183,12 +183,20 @@ deployment to change labels or repair private readers.
 
 ## R05: original refresh/transport symptom remains separate
 
-Reuse targeted browser refresh, socket close, connection refusal, stale-response,
-proxy and genuine upstream-failure tests. Preserve editing/task identity without
-duplicate dispatch. The original ECONNABORTED emitting process and stack remain
-unidentified until actual evidence establishes them. Do not suppress a broad
-error class or repeat models just to obtain a log. Ordinary later use can supply
-a bounded original stack for a focused regression.
+The [R05 trace](r05-refresh-transport.md) recovers ten exact matching error entries
+from three archived Windows logs. Their prefixes identify Vite's WebSocket proxy,
+and their stacks show Node socket writes. The earlier proxy lifecycle fix is
+already present. A deliberately unfiltered control reproduces duplicate proxy
+diagnostics; current focused proxy/refresh, connection, stale-response and genuine
+upstream-failure tests pass. Historical production and Vite idle navigation records
+remain bound to their original source rather than being relabelled current.
+
+No new runtime defect or speculative transport change was established. The
+reviewer's original October session still lacks a process/source/stack binding;
+the independent historical match does not establish every possible cause of the
+same error text. Preserve editing/task identity without duplicate dispatch. Use
+the bounded capture guidance if it recurs; never suppress a broad error class or
+repeat models merely to obtain a log. R06 remains separate.
 
 ## R06: release and capability disposition remains separate
 
