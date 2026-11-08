@@ -174,3 +174,79 @@ The narrow maintainer observation reader passes the complete client gate and
 does not change Auto admission, the app bundle, backend runtime or qualification.
 Public Gallery 74 and all broader release holds remain; this is not public
 activation. All 43 missing-model cases remain user-held in the same two PR7s.
+
+## Deterministic metadata and current-source verification — 2026-11-08
+
+This checkpoint supersedes the earlier unresolved maintainer diagnosis and the
+two new ACE candidates' pending-listening statements. It changes no public
+Gallery entry, template review, qualification, rights or publication decision.
+
+The inventory defect was reproduced against the original host-dependent MIME
+lookup. Repository-owned mappings now keep supported formats deterministic,
+including the existing `audio/x-wav` spelling; unknown extensions remain opaque.
+PNG/WebP header validation and byte/size/purpose/complete-set checks remain strict.
+The original failing regression and related malformed-image/case tests are
+retained. All 40 asset tests pass. Seven WAV metadata discrepancies resolve.
+All 391 available files retain their original bytes, sizes and purposes.
+
+Eight older WebP descriptors still declare an opaque content type and omit
+512-by-512 dimensions. A separate complete 395-record metadata-only proposal
+changes only those fields. Independent full WebP decoding confirms all eight
+512-by-512 records; their existing approved byte identities remain exact.
+The original asset set, rights ledger, immutable Dataset pin and all four rights-held absences stay unchanged. The complete-set
+check remains held; the proposal is not an approved/public manifest update.
+
+The candidate reporter previously assigned `releaseContractCurrent` unconditionally.
+It now runs the existing bounded read-only `release-contract.mjs --check`.
+Staleness, verifier failure, timeout or unavailable execution makes the gate false
+with a named blocker. It does not regenerate source or expose private diagnostics.
+Three original failing CLI regressions now pass; 26 related report/contract/policy
+tests pass. The actual current-source private projection returns false, retaining
+every other gate, blocker, coverage count and original report unchanged. Correct
+freshness reporting does not qualify a template or hardware profile.
+
+Validation: `node --test scripts/release-candidate-report.test.mjs
+scripts/release-contract.test.mjs scripts/release-qualification-policy.test.mjs`
+passes 26 tests; `python -B scripts/template-gallery-assets.test.py` passes 40;
+`npm run test:release-contract` passes 49 with six declared optional skips;
+`ruff check scripts/template-gallery-assets.py scripts/template-gallery-assets.test.py
+--select E9,F` passes. The complete final `npm run check` passes in 506.09
+seconds, with exact source fingerprints retained before/after. All 638 frozen release,
+asset and build inputs, including the 119-file product bundle, remain exact.
+Backend executable code is unchanged: its completed 9140-test/13202-subtest gate
+retains its original scope. No native model, deployment or closed proof is repeated.
+
+The user explicitly accepted both new Auto outputs, `udHS8txXiAwZ` and
+`kjDOnhLsP6hu`, for private listening. Verdicts bind their exact original WAVs.
+Earlier recordings and capture-time observations remain unchanged. Formal rubric,
+exact-file rights and publication are still separate.
+
+After actual upstream HTTP recovery, only the remaining failed setup job was
+retried. All 16 push/PR checks passed at prior heads `61778e22` / `52a52ead`;
+both PRs were clean/mergeable with no unresolved review threads. New tooling
+commits require their own actual hosted outcomes; old green checks do not qualify
+new heads. Changes stay in the same two existing PR7s.
+
+### Remaining work and closure criteria
+
+1. Bind the technically reviewed eight-record metadata proposal to dependent
+   source/rights identities in a separately authorized manifest/Dataset update.
+   No public update is part of this work. Four absent rights-held assets
+   require exact-file redistribution decisions; do not invent or replace them.
+2. Complete formal contact-sheet and ACE template review, then obtain separate
+   output-specific rights/publication decisions. Private acceptance is recorded;
+   accepted outputs need no rerun or repeated listening request.
+3. Continue evidence recovery for current Gallery rows without rewriting their
+   original locks. The retained 74-error report, two Qwen bundles lacking original
+   complete-model-set authority and unavailable public qualification remain held.
+4. Keep boardwalk/car creative disposition separate from closed Auto technical
+   proof, Wan's fixed-deadline zero-output hold and ACE melody-codec absence.
+   R04 constrained Windows/fresh GPU setup and artifact/telemetry limits, plus
+   R05's unbound original reviewer session, retain their stated proof boundaries.
+5. Physical CPU/NVIDIA/MPS and resource-tuple evidence require separately scoped
+   admission and actual supported-machine proof. Do not infer it from unit CI or
+   the large AMD host. All **43 missing-model cases remain user-held**.
+
+The SSD remains available storage only. No downloads, model moves, installations,
+uploads, cache/source/runtime changes or new model campaign occurred. Software
+merge readiness and public release readiness remain distinct.

@@ -295,3 +295,23 @@ codec absence and broader resource/hardware/publication limits remain. All
 **43 missing-model cases stay user-held**; the SSD grants no download or cache
 move. Changes stay in the same two existing PR7s. Next is listening/template and
 publication disposition for these concrete candidates, not another model run.
+
+## Accepted ACE Auto listening and deterministic tooling follow-up
+
+The user accepted both new Auto candidates: `udHS8txXiAwZ` (75-second song)
+and `kjDOnhLsP6hu` (90-second continuation). Append-only verdicts bind the exact
+original WAV hashes and task identities. This supersedes the pending-listening
+statements above. Original Expert recordings, bundled continuation source and
+capture-time records remain unchanged; accepted outputs are not rerun/re-reviewed.
+
+The [R06 tooling checkpoint](r06-release-disposition.md#deterministic-metadata-and-current-source-verification--2026-11-08)
+records the diagnosed host-dependent metadata and false freshness gate repairs,
+failing-to-passing regressions and complete client check. Seven WAV metadata
+differences resolve; eight legacy WebP descriptor corrections are independently
+decoded and technically verified in a separate private proposal, and four exact
+rights-held absences stay held. All 638 frozen release/asset/build inputs and original public contracts remain exact.
+
+Formal template rubrics, exact-file rights/publication, Gallery 74 and physical
+qualification remain open under their own closure criteria. No numeric review
+scores, public lock repair or missing original model-set authority were invented.
+All **43 missing-model cases remain user-held** in the same two existing PR7s.

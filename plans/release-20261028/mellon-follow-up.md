@@ -270,3 +270,21 @@ The narrow maintainer observation reader passes the complete client gate and
 does not change Auto admission, the app bundle, backend runtime or qualification.
 Public Gallery 74 and all broader release holds remain; this is not public
 activation. All 43 missing-model cases remain user-held in the same two PR7s.
+
+## R06 tooling follow-up and explicit remaining work
+
+The [R06 deterministic-tooling checkpoint](r06-release-disposition.md#deterministic-metadata-and-current-source-verification--2026-11-08)
+closes the diagnosed maintainer MIME portability and false contract-freshness
+issues with original failing regressions, related tests and the complete client
+gate. The actual current contract remains stale and is now reported honestly;
+eligibility and public data are not promoted. Seven WAV differences resolve;
+eight older image descriptor changes have a private metadata-only proposal.
+
+Both new ACE Auto outputs are now accepted for private listening, superseding
+the pending statements above. Their formal template/rights/publication decisions
+remain separate. The ordered R06 closure criteria retain current Gallery locks,
+four rights-held absences, missing original model-set authority, hardware/resource
+evidence, constrained setup/telemetry and historical-session limits. Closed Auto
+technical work does not decide boardwalk/car creative review, Wan performance
+or unavailable ACE melody codecs. All 43 missing-model cases stay held; accepted
+outputs are preserved and no new model execution is needed for these repairs.
