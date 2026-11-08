@@ -5,6 +5,11 @@ They are not silently dropped from the originally requested whole-app release.
 Do not start them in the Windows manual-testing window. A later continuation
 needs an explicit finite selection and updated source/evidence inventory.
 
+The later [R06 disposition checkpoint](r06-release-disposition.md) provides the
+current bounded CI, Gallery, asset-rights and release-report audit. The older
+census and group counts below remain historical planning records, not current
+qualification or an instruction to run another campaign.
+
 The retained 27 October catalog census describes 80 public templates, 203 ordinary
 workflows, 149 standalone/nonpublic-source rows, 58 resource tuples and seven
 hardware profiles. Fifty-four ordinary workflows overlap public source templates;

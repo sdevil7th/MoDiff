@@ -21,7 +21,7 @@ establish editing effort, developer usability or runtime correctness.
 | 4 | R03-V usable canvas space | Bounded viewport matrix verified: 3840×2160 at pixel ratio 1, 2560×1440 at 1.5, 1920×1080 at 2, plus compact 1280×720. A reproduced activity-shelf obstruction has a narrow fold-away control that retains history. Arranged stage actions and Save/export remain reachable with both side panels. Complete gate and Linux delivery results belong to the same paired PR checkpoints; physical OS scaling and arbitrary graph usability are not inferred. |
 | 5 | R04 setup and repeated generation | Setup metadata repair delivered; bounded Linux cold/reuse/edit/adapter/recompute/release paths verified. Original constrained Windows, fresh GPU setup, different-artifact replacement and formal cached-adapter ownership remain held. See the [R04 acceptance checkpoint](r04-setup-repeat.md). |
 | 6 | R05 original transport symptom | Historical matching Windows stacks identify Vite's WebSocket proxy; existing disconnect handling passes the bounded checks. The original reviewer's session remains unbound. See the [R05 trace](r05-refresh-transport.md). |
-| 7 | R06 release and capability disposition | Open with explicit holds. Record each creative, access, runtime, hardware, provenance and publication limitation separately. Held cases are not passes. |
+| 7 | R06 release and capability disposition | Current CI, read-only release checks and evidence disposition audited. The public release remains blocked; see the [R06 checkpoint and ordered follow-up](r06-release-disposition.md). Creative, rights, qualification and user-held cases are not passes. |
 
 ## R03-C first increment: actual developer acceptance
 
@@ -199,6 +199,15 @@ the bounded capture guidance if it recurs; never suppress a broad error class or
 repeat models merely to obtain a log. R06 remains separate.
 
 ## R06: release and capability disposition remains separate
+
+The [R06 checkpoint](r06-release-disposition.md) records the fresh eight-check
+release audit, current PR CI, preserved originals, private report projections,
+manual-testing readiness and ordered remaining work. The same 74 Gallery errors
+affect 63 examples; they are not 74 mandatory reruns. The complete asset manifest
+contains 395 records, with all 391 available files byte-exact and four rights-held
+files absent. A stale report adds one previously unreported contact-sheet prompt
+mismatch; a private current projection changes no release eligibility counts.
+These findings do not authorize a public asset, lock, rights or model change.
 
 - All 43 missing-model cases stay user-held. The added SSD is storage permission,
   not authority for model downloads, cache moves/configuration or mount changes.
