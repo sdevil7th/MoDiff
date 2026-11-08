@@ -119,3 +119,96 @@ corrected, with no model rerun.
 The [R06 disposition](r06-release-disposition.md) retains broader resource,
 qualification, hardware, creative and publication blockers. Changes stay in
 the same two PR7s; the current application and model/runtime state are unchanged.
+
+## Current-recipe candidate tranche — contact sheet recovered
+
+The next tranche compares the three changed recipes with their later native
+outputs. It produces **one private current-recipe replacement proposal**, rather
+than changing the historical packets or activating a public replacement.
+
+| Current recipe                            | Retained execution | Disposition                                                                                                                                                                |
+| ----------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Z cinematic contact sheet, rear-view exit | `WbapirwfoAgl`     | Current creator settings and provenance match; private proposal assembled. Template rubric, exact-file rights and publication remain pending.                              |
+| ACE 75-second text-to-audio               | `FjUO3EXXpuIY`     | Creative fields match, but the actual run is Expert and the current template selects Auto. Original consumed lyrics are unavailable. Keep held.                            |
+| ACE joined 90-second continuation         | `E0OvdRNfqCyF`     | Creative fields and the real 75-second source/90-second delivery have retained native bindings. Actual Expert execution does not prove the current Auto recipe. Keep held. |
+
+### Contact-sheet authority and concrete proposal
+
+The pre-run `contact-sheet-rear-view-exit-v2` declaration was captured on
+November 4 at 04:29:13 UTC, before the original native task. All **47 locked
+settings**, execution selection, expected output, prompt hash and catalog lock
+match today's template. The original form agrees field by field. Its original
+output has no `templateId` or prompt-settings hash; those absences are retained.
+The independent predeclaration supplies creator authority without rewriting the
+output or pretending the private revision was the public default at execution.
+
+Original source inventories, installed immutable model identity, node contract,
+submitted graph, task/attempt/session/workflow, genuine late-row critical-field
+join and media remain bound. The current private provenance validator returns
+**zero blockers**. The accepted WebP is **182,632 bytes**, **1344×768**, SHA-256
+`4c2bbf8e5c5fc23984d3cbb7cf716220d6a5a3a628510b0de9bae418b3447723`.
+It is the accepted rear-view revision, not the rejected front-facing predecessor.
+
+The ignored `contact-current-recipe-candidate.v1` packet contains original
+copies, the old manifest entry, a proposed replacement entry, exact media,
+redacted public-format provenance and a draft quality review. The proposed
+creator/provenance bindings are `ps_b1ca2b43` and `tpl_44b603f1`. It is a
+**reviewed single-run proposal**, not an exact duplicate-output proof or formal
+registered Auto/hardware qualification. Original source and capture time remain
+unchanged.
+
+The existing Gallery verifier checked this one-entry proposal in an isolated
+private fixture. It found **zero recipe, media or provenance errors** and
+**17 expected review-status/missing-rubric diagnostics**. These are deliberately
+retained: the user's earlier “Accept revised contact sheet” is private visual
+acceptance, not invented numeric scores or publication approval. The draft cannot
+pass a publication gate. The fixture's local descriptor is solely for this
+private check; the real immutable Dataset descriptor remains exact.
+
+The first private assembly helper's diagnostic classifier omitted one expected
+review-status message and stopped after saving the actual verifier report. Its
+helper, report and failure are preserved. A separate metadata finalizer compared
+the exact maintained review diagnostics; it changed no validator, original
+receipt or gate result. No model or native audit was repeated.
+
+### Audio holds are execution-policy gaps
+
+The 75-second form matches **46 of 47 current locked fields** literally. The
+continuation matches **45 of 47**: its required source is populated, while the
+template's placeholder is blank. The creative-policy difference in both is
+`resourceMode`: today's templates select `auto`, while the
+original native graphs and forms record `expert`. Renaming that field or using
+the current lock would misstate execution. The continuation's nonblank source
+path is an actual supplied input, not a new creative setting; its exact 75-second
+source bytes remain distinct from current bundled-input authority.
+
+The 75-second output also has an explicit original consumed-lyrics capture gap.
+Submitted lyrics and a positive listening verdict do not fill that missing
+backend observation. No absent fields, current Auto identity, source capture or
+complete model set were synthesized. No audio provenance proposal was labelled
+current-qualified, and the accepted songs were not rendered or reviewed again.
+
+### Preservation, checks and next actions
+
+The private comparison, proposal assembly and metadata finalization used the
+existing readers and originals. The finalizer verified **13 exact original
+files** and **all 638 frozen release/asset/build inputs**, unchanged. No source,
+runtime, package, model, public sidecar, asset byte, rights record or Dataset pin
+changed. There was no Linux allocation, Run, release probe, download or upload.
+
+The authoritative private results are
+`current-recipe-binding-inspection.v1.json`,
+`contact-current-recipe-candidate.v2.result.json` and the packet's
+`private-gallery-verification.json`. The retained public **74-error report is
+unchanged**; a prepared private candidate is not a completed public repair.
+
+1. Complete the concrete contact-sheet template rubric and per-file publication
+   review. Preserve the existing visual acceptance; do not reask it or repeat
+   the model. Only then prepare the ordinary asset/rights/pinned-source update.
+2. Keep both current ACE Auto bindings held. A separate admissible Auto
+   observation or a deliberately reviewed template-policy revision is needed;
+   neither is authorized by metadata recovery. Do not change defaults to fit old
+   evidence or rerun accepted media merely for a reader field.
+3. Keep the two legacy Qwen complete-model-set holds and all broader R06 holds.
+   All **43 missing-model cases remain user-held**. The same two existing PR7s
+   carry this checkpoint; no new model campaign or public approval is implied.

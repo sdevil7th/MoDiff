@@ -227,6 +227,16 @@ The [retained Gallery recovery tranche](gallery-evidence-recovery.md) preserves
 58 corroborated previous-recipe records, with missing-source, derivative and
 rights limits explicit. No current-recipe hash or public approval is inferred.
 
+The follow-on current-recipe comparison recovers one concrete private
+contact-sheet replacement proposal. Its predeclared rear-view recipe matches all
+47 current settings and its original provenance passes; the private Gallery
+projection has only the deliberately pending template review. Public records
+stay unchanged. Both accepted ACE candidates retain actual Expert-versus-current-
+Auto mismatches, with an additional original consumed-lyrics gap for the
+75-second song. This is evidence recovery, not a closed public Gallery gate.
+See the recovery checkpoint for exact identities, preserved failures and review
+steps. The 43 missing-model cases remain held.
+
 ## Validation and operating boundaries
 
 Author source only in the canonical Windows checkouts and keep changes in the
