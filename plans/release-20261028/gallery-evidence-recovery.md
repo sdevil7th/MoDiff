@@ -1,5 +1,10 @@
 # Retained Gallery evidence recovery: first tranche
 
+The latest approved registration covers **26 of 89 supported templates**. The
+six Z-image replacements below reduce the strict Gallery report from 66 to 60
+errors; earlier totals in this chronological record remain historical evidence.
+See [the six-image registration](#six-accepted-z-image-registrations) for its scope.
+
 This tranche recovers **58 previous-recipe evidence records** without changing
 their locks, provenance or media. **It repairs zero current-recipe bindings**:
 the strict Gallery total remains 74 errors. An old execution cannot become a
@@ -213,7 +218,6 @@ unchanged**; a prepared private candidate is not a completed public repair.
    All **43 missing-model cases remain user-held**. The same two existing PR7s
    carry this checkpoint; no new model campaign or public approval is implied.
 
-
 ## ACE current Auto execution gaps — native technical closure
 
 This checkpoint supersedes the two **current-recipe Auto execution holds** above.
@@ -315,3 +319,36 @@ Formal template rubrics, exact-file rights/publication, Gallery 74 and physical
 qualification remain open under their own closure criteria. No numeric review
 scores, public lock repair or missing original model-set authority were invented.
 All **43 missing-model cases remain user-held** in the same two existing PR7s.
+
+## Six accepted Z-image registrations
+
+The maintainer approved the exact Quick Concept, Product Mockup, Poster, Low
+VRAM, Fast LoRA and Z realism-LoRA images, their proposed 4/5 quality criteria,
+known visual limits, per-file Apache-2.0 terms and publication of the redacted
+proof/review records. All six passed the maintained Gallery verifier as
+**reviewed** current-recipe examples. No duplicate-run Exact or physical hardware
+qualification is inferred.
+
+The pre-run creator declarations, all 47 locked settings, actual task/graph,
+complete immutable model sets, backend source inventories and encoded/decoded
+media identities remain bound to their original executions. The two LoRA records
+retain their actual adapter application evidence and complete base-plus-adapter
+model-set locks. Absent raw task candidate identities remain absent; the existing
+observed-workflow Auto vocabulary records that limited execution evidence.
+
+The current Dataset pin is
+`ab0271875e2c3f759bfe8228541119dd37be6ec3`. Publication and the source descriptor
+were verified anonymously against every included byte. The complete inventory
+still has 395 files; its approved subset includes 391. All 74 unrelated Gallery
+entries and the four exact Chinese New Year/Ghibli rights holds are preserved.
+An inherited approval-scope note in four metadata rights records was corrected
+in a separate parent-bound publication; the preceding immutable revision remains
+available. No media or original native receipt changed in that correction.
+
+The normal current-source coverage report moves from **20/89 to 26/89**, leaving
+63 uncovered supported templates. The strict report removes only the six named
+stale-lock errors and introduces none. Klein proof gaps, creative/recipe
+alignment, missing melody codecs, the Wan deadline, broader Auto/hardware and
+rights/publication limits remain separate. All **43 missing-model cases remain
+user-held**. The accepted images are not generated again; no cache retirement,
+model acquisition or native worker/source refresh is part of registration.

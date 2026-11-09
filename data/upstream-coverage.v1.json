@@ -2458,7 +2458,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:2ea80a979eb270e33633498b6b72014495c476c0f04f99a168308b0986130242",
+  "contentHash": "sha256:13b59700bceb8491d65115e88fc7755b387c327b4e857154b8add43e03d2f99d",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -10193,8 +10193,8 @@
       },
       "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": "approved_exact",
-      "galleryVerificationStatus": "exact",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "z_image_poster",
       "mode": "text_to_image",
       "modelType": "ZImageModularPipeline",
@@ -10223,8 +10223,8 @@
       },
       "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": "approved_exact",
-      "galleryVerificationStatus": "exact",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "z_image_product_mockup",
       "mode": "text_to_image",
       "modelType": "ZImageModularPipeline",
@@ -10253,8 +10253,8 @@
       },
       "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": "approved_exact",
-      "galleryVerificationStatus": "exact",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "z_image_quick_concept",
       "mode": "text_to_image",
       "modelType": "ZImageModularPipeline",
@@ -10276,7 +10276,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "455511685a341b245ddcef3a015aba41bbf311ce9639e0f3d8109db2d62b24f6",
+    "templateBundleSha256": "eb1fd50c288ef440e857df64f7cfd5d78edb72712abdab5ef8b6ea8c1464435c",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
