@@ -352,3 +352,39 @@ alignment, missing melody codecs, the Wan deadline, broader Auto/hardware and
 rights/publication limits remain separate. All **43 missing-model cases remain
 user-held**. The accepted images are not generated again; no cache retirement,
 model acquisition or native worker/source refresh is part of registration.
+
+## Accepted retained Klein multi-reference registration
+
+The maintainer separately approved the retained Klein material-fusion output,
+all proposed 4/5 formal criteria, its known limits, exact-file Apache-2.0
+redistribution and publication. The decision explicitly attests permission to
+make and redistribute this derivative from both identified references. Existing
+input files, mixed input-license labels and prior rights records remain unchanged.
+
+The original current creator declaration, all 47 locked settings, task, source,
+immutable installed model, complete consumed controls, two ordered input hashes
+and encoded/decoded output identities are retained. The narrowly tested
+maintainer reader records the actual seven-node image-conditioned Auto path
+without filling the original null candidate/task classifications or replacing
+the executed owner with a legacy form label. This observation is not a new Auto
+admission or hardware qualification. No model run, native audit, playback,
+release or QA closure was repeated.
+
+The normal Gallery validator accepts this as a **Reviewed** current-recipe
+example with its genuine existing before image. Dataset revision
+`00bcdf9eaead7ad42d7db8a90223078e2511cf4b` and the source descriptor pass full
+anonymous byte verification. The complete inventory remains 395 records and
+the approved subset 391 files. All 79 unrelated Gallery entries, both reference
+identities and the four exact rights-held absences remain unchanged. Current
+registered coverage becomes **27/89**; broader release gates remain separate.
+
+The retained Cinematic Octane portrait is also visually accepted with its
+narrow-collar limitation. Its three stale form values remain separate from the
+matching native consumed controls. Custom resource, original source/model and
+two-adapter evidence review, formal quality, rights and publication remain open;
+visual acceptance does not register it or authorize a replacement run.
+
+All **43 missing-model cases remain user-held**, and the two oversized models
+remain deferred to later cloud work. No cache move/deletion, model acquisition,
+SSD change, native source refresh or broader capability approval is part of
+these registrations. Changes stay in the same two existing PR7s.
