@@ -217,11 +217,25 @@ def test_scoped_math_adapter_refuses_nonfinite_vision_before_later_generation(mo
     assert torch.backends.cuda.fp16_bf16_reduction_math_sdp_allowed() is prior
 
 
-def test_registered_math_policy_runs_a_tiny_official_vision_model_without_downloads():
+@pytest.mark.usefixtures("portable_cpu_bfloat16_math")
+def test_registered_math_policy_runs_a_tiny_official_vision_model_without_downloads(monkeypatch):
     import torch
     from transformers import Qwen3VLVisionConfig
     from transformers.models.qwen3_vl.modeling_qwen3_vl import Qwen3VLVisionModel
 
+    # This is a BF16 attention contract, not optimized CPU kernel qualification.
+    # Observe real forwards so an omitted portable context fails before entering
+    # optimized CPU BF16 kernels, as in the related Flux numerical contracts.
+    linear_forward = torch.nn.Linear.forward
+    bf16_forwards = []
+
+    def portable_forward(module, value):
+        if value.device.type == "cpu" and value.dtype == torch.bfloat16:
+            assert not torch.backends.mkldnn.enabled, "BF16 contract requires portable CPU math"
+            bf16_forwards.append(True)
+        return linear_forward(module, value)
+
+    monkeypatch.setattr(torch.nn.Linear, "forward", portable_forward)
     with torch.random.fork_rng(devices=[]):
         torch.manual_seed(7)
         config = Qwen3VLVisionConfig(
@@ -252,3 +266,4 @@ def test_registered_math_policy_runs_a_tiny_official_vision_model_without_downlo
             assert torch.isfinite(value).all()
             torch.testing.assert_close(value, getattr(expected, field), rtol=0.03, atol=0.03)
         assert torch.backends.cuda.fp16_bf16_reduction_math_sdp_allowed() is prior
+        assert bf16_forwards
