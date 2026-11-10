@@ -2458,7 +2458,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:b21016738820d3e26ab1c2a8c6c2b1de8e5bb0ad93b40dd130c32e894c96a298",
+  "contentHash": "sha256:89cabe85da8bbdd0dbc1fb0435ed5d8d7d86378de6908810b46e569f8a1c5943",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -9300,8 +9300,8 @@
       },
       "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": "approved_exact",
-      "galleryVerificationStatus": "exact",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "qwen_control_image_layout",
       "mode": "control_image",
       "modelType": "QwenImageModularPipeline",
@@ -9694,8 +9694,8 @@
       },
       "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": "approved_exact",
-      "galleryVerificationStatus": "exact",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "qwen_packaging_dieline",
       "mode": "control_image",
       "modelType": "QwenImageModularPipeline",
@@ -10276,7 +10276,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "d359e5b9bcc5bfffa7947b3713af528bb4aaf38a3c4b66d4367b60757d263b3a",
+    "templateBundleSha256": "07942a6e02cd08527f69ff7b27a080ee49ec1048e27869dee54ba7bd9606c135",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
