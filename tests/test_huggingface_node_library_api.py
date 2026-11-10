@@ -30,8 +30,8 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second_response.status, 200)
         self.assertEqual(second["schemaVersion"], 7)
         self.assertEqual(second["providers"], ["diffusers", "transformers"])
-        self.assertEqual(len(second["definitions"]), 142)
-        self.assertEqual(len(second["blockDefinitions"]), 613)
+        self.assertEqual(len(second["definitions"]), 144)
+        self.assertEqual(len(second["blockDefinitions"]), 630)
         stage_blocks = [block for block in second["blockDefinitions"]
                         if block["description"] in {
                             f"Existing MoDiff node modules.DiffusersImage.{action} used by this reviewed standard Diffusers composite."
@@ -39,7 +39,7 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
                         }]
         self.assertEqual({block["className"] for block in stage_blocks}, {"EncodeInputs", "Denoise", "DecodeLatents"})
         self.assertEqual(len(stage_blocks), 3)
-        self.assertEqual(len(second["blockDefinitions"]) - len(stage_blocks), 610)
+        self.assertEqual(len(second["blockDefinitions"]) - len(stage_blocks), 627)
         self.assertEqual(len(second["blockRoleAdapters"]), 322)
         self.assertEqual(len(second["containerStateAdapters"]), 9)
         self.assertNotEqual(second["definitions"][0]["label"], "Changed by caller")

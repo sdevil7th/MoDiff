@@ -8318,6 +8318,351 @@
           "sha256Source": "publisher-lfs"
         }
       ]
+    },
+    {
+      "repo": "MiniMaxAI/MiniMax-H3-Image",
+      "revision": "492fd8c4eca666f1085f57e30738c1e0d86b3439",
+      "source": "https://huggingface.co/api/models/MiniMaxAI/MiniMax-H3-Image/revision/492fd8c4eca666f1085f57e30738c1e0d86b3439?blobs=true",
+      "selection": "official-modular-image-text-and-ordered-reference",
+      "files": [
+        {
+          "path": "modular_model_index.json",
+          "byteSize": 2217,
+          "sha256": "460c2698fb6258f134b21a5c5077b9aff7c72686da2b07d1fdfcd1227b05156f",
+          "gitBlobId": "3ee32b3b1524d61d174e480741825b5a27931027",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "processor/chat_template.json",
+          "byteSize": 5499,
+          "sha256": "5c72a170d2a4a1a3bc5adad2e689ae28138a9700e5b8c96c0266331e86c0acce",
+          "gitBlobId": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "processor/merges.txt",
+          "byteSize": 1671839,
+          "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+          "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "processor/preprocessor_config.json",
+          "byteSize": 390,
+          "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+          "gitBlobId": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "processor/tokenizer.json",
+          "byteSize": 7032403,
+          "sha256": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7",
+          "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "processor/tokenizer_config.json",
+          "byteSize": 11003,
+          "sha256": "a07e942ac874baa13758de8d1fbdb186683cc03416b5589e1b6671c6b3057c68",
+          "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "processor/video_preprocessor_config.json",
+          "byteSize": 385,
+          "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+          "gitBlobId": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "processor/vocab.json",
+          "byteSize": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+          "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "scheduler/scheduler_config.json",
+          "byteSize": 149,
+          "sha256": "ce1792ea34cef021fec782abf9f45125f6bf0438f7c424e567ce28b246ad0a08",
+          "gitBlobId": "b5c5ed759b9363af64a39422c1e71070f483a7ea",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/chat_template.json",
+          "byteSize": 5499,
+          "sha256": "5c72a170d2a4a1a3bc5adad2e689ae28138a9700e5b8c96c0266331e86c0acce",
+          "gitBlobId": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/config.json",
+          "byteSize": 1474,
+          "sha256": "d2dd0c60d01b9e195d9447c52da61c7302d28828524914c044d9c6e1b81d0427",
+          "gitBlobId": "29e925092dee9f14278c53e7e7d876cea8a997bc",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/merges.txt",
+          "byteSize": 1671839,
+          "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+          "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/model-00001-of-00014.safetensors",
+          "byteSize": 4932328944,
+          "sha256": "6b9dfbc930e505402ae9d7e5091a9d7d656cda5f34614f01cfe70bfb0cca27cb",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00002-of-00014.safetensors",
+          "byteSize": 4875990528,
+          "sha256": "d8bb44b4ff303fe76fe9e894022fb3dc71b15a2e716592790fe0e3c3e60478fa",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00003-of-00014.safetensors",
+          "byteSize": 4875990552,
+          "sha256": "54f22e8b3168f8dc962fac0d313607ebf52a12b433d4cf3098a0d82d9f042940",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00004-of-00014.safetensors",
+          "byteSize": 4875990584,
+          "sha256": "ad09c74d3c13ee29b5d0d84548fd8a3424a651564eaccd519946c296e59c557f",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00005-of-00014.safetensors",
+          "byteSize": 4875990584,
+          "sha256": "fc993c8a0e2a5b0570f383e1a95dc3a1281d1b224b6f3ee908f4827941e1dfc2",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00006-of-00014.safetensors",
+          "byteSize": 4875990584,
+          "sha256": "82f05620d1f718a90c362b221d6a184ff1a0f53301d706882d3df49695fa1974",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00007-of-00014.safetensors",
+          "byteSize": 4875990584,
+          "sha256": "fb91da8cb01ff4de3eef0eab1c3e769a734b3a1aafc61734068638a0d6c86934",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00008-of-00014.safetensors",
+          "byteSize": 4875990584,
+          "sha256": "431ca56535c8781944ce3801f5eb61c45531e853ecc5846d936ebaf4761b764f",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00009-of-00014.safetensors",
+          "byteSize": 4875990584,
+          "sha256": "3825e3f4302f4d2f7d76aa7430d2ce0864fde6b9e540a5806bf0d8e38e4d9f47",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00010-of-00014.safetensors",
+          "byteSize": 4875990584,
+          "sha256": "aded5a4d1d5e22dbd8b6f79266b6eb88c840411b09527c53917a1419ace22e2f",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00011-of-00014.safetensors",
+          "byteSize": 4875990584,
+          "sha256": "3820ffe8d8d6477f6fe8d614ef3c87abb264ee39accebf43a1507b970d80946f",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00012-of-00014.safetensors",
+          "byteSize": 4875990584,
+          "sha256": "05ad2d08ce71963121c9b03f1d9ec5d7641052f4b23c6c12b80d71065eb8e98e",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00013-of-00014.safetensors",
+          "byteSize": 4875990584,
+          "sha256": "b64f2289871261fdd1abbd3b78bcd66011b341de3dc8eeb2ed1a473ee7c8d95c",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model-00014-of-00014.safetensors",
+          "byteSize": 3270697008,
+          "sha256": "e45b6c9998c77ee5a6577f9f47bc76416c1d4d387169e50c4c9d3134ea51b13b",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "text_encoder/model.safetensors.index.json",
+          "byteSize": 97831,
+          "sha256": "06c952c569285870b811989b794b9766493e280fb77fbcb957fc4e5fcf25403a",
+          "gitBlobId": "b7f68f12031a25c81d72d46a284fe9e1daa448b8",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/preprocessor_config.json",
+          "byteSize": 390,
+          "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+          "gitBlobId": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer.json",
+          "byteSize": 7032403,
+          "sha256": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7",
+          "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer_config.json",
+          "byteSize": 11003,
+          "sha256": "a07e942ac874baa13758de8d1fbdb186683cc03416b5589e1b6671c6b3057c68",
+          "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/video_preprocessor_config.json",
+          "byteSize": 385,
+          "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+          "gitBlobId": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/vocab.json",
+          "byteSize": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+          "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "tokenizer/merges.txt",
+          "byteSize": 1671839,
+          "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+          "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "tokenizer/tokenizer.json",
+          "byteSize": 7032403,
+          "sha256": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7",
+          "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "tokenizer/tokenizer_config.json",
+          "byteSize": 11003,
+          "sha256": "a07e942ac874baa13758de8d1fbdb186683cc03416b5589e1b6671c6b3057c68",
+          "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "tokenizer/vocab.json",
+          "byteSize": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+          "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "transformer_diffusers/config.json",
+          "byteSize": 546,
+          "sha256": "f8a1f3f87e708d0d4268d7c1abd040a7af9f2b7c435827f14e0a2d6fc260bcf9",
+          "gitBlobId": "159d729b74041a3f040e0d7808a9a5f86ec72996",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00001-of-00012.safetensors",
+          "byteSize": 5436941096,
+          "sha256": "acb9c4df2881b529aeb18ef2c13be62a19bf20792ef067f637ae5bcac17a6766",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00002-of-00012.safetensors",
+          "byteSize": 5841279952,
+          "sha256": "20600886fede3ee00b82b8f7f344528a4e774a8c16271e8ec5b63de9408ba3bc",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00003-of-00012.safetensors",
+          "byteSize": 5472841128,
+          "sha256": "883a6641265a84a047b1489812e1596aa3e8ab58e14473613a806dafe129ff20",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00004-of-00012.safetensors",
+          "byteSize": 5472883512,
+          "sha256": "472b99ea4f2ff9438458c51ca90ba971056a35035bb50eaade8b5ecc502d87a8",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00005-of-00012.safetensors",
+          "byteSize": 5839161384,
+          "sha256": "bb4f48e6bb159cbf38852c95ee062688c0c6de2e72f873d545d6b5430dc5cef8",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00006-of-00012.safetensors",
+          "byteSize": 5472862856,
+          "sha256": "f347869ee1f1f9ba2649f8eae5833cdecae4c683b8ef11ffa4d9315eeae2b1ad",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00007-of-00012.safetensors",
+          "byteSize": 5472861800,
+          "sha256": "b7c12409e0f6a7f308491e780fb116dca104549ae1f9b823de0391d4850fa273",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00008-of-00012.safetensors",
+          "byteSize": 5839161384,
+          "sha256": "00b658c99072db8c72e423a4484646d3f9d8d32d6a6ebf143fd4ea0d281dc0e2",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00009-of-00012.safetensors",
+          "byteSize": 5472862856,
+          "sha256": "4193119f57bd7467c32e834f632efc515535110fc39abc23ee10a98129eabd64",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00010-of-00012.safetensors",
+          "byteSize": 5472861800,
+          "sha256": "6935231d3ed470c99409912b6ef1c8986eb69ed8a1b61c0da7e198649841bd00",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00011-of-00012.safetensors",
+          "byteSize": 5839161384,
+          "sha256": "5f9927066a8adadfb6f50d73e0c3c96080d1be5f8fdba052ed29351c9d88cbde",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model-00012-of-00012.safetensors",
+          "byteSize": 4656551424,
+          "sha256": "aa9e750dadffb82781d2b239869f85950b42c9d1322b402025541686f1c2a729",
+          "sha256Source": "huggingface-lfs"
+        },
+        {
+          "path": "transformer_diffusers/diffusion_pytorch_model.safetensors.index.json",
+          "byteSize": 64994,
+          "sha256": "9617854370f06cbc5d35f01c9ec540c32479464c17de0756c2aac537926d94f9",
+          "gitBlobId": "012db93d134a48cc326eacb33557f9ff2a55380e",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae_diffusers/config.json",
+          "byteSize": 1975,
+          "sha256": "6d809326cc9a46763e810777d71d2fdddbd5df820d5644e8fe778ea97d9913a4",
+          "gitBlobId": "71b0fc5fd1e6c03fccc3c686f8fbb68ac7eb7739",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae_diffusers/diffusion_pytorch_model.safetensors",
+          "byteSize": 2336973400,
+          "sha256": "5bb2809698c3989033f719ece2243f277fefedef1dd9a1d05f3d4136b2f93b35",
+          "sha256Source": "huggingface-lfs"
+        }
+      ]
     }
   ],
   "schemaVersion": 1,
@@ -9025,6 +9370,15 @@
       "baseRepo": "depth-anything/Depth-Anything-V2-Metric-Outdoor-Small-hf",
       "baseRevision": "fd2c22027eaf20374204f14099b8341e1925ad39",
       "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "MiniMaxH3ImageModularPipeline",
+      "baseRepo": "MiniMaxAI/MiniMax-H3-Image",
+      "baseRevision": "492fd8c4eca666f1085f57e30738c1e0d86b3439",
+      "baseLicense": "minimax-h3-image-community-license-agreement",
+      "snapshotByteSize": 204016542937,
+      "weightByteSize": 203969758064,
       "artifacts": []
     }
   ]

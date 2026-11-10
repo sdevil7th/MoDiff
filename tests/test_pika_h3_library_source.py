@@ -22,11 +22,11 @@ def test_mixed_library_keeps_v6_members_and_exact_existing_hashes(library):
     for identity, digest in baseline['definitions'].items():
         assert definitions[identity]['schemaVersion'] == 6
         assert definitions[identity]['contentHash'] == digest, identity
-    new = [row for row in definitions.values() if row['id'] not in baseline['definitions']]
+    new = [row for row in definitions.values() if row['pipelineClass'] == PIKA_PIPELINE]
     assert len(new) == 3
     assert {row['workflowId'] for row in new} == {'t2va', 'fl2va', 'ref2va'}
     assert all(row['pipelineClass'] == PIKA_PIPELINE and row['libraryRevision'] == PIKA_SOURCE_REVISION for row in new)
-    assert len(library['sourceSupplements']) == 1
+    assert len(library['sourceSupplements']) == 2
     assert set(library['sourceSupplements'][0]['definitionIds']) == {row['id'] for row in new}
     assert validate_huggingface_node_library(library) == library
 

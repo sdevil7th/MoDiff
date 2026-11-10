@@ -4145,6 +4145,7 @@ class ModelsLoader(NodeBase):
                 repo_id=real_repo_id,
                 repo_source=_source,
                 revision=revision,
+                model_index=reviewed_index_document,
             )
 
             # Make every connected output self-describing. Runtime cleanup may

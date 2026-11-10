@@ -30,6 +30,108 @@ _SOURCE_FILES = {
 }
 
 
+H3_IMAGE_PIPELINE = "MiniMaxH3ImageModularPipeline"
+H3_IMAGE_SOURCE_REVISION = "875373ac7f5856071e345a3e394c74efccc6b9e6"
+H3_IMAGE_SOURCE_PATH = Path(__file__).resolve().parents[1] / "data/minimax-h3-image-modular-source.v1.json"
+
+
+@lru_cache(maxsize=1)
+def _h3_image_source():
+    # This fixed digest binds the source-only inputs to the independently reproduced wheel.
+    with H3_IMAGE_SOURCE_PATH.open("rb") as stream:
+        raw = stream.read(2 * 1024**2 + 1)
+    if len(raw) > 2 * 1024**2:
+        raise ModularWorkflowContractError("The H3 Image source supplement exceeds its bound.")
+    document = json.loads(raw)
+    if _contract_hash(document) != "sha256:883ee2bdad95d6b4d78a3484967e00cf5b0ff2cc7c5b99568c2d31b8f372120a":
+        raise ModularWorkflowContractError("The H3 Image source supplement differs from its reviewed snapshot.")
+    from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES, DIFFUSERS_H3_IMAGE_RUNTIME_PROFILE_ID
+    from modiff.modular_block_contracts import validate_modular_block_snapshot
+    from modiff.modular_conditional_contracts import validate_modular_conditional_snapshot
+
+    build, = OPTIONAL_RUNTIME_PROFILES[DIFFUSERS_H3_IMAGE_RUNTIME_PROFILE_ID].source_builds
+    if (document["runtimeProfileId"] != DIFFUSERS_H3_IMAGE_RUNTIME_PROFILE_ID
+            or document["sourceRevision"] != build["sourceArtifact"]["commit"]
+            or document["sourceWheelSHA256"] != build["outputWheel"]["sha256"]):
+        raise ModularWorkflowContractError("The H3 Image source and runtime provider identities differ.")
+    workflow = validate_modular_workflow_contract(document["contract"])
+    source = {"source_revision": H3_IMAGE_SOURCE_REVISION, "workflow_snapshot": {"contracts": [workflow]}}
+    blocks = validate_modular_block_snapshot(document["blocks"], **source)
+    validate_modular_conditional_snapshot(document["conditionals"], block_snapshot=blocks, **source)
+    return document
+
+
+def _validate_h3_companion(document, expected):
+    try:
+        raw = json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    except (TypeError, ValueError, RecursionError) as exc:
+        raise ModularWorkflowContractError("The H3 Image companion must be finite JSON.") from exc
+    if len(raw) > 2 * 1024**2 or "sha256:" + hashlib.sha256(raw).hexdigest() != _contract_hash(expected):
+        raise ModularWorkflowContractError("The H3 Image companion differs from the reviewed source.")
+    return expected
+
+
+def reproduce_installed_h3_image_contracts():
+    """Explicit no-weight reproduction using the already activated package."""
+    import sys
+    from modiff.runtime_overlays import active_diffusers_provider
+    from modiff.optional_runtimes import DIFFUSERS_H3_IMAGE_RUNTIME_PROFILE_ID
+
+    provider = active_diffusers_provider()
+    if (not sys.dont_write_bytecode or not provider
+            or provider.get("profileId") != DIFFUSERS_H3_IMAGE_RUNTIME_PROFILE_ID):
+        raise RuntimeError("H3 Image reproduction requires -B and its active reviewed source provider.")
+    from diffusers import MiniMaxH3ImageBlocks
+    from modiff.modular_workflow_discovery import build_modular_workflow_contract
+    from modiff.modular_block_contracts import build_modular_block_contracts
+    from modiff.modular_conditional_contracts import build_modular_conditional_contract
+
+    pipe = MiniMaxH3ImageBlocks().init_pipeline()
+    contract = build_modular_workflow_contract(pipe, aliases={"text2image": "text_to_image", "image_conditioned": "edit_image"})
+    header = {"schemaVersion": 1, "diffusersRevision": H3_IMAGE_SOURCE_REVISION}
+    blocks = {**header, **build_modular_block_contracts(pipe)}
+    tree = build_modular_conditional_contract(pipe)
+    conditionals = {**header, "blockDefinitions": tree["blockDefinitions"], "pipelines": [tree["pipeline"]]}
+    expected = _h3_image_source()
+    if any(observed != expected[name] for name, observed in (
+        ("contract", contract), ("blocks", blocks), ("conditionals", conditionals),
+    )):
+        raise ModularWorkflowContractError("The active H3 Image blocks differ from their reviewed contracts.")
+    return {"contract": contract, "blocks": blocks, "conditionals": conditionals}
+
+
+def _h3_image_source_identity(document):
+    return {
+        "repository": "https://github.com/huggingface/diffusers.git",
+        "revision": document["sourceRevision"], "sourceTree": document["sourceTree"],
+        "license": "Apache-2.0", "wheelSha256": document["sourceWheelSHA256"],
+    }
+
+
+def _h3_image_block_document():
+    document = _h3_image_source()
+    body = {
+        "schemaVersion": 1, "kind": "official-source-block-supplement",
+        "source": _h3_image_source_identity(document), "runtimeProfileId": document["runtimeProfileId"],
+        "workflowContractHash": _contract_hash(document["contract"]),
+        "blocks": deepcopy(document["blocks"]), "scope": "Source-generated block structures for discovery.",
+    }
+    return {**body, "contentHash": _contract_hash(body)}
+
+
+def _h3_image_library_source():
+    document = _h3_image_source()
+    companion = _h3_image_block_document()
+    return {
+        "libraryRevision": H3_IMAGE_SOURCE_REVISION,
+        "runtimeProfileId": document["runtimeProfileId"],
+        "workflowContractHash": companion["workflowContractHash"],
+        "blockContractHash": companion["contentHash"],
+        "contracts": [deepcopy(document["contract"])],
+        "blocks": companion["blocks"],
+    }
+
+
 def validate_supplemental_modular_contract(document):
     """Admit only the declared data shape; this grants no execution authority."""
     if (type(document) is not dict
@@ -66,6 +168,8 @@ def _pika_contract():
 
 
 def reviewed_supplemental_modular_contract(pipeline_class):
+    if pipeline_class == H3_IMAGE_PIPELINE:
+        return deepcopy(_h3_image_source()["contract"])
     if pipeline_class != PIKA_PIPELINE:
         return None
     return deepcopy(_pika_contract())
@@ -107,6 +211,9 @@ def _reviewed_pika_source_document():
 
 def validate_supplemental_modular_blocks(document):
     """Validate the separate source companion without relabelling old blocks."""
+    if isinstance(document, dict) and document.get("runtimeProfileId") == "huggingface-diffusers-h3-image-875373a":
+        expected = _h3_image_block_document()
+        return _validate_h3_companion(document, expected)
     keys = {'schemaVersion', 'kind', 'source', 'runtimeProfileId', 'workflowContractHash',
             'blocks', 'scope', 'contentHash'}
     if (type(document) is not dict or set(document) != keys
@@ -158,6 +265,8 @@ def _pika_blocks():
 
 
 def reviewed_supplemental_modular_blocks(pipeline_class):
+    if pipeline_class == H3_IMAGE_PIPELINE:
+        return _h3_image_block_document()
     if pipeline_class != PIKA_PIPELINE:
         return None
     return deepcopy(_pika_blocks())
@@ -181,16 +290,19 @@ def reviewed_modular_source_supplements():
         'workflowContractHash': document['workflowContractHash'],
         'blockContractHash': document['contentHash'],
         'contracts': [reviewed_supplemental_modular_contract(PIKA_PIPELINE)],
-        'blocks': document['blocks']}]
+        'blocks': document['blocks']}, _h3_image_library_source()]
 
 
 def reviewed_modular_source_providers():
     """Lightweight declared providers, independent of installed model classes."""
-    return {PIKA_PIPELINE: PIKA_RUNTIME_PROFILE}
+    return {PIKA_PIPELINE: PIKA_RUNTIME_PROFILE, H3_IMAGE_PIPELINE: _h3_image_source()["runtimeProfileId"]}
 
 
 def validate_supplemental_modular_conditionals(document):
     """Validate the original tree against its own exact resolved companions."""
+    if isinstance(document, dict) and document.get("runtimeProfileId") == "huggingface-diffusers-h3-image-875373a":
+        expected = reviewed_supplemental_modular_conditionals(H3_IMAGE_PIPELINE)
+        return _validate_h3_companion(document, expected)
     keys = {'schemaVersion', 'kind', 'source', 'runtimeProfileId', 'workflowContractHash',
         'blockContractHash', 'snapshot', 'scope', 'contentHash'}
     if (type(document) is not dict or set(document) != keys
@@ -239,6 +351,15 @@ def _pika_conditionals():
 
 
 def reviewed_supplemental_modular_conditionals(pipeline_class):
+    if pipeline_class == H3_IMAGE_PIPELINE:
+        document = _h3_image_source()
+        body = {
+            "schemaVersion": 1, "kind": "official-source-conditional-supplement",
+            "source": _h3_image_source_identity(document), "runtimeProfileId": document["runtimeProfileId"],
+            "workflowContractHash": _contract_hash(document["contract"]), "blockContractHash": _h3_image_block_document()["contentHash"],
+            "snapshot": deepcopy(document["conditionals"]), "scope": "Source-generated unpruned hierarchy for discovery.",
+        }
+        return {**body, "contentHash": _contract_hash(body)}
     return deepcopy(_pika_conditionals()) if pipeline_class == PIKA_PIPELINE else None
 
 

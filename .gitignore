@@ -49,6 +49,9 @@ data/*
 !data/diffusers-evaluation-runtime.v1.json
 !data/diffusers-flux3-source-build.v1.json
 !data/diffusers-video-source-build.v1.json
+!data/diffusers-h3-image-source-build.v1.json
+!data/minimax-h3-image-modular-source.v1.json
+!data/minimax-h3-image-catalog-gate-review.v1.json
 !data/pika-h3-flex-workflow-contract.v1.json
 !data/pika-h3-flex-block-contract.v1.json
 !data/pika-h3-flex-conditional-contract.v1.json

@@ -175,7 +175,7 @@ class ModularOperationDiscoveryTests(unittest.TestCase):
         declared = declared_optional_pipeline_configs()
         self.assertEqual(set(declared), {
             "Flux3ModularPipeline", "Flux3DistilledModularPipeline",
-            "MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline",
+            "MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline", "MiniMaxH3ImageModularPipeline",
         })
         by_class.update(declared)
         for contract in contracts:

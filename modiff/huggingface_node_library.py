@@ -261,6 +261,12 @@ def _integration_status(pipeline_class: str, workflow_id: str) -> str:
         return "equivalent_standard_route"
     if reviewed_whole_workflow_graph_adapter(pipeline_class, workflow_id) is not None:
         return "reviewed_modular_workflow_route"
+    from modiff.supplemental_modular_contracts import H3_IMAGE_PIPELINE, reviewed_supplemental_modular_contract
+
+    if pipeline_class == H3_IMAGE_PIPELINE:
+        workflow = reviewed_supplemental_modular_contract(pipeline_class)
+        if any(item["id"] == workflow_id for item in workflow["workflows"]):
+            return "contract_only"
     if pipeline_class in CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME:
         return "contract_only"
     if pipeline_class in PINNED_MODULAR_WORKFLOW_TRUTH:
@@ -590,8 +596,16 @@ def validate_huggingface_node_library(value: Any) -> dict[str, Any]:
     from modiff.supplemental_modular_contracts import reviewed_modular_source_supplements
     supplements = reviewed_modular_source_supplements() if schema_version == 7 else []
     expected_sources = [_library_source_declaration(source) for source in supplements]
-    if schema_version == 7 and _content_hash({'sources': normalized['sourceSupplements']}) != _content_hash({'sources': expected_sources}):
-        raise HuggingFaceNodeLibraryError('Hugging Face supplemental sources are not the exact reviewed declarations.')
+    if schema_version == 7:
+        observed = _content_hash({"sources": normalized["sourceSupplements"]})
+        if observed != _content_hash({"sources": expected_sources}):
+            # Older v7 collections contain the complete Pika source only. The remainder
+            # of this validator still verifies every member against that exact source set.
+            from modiff.supplemental_modular_contracts import PIKA_SOURCE_REVISION
+            supplements = [source for source in supplements if source["libraryRevision"] == PIKA_SOURCE_REVISION]
+            expected_sources = [_library_source_declaration(source) for source in supplements]
+            if observed != _content_hash({"sources": expected_sources}):
+                raise HuggingFaceNodeLibraryError("Hugging Face supplemental sources are not the exact reviewed declarations.")
     supplemental_by_id = {identity: source for source, declaration in zip(supplements, expected_sources)
                           for identity in declaration['definitionIds']}
 

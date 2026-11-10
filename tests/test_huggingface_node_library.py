@@ -54,8 +54,8 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
 
     def test_current_snapshot_builds_immutable_first_party_definitions(self):
         self.assertEqual(self.library["schemaVersion"], 7)
-        self.assertEqual(len(self.library["definitions"]), 142)
-        self.assertEqual(len(self.library["blockDefinitions"]), 613)
+        self.assertEqual(len(self.library["definitions"]), 144)
+        self.assertEqual(len(self.library["blockDefinitions"]), 630)
         stage_blocks = [block for block in self.library["blockDefinitions"]
                         if block["description"] in {
                             f"Existing MoDiff node modules.DiffusersImage.{action} used by this reviewed standard Diffusers composite."
@@ -63,11 +63,11 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
                         }]
         self.assertEqual({block["className"] for block in stage_blocks}, {"EncodeInputs", "Denoise", "DecodeLatents"})
         self.assertEqual(len(stage_blocks), 3)
-        self.assertEqual(len(self.library["blockDefinitions"]) - len(stage_blocks), 610)
+        self.assertEqual(len(self.library["blockDefinitions"]) - len(stage_blocks), 627)
         self.assertEqual(self.library["providers"], ["diffusers", "transformers"])
         diffusers_definitions = [item for item in self.library["definitions"] if item["provider"] == "diffusers"]
         transformers_definitions = [item for item in self.library["definitions"] if item["provider"] == "transformers"]
-        self.assertEqual(len(diffusers_definitions), 134)
+        self.assertEqual(len(diffusers_definitions), 136)
         self.assertEqual(len(transformers_definitions), 8)
         for definition in diffusers_definitions:
             self.assertEqual(definition["schemaVersion"], 6)

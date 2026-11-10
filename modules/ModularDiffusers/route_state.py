@@ -234,17 +234,19 @@ class _PipelineInstanceToken:
         "_repo_id",
         "_repo_source",
         "_revision",
+        "_workflow_config",
         "_sealed",
         "__weakref__",
     )
 
-    def __init__(self, seal, *, model_type, repo_id, repo_source, revision):
+    def __init__(self, seal, *, model_type, repo_id, repo_source, revision, workflow_config):
         if seal is not _ISSUER_SEAL:
             raise TypeError("Pipeline instance tokens are issued only by ModelsLoader.")
         object.__setattr__(self, "_model_type", model_type)
         object.__setattr__(self, "_repo_id", repo_id)
         object.__setattr__(self, "_repo_source", repo_source)
         object.__setattr__(self, "_revision", revision)
+        object.__setattr__(self, "_workflow_config", workflow_config)
         object.__setattr__(self, "_sealed", True)
 
     def __setattr__(self, _name, _value):
@@ -1097,7 +1099,24 @@ def _component_id_inventory(component):
     return tuple(sorted(values))
 
 
-def issue_pipeline_instance_token(*, model_type, repo_id, repo_source, revision):
+def _reviewed_workflow_config(model_type, model_index):
+    """Carry only checkpoint-owned reference geometry into rebuilt H3 image stages."""
+    if model_type != "MiniMaxH3ImageModularPipeline" or model_index is None:
+        return ()
+    if not isinstance(model_index, Mapping):
+        raise ValueError("The reviewed H3 Image model index must be a mapping.")
+    values = []
+    for prefix, default_max in (("reference", 2048), ("vision", 1024)):
+        low, high = (prefix + suffix for suffix in ("_min_short_edge", "_max_short_edge"))
+        minimum = model_index.get(low, 1024)
+        maximum = model_index.get(high, default_max)
+        if type(minimum) is not int or type(maximum) is not int or not 32 <= minimum <= maximum <= 2048:
+            raise ValueError("H3 Image reference geometry falls outside its reviewed range.")
+        values.extend((name, model_index[name]) for name in (low, high) if name in model_index)
+    return tuple(values)
+
+
+def issue_pipeline_instance_token(*, model_type, repo_id, repo_source, revision, model_index=None):
     """Mint the identity token for one successful ModelsLoader execution."""
 
     if not isinstance(model_type, str) or not model_type:
@@ -1114,6 +1133,7 @@ def issue_pipeline_instance_token(*, model_type, repo_id, repo_source, revision)
         repo_id=repo_id,
         repo_source=repo_source,
         revision=revision,
+        workflow_config=_reviewed_workflow_config(model_type, model_index),
     )
     with _REGISTRY_LOCK:
         _ISSUED_BINDINGS.add(token)

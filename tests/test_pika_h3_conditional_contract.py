@@ -26,7 +26,7 @@ def test_pika_original_tree_and_resolved_companions_are_source_bound_and_detache
     assert collection['schemaVersion'] == 2
     assert {key: value for key, value in {**collection, 'schemaVersion': 1}.items()
         if key != 'sourceSupplements'} == historical
-    assert collection['sourceSupplements'] == [snapshot]
+    assert [s for s in collection['sourceSupplements'] if s['diffusersRevision'] == snapshot['diffusersRevision']] == [snapshot]
     collection['sourceSupplements'].clear()
     document['snapshot']['blockDefinitions'].clear()
     assert len(reviewed_modular_conditional_collection()['sourceSupplements'][0]['blockDefinitions']) == 32

@@ -36,8 +36,8 @@ class HuggingFaceCatalogOnlyGateTests(unittest.TestCase):
 
         self.assertEqual(audit["schemaVersion"], 1)
         self.assertEqual(audit["kind"], "huggingface_cluster_catalog_only_audit")
-        self.assertEqual(audit["familyCount"], 7)
-        self.assertEqual(audit["definitionCount"], 21)
+        self.assertEqual(audit["familyCount"], 8)
+        self.assertEqual(audit["definitionCount"], 23)
         self.assertEqual(audit["routeEligibleCount"], 0)
         self.assertTrue(audit["contentHash"].startswith("sha256:"))
         self.assertTrue(
@@ -70,6 +70,7 @@ class HuggingFaceCatalogOnlyGateTests(unittest.TestCase):
                 "krea-2": 2,
                 "ltx-2.5": 4,
                 "pika-h3-flex": 3,
+                "minimax-h3-image": 2,
                 "stable-diffusion-3": 2,
             },
         )

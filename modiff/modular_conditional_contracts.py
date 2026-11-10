@@ -581,10 +581,17 @@ def reviewed_modular_conditional_snapshot() -> dict[str, Any]:
 
 def reviewed_modular_conditional_collection() -> dict[str, Any]:
     """Mixed-source API envelope; each source snapshot keeps its own identity."""
-    from modiff.supplemental_modular_contracts import reviewed_supplemental_modular_conditionals, PIKA_PIPELINE
-    base = reviewed_modular_conditional_snapshot()
-    return {**base, 'schemaVersion': 2,
-        'sourceSupplements': [reviewed_supplemental_modular_conditionals(PIKA_PIPELINE)['snapshot']]}
+    from modiff.supplemental_modular_contracts import (
+        reviewed_modular_source_providers, reviewed_supplemental_modular_conditionals,
+    )
+    return {
+        **reviewed_modular_conditional_snapshot(),
+        "schemaVersion": 2,
+        "sourceSupplements": [
+            reviewed_supplemental_modular_conditionals(pipeline)["snapshot"]
+            for pipeline in reviewed_modular_source_providers()
+        ],
+    }
 
 
 def select_conditional_branch(conditional: Mapping[str, Any], present_inputs: Sequence[str]) -> str | None:

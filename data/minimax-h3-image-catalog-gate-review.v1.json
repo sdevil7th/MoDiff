@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "kind": "minimax-h3-image-catalog-only-gate-review",
+  "pipelineClasses": [
+    "MiniMaxH3ImageModularPipeline"
+  ],
+  "sourceRevision": "875373ac7f5856071e345a3e394c74efccc6b9e6",
+  "sourceContract": "data/minimax-h3-image-modular-source.v1.json",
+  "runtimeBuild": "data/diffusers-h3-image-source-build.v1.json",
+  "artifact": {
+    "repository": "MiniMaxAI/MiniMax-H3-Image",
+    "revision": "492fd8c4eca666f1085f57e30738c1e0d86b3439",
+    "license": "minimax-h3-image-community-license-agreement"
+  },
+  "workflows": [
+    "text2image",
+    "image_conditioned"
+  ],
+  "scope": "The generic library exposes reviewed structural definitions. A normal Studio model switch and full-weight execution require a separately admitted artifact, provider and execution recipe.",
+  "admission": {
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "unresolvedGates": [
+      "exact_cluster_execution_admission",
+      "explicit_reviewed_optional_runtime_activation",
+      "full_weight_resource_lifecycle_and_output_qualification",
+      "template_media_and_publication_approval"
+    ]
+  }
+}

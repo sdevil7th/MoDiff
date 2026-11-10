@@ -627,6 +627,12 @@ def _new_runtime(*, bundle, pipeline_class, workflow_id, execution_scope, compos
         if execution_scope == "selected_workflow" and workflow_id != "default":
             blocks = blocks.get_workflow(workflow_id)
     pipeline = blocks.init_pipeline(components_manager=components)
+    workflow_config = getattr(token, "_workflow_config", ())
+    if workflow_config:
+        # The Models Loader validated this checkpoint before issuing its private token.
+        # Pruning a text-only branch can remove all reference processing configs.
+        declared = {spec.name for spec in blocks.expected_configs}
+        pipeline.update_components(**{k: v for k, v in workflow_config if k in declared})
     pipeline._modiff_composition_hash = composition_hash
     expected = tuple(pipeline.pretrained_component_names)
     # An edited graph explicitly invokes its reviewed steps. Do not re-run the

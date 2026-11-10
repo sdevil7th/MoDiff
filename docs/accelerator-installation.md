@@ -21,6 +21,13 @@ revision; that checkout is not required to install or run the application.
 
 ### Explicit Diffusers source evaluation
 
+The candidate `huggingface-diffusers-h3-image-875373a` provider binds
+MiniMax H3 Image to official Diffusers commit
+`875373ac7f5856071e345a3e394c74efccc6b9e6`. Its source-build contract
+pins the upstream archive and the byte-exact wheel. Installation and activation
+require target-specific qualification. The full checkpoint has separate
+[MiniMax model terms](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image/blob/492fd8c4eca666f1085f57e30738c1e0d86b3439/LICENSE).
+
 The separately declared `huggingface-diffusers-video-d0b9b1b` optional provider
 has passed isolated package/API, tiny CPU compatibility and rollback checks on
 Linux x86-64. Installation and activation are enabled only on that target;

@@ -1396,6 +1396,14 @@ MINIMAX_MUSIC3_PIPELINE_CONFIG = PipelineConfig(
     default_dtype="bfloat16",
 )
 
+MINIMAX_H3_IMAGE_PIPELINE_CONFIG = PipelineConfig(
+    node_specs={},
+    label="MiniMax H3 Image",
+    default_repo="MiniMaxAI/MiniMax-H3-Image",
+    default_dtype="bfloat16",
+)
+
+
 MINIMAX_H3_PIPELINE_CONFIG = PipelineConfig(
     # MiniMax H3 is exposed only through its exact package-owned
     # before-encode/text/VAE/denoise/decode actions. The Models Loader also
@@ -2244,6 +2252,7 @@ def declared_optional_pipeline_configs():
     configured = {'Flux3ModularPipeline': FLUX_3_PIPELINE_CONFIG,
                   'Flux3DistilledModularPipeline': FLUX_3_DISTILLED_PIPELINE_CONFIG,
                   'MiniMaxH3ModularPipeline': MINIMAX_H3_PIPELINE_CONFIG,
+                  'MiniMaxH3ImageModularPipeline': MINIMAX_H3_IMAGE_PIPELINE_CONFIG,
                   'PikaH3FlexModularPipeline': PIKA_H3_FLEX_PIPELINE_CONFIG}
     result = {}
     for profile in DIFFUSERS_EXECUTION_PROFILES.values():
@@ -2312,7 +2321,7 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
         if len(providers) != 1 or None in providers:
             raise ValueError('The optional model has no exact declared provider.')
         return {**_pipeline_config_metadata(model_type, declared),
-                'execution_status': 'expert_only', 'required_diffusers_provider': providers.pop()}
+                'execution_status': 'expert_only' if profiles else 'contract_only', 'required_diffusers_provider': providers.pop()}
     specification = CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME.get(model_type)
     if specification is not None:
         return {
