@@ -1882,8 +1882,17 @@ OPTIONAL_RUNTIME_PROFILES = MappingProxyType({
 _DIFFUSERS_VIDEO_PROFILE = project_optional_runtime_qualification(
     _DIFFUSERS_VIDEO_PROFILE, platform_name='linux', machine='x86_64',
 )
+# Both x86_64 package targets passed isolated installation, activation and rollback
+# on clean source 84514dfe52ebe91f0be6ce5a709ff0ff5a83a855. Model execution is
+# separately admitted by the graph and its exact artifact binding.
+for _platform in ("linux", "windows"):
+    _DIFFUSERS_H3_IMAGE_PROFILE = project_optional_runtime_qualification(
+        _DIFFUSERS_H3_IMAGE_PROFILE, platform_name=_platform, machine="x86_64",
+    )
 OPTIONAL_RUNTIME_PROFILES = MappingProxyType({
-    **OPTIONAL_RUNTIME_PROFILES, _DIFFUSERS_VIDEO_PROFILE.id: _DIFFUSERS_VIDEO_PROFILE,
+    **OPTIONAL_RUNTIME_PROFILES,
+    _DIFFUSERS_VIDEO_PROFILE.id: _DIFFUSERS_VIDEO_PROFILE,
+    _DIFFUSERS_H3_IMAGE_PROFILE.id: _DIFFUSERS_H3_IMAGE_PROFILE,
 })
 
 

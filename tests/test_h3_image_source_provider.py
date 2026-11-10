@@ -23,10 +23,13 @@ def test_minimax_image_source_build_and_target_contract():
     )
     video = OPTIONAL_RUNTIME_PROFILES[DIFFUSERS_VIDEO_RUNTIME_PROFILE_ID]
     assert video.spec_digest != profile.spec_digest
-    for platform, machine in (("linux", "x86_64"), ("windows", "x86_64"), ("macos", "arm64")):
+    for platform, machine in (("linux", "x86_64"), ("windows", "x86_64"), ("macos", "arm64"), ("linux", "aarch64")):
         target = profile.contract_for_target(platform_name=platform, machine=machine)
-        assert target.contract_state == "candidate_unqualified"
-        assert not target.install_action_available and not target.activation_available
+        qualified = (platform, machine) in {("linux", "x86_64"), ("windows", "x86_64")}
+        assert target.contract_state == ("qualified" if qualified else "candidate_unqualified")
+        assert target.cutover_ready is qualified
+        assert target.install_action_available is qualified
+        assert target.activation_available is qualified
 
 
 
