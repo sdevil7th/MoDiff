@@ -94,6 +94,16 @@ Inactive ACE controls on another audio family are not execution evidence. The
 client preserves these scoped fields on history restore; older receipts remain
 unchanged and missing controls are not reconstructed from saved form values.
 
+ACE dispatch records also retain the actual task type and repaint interval, and
+identify the consumed `src_audio` or `reference_audio` tensor after resampling,
+stereo normalization and continuation padding. The node-local fields include
+SHA-256 of contiguous raw bytes, shape, dtype, original device, byte count and
+the pipeline-native sample rate. They do not change the legacy history summary.
+Only plain dense CPU/CUDA tensors up to 32 MiB are copied for this evidence;
+larger or unsupported inputs have an explicit capture status and no hash. Tensor
+contents never enter history. A tensor identity establishes dispatch, not audio
+quality or a claim that the generated edit preserved material outside its bounds.
+
 Offload can reduce accelerator residency while increasing host-memory demand.
 Supported options do not establish that a particular model, duration and recipe
 fits a Windows machine. Quantized image support does not automatically authorize

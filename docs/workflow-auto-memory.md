@@ -447,6 +447,12 @@ structured resource-failure categories;
 request fields cannot force a candidate or supply warm-owner authority. A search
 that cannot admit the whole graph returns the original refusal and no patches.
 Unknown headers keep the previous unknown-demand policy and preference.
+When one primary image owner borrows reviewed auxiliary components and its
+only refusal is an incompatible global CPU-offload policy, Auto can inspect the
+same declared placement alternatives. Every alternative must pass complete
+graph admission, including the unchanged ownership and memory checks. Auxiliary
+placement and budgets remain unchanged. Other validation failures, independent
+primary owners and unsupported placements do not gain this search permission.
 Progressive search compares actual whole-graph RAM and VRAM peaks first, then
 private sums of cold CPU and GPU owner demand. The sums allow several sequential
 owners to improve across an unchanged peak; they do not replace peak admission

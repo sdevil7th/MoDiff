@@ -12,6 +12,29 @@ def node(params=None):
     return {"module": "modules.Diffusers", "action": "Encode", "params": params or {}}
 
 
+def test_audio_dispatch_identity_is_scoped_and_preserves_legacy_summary():
+    audio = {"module": "modules.DiffusersAudio", "action": "Generate", "params": {}}
+    values = {"seed": 4, "task_type": "repaint", "repainting_start": 0, "repainting_end": 10,
+              "src_audio_sha256": "a" * 64, "src_audio_shape": [2, 48000],
+              "src_audio_capture": "contiguous-bytes-v1", "src_audio": object()}
+    record = capture_generation_inputs("audio", audio, values)
+    assert record["fields"]["task_type"]["value"] == "repaint"
+    assert record["fields"]["src_audio_sha256"]["value"] == "a" * 64
+    assert "src_audio" not in record["fields"]
+    receipt = build_resolved_execution_inputs({"nodes": {"audio": audio}}, {"audio": record},
+                                             task_id="run", attempt_index=0, node_id="audio")
+    assert receipt["summary"] == {"seed": 4}
+    assert receipt["nodes"] == [record]
+    other = capture_generation_inputs("other", node(), values)
+    assert other["fields"] == {"seed": {"source": "literal", "value": 4}}
+    omitted = capture_generation_inputs("audio", audio, {"seed": 4, "src_audio_shape": object()})
+    receipt = build_resolved_execution_inputs({"nodes": {"audio": audio}}, {"audio": omitted},
+                                             task_id="run", attempt_index=0, node_id="audio")
+    assert receipt["summary"] == {"seed": 4}
+    assert receipt["unavailableFields"] == []
+    assert receipt["nodes"][0]["omittedFields"] == {"src_audio_shape": "unsupported-value"}
+
+
 @pytest.mark.parametrize('module,action', [
     ('ModularDiffusers', 'Lora'), ('DiffusersImage', 'LoadAdapter'), ('DiffusersAudio', 'LoadAdapter'),
 ])

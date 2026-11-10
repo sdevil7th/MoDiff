@@ -1545,6 +1545,16 @@ def _build_workflow_auto_plan(
         # message substring, user flag or client-selected candidate grants it.
         _placement_state['resourceIssueKeys'] = tuple(memory_issues)
         _placement_state['resourceOnly'] = bool(memory_issues) and len(issues) == len(memory_issues)
+        # One primary image owner can borrow a reviewed resident component.
+        # Its preferred global CPU hooks may conflict even though an existing
+        # declared group placement is compatible. Explore complete alternatives;
+        # never waive the ownership refusal or alter the auxiliary's placement.
+        _placement_state['sharedComponentPolicyOnly'] = (
+            bool(mixed_pairs) and not mixed_release_required and not memory_issues
+            and len(issues) == 1 and len(primary_ids) == 1
+            and all(owner.get('sharedWithModelOwnerId') in primary_ids
+                    for owner in planned if owner['nodeId'] not in primary_ids)
+        )
         _placement_state['coldCpuBytes'] = sum(owner['requirements']['systemRamBytes'] for owner in planned)
         _placement_state['coldGpuBytes'] = sum(owner['requirements']['vramBytes'] for owner in planned)
         _placement_state['mayExplore'] = not custom_nodes and not preparation_nodes
@@ -1574,8 +1584,9 @@ _PLACEMENT_EVALUATION_LIMIT = 64
 def build_workflow_auto_plan(graph, **kwargs):
     """Choose declared image placements using the same complete graph admission.
 
-    Preserve an already admitted default/warm plan. Under known cold pressure,
-    explore at most 64 complete plans, sharing immutable recipe/header reads.
+    Preserve an already admitted default/warm plan. Under known cold pressure
+    or a sole shared-component policy conflict, explore at most 64 complete
+    plans, sharing immutable recipe/header reads.
     A refused search returns the original refusal with no graph mutations.
     """
     preferred_diagnostic = kwargs.pop('_preferred_diagnostic', None)
@@ -1616,7 +1627,8 @@ def build_workflow_auto_plan(graph, **kwargs):
             'completeWarmGpuOwnerIds', 'mayExplore',
         )})
     if ((original['canAutoRun'] and not original.get('requiresCachePreparation'))
-            or not (state.get('resourceOnly') or state.get('rawResourceOnly')) or not state.get('mayExplore')):
+            or not (state.get('resourceOnly') or state.get('rawResourceOnly')
+                    or state.get('sharedComponentPolicyOnly')) or not state.get('mayExplore')):
         return original
     choices, current, evaluations = {}, original, 1
     inspected = {(): (original, state)}

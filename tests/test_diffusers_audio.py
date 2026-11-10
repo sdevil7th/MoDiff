@@ -1382,6 +1382,75 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 self.assertEqual(pipeline.call_kwargs["task_type"], "repaint")
                 self.assertEqual(tuple(pipeline.call_kwargs["src_audio"].shape), (2, 48000))
 
+    def test_ace_dispatch_receipt_identifies_actual_conditioning_tensor_and_interval(self):
+        from modiff.execution_input_provenance import bind_generation_input_origins
+
+        source = {"samples": np.arange(480, dtype=np.float32)[None, :] / 1000,
+                  "sample_rate": 24000}
+        original = source["samples"].copy()
+        for mode, task, port, controls in (
+            ("audio_variation", "cover", "reference_audio", {"audio_duration": 0.02}),
+            ("audio_repaint", "repaint", "src_audio", {"repainting_start": 0.005, "repainting_end": 0.015}),
+            ("audio_continuation", "continuation", "src_audio", {"extension_duration": 0.01}),
+        ):
+            with self.subTest(mode=mode):
+                pipeline = FakeSourceConditionedAceStepPipeline()
+                pipeline._modiff_audio_mode = mode
+                node = Generate("dispatch")
+                node.progress = lambda *args, **kwargs: None
+                node.execute(pipeline=pipeline, source_audio=source, task_type=task,
+                             sample_rate=24000, **controls)
+                fields = node._execution_input_record["fields"]
+                tensor = pipeline.call_kwargs[port].detach().cpu().contiguous()
+                digest = hashlib.sha256(memoryview(tensor.numpy()).cast("B")).hexdigest()
+                self.assertEqual(fields["task_type"]["value"], pipeline.call_kwargs["task_type"])
+                self.assertEqual(fields[port + "_sha256"]["value"], digest)
+                self.assertEqual(fields[port + "_shape"]["value"], list(tensor.shape))
+                self.assertEqual(fields[port + "_sample_rate"]["value"], 48000)
+                self.assertEqual(fields[port + "_dtype"]["value"], "float32")
+                self.assertEqual(fields[port + "_device"]["value"], "cpu")
+                self.assertEqual(fields[port + "_bytes"]["value"], tensor.numel() * tensor.element_size())
+                self.assertEqual(fields[port + "_capture"]["value"], "contiguous-bytes-v1")
+                other = "src_audio" if port == "reference_audio" else "reference_audio"
+                self.assertFalse(any(key.startswith(other + "_") for key in fields))
+                if task in {"repaint", "continuation"}:
+                    for key in ("repainting_start", "repainting_end"):
+                        self.assertEqual(fields[key]["value"], pipeline.call_kwargs[key])
+                bound = bind_generation_input_origins("dispatch", {
+                    "module": "modules.DiffusersAudio", "action": "Generate", "params": {
+                        "source_audio": {"sourceId": "input", "sourceKey": "audio"},
+                    }}, node._execution_input_record, source_fields=node._execution_input_source_fields)
+                self.assertEqual(bound["fields"][port + "_sha256"]["source"], "connected")
+                self.assertEqual(bound["fields"][port + "_sha256"]["sourceNodeId"], "input")
+                np.testing.assert_array_equal(source["samples"], original)
+
+    def test_audio_tensor_identity_is_bounded_and_does_not_traverse_unknown_objects(self):
+        import torch
+        from modules.DiffusersAudio.main import _audio_dispatch_tensor_evidence
+
+        def capture(value):
+            return _audio_dispatch_tensor_evidence("src_audio", value, sample_rate=48000)
+
+        class Unknown:
+            def __getattribute__(self, name):
+                raise AssertionError("Unknown object must not be inspected")
+
+        self.assertEqual(capture(Unknown()), {"src_audio_capture": "unsupported-tensor"})
+        self.assertEqual(capture(torch.empty((2, 4), device="meta")),
+                         {"src_audio_capture": "unsupported-tensor"})
+        self.assertEqual(capture(torch.zeros((2, 4)).to_sparse()),
+                         {"src_audio_capture": "unsupported-tensor"})
+        with patch("modules.DiffusersAudio.main.AUDIO_DISPATCH_CAPTURE_MAX_BYTES", 15):
+            self.assertEqual(capture(torch.zeros((2, 2))), {"src_audio_capture": "byte-limit"})
+        value = torch.arange(12).reshape(3, 4).to(torch.bfloat16).T
+        before = value.clone()
+        identity = capture(value)
+        expected = value.contiguous().view(torch.uint8).numpy().tobytes()
+        self.assertEqual(identity["src_audio_sha256"], hashlib.sha256(expected).hexdigest())
+        self.assertEqual(identity["src_audio_dtype"], "bfloat16")
+        self.assertTrue(torch.equal(value, before))
+        self.assertFalse(value.is_contiguous())
+
     def test_repaint_rejects_decoded_audio_that_cannot_fill_the_selected_interval(self):
         source = {"samples": np.full((2, 48000), 0.2, dtype=np.float32), "sample_rate": 48000}
         for shape, message in (((1, 1, 48000), "channels"), ((1, 2, 10000), "selected interval")):

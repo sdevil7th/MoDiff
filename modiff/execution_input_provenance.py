@@ -37,9 +37,16 @@ FIELD_NAMES = {
     "match_input_resolution": "matchInputResolution", "depth_convention": "depthConvention",
     "use_kv_cache": "attentionContextReuse",
 }
+AUDIO_DISPATCH_FIELDS = {
+    'task_type': 'audioTaskType', 'repainting_start': 'audioRepaintingStart',
+    'repainting_end': 'audioRepaintingEnd',
+    **{f'{port}_{field}': f'{port}_{field}'
+       for port in ('src_audio', 'reference_audio')
+       for field in ('sha256', 'shape', 'dtype', 'device', 'bytes', 'sample_rate', 'capture')},
+}
 NODE_FIELD_NAMES = {
     ('DiffusersAudio', 'Generate'): {
-        **FIELD_NAMES, 'lyrics': 'lyrics', 'vocal_language': 'vocalLanguage',
+        **FIELD_NAMES, **AUDIO_DISPATCH_FIELDS, 'lyrics': 'lyrics', 'vocal_language': 'vocalLanguage',
         'shift': 'shift', 'bpm': 'bpm', 'keyscale': 'keyscale', 'timesignature': 'timesignature',
     },
     ('Image', 'Load'): {
@@ -513,12 +520,17 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
         if scoped_summary and _is_adapter_descriptor(record):
             continue
         field_names = _field_names(record)
+        # Dispatch identities are node-local evidence. Preserve the legacy
+        # cross-node summary and do not turn tensor metadata into form values.
+        local_only = AUDIO_DISPATCH_FIELDS if _accounting_scope(record) == ('DiffusersAudio', 'Generate') else {}
         for key, field in record["fields"].items():
+            if key in local_only:
+                continue
             canonical = field_names[key]
             values = candidates.setdefault(canonical, [])
             if not any(type(existing) is type(field["value"]) and existing == field["value"] for existing in values):
                 values.append(field["value"])
-        unavailable.update(field_names[key] for key in record["omittedFields"])
+        unavailable.update(field_names[key] for key in record["omittedFields"] if key not in local_only)
     # Missing records can be unexecuted branches. Never manufacture their values.
     missing = sorted(ancestors - records.keys())
     summary = {key: values[0] for key, values in candidates.items() if len(values) == 1 and key not in unavailable}

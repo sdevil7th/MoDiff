@@ -17,6 +17,101 @@ BASE = "Qwen/Qwen-Image-2512"
 BASE_PIN = "25468b98e3276ca6700de15c6628e51b7de54a26"
 
 
+@pytest.fixture
+def shared_placement_plan(monkeypatch, tmp_path):
+    """Real declared candidates with controlled headers and no model loading."""
+    from modiff import auto_resource
+    from weight_loading_fixtures import same_dtype_conversion_reserve
+
+    hardware = {
+        "platform": "linux", "architecture": "x86_64",
+        "accelerator": {"kind": "cuda", "backend": "rocm", "memoryKind": "shared",
+                        "totalBytes": 96 * GIB, "freeBytes": 90 * GIB},
+        "systemMemory": {"totalBytes": 128 * GIB, "availableBytes": 116 * GIB},
+        "offloadDisk": {"path": str(tmp_path), "freeBytes": 128 * GIB},
+    }
+    components = {"text_encoder": 16 * GIB, "transformer": 40 * GIB, "vae": GIB // 4}
+    bound = {"revision": BASE_PIN, "dtype": "bfloat16", "components": components,
+             "totalBytes": sum(components.values()), "largestComponentBytes": max(components.values()),
+             "proofScope": "parameter_storage_lower_bound_only"}
+    monkeypatch.setattr(auto_resource, "_artifact_cache_status",
+                        lambda *args, **kwargs: {"installed": True, "complete": True, "snapshots": []})
+    monkeypatch.setattr(auto_resource, "artifact_parameter_lower_bound", lambda *args, **kwargs: deepcopy(bound))
+    monkeypatch.setattr(auto_resource, "artifact_parameter_conversion_reserve",
+                        lambda *args, **kwargs: same_dtype_conversion_reserve(bound) if bound else None)
+    monkeypatch.setattr(auto_resource, "qualified_auto_overrides", lambda **kwargs: {})
+    monkeypatch.setattr(planner, "_inspect_reviewed_controlnet_artifact",
+                        lambda: {"weightStorageBytes": WEIGHT_BYTES})
+    reads = []
+
+    def recipe(payload, **kwargs):
+        result = auto_resource.build_auto_resource_plan(
+            payload, runtime_fingerprint={}, local_models=[], data_dir=tmp_path, history={"entries": {}},
+        )
+        reads.append(deepcopy(result))
+        return result
+
+    def plan(value):
+        return planner.build_workflow_auto_plan(
+            value, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path),
+            hardware=hardware, plan_recipe=recipe,
+        )
+
+    return plan, hardware, bound, reads
+
+
+@pytest.mark.parametrize("scale,seed", [(1.2, 5201), (1.1, 5202)])
+def test_shared_control_component_selects_a_declared_compatible_placement(
+    shared_placement_plan, scale, seed,
+):
+    plan, _, _, reads = shared_placement_plan
+    value = graph(scale, seed)
+    value["nodes"]["load"]["params"].update(
+        offload_mode={"value": "model_cpu"}, auto_offload={"value": True},
+    )
+    before = deepcopy(value)
+    result = plan(value)
+    assert result["canAutoRun"], result["issues"]
+    assert value == before
+    primary = next(owner for owner in result["loaders"] if owner["nodeId"] == "load")
+    auxiliary = next(owner for owner in result["loaders"] if owner["nodeId"] == "aux")
+    assert primary["settings"]["offloadMode"] in {"none", "group_cpu", "group_disk"}
+    selected = next(candidate for candidate in reads[0]["candidates"]
+                    if candidate["id"] == primary["candidateId"])
+    assert selected["canAutoRun"]
+    assert selected["offloadMode"] == primary["settings"]["offloadMode"]
+    assert auxiliary["settings"]["offloadMode"] == "none"
+    assert auxiliary["requirements"]["systemRamBytes"] == WEIGHT_BYTES
+    assert auxiliary["requirements"]["vramBytes"] == WEIGHT_BYTES
+    assert result["schedule"] is None
+    assert all(patch["nodeId"] == "load" and patch["field"] in {"offload_mode", "auto_offload"}
+               for patch in result["patches"])
+    assert len(reads) == 1
+
+
+def test_shared_component_placement_keeps_capacity_refusals(shared_placement_plan):
+    plan, hardware, _, _ = shared_placement_plan
+    value = graph()
+    value["nodes"]["load"]["params"].update(
+        offload_mode={"value": "model_cpu"}, auto_offload={"value": True},
+    )
+    hardware["systemMemory"]["availableBytes"] = GIB
+    before = deepcopy(value)
+    result = plan(value)
+    assert not result["canAutoRun"]
+    assert not result["patches"]
+    assert value == before
+
+
+def test_unknown_headers_do_not_authorize_shared_component_placement_alternatives(shared_placement_plan):
+    plan, _, bound, reads = shared_placement_plan
+    bound.clear()
+    result = plan(graph())
+    assert all("placementAlternativeOf" not in candidate
+               for candidate in reads[-1]["candidates"])
+    assert all("-placement-" not in owner["candidateId"] for owner in result["loaders"])
+
+
 def node(action, module="modules.ModularDiffusers", **values):
     return {"module": module, "action": action, "params": {
         key: value if isinstance(value, dict) and "sourceId" in value else {"value": value}

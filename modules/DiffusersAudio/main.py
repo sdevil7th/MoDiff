@@ -34,6 +34,7 @@ AUDIO_LDM2_DEFAULT_REPO = "cvssp/audioldm2"
 ACE_MAX_DURATION_SECONDS = 240.0
 ACE_CONTINUATION_MAX_EXTENSION_SECONDS = 180.0
 ACE_CONTINUATION_DEFAULT_EXTENSION_SECONDS = 15.0
+AUDIO_DISPATCH_CAPTURE_MAX_BYTES = 32 * 1024**2
 DEVICE_OPTIONS = list(DEVICE_LIST.keys())
 DIRECT_AUDIO_OFFLOAD_MODES = [
     OFFLOAD_MODE_NONE,
@@ -744,6 +745,34 @@ def audio_to_numpy(audio: Any, *, clip: bool = True) -> tuple[np.ndarray, int]:
     if clip:
         array = np.clip(array, -1.0, 1.0)
     return array, sample_rate
+
+
+def _audio_dispatch_tensor_evidence(port, value, *, sample_rate):
+    """Identify only a known, bounded conditioning tensor at library dispatch.
+
+    Hash contiguous raw bytes without dtype conversion or input mutation. A
+    bounded device-to-host copy is evidence only, never a second model call.
+    Unsupported inputs remain explicitly unavailable; no arbitrary traversal.
+    """
+    import torch
+
+    prefix = port + "_"
+    if type(value) is not torch.Tensor or value.layout != torch.strided or value.is_quantized:
+        return {prefix + "capture": "unsupported-tensor"}
+    size = value.numel() * value.element_size()
+    if size > AUDIO_DISPATCH_CAPTURE_MAX_BYTES:
+        return {prefix + "capture": "byte-limit"}
+    if value.ndim != 2 or value.device.type not in {"cpu", "cuda"}:
+        return {prefix + "capture": "unsupported-tensor"}
+    try:
+        raw = value.detach().to("cpu").contiguous().view(torch.uint8).numpy()
+        digest = hashlib.sha256(memoryview(raw).cast("B")).hexdigest()
+    except (RuntimeError, TypeError, ValueError):
+        return {prefix + "capture": "capture-error"}
+    return {prefix + "capture": "contiguous-bytes-v1", prefix + "sha256": digest,
+            prefix + "shape": list(value.shape), prefix + "dtype": str(value.dtype).removeprefix("torch."),
+            prefix + "device": str(value.device), prefix + "bytes": size,
+            prefix + "sample_rate": sample_rate}
 
 
 def audio_to_tensor(audio: Any, device: Any, target_sample_rate: int | None = None):
@@ -2203,7 +2232,7 @@ class Generate(NodeBase):
             current_step=0,
             total_steps=call_kwargs["num_inference_steps"],
         )
-        self._record_audio_call_inputs(call_kwargs, invocation)
+        self._record_audio_call_inputs(call_kwargs, invocation, source_sample_rate=sample_rate)
         result = pipeline(**call_kwargs)
         audio = output_to_audio_object(result, sample_rate=sample_rate)
         if task_type == "continuation" and kwargs.get("return_continuation_tail", True):
@@ -2224,15 +2253,24 @@ class Generate(NodeBase):
             "duration_seconds": float(audio.get("duration_seconds") or 0.0),
         }
 
-    def _record_audio_call_inputs(self, call_kwargs, invocation: AudioInvocation):
+    def _record_audio_call_inputs(self, call_kwargs, invocation: AudioInvocation, *, source_sample_rate=None):
         # Record normalized controls at dispatch. Inactive ACE controls remain
         # in the reusable node schema but do not describe standard audio calls.
+        source_evidence = {}
+        if invocation.adapter.generation_kind == "ace_step":
+            for port in ("src_audio", "reference_audio"):
+                if port in call_kwargs:
+                    source_evidence.update(_audio_dispatch_tensor_evidence(
+                        port, call_kwargs[port], sample_rate=source_sample_rate,
+                    ))
         self.record_generation_inputs({
             **call_kwargs,
+            **source_evidence,
             "seed": int(invocation.controls["seed"]),
             "audio_duration": invocation.duration_seconds,
             "sample_rate": int(invocation.controls["sample_rate"]),
         })
+        self._execution_input_source_fields = {key: "source_audio" for key in source_evidence}
         if invocation.adapter.generation_kind != "ace_step":
             self._execution_input_source_fields = {
                 "num_inference_steps": "stable_audio_steps",
