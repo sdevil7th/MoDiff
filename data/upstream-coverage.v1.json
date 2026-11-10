@@ -2458,7 +2458,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:704347442f58c5b019f8cc80f505235dec871e96c792f9c18fd14955269eb8a4",
+  "contentHash": "sha256:893da6adf305d20b188956a8c8759cdc16b7c4fe32dc38a84ddf9116b09be907",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -9330,8 +9330,8 @@
       },
       "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": "approved_exact",
-      "galleryVerificationStatus": "exact",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "qwen_edit_plus_single_image",
       "mode": "edit_image",
       "modelType": "QwenImageEditPlusModularPipeline",
@@ -10276,7 +10276,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "86a099c94c7dd702895cdcb1c98097e78a29f2adbec5bc5e495adf12b7960138",
+    "templateBundleSha256": "b301175bf986164581aa4d9fe0eb50bda0c6a7faed0ddf6bb0f15337c6edd305",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
