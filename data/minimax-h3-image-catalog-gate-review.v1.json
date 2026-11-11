@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "kind": "minimax-h3-image-catalog-only-gate-review",
+  "kind": "minimax-h3-image-generic-operation-review",
   "pipelineClasses": [
     "MiniMaxH3ImageModularPipeline"
   ],
@@ -16,13 +16,11 @@
     "text2image",
     "image_conditioned"
   ],
-  "scope": "The generic library exposes reviewed structural definitions. A normal Studio model switch and full-weight execution require a separately admitted artifact, provider and execution recipe.",
+  "scope": "Exact generic image stage bindings and static graph admission for the pinned official provider. Full-weight hardware, lifecycle and publication require their own evidence.",
   "admission": {
-    "runtimeCatalogExposed": false,
-    "downloadCatalogExposed": false,
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
     "unresolvedGates": [
-      "exact_cluster_execution_admission",
-      "explicit_reviewed_optional_runtime_activation",
       "full_weight_resource_lifecycle_and_output_qualification",
       "template_media_and_publication_approval"
     ]

@@ -226,6 +226,7 @@ _REQUIRED_COMPONENT_EDGES = {
     "workflow_denoise": {("models", "pipeline_components", "denoise", "pipeline_components")},
     "workflow_audio_decoder": {("models", "pipeline_components", "decode", "pipeline_components")},
     "workflow_text_encoder": {("models", "pipeline_components", "prompt", "pipeline_components")},
+    'workflow_prepare_images': {('models', 'pipeline_components', 'beforeEncode', 'pipeline_components')},
     "workflow_image_encoder": {("models", "pipeline_components", "imageEncode", "pipeline_components")},
     "workflow_video_image_encoder": {("models", "pipeline_components", "imageEncode", "pipeline_components")},
     "workflow_video_encoder": {("models", "pipeline_components", "videoEncode", "pipeline_components")},
@@ -906,7 +907,18 @@ REVIEWED_CLUSTER_EXECUTION_CANDIDATES += (
     },
 )
 
+REVIEWED_CLUSTER_EXECUTION_CANDIDATES += tuple({
+    'pipelineClass': 'MiniMaxH3ImageModularPipeline', 'workflowId': workflow,
+    'adapterSource': 'workflow', 'adapterId': 'official_top_level_blocks',
+    'studioMode': task, 'studioSpecId': f'minimax-h3-image:modular-{task.replace("_", "-")}:v1',
+    'executionRoute': 'official_modular_workflow',
+} for workflow, task in (('text2image', 'text_to_image'), ('image_conditioned', 'edit_image')))
+
 _WORKFLOW_REPOSITORIES = {
+    'MiniMaxH3ImageModularPipeline': frozenset({
+        ('text2image', 'MiniMaxAI/MiniMax-H3-Image'),
+        ('image_conditioned', 'MiniMaxAI/MiniMax-H3-Image'),
+    }),
     "Cosmos3DistilledModularPipeline": frozenset(
         {
             ("text2image", "nvidia/Cosmos3-Super-Text2Image-4Step"),

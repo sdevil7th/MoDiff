@@ -121,6 +121,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
             "PikaH3FlexModularPipeline",
+            "MiniMaxH3ImageModularPipeline",
             "Wan22Pipeline",
             "WanAnimatePipeline",
             "WanImage2VideoModularPipeline",

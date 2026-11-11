@@ -73,6 +73,23 @@ for model components and Modular Pipeline execution.
 
 ## Setup
 
+### MiniMax H3 Image
+
+Model Setup offers text-to-image, image edit and ordered multi-reference edit
+through the existing generic image workflow nodes. Reference preparation uses
+the official resize block before text and VAE encoding. The model owns its six
+sampling heads and sigma schedule. Generation exposes width, height, seed and
+minimum generation area. The default internal canvas is at least four megapixels.
+The nodes capture the normalized controls they consume and forward the official
+loop's step progress and interruption checks through MoDiff's existing node boundary.
+
+Use the exact `huggingface-diffusers-h3-image-875373a` optional provider and pinned
+checkpoint. Group Disk loads components incrementally and uses leaf hooks for
+the text encoder and VAE. Record actual full-model memory, scratch, output and
+lifecycle evidence for each machine. The reviewed source and small-fixture
+checks have their own scope. Model Setup reviews incompatible controls during a
+model change and supports Cancel and Undo through its existing transactions.
+
 ### FLUX.2 native hierarchy
 
 The registered full FLUX.2 text and image-conditioned routes use

@@ -1420,6 +1420,7 @@ MINIMAX_H3_PIPELINE_CONFIG = PipelineConfig(
 # other unmatched layers. Keep this policy in backend execution metadata.
 _COMPONENT_GROUP_OFFLOAD_TYPES = {
     'MiniMaxH3ModularPipeline': (('text_encoder', 'leaf_level'),),
+    'MiniMaxH3ImageModularPipeline': (('text_encoder', 'leaf_level'),),
     'PikaH3FlexModularPipeline': (('text_encoder', 'leaf_level'),),
 }
 
@@ -2238,6 +2239,7 @@ def get_all_model_types(*, include_contract_only: bool = False) -> Dict[str, str
     all_labels = {"": ""}
     for pipeline_cls, config in _get_registry_instance().get_all().items():
         all_labels[pipeline_cls.__name__] = config.label
+    all_labels.update({name: config.label for name, config in declared_optional_pipeline_configs().items()})
     if include_contract_only:
         all_labels.update(
             (specification.class_name, specification.label)

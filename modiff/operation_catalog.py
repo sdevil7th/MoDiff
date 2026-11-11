@@ -33,6 +33,10 @@ def seed_standard_operation_defaults(node, profile):
     capability = studio_capability_definition(profile.model_type, repository=profile.default_repo)
     if node["action"] == profile.loader_action:
         defaults = {"dtype": capability.get("defaultDtype")}
+        placement = capability.get('offloadSupport', {}).get('default')
+        current = node['values'].get('offload_mode', node['params'].get('offload_mode', {}).get('default'))
+        if placement in profile.supported_offload_modes and current not in profile.supported_offload_modes:
+            defaults.update(offload_mode=placement, auto_offload=placement != 'none')
         if 'defaultWeightFormat' in capability:
             from modiff.modular_weight_formats import capability_default_weight_format
             defaults['weight_format'] = capability_default_weight_format(capability)
@@ -566,6 +570,17 @@ def resolve_operation(modules, contracts, selection):
             for port in contract['ports']:
                 if port['direction'] == 'input' and port['name'] in definition['params']:
                     definition['params'][port['name']]['hidden'] = port['hidden']
+            if contract['pipelineClass'] == 'MiniMaxH3ImageModularPipeline':
+                from modiff.h3_image_studio_specs import image_stage_field_overrides, image_stage_excluded_fields
+                from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS
+                action_key = next(key for key, (_, node_key) in MODULAR_ACTION_BINDINGS.items()
+                                  if node_key == contract['nodeKey'])
+                for name, overlay in image_stage_field_overrides(action_key, contract['workflowId']).items():
+                    definition['params'][name].update(deepcopy(overlay))
+                    if 'default' in overlay:
+                        values[name] = overlay['default']
+                for name in image_stage_excluded_fields(action_key):
+                    definition['params'].pop(name, None)
         else:
             from modules.ModularDiffusers.modular_utils import get_model_type_metadata
 
@@ -591,6 +606,11 @@ def resolve_operation(modules, contracts, selection):
             raise ValueError("Operation binding targets an undeclared field.")
         definition["params"][key]["value"] = deepcopy(value)
     result = {**definition, "module": module, "action": action, "values": values, "operation": deepcopy(contract)}
+    if module == 'modules.ModularDiffusers' and action == 'ModelsLoader':
+        from modiff.diffusers_profiles import execution_profiles_for_execution
+        profiles = [profile for profile in execution_profiles_for_execution(contract['pipelineClass']) if profile.public]
+        if len(profiles) == 1:
+            seed_standard_operation_defaults(result, profiles[0])
     if module in _STANDARD_DEFAULT_MODULES:
         from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
         from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS

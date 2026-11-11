@@ -19,6 +19,7 @@ from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.modular_weight_formats import weight_format_download_selections
 from modiff.optional_runtimes import TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID
 from modiff.joint_av_studio_specs import h3_studio_specifications, pika_studio_specifications
+from modiff.h3_image_studio_specs import h3_image_studio_specifications
 
 
 STUDIO_EXECUTION_SPEC_SCHEMA_VERSION = 1
@@ -10170,6 +10171,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
     **_HUNYUAN_VIDEO_15_STUDIO_EXECUTION_SPEC_DEFINITIONS,
     **_MINIMAX_H3_STUDIO_EXECUTION_SPEC_DEFINITIONS,
     **h3_studio_specifications(),
+    **h3_image_studio_specifications(),
     **pika_studio_specifications(),
     **_WAN_ANIMATE_2_STUDIO_EXECUTION_SPEC_DEFINITIONS,
     **_COSMOS3_NANO_STUDIO_EXECUTION_SPEC_DEFINITIONS,

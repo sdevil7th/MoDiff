@@ -462,7 +462,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "flux3-klein:official-provider:v1:edit-image:v1",
             "flux3-klein:official-provider:v1:text-to-image:v1",
         }
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 286)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 289)
         self.assertEqual(
             {specification["id"] for specification in payload["studioExecutionSpecs"]
              if specification["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
@@ -484,8 +484,17 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
              if specification['pipelineClass'] == 'WanTI2VImageToVideoPipeline'},
             {'wan-22-ti2v-5b:image-to-video:v1'},
         )
+        h3_image_ids = {
+            'minimax-h3-image:modular-text-to-image:v1',
+            'minimax-h3-image:modular-edit-image:v1',
+            'minimax-h3-image:modular-multi-image-reference-edit:v1',
+        }
         self.assertEqual(
-            sum(specification["id"] not in public_flux3_spec_ids | pika_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
+            {specification['id'].removeprefix('') for specification in payload["studioExecutionSpecs"]
+             if specification['pipelineClass'] == 'MiniMaxH3ImageModularPipeline'}, h3_image_ids,
+        )
+        self.assertEqual(
+            sum(specification["id"] not in public_flux3_spec_ids | pika_ids | h3_image_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
                 for specification in payload["studioExecutionSpecs"]),
             278,
         )

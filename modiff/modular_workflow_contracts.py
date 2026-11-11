@@ -165,6 +165,7 @@ def effective_reviewed_modular_selector(
 # This exact checkpoint is reviewed for T2I only; neither raw kwargs nor a
 # connected sealed bundle may turn it into a Nano video/action checkpoint.
 PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS = {
+    ('MiniMaxH3ImageModularPipeline', 'MiniMaxAI/MiniMax-H3-Image'): frozenset({'text2image', 'image_conditioned'}),
     ("Cosmos3OmniModularPipeline", COSMOS3_SUPER_T2I_REPOSITORY): frozenset({"text2image"}),
 }
 
@@ -208,16 +209,16 @@ PINNED_MODULAR_REPOSITORY_COMPONENT_SUBFOLDERS = {
 
 def reviewed_modular_component_load_types(repository):
     """Concrete factory aliases scoped to reviewed immutable repository indices."""
-    if repository == 'Pika-Labs/Pika-H3-Flex':
-        # Newer-source supplement: the reviewed d0b9b1b blocks request the
-        # Qwen2 base while this pinned Pika index publishes its fast tokenizer.
+    if repository in {'Pika-Labs/Pika-H3-Flex', 'MiniMaxAI/MiniMax-H3-Image'}:
+        # These exact newer-source checkpoints publish the fast tokenizer,
+        # while their official blocks request the slow Qwen2 base class.
         return {'tokenizer': ('transformers', 'Qwen2TokenizerFast')}
     return dict(PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES.get(repository, {}))
 
 
 def reviewed_modular_component_index_overrides(repository):
     """Exact newer-source index declarations, distinct from loading-only aliases."""
-    if repository == 'Pika-Labs/Pika-H3-Flex':
+    if repository in {'Pika-Labs/Pika-H3-Flex', 'MiniMaxAI/MiniMax-H3-Image'}:
         return reviewed_modular_component_load_types(repository)
     return {}
 

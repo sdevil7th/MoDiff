@@ -38,6 +38,7 @@ def _block(letter, type_name, description, default=1, name="img_ids"):
 
 
 def _snapshots(monkeypatch, ordinary, conditional):
+    monkeypatch.setattr("modiff.supplemental_modular_contracts.reviewed_modular_source_supplements", lambda: ())
     monkeypatch.setattr(blocks, "reviewed_modular_block_snapshot", lambda: {"blockDefinitions": ordinary})
     monkeypatch.setattr(blocks, "reviewed_modular_conditional_snapshot", lambda: {"blockDefinitions": conditional})
 

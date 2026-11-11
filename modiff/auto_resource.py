@@ -506,9 +506,12 @@ def _cache_dirs_for_record(record: dict[str, Any]) -> list[str]:
         cache_dirs.append(str(record["cache_dir"]))
 
     seen_cache_dirs = []
+    seen_keys = set()
     for cache_dir in cache_dirs:
-        normalized = str(Path(cache_dir).expanduser()).lower()
-        if normalized not in seen_cache_dirs:
+        normalized = str(Path(cache_dir).expanduser())
+        key = os.path.normcase(normalized)
+        if key not in seen_keys:
+            seen_keys.add(key)
             seen_cache_dirs.append(normalized)
     return seen_cache_dirs
 

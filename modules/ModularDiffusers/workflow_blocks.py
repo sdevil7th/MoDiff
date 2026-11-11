@@ -230,6 +230,8 @@ def _official_stage_component_dependencies(block, *, pipeline_class, block_path,
     required = {
         (_ANIMA_PIPELINE, "denoise"): ("vae",),
         (_ANIMA_PIPELINE, "vae_encoder"): ("transformer",),
+        ('MiniMaxH3ImageModularPipeline', 'denoise'): ('vae',),
+        ('MiniMaxH3ImageModularPipeline', 'decode'): ('transformer',),
     }.get((pipeline_class, block_path), ())
     if not required:
         return block
@@ -237,7 +239,7 @@ def _official_stage_component_dependencies(block, *, pipeline_class, block_path,
 
     specs = {spec.name: spec for spec in definition.blocks.expected_components}
     if any(name not in specs for name in required):
-        raise ValueError("The official Anima definition is missing a reviewed geometry component.")
+        raise ValueError("The official workflow definition is missing a reviewed geometry component.")
 
     class StageWithGeometryComponents(SequentialPipelineBlocks):
         @property
@@ -300,6 +302,10 @@ class _OfficialWorkflowBlockMixin:
             block, pipeline_class=pipeline_class, block_path=block_path, definition=definition,
         )
         pipeline = block.init_pipeline(components_manager=components)
+        workflow_config = getattr(token, '_workflow_config', ())
+        if workflow_config:
+            declared = {spec.name for spec in block.expected_configs}
+            pipeline.update_components(**{key: value for key, value in workflow_config if key in declared})
         expected_components = tuple(pipeline.pretrained_component_names)
         model_ids = collect_model_ids(
             {"pipeline_components": pipeline_components},
@@ -851,6 +857,30 @@ class WorkflowDecodeAudio(_OfficialWorkflowBlockMixin, NodeBase):
         }
 
 
+class WorkflowPrepareImages(_OfficialWorkflowBlockMixin, NodeBase):
+    """Prepare ordered references through the selected official image workflow."""
+
+    label = 'Prepare Reference Images'
+    category = 'Modular Diffusers'
+    resizable = True
+    skipParamsCheck = True
+    stage = 'before_encode'
+    action_key = 'workflow_prepare_images'
+    params = {
+        'pipeline_components': {'label': 'Pipeline Components', 'display': 'input',
+                                'type': 'diffusers_modular_pipeline_components', 'required': True},
+        'pipeline_class': {'type': 'string', 'default': 'MiniMaxH3ImageModularPipeline', 'hidden': True},
+        'workflow_id': {'type': 'string', 'default': 'image_conditioned', 'hidden': True},
+        'block_path': {'type': 'string', 'default': 'before_encode', 'hidden': True},
+        'image': {'label': 'Reference Images', 'display': 'input', 'type': 'image', 'required': True},
+        'state_out': {'label': 'Workflow State', 'display': 'output', 'type': 'modular_workflow_state'},
+    }
+
+    def execute(self, **kwargs):
+        from .h3_image_adapter import execute_image_stage
+        return execute_image_stage(self, kwargs)
+
+
 class WorkflowTextEncode(_OfficialWorkflowBlockMixin, NodeBase):
     """Run an official package-owned text-encoder block and seal its state."""
 
@@ -861,6 +891,7 @@ class WorkflowTextEncode(_OfficialWorkflowBlockMixin, NodeBase):
     stage = "text_encoder"
     action_key = "workflow_text_encoder"
     params = {
+        'state_in': {'label': 'Workflow State', 'display': 'input', 'type': 'modular_workflow_state', 'hidden': True},
         "pipeline_components": {
             "label": "Pipeline Components",
             "display": "input",
@@ -888,6 +919,9 @@ class WorkflowTextEncode(_OfficialWorkflowBlockMixin, NodeBase):
     }
 
     def execute(self, **kwargs):
+        if kwargs.get('pipeline_class') == 'MiniMaxH3ImageModularPipeline':
+            from .h3_image_adapter import execute_image_stage
+            return execute_image_stage(self, kwargs)
         pipeline_class = kwargs.get("pipeline_class")
         workflow_id = kwargs.get("workflow_id")
         token, pipeline = self._prepare_pipeline(
@@ -976,6 +1010,9 @@ class WorkflowImageEncode(_OfficialWorkflowBlockMixin, NodeBase):
     }
 
     def execute(self, **kwargs):
+        if kwargs.get('pipeline_class') == 'MiniMaxH3ImageModularPipeline':
+            from .h3_image_adapter import execute_image_stage
+            return execute_image_stage(self, kwargs)
         pipeline_class = kwargs.get("pipeline_class")
         workflow_id = kwargs.get("workflow_id")
         token, pipeline = self._prepare_pipeline(
@@ -1027,6 +1064,8 @@ class WorkflowImageDenoise(_OfficialWorkflowBlockMixin, NodeBase):
     stage = "denoise"
     action_key = "workflow_image_denoise"
     params = {
+        'min_generation_area': {'label': 'Minimum Generation Area', 'type': 'int', 'default': 4194304,
+                                'min': 1024, 'max': 16777216, 'hidden': True},
         "pipeline_components": {
             "label": "Pipeline Components",
             "display": "input",
@@ -1096,6 +1135,9 @@ class WorkflowImageDenoise(_OfficialWorkflowBlockMixin, NodeBase):
     }
 
     def execute(self, **kwargs):
+        if kwargs.get('pipeline_class') == 'MiniMaxH3ImageModularPipeline':
+            from .h3_image_adapter import execute_image_stage
+            return execute_image_stage(self, kwargs)
         pipeline_class = kwargs.get("pipeline_class")
         workflow_id = kwargs.get("workflow_id")
         token, pipeline = self._prepare_pipeline(

@@ -139,6 +139,7 @@ REVIEWED_BUILTIN_WORKFLOWS = {
     # ``transformer_ref``. An unscoped load would pull both partitions.
     "MiniMaxH3ModularPipeline": frozenset({"t2va", "fl2va", "ref2va"}),
     "PikaH3FlexModularPipeline": frozenset({"t2va", "fl2va", "ref2va"}),
+    'MiniMaxH3ImageModularPipeline': frozenset({'text2image', 'image_conditioned'}),
 }
 REVIEWED_EXPANDED_WORKFLOW_MODEL_TYPES = frozenset(
     {
@@ -809,8 +810,9 @@ def _validate_reviewed_pipeline_index(model_type, repository, revision):
                 raise ValueError(f"The exact reviewed Modular artifact has an incompatible {name!r} loading descriptor.")
 
     expected_component_names = set(installed_pipeline._component_specs)
+    expected_config_names = set(getattr(installed_pipeline, '_config_specs', {}))
     for name, raw_value in document.items():
-        if name in expected_component_names or not isinstance(raw_value, list):
+        if name in expected_component_names or name in expected_config_names or not isinstance(raw_value, list):
             continue
         if filename == ModularPipeline.config_name:
             if len(raw_value) != 3 or not isinstance(raw_value[2], dict):

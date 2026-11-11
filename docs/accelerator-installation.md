@@ -27,8 +27,11 @@ MiniMax H3 Image to official Diffusers commit
 pins the upstream archive and the byte-exact wheel. Windows and Linux x86_64
 passed the isolated package install, activation, API workload and rollback checks
 on clean source `84514dfe52ebe91f0be6ce5a709ff0ff5a83a855`. Those systems offer
-explicit installation and activation. The image workflows remain catalog-only
-while their Studio execution bindings are under review. The full checkpoint has separate
+explicit installation and activation. H3 Image uses the shared image workflow
+nodes for text, single-reference and ordered-reference generation. Its fixed
+six-head sampler exposes dimensions, seed and minimum generation area. Expert
+execution requires the activated provider, exact model files and resource checks.
+Full-weight hardware and output qualification are recorded separately. The full checkpoint has separate
 [MiniMax model terms](https://huggingface.co/MiniMaxAI/MiniMax-H3-Image/blob/492fd8c4eca666f1085f57e30738c1e0d86b3439/LICENSE).
 
 The separately declared `huggingface-diffusers-video-d0b9b1b` optional provider

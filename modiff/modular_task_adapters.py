@@ -10,7 +10,7 @@ from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
 
 def _with_reviewed_reference_tasks(pipeline, adapters):
     result = dict(adapters)
-    if pipeline in {"Flux2ModularPipeline", "Flux2KleinModularPipeline", "FluxKontextModularPipeline"} and "edit_image" in result:
+    if pipeline in {"Flux2ModularPipeline", "Flux2KleinModularPipeline", "FluxKontextModularPipeline", "MiniMaxH3ImageModularPipeline"} and "edit_image" in result:
         # The official encoder retains individual references and ordered IDs;
         # Kontext adds its explicit canvas-composition operation at projection.
         result["multi_image_reference_edit"] = result["edit_image"]
@@ -29,6 +29,8 @@ def modular_task_adapters(pipeline, workflow, *, authoring=False):
             if truth
             else []
         )
+        if pipeline == 'MiniMaxH3ImageModularPipeline':
+            tasks = ['text_to_image' if workflow['id'] == 'text2image' else 'edit_image']
         return _with_reviewed_reference_tasks(pipeline, [(task, whole) for task in tasks or [workflow["taskId"]]])
     result = {}
     for adapter in adapters:

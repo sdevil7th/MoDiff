@@ -39,7 +39,7 @@ def _dedupe_locations(locations):
     for label, path in locations:
         if not path:
             continue
-        normalized = str(Path(path).expanduser()).lower()
+        normalized = os.path.normcase(str(Path(path).expanduser()))
         if normalized in seen:
             continue
         seen.add(normalized)

@@ -89,20 +89,6 @@
       ]
     },
     {
-      "id": "minimax-h3-image",
-      "pipelineClasses": [
-        "MiniMaxH3ImageModularPipeline"
-      ],
-      "evidencePath": "data/minimax-h3-image-catalog-gate-review.v1.json",
-      "evidenceSha256": "d97933a721eea1780921cda7f965af8e326c531bb6b3a0a09e0d00b5086d7ec3",
-      "blockers": [
-        "exact_cluster_execution_admission",
-        "explicit_reviewed_optional_runtime_activation",
-        "full_weight_resource_lifecycle_and_output_qualification",
-        "template_media_and_publication_approval"
-      ]
-    },
-    {
       "id": "pika-h3-flex",
       "pipelineClasses": [
         "PikaH3FlexModularPipeline"
@@ -136,5 +122,5 @@
       ]
     }
   ],
-  "contentHash": "sha256:57e35aa39453eeb204989fdee84791c8760b72dfb53b80111161c22259bbca1b"
+  "contentHash": "sha256:9e2e7b6ee51e878af942c8f64722a3e197248bce078e7713a0f51a8ec388799e"
 }

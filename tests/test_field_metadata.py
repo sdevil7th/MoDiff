@@ -216,7 +216,7 @@ class ModularMetadataContractTests(unittest.TestCase):
     @unittest.skipUnless(importlib.util.find_spec("transformers"), "requires the reviewed optional runtime")
     def test_all_registered_model_schemas_match_existing_generic_contracts(self):
         from modules.ModularDiffusers.modular_utils import (
-            get_all_model_types, pipeline_class_from_model_type, require_modiff_node_contract,
+            get_all_model_types, pipeline_authoring_identity, require_modiff_node_contract,
         )
         from modules.ModularDiffusers.field_metadata import _FieldContext
 
@@ -232,7 +232,7 @@ class ModularMetadataContractTests(unittest.TestCase):
                 with self.subTest(model_type=model_type, action=action):
                     callback = metadata_field_callback(action, "update_node", node_id="draft", sid="editing")
                     try:
-                        pipeline = pipeline_class_from_model_type(model_type)
+                        pipeline = pipeline_authoring_identity(model_type)
                         _, expected = require_modiff_node_contract(pipeline, callback.__self__.node_type, resolve_blocks=False)
                     except ValueError:
                         with patch.object(_FieldContext, "get_signal_value", return_value=model_type), patch.object(

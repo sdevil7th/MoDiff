@@ -81,8 +81,8 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
         results = self.results()
         admitted = [result for result in results.values() if result["status"] == "admitted"]
 
-        self.assertEqual(len(results), 81)
-        self.assertEqual(len(admitted), 81)
+        self.assertEqual(len(results), 83)
+        self.assertEqual(len(admitted), 83)
         for result in admitted:
             specification = STUDIO_EXECUTION_SPEC_DEFINITIONS[result["studioExecutionSpec"]["id"]]
             if any(
@@ -165,6 +165,8 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
                 "diffusers.modular:HunyuanVideo15ModularPipeline:image2video",
                 "diffusers.modular:Cosmos3DistilledModularPipeline:text2image",
                 "diffusers.modular:Cosmos3DistilledModularPipeline:image2video",
+                "diffusers.modular:MiniMaxH3ImageModularPipeline:text2image",
+                "diffusers.modular:MiniMaxH3ImageModularPipeline:image_conditioned",
                 "diffusers.modular:MiniMaxH3ModularPipeline:t2va",
                 "diffusers.modular:MiniMaxH3ModularPipeline:fl2va",
                 "diffusers.modular:MiniMaxH3ModularPipeline:ref2va",
@@ -1145,7 +1147,7 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
             for result in admitted
         }
 
-        self.assertEqual(len(pairs), 81)
+        self.assertEqual(len(pairs), 83)
         expert_only_model_types = {
             "StableDiffusionXLModularPipeline",
             "Flux2ModularPipeline",
@@ -1163,6 +1165,7 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
             "HunyuanVideo15ModularPipeline",
             "Cosmos3DistilledModularPipeline",
             "MiniMaxH3ModularPipeline",
+            "MiniMaxH3ImageModularPipeline",
             "WanAnimate2ModularPipeline",
             "WanAnimate2DistilledModularPipeline",
             "Cosmos3OmniModularPipeline",
@@ -1211,7 +1214,8 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
                 ("cosmos-guardrail-0.3.1",) if model_type in {
                     "Cosmos3OmniModularPipeline", "Cosmos3DistilledModularPipeline",
                 } else ("huggingface-diffusers-video-d0b9b1b",)
-                if model_type == "MiniMaxH3ModularPipeline" else (),
+                if model_type == "MiniMaxH3ModularPipeline" else ("huggingface-diffusers-h3-image-875373a",)
+                if model_type == "MiniMaxH3ImageModularPipeline" else (),
             )
         self.assertTrue(all(result["executable"] is False for result in admitted))
 

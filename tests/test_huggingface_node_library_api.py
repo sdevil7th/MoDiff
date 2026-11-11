@@ -48,8 +48,8 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
         admissions = [
             admission for definition in second["definitions"] for admission in definition["executionAdmissions"]
         ]
-        self.assertEqual(len(admissions), 122)
-        self.assertEqual(sum(admission["status"] == "admitted" for admission in admissions), 122)
+        self.assertEqual(len(admissions), 124)
+        self.assertEqual(sum(admission["status"] == "admitted" for admission in admissions), 124)
         self.assertTrue(all(admission["executable"] is False for admission in admissions))
 
     async def test_registered_interfaces_match_every_compiled_boundary_and_are_detached(self):

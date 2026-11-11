@@ -195,6 +195,9 @@ def _reviewed_block_input_params(field_kind="inputs"):
     Same-type descriptions/defaults retain the existing union behavior.
     """
     ordinary = reviewed_modular_block_snapshot()["blockDefinitions"]
+    from modiff.supplemental_modular_contracts import reviewed_modular_source_supplements
+    ordinary = [*ordinary, *(block for source in reviewed_modular_source_supplements()
+                            for block in source['blocks']['blockDefinitions'])]
     conditional = reviewed_modular_conditional_snapshot()["blockDefinitions"]
     definitions = ordinary
     if field_kind == "outputs":

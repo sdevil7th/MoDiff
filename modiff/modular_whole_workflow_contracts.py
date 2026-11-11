@@ -432,6 +432,17 @@ PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS.update(
 # Newer-source supplements are intentionally separate from the historical
 # catalog's pinned adapter inventory. Their schema/source audit is independent.
 SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS = {}
+for _image_workflow in ('text2image', 'image_conditioned'):
+    _image_actions = ['workflow_text_encoder', 'workflow_image_denoise', 'workflow_image_decoder']
+    _image_blocks = ['text_encoder', 'denoise', 'decode']
+    if _image_workflow == 'image_conditioned':
+        _image_actions = ['workflow_prepare_images', 'workflow_text_encoder', 'workflow_image_encoder',
+                          'workflow_image_denoise', 'workflow_image_decoder']
+        _image_blocks = ['before_encode', 'text_encoder', 'vae_encoder', 'denoise', 'decode']
+    SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS[('MiniMaxH3ImageModularPipeline', _image_workflow)] = (
+        _sequential_adapter(['prompt'] + (['image'] if _image_workflow == 'image_conditioned' else []),
+                            _image_actions, _image_blocks)
+    )
 for _joint_pipeline in ("MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline"):
     for _joint_workflow in ("t2va", "fl2va", "ref2va"):
         _joint_blocks = (["text_encoder", "denoise", "decode"] if _joint_workflow == "t2va" else

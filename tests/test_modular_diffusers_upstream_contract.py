@@ -18,6 +18,7 @@ from modules import MODULE_MAP
 from modules.ModularDiffusers.modular_utils import (
     REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES,
     get_all_model_types,
+    declared_optional_pipeline_configs,
     get_modular_guider_options,
     get_modular_layer_block_options,
     get_modular_node_action_options,
@@ -70,6 +71,18 @@ requires_transformers = unittest.skipUnless(
     "requires the staged optional Transformers runtime",
 )
 _NO_EXPLICIT_GUIDER = object()
+
+
+def _installed_pipeline(model_type):
+    pipeline = getattr(diffusers, model_type, None)
+    if pipeline is None:
+        # Base-runtime checks still validate the exact optional declaration;
+        # installed-provider tests separately construct the real source class.
+        assert model_type in declared_optional_pipeline_configs(), model_type
+        profiles = [p for p in public_execution_profiles() if p['model_type'] == model_type]
+        assert len(profiles) == 1 and profiles[0]['required_diffusers_provider']
+        assert profiles[0]['optionalRuntimeRequirement']['requiredNow'] is True
+    return pipeline
 
 
 class ReviewedIndexCacheRootsTest(unittest.TestCase):
@@ -685,6 +698,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "FluxModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "FluxKontextModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "Flux2ModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
+            "Flux3ModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
+            "Flux3DistilledModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "Flux2KleinModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "Flux2KleinBaseModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "ZImageModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
@@ -716,16 +731,20 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 "Cosmos3DistilledModularPipeline",
                 "HunyuanVideo15ModularPipeline",
                 "MiniMaxH3ModularPipeline",
+                "MiniMaxH3ImageModularPipeline",
+                "PikaH3FlexModularPipeline",
             },
         )
         self.assertEqual(registered, set(expected))
 
         actions = {"controlnet", "decoder", "denoise", "image_encoder", "ip_adapter", "text_encoder", "vae_encoder"}
         for model_type, supported_actions in expected.items():
-            pipeline_class = getattr(diffusers, model_type)
+            pipeline_class = _installed_pipeline(model_type)
             metadata = get_model_type_metadata(model_type)
             actual_actions = {name for name, config in metadata["node_params"].items() if config is not None}
             self.assertEqual(actual_actions, supported_actions)
+            if pipeline_class is None:
+                continue
 
             for action in actions:
                 with self.subTest(model_type=model_type, action=action):
@@ -866,6 +885,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
         for model_type in sorted(set(get_all_model_types()) - {"", "DummyCustomPipeline"}):
             metadata = get_model_type_metadata(model_type)
+            if _installed_pipeline(model_type) is None:
+                continue
             for action in ("vae_encoder", "image_encoder"):
                 if metadata["node_params"].get(action) is None:
                     continue
@@ -908,6 +929,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         for model_type in sorted(registered):
             with self.subTest(model_type=model_type):
                 metadata = get_model_type_metadata(model_type)
+                if _installed_pipeline(model_type) is None:
+                    continue
                 if metadata["node_params"].get("denoise") is None:
                     self.assertIn(model_type, REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES)
                     with self.assertRaisesRegex(ValueError, "does not support the generic Denoise"):
@@ -1502,6 +1525,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         for model_type in sorted(registered):
             with self.subTest(model_type=model_type):
                 metadata = get_model_type_metadata(model_type)
+                if _installed_pipeline(model_type) is None:
+                    continue
                 if metadata["node_params"].get("denoise") is None:
                     self.assertIn(model_type, REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES)
                     self.assertNotIn(model_type, expected)
@@ -1538,9 +1563,11 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             self.assertTrue(scheduler_type.__module__.startswith("diffusers."))
 
         for model_type in set(get_all_model_types()) - {"", "DummyCustomPipeline"}:
-            pipeline_class = getattr(diffusers, model_type)
+            pipeline_class = _installed_pipeline(model_type)
             with self.subTest(model_type=model_type):
                 metadata = get_model_type_metadata(model_type)
+                if _installed_pipeline(model_type) is None:
+                    continue
                 if metadata["node_params"].get("denoise") is None:
                     self.assertIn(model_type, REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES)
                     self.assertNotIn(model_type, expected)

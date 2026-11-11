@@ -133,8 +133,8 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
             admission for definition in self.library["definitions"] for admission in definition["executionAdmissions"]
         ]
 
-        self.assertEqual(len(admissions), 122)
-        self.assertEqual(sum(admission["status"] == "admitted" for admission in admissions), 122)
+        self.assertEqual(len(admissions), 124)
+        self.assertEqual(sum(admission["status"] == "admitted" for admission in admissions), 124)
         self.assertTrue(all(admission["executable"] is False for admission in admissions))
         self.assertTrue(
             all(definition["executionClaim"] == "discovery_only" for definition in self.library["definitions"])
@@ -195,8 +195,8 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
         adapter_definitions = [item for item in self.library["definitions"] if item["graphAdapterContracts"]]
         adapters = [adapter for definition in adapter_definitions for adapter in definition["graphAdapterContracts"]]
 
-        self.assertEqual(len(adapter_definitions), 142)
-        self.assertEqual(len(adapters), 146)
+        self.assertEqual(len(adapter_definitions), 144)
+        self.assertEqual(len(adapters), 148)
         self.assertTrue(all(definition["executionClaim"] == "discovery_only" for definition in adapter_definitions))
         flux = self.definition("FluxModularPipeline", "text2image")
         self.assertEqual(flux["graphAdapterContracts"][0]["actionSequence"], ["text_encoder", "denoise", "decoder"])

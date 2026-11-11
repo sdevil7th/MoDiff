@@ -33,7 +33,7 @@ def test_minimax_image_source_build_and_target_contract():
 
 
 
-def test_source_only_image_workflows_use_the_generic_library_without_execution_offers():
+def test_image_workflows_use_the_generic_library_with_exact_graph_admission():
     from modiff.huggingface_node_library import build_huggingface_node_library
     from modiff.modular_conditional_contracts import reviewed_modular_conditional_collection
     from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
@@ -50,7 +50,7 @@ def test_source_only_image_workflows_use_the_generic_library_without_execution_o
     library = build_huggingface_node_library()
     entries = [item for item in library["definitions"] if item.get("pipelineClass") == pipeline]
     assert len(entries) == 2
-    assert all(item["integrationStatus"] == "contract_only" and not item["executionAdmissions"] for item in entries)
+    assert all(item["integrationStatus"] == "reviewed_modular_workflow_route" and item["executionAdmissions"] for item in entries)
     source = next(s for s in library["sourceSupplements"] if s["runtimeProfileId"] == DIFFUSERS_H3_IMAGE_RUNTIME_PROFILE_ID)
     assert set(source["definitionIds"]) == {item["id"] for item in entries}
     snapshot = next(s for s in reviewed_modular_conditional_collection()["sourceSupplements"]
@@ -106,7 +106,7 @@ def test_rebuilt_generic_stage_recovers_only_its_checkpoint_reference_config(mon
     assert pipeline.update_components.call_args_list[0].kwargs == {"reference_min_short_edge": 32, "reference_max_short_edge": 64}
 
 
-def test_pinned_image_artifact_metadata_does_not_enable_its_loader():
+def test_pinned_image_artifact_requires_exact_provider_and_workflow():
     import pytest
     from modiff.model_artifact_catalog import catalog_download_inventory, catalog_model, require_catalog_revision, read_model_artifact_catalog
     from modules.ModularDiffusers.loaders import ModelsLoader
@@ -123,6 +123,8 @@ def test_pinned_image_artifact_metadata_does_not_enable_its_loader():
     assert catalog_download_inventory(repo, rev, paths)["exactBytes"] == 135_375_974_816
     assert catalog_download_inventory(repo, rev, paths[:-1]) is None
     assert catalog_download_inventory(repo, "a" * 40, paths) is None
-    assert get_model_type_metadata(pipe)["execution_status"] == "contract_only"
-    with pytest.raises(ValueError, match="contract discovery only"):
-        ModelsLoader._reviewed_builtin_selection(model_type=pipe, repo_id={"source": "hub", "value": repo}, revision=rev)
+    assert get_model_type_metadata(pipe)["execution_status"] == "expert_only"
+    ModelsLoader._reviewed_builtin_selection(model_type=pipe, repo_id={"source": "hub", "value": repo}, revision=rev)
+    from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+    with pytest.raises(ValueError, match="workflow/revision"):
+        require_reviewed_modular_repository_workflow(pipe, repo, rev, "unsupported")

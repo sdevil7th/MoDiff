@@ -1,6 +1,7 @@
 """Operation bindings projected from the existing reviewed Modular owners."""
 
 from copy import deepcopy
+from modiff.h3_image_studio_specs import image_stage_field_overrides, image_stage_excluded_fields
 from modiff.component_bundle_contracts import with_qwen_t2i_bundle_contract
 
 from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS, MODULAR_AUXILIARY_OPERATION_BINDINGS
@@ -175,6 +176,10 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                             task=task,
                             operation_id=operation_id,
                             node_key=node_key,
+                            field_overrides=(image_stage_field_overrides(action_key, workflow_id)
+                                if pipeline_class == 'MiniMaxH3ImageModularPipeline' else None),
+                            excluded_fields=(image_stage_excluded_fields(action_key)
+                                if pipeline_class == 'MiniMaxH3ImageModularPipeline' else ()),
                         )
                         if record is None:
                             continue

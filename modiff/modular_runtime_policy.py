@@ -13,6 +13,9 @@ def reviewed_reference_component_attention(model_type, workflow_id, *, rocm=Fals
     if (rocm is True and bfloat16 is True and workflow_id == 'ref2va'
             and model_type in {'MiniMaxH3ModularPipeline', 'PikaH3FlexModularPipeline'}):
         return {'text_encoder': ROCM_BF16_VISION_MATH}
+    if (rocm is True and bfloat16 is True and workflow_id == 'image_conditioned'
+            and model_type == 'MiniMaxH3ImageModularPipeline'):
+        return {'text_encoder': ROCM_BF16_VISION_MATH}
     return {}
 
 

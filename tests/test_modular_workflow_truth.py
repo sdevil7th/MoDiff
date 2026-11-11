@@ -107,17 +107,28 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         whole_workflow_only = registered - set(PINNED_MODULAR_WORKFLOW_TRUTH)
         self.assertEqual(
             whole_workflow_only,
-            {"Cosmos3DistilledModularPipeline", "MiniMaxH3ModularPipeline"},
+            {"Cosmos3DistilledModularPipeline", "MiniMaxH3ModularPipeline",
+             "MiniMaxH3ImageModularPipeline", "PikaH3FlexModularPipeline"},
         )
         available_truth = {name for name in PINNED_MODULAR_WORKFLOW_TRUTH
                            if getattr(diffusers, name, None) is not None}
-        self.assertEqual(available_truth | whole_workflow_only, registered)
+        from modules.ModularDiffusers.modular_utils import declared_optional_pipeline_configs
+        self.assertEqual(available_truth | whole_workflow_only | set(declared_optional_pipeline_configs()), registered)
         for model_type in whole_workflow_only:
             candidates = [
                 candidate
                 for candidate in REVIEWED_CLUSTER_EXECUTION_CANDIDATES
                 if candidate["pipelineClass"] == model_type
             ]
+            if not candidates:
+                from modiff.modular_whole_workflow_contracts import SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS
+                self.assertIn(model_type, {'MiniMaxH3ModularPipeline', 'PikaH3FlexModularPipeline'})
+                workflows = {workflow for pipeline, workflow in SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS
+                             if pipeline == model_type}
+                self.assertEqual(workflows, {'t2va', 'fl2va', 'ref2va'})
+                for workflow in workflows:
+                    self.assertIsNotNone(reviewed_whole_workflow_graph_adapter(model_type, workflow))
+                continue
             self.assertTrue(candidates)
             for candidate in candidates:
                 self.assertEqual(candidate["adapterSource"], "workflow")
@@ -224,6 +235,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 "video_to_video_with_audio",
             },
         }
+        expected["MiniMaxH3ImageModularPipeline"] = {"text_to_image", "edit_image", "multi_image_reference_edit"}
         expected["Flux2ModularPipeline"] = {"text_to_image", "edit_image"}
         expected["Flux3ModularPipeline"] = {"text_to_image", "edit_image"}
         expected["Flux3DistilledModularPipeline"] = {"text_to_image", "edit_image"}
@@ -239,7 +251,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         optional = {profile["model_type"]: profile for profile in public_execution_profiles()
                     if profile.get("required_diffusers_provider")}
         self.assertEqual(set(optional), set(private_truth) | {
-            "MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline",
+            "MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline", "MiniMaxH3ImageModularPipeline",
         })
         for profile in optional.values():
             self.assertFalse(profile["live_proof"])
@@ -320,13 +332,17 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                     else:
                         # Joint AV uses a source-bound whole-workflow adapter,
                         # independently of the historical detailed mode table.
-                        from modiff.modular_whole_workflow_contracts import SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS
-                        from modiff.supplemental_modular_contracts import PIKA_WORKFLOW_TASKS
-                        workflow = next(key for key, task in PIKA_WORKFLOW_TASKS.items() if task == mode)
-                        adapter = SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS[model_type, workflow]
+                        if model_type == 'MiniMaxH3ImageModularPipeline':
+                            self.assertIn(mode, {'text_to_image', 'edit_image', 'multi_image_reference_edit'})
+                            workflow = 'text2image' if mode == 'text_to_image' else 'image_conditioned'
+                        else:
+                            from modiff.supplemental_modular_contracts import PIKA_WORKFLOW_TASKS
+                            self.assertIn(model_type, {'MiniMaxH3ModularPipeline', 'PikaH3FlexModularPipeline'})
+                            workflow = next(key for key, task in PIKA_WORKFLOW_TASKS.items() if task == mode)
+                        adapter = reviewed_whole_workflow_graph_adapter(model_type, workflow)
+                        self.assertIsNotNone(adapter)
                         self.assertEqual(len(adapter['stateEdges']), len(adapter['actionSequence']) - 1)
                         for action in adapter['actionSequence']:
-                            self.assertTrue(action.startswith('workflow_joint_av_'))
                             _role, node_key = _ACTION_ROLE_CONTRACTS[action]
                             module, name = node_key.rsplit('.', 1)
                             self.assertIn(name, module_registry.MODULE_MAP[module])

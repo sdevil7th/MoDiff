@@ -396,6 +396,11 @@ See [docs/api-reference.md](docs/api-reference.md) for route groups and trust im
 
 The Modular Diffusers integration is documented in [modules/ModularDiffusers/README.md](modules/ModularDiffusers/README.md). MoDiff owns the pipeline configuration schema used by its dynamic node contracts while relying on upstream Diffusers for model and pipeline execution.
 
+MiniMax H3 Image uses the generic image stages and Model Setup switching with its
+exact optional Diffusers provider. Its six-head sampler supports text and ordered
+reference images. See the [H3 Image setup](modules/ModularDiffusers/README.md#minimax-h3-image)
+for controls and execution requirements.
+
 For the current task browser, picker behavior and qualification limits, see
 [Workflow authoring and model selection](docs/workflow-authoring-ux.md).
 Exact reviewed evaluation installations can expose separate private Expert

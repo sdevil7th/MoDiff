@@ -1,5 +1,5 @@
 {
-  "contentHash": "sha256:b19ced3e21bd397a7d0fc1812a2f414f909ece93f47e58f61e477fed577eb6d9",
+  "contentHash": "sha256:4e7adab6a1e0da8afbc246afb2a05b448d33c7bf11ac7a8a1ec710476b6c1697",
   "coverageBoundary": {
     "backendArtifactPins": "snapshotted",
     "backendExecutionProfiles": "snapshotted",
@@ -8722,6 +8722,216 @@
     },
     {
       "advertisementEntryPoints": [
+        "execution_profile:minimax-h3-image:official-provider:v1",
+        "model_capability:MiniMaxH3ImageModularPipeline",
+        "node_model_dropdown:modules.ModularDiffusers.ModelsLoader",
+        "studio_execution_spec:minimax-h3-image:modular-edit-image:v1"
+      ],
+      "artifact": {
+        "declaredFileCount": 52,
+        "exactBytes": 135375974816,
+        "gated": null,
+        "inventoryState": "exact_bytes",
+        "license": "minimax-h3-image-community-license-agreement",
+        "repository": "MiniMaxAI/MiniMax-H3-Image",
+        "revision": "492fd8c4eca666f1085f57e30738c1e0d86b3439"
+      },
+      "artifactVariantOf": null,
+      "canonicalTask": "edit_image",
+      "displayName": "MiniMax H3 Image",
+      "disposition": "native_integration_missing",
+      "dispositionReason": "public_modular_profile_lacks_complete_stage_chain",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "not_applicable_or_missing"
+      },
+      "exactVariantReview": null,
+      "exception": null,
+      "implementation": {
+        "executionPath": "modular-diffusers",
+        "loader": "modules.ModularDiffusers.ModelsLoader",
+        "pipelineClass": "MiniMaxH3ImageModularPipeline",
+        "profileId": "minimax-h3-image:official-provider:v1"
+      },
+      "integratedNativeAlternativeProfileIds": [],
+      "knownDefects": [
+        "public_modular_profile_lacks_complete_stage_chain"
+      ],
+      "modelType": "MiniMaxH3ImageModularPipeline",
+      "optionalRuntime": {
+        "delivery": "optional_overlay",
+        "executionProfileIds": [
+          "minimax-h3-image:official-provider:v1"
+        ],
+        "profileIds": [
+          "huggingface-diffusers-h3-image-875373a"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
+        "schemaVersion": 1,
+        "state": "unavailable"
+      },
+      "routeId": "minimax-h3-image:official-provider:v1/edit_image",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "edit_image",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "fullStageChain": false,
+        "inventoryCoverage": null,
+        "nativePipelineClass": null,
+        "nativeWorkflowId": null,
+        "requiredCoreRolesPresent": false,
+        "stageRoles": []
+      }
+    },
+    {
+      "advertisementEntryPoints": [
+        "execution_profile:minimax-h3-image:official-provider:v1",
+        "model_capability:MiniMaxH3ImageModularPipeline",
+        "node_model_dropdown:modules.ModularDiffusers.ModelsLoader",
+        "studio_execution_spec:minimax-h3-image:modular-multi-image-reference-edit:v1"
+      ],
+      "artifact": {
+        "declaredFileCount": 52,
+        "exactBytes": 135375974816,
+        "gated": null,
+        "inventoryState": "exact_bytes",
+        "license": "minimax-h3-image-community-license-agreement",
+        "repository": "MiniMaxAI/MiniMax-H3-Image",
+        "revision": "492fd8c4eca666f1085f57e30738c1e0d86b3439"
+      },
+      "artifactVariantOf": null,
+      "canonicalTask": "multi_image_reference_edit",
+      "displayName": "MiniMax H3 Image",
+      "disposition": "native_integration_missing",
+      "dispositionReason": "public_modular_profile_lacks_complete_stage_chain",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "not_applicable_or_missing"
+      },
+      "exactVariantReview": null,
+      "exception": null,
+      "implementation": {
+        "executionPath": "modular-diffusers",
+        "loader": "modules.ModularDiffusers.ModelsLoader",
+        "pipelineClass": "MiniMaxH3ImageModularPipeline",
+        "profileId": "minimax-h3-image:official-provider:v1"
+      },
+      "integratedNativeAlternativeProfileIds": [],
+      "knownDefects": [
+        "public_modular_profile_lacks_complete_stage_chain"
+      ],
+      "modelType": "MiniMaxH3ImageModularPipeline",
+      "optionalRuntime": {
+        "delivery": "optional_overlay",
+        "executionProfileIds": [
+          "minimax-h3-image:official-provider:v1"
+        ],
+        "profileIds": [
+          "huggingface-diffusers-h3-image-875373a"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
+        "schemaVersion": 1,
+        "state": "unavailable"
+      },
+      "routeId": "minimax-h3-image:official-provider:v1/multi_image_reference_edit",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "multi_image_reference_edit",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "fullStageChain": false,
+        "inventoryCoverage": null,
+        "nativePipelineClass": null,
+        "nativeWorkflowId": null,
+        "requiredCoreRolesPresent": false,
+        "stageRoles": []
+      }
+    },
+    {
+      "advertisementEntryPoints": [
+        "execution_profile:minimax-h3-image:official-provider:v1",
+        "model_capability:MiniMaxH3ImageModularPipeline",
+        "node_model_dropdown:modules.ModularDiffusers.ModelsLoader",
+        "studio_execution_spec:minimax-h3-image:modular-text-to-image:v1"
+      ],
+      "artifact": {
+        "declaredFileCount": 52,
+        "exactBytes": 135375974816,
+        "gated": null,
+        "inventoryState": "exact_bytes",
+        "license": "minimax-h3-image-community-license-agreement",
+        "repository": "MiniMaxAI/MiniMax-H3-Image",
+        "revision": "492fd8c4eca666f1085f57e30738c1e0d86b3439"
+      },
+      "artifactVariantOf": null,
+      "canonicalTask": "text_to_image",
+      "displayName": "MiniMax H3 Image",
+      "disposition": "native_integration_missing",
+      "dispositionReason": "public_modular_profile_lacks_complete_stage_chain",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "not_applicable_or_missing"
+      },
+      "exactVariantReview": null,
+      "exception": null,
+      "implementation": {
+        "executionPath": "modular-diffusers",
+        "loader": "modules.ModularDiffusers.ModelsLoader",
+        "pipelineClass": "MiniMaxH3ImageModularPipeline",
+        "profileId": "minimax-h3-image:official-provider:v1"
+      },
+      "integratedNativeAlternativeProfileIds": [],
+      "knownDefects": [
+        "public_modular_profile_lacks_complete_stage_chain"
+      ],
+      "modelType": "MiniMaxH3ImageModularPipeline",
+      "optionalRuntime": {
+        "delivery": "optional_overlay",
+        "executionProfileIds": [
+          "minimax-h3-image:official-provider:v1"
+        ],
+        "profileIds": [
+          "huggingface-diffusers-h3-image-875373a"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
+        "schemaVersion": 1,
+        "state": "unavailable"
+      },
+      "routeId": "minimax-h3-image:official-provider:v1/text_to_image",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "text_to_image",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "fullStageChain": false,
+        "inventoryCoverage": null,
+        "nativePipelineClass": null,
+        "nativeWorkflowId": null,
+        "requiredCoreRolesPresent": false,
+        "stageRoles": []
+      }
+    },
+    {
+      "advertisementEntryPoints": [
         "execution_profile:nucleus-image:direct",
         "model_capability:NucleusMoEImagePipeline",
         "node_model_dropdown:modules.DiffusersImage.LoadPipeline",
@@ -16071,7 +16281,7 @@
     "modelArtifactCatalog": "sha256:083b851965329e6ba5d905b39e361beef1ff1832776aedefd2805ef81af28c17",
     "modularWorkflowSnapshot": "sha256:dd06d28cde763faf3245580f6ab3ef290715764a58f2b5c9321d9c9e40c8d3c9",
     "operationInventory": "sha256:5252bd41e013aeebb1252ab1b9435ada2c88012fc63653c9979c31fda5062e72",
-    "publicExecutionProfiles": "sha256:11ddcda039b9cf270c05da8bf6b810cf63fcccdce7e52cc0fd339baead679d61"
+    "publicExecutionProfiles": "sha256:d24da994cbab023499796be3a91fd6805d6304772b9675fd726255ad2823f61d"
   },
   "summary": {
     "denominatorFrozen": false,
@@ -16080,16 +16290,18 @@
       "blocked": 2,
       "documented_whole_pipeline_exception": 83,
       "native_integrated": 77,
+      "native_integration_missing": 3,
       "non_diffusion_image_task": 14,
       "preserved_standard_alternative": 38
     },
     "freezeBlockers": [
       "paired_client_advertisement_gate_not_recorded",
-      "custom_first_party_examples_not_recorded"
+      "custom_first_party_examples_not_recorded",
+      "native_integration_gaps_present"
     ],
-    "knownDefectRouteCount": 12,
-    "nativeIntegrationMissingCount": 0,
-    "profileCount": 127,
-    "routeCount": 220
+    "knownDefectRouteCount": 15,
+    "nativeIntegrationMissingCount": 3,
+    "profileCount": 128,
+    "routeCount": 223
   }
 }

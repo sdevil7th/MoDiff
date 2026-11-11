@@ -242,6 +242,7 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
             client_studio / "registeredBlockV2AudioRoutes.ts",
             client_studio / "registeredBlockV2ImageRoutes.ts",
             client_studio / "registeredBlockV2OrdinaryFluxRoutes.ts",
+            client_studio / "registeredBlockV2SourceRoutes.ts",
         ]
         if any(not path.is_file() for path in route_files):
             self.skipTest("Sibling MoDiff-client checkout is required for the registered V2 pin parity gate.")
@@ -265,7 +266,7 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
             for pattern in patterns
             for admission_id, content_hash, canonical_sha256 in pattern.findall(source)
         }
-        self.assertEqual(len(client_pins), 122)
+        self.assertEqual(len(client_pins), 124)
         self.assertEqual(dict(REGISTERED_BLOCK_V2_DEFINITION_PINS), client_pins)
 
     def test_transformers_composite_receipt_joins_direct_profile_and_optional_runtime(self):

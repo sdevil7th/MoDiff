@@ -234,6 +234,12 @@ def test_reviewed_native_image_lora_targets_equal_pinned_official_classes():
                 or not any(declared_image_owner(profile, profile.default_repo, mode) for mode in profile.modes)):
             continue
         pipeline_class = getattr(diffusers, profile.pipeline_class, None)
+        if pipeline_class is None and profile.pipeline_class == "MiniMaxH3ImageModularPipeline":
+            assert profile.required_diffusers_provider == "huggingface-diffusers-h3-image-875373a"
+            assert profile.lora_loadable_components == ()
+            assert profile.component_lora_declaration is None
+            assert profile.to_public_dict()["optionalRuntimeRequirement"]["requiredNow"] is True
+            continue  # Exact no-LoRA declaration; real optional-provider tests inspect its installed class.
         if pipeline_class is None:
             assert profile.pipeline_class in {'Flux3ModularPipeline', 'Flux3DistilledModularPipeline'}
             legacy_ids = {'flux3-klein:modular', 'flux3-klein-base:modular'}

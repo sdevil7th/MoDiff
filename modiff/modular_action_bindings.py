@@ -5,6 +5,7 @@ runtime registry. Keep saved action names stable.
 """
 
 MODULAR_ACTION_BINDINGS = {
+    'workflow_prepare_images': ('beforeEncode', 'modules.ModularDiffusers.WorkflowPrepareImages'),
     "text_encoder": ("prompt", "modules.ModularDiffusers.EncodePrompt"),
     "image_encoder": ("imageEmbeddings", "modules.ModularDiffusers.ImageEmbeddings"),
     "vae_encoder": ("imageEncode", "modules.ModularDiffusers.ImageEncode"),
