@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "kind": "minimax-h3-image-generic-operation-review",
+  "pipelineClasses": [
+    "MiniMaxH3ImageModularPipeline"
+  ],
+  "sourceRevision": "875373ac7f5856071e345a3e394c74efccc6b9e6",
+  "sourceContract": "data/minimax-h3-image-modular-source.v1.json",
+  "runtimeBuild": "data/diffusers-h3-image-source-build.v1.json",
+  "artifact": {
+    "repository": "MiniMaxAI/MiniMax-H3-Image",
+    "revision": "492fd8c4eca666f1085f57e30738c1e0d86b3439",
+    "license": "minimax-h3-image-community-license-agreement"
+  },
+  "workflows": [
+    "text2image",
+    "image_conditioned"
+  ],
+  "scope": "Exact generic image stage bindings and static graph admission for the pinned official provider. Full-weight hardware, lifecycle and publication require their own evidence.",
+  "admission": {
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
+    "unresolvedGates": [
+      "full_weight_resource_lifecycle_and_output_qualification",
+      "template_media_and_publication_approval"
+    ]
+  }
+}

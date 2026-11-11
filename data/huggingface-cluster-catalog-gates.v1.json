@@ -21,6 +21,22 @@
       ]
     },
     {
+      "id": "flux-3",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline",
+        "Flux3ModularPipeline"
+      ],
+      "evidencePath": "data/flux3-catalog-gate-review.v1.json",
+      "evidenceSha256": "0576071cfd6f81205282017fcf2ab0879ec9c0de260387293d2d86b85e1abf3a",
+      "blockers": [
+        "published_runtime",
+        "selected_weight_headers",
+        "pretrained_execution",
+        "adapter_artifacts",
+        "offload_and_resource_qualification"
+      ]
+    },
+    {
       "id": "ideogram-4",
       "pipelineClasses": [
         "Ideogram4ModularPipeline"
@@ -73,6 +89,22 @@
       ]
     },
     {
+      "id": "pika-h3-flex",
+      "pipelineClasses": [
+        "PikaH3FlexModularPipeline"
+      ],
+      "evidencePath": "data/pika-h3-flex-catalog-gate-review.v1.json",
+      "evidenceSha256": "f93628611c892253ba24c586afeb7ae72ce312d4c8025404eae6513a7ae28eed",
+      "blockers": [
+        "exact_cluster_execution_admission",
+        "explicit_reviewed_optional_runtime_activation",
+        "task_scoped_artifact_acquisition",
+        "license_and_territory_acknowledgement",
+        "native_resource_lifecycle_and_output_qualification",
+        "template_media_and_publication_approval"
+      ]
+    },
+    {
       "id": "stable-diffusion-3",
       "pipelineClasses": [
         "StableDiffusion3ModularPipeline"
@@ -90,5 +122,5 @@
       ]
     }
   ],
-  "contentHash": "sha256:56d5ffd548331733c9df1af5af2e321b51b8f7a949ce2835d6e4217dc3617be1"
+  "contentHash": "sha256:9e2e7b6ee51e878af942c8f64722a3e197248bce078e7713a0f51a8ec388799e"
 }

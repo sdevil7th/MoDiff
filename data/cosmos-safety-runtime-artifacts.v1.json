@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 1,
+  "packages": [
+    {
+      "distribution": "cosmos-guardrail",
+      "import_name": "cosmos_guardrail",
+      "version": "0.3.1",
+      "publisher": "cosmos-guardrail contributors",
+      "project_url": "https://pypi.org/project/cosmos-guardrail/0.3.1/",
+      "distribution_url": "https://pypi.org/project/cosmos-guardrail/0.3.1/",
+      "license": "Apache-2.0",
+      "role": "runtime_root",
+      "required_symbols": [
+        "CosmosSafetyChecker"
+      ]
+    },
+    {
+      "distribution": "nltk",
+      "import_name": "nltk",
+      "version": "3.10.3",
+      "publisher": "NLTK Team",
+      "project_url": "https://pypi.org/project/nltk/3.10.3/",
+      "distribution_url": "https://pypi.org/project/nltk/3.10.3/",
+      "license": "Apache-2.0",
+      "role": "dependency",
+      "required_symbols": [
+        "WordNetLemmatizer"
+      ]
+    },
+    {
+      "distribution": "better-profanity",
+      "import_name": "better_profanity",
+      "version": "0.7.0",
+      "publisher": "Son Nguyen Thanh",
+      "project_url": "https://pypi.org/project/better-profanity/0.7.0/",
+      "distribution_url": "https://pypi.org/project/better-profanity/0.7.0/",
+      "license": "MIT",
+      "role": "dependency",
+      "required_symbols": [
+        "Profanity"
+      ]
+    },
+    {
+      "distribution": "retinaface-py",
+      "import_name": "retinaface",
+      "version": "0.0.2",
+      "publisher": "Jiankang Deng",
+      "project_url": "https://pypi.org/project/retinaface-py/0.0.2/",
+      "distribution_url": "https://pypi.org/project/retinaface-py/0.0.2/",
+      "license": "MIT",
+      "role": "dependency",
+      "required_symbols": []
+    },
+    {
+      "distribution": "opencv-python",
+      "import_name": "cv2",
+      "version": "5.0.0.93",
+      "publisher": "opencv-python contributors",
+      "project_url": "https://pypi.org/project/opencv-python/5.0.0.93/",
+      "distribution_url": "https://pypi.org/project/opencv-python/5.0.0.93/",
+      "license": "Apache-2.0 AND MIT",
+      "role": "runtime_root",
+      "required_symbols": [
+        "Canny",
+        "GaussianBlur",
+        "Sobel",
+        "calcOpticalFlowFarneback",
+        "cvtColor",
+        "remap",
+        "imencode",
+        "imdecode"
+      ]
+    },
+    {
+      "distribution": "scikit-image",
+      "import_name": "skimage",
+      "version": "0.25.2",
+      "publisher": "scikit-image contributors",
+      "project_url": "https://pypi.org/project/scikit-image/0.25.2/",
+      "distribution_url": "https://pypi.org/project/scikit-image/0.25.2/",
+      "license": "BSD-3-Clause",
+      "role": "dependency",
+      "required_symbols": []
+    },
+    {
+      "distribution": "lazy-loader",
+      "import_name": "lazy_loader",
+      "version": "0.4",
+      "publisher": "Scientific Python Developers",
+      "project_url": "https://pypi.org/project/lazy-loader/0.4/",
+      "distribution_url": "https://pypi.org/project/lazy-loader/0.4/",
+      "license": "BSD-3-Clause",
+      "role": "dependency",
+      "required_symbols": [
+        "load",
+        "attach"
+      ]
+    },
+    {
+      "distribution": "tifffile",
+      "import_name": "tifffile",
+      "version": "2025.6.11",
+      "publisher": "Christoph Gohlke",
+      "project_url": "https://pypi.org/project/tifffile/2025.6.11/",
+      "distribution_url": "https://pypi.org/project/tifffile/2025.6.11/",
+      "license": "BSD-3-Clause",
+      "role": "dependency",
+      "required_symbols": [
+        "imread",
+        "imwrite"
+      ]
+    },
+    {
+      "distribution": "joblib",
+      "import_name": "joblib",
+      "version": "1.5.3",
+      "publisher": "joblib contributors",
+      "project_url": "https://pypi.org/project/joblib/1.5.3/",
+      "distribution_url": "https://pypi.org/project/joblib/1.5.3/",
+      "license": "BSD-3-Clause",
+      "role": "dependency",
+      "required_symbols": [
+        "Parallel"
+      ]
+    },
+    {
+      "distribution": "defusedxml",
+      "import_name": "defusedxml",
+      "version": "0.7.1",
+      "publisher": "Christian Heimes",
+      "project_url": "https://pypi.org/project/defusedxml/0.7.1/",
+      "distribution_url": "https://pypi.org/project/defusedxml/0.7.1/",
+      "license": "Python-2.0",
+      "role": "dependency",
+      "required_symbols": []
+    }
+  ],
+  "artifactLocks": [
+    {
+      "distribution": "cosmos-guardrail",
+      "version": "0.3.1",
+      "filename": "cosmos_guardrail-0.3.1-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/1a/ef/2e9257bc10fdbb6adb96f6086caa368a65dd6c1da3bfaf87c64a9d0b3684/cosmos_guardrail-0.3.1-py3-none-any.whl",
+      "sha256": "58c0ff49393f65b7589aa8365edc6640ebbcdfbfdde69c95b8a088fe13237ed6",
+      "byteSize": 17501,
+      "platform": "linux",
+      "pythonTag": "cp312",
+      "machine": "x86_64"
+    },
+    {
+      "distribution": "nltk",
+      "version": "3.10.3",
+      "filename": "nltk-3.10.3-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/b6/6d/ebd2af4640b12168fdf0cb74b6118df2f32a2f62ec7e0c06fbfd80706639/nltk-3.10.3-py3-none-any.whl",
+      "sha256": "ff9598a8e20518ee0d557745890cc4435b9578489e2dcbc69c4f81fa060caf7c",
+      "byteSize": 1798643,
+      "platform": "linux",
+      "pythonTag": "cp312",
+      "machine": "x86_64"
+    },
+    {
+      "distribution": "better-profanity",
+      "version": "0.7.0",
+      "filename": "better_profanity-0.7.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/f3/dd/0b074d89e903cc771721cde2c4bf3d8c9d114b5bd791af5c62bcf5fb9459/better_profanity-0.7.0-py3-none-any.whl",
+      "sha256": "bd4c529ea6aa2db1aaa50524be1ed14d0fe5c664f1fd88c8bc388c7e9f9f00e8",
+      "byteSize": 46104,
+      "platform": "linux",
+      "pythonTag": "cp312",
+      "machine": "x86_64"
+    },
+    {
+      "distribution": "retinaface-py",
+      "version": "0.0.2",
+      "filename": "retinaface_py-0.0.2-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/4c/de/f90cc5c235b8ccc8d893b0616a5d7ec59c59fe19339fa3b7fa7867b9f1ff/retinaface_py-0.0.2-py3-none-any.whl",
+      "sha256": "d8cc969841714e4275c35f2cbcec951b88e23a583608588c6c4ecd985a71d66d",
+      "byteSize": 37388,
+      "platform": "linux",
+      "pythonTag": "cp312",
+      "machine": "x86_64"
+    },
+    {
+      "distribution": "opencv-python",
+      "version": "5.0.0.93",
+      "filename": "opencv_python-5.0.0.93-cp37-abi3-manylinux_2_28_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/cf/4c/c73f828fdbcd37eaf21d08fa852544a3ca7c2dbb3ea76873d64f2ea413d1/opencv_python-5.0.0.93-cp37-abi3-manylinux_2_28_x86_64.whl",
+      "sha256": "c8de2dec111122a02e8beb28e16c31904992dfd6186560b142a92c71403c1039",
+      "byteSize": 73783032,
+      "platform": "linux",
+      "pythonTag": "cp312",
+      "machine": "x86_64"
+    },
+    {
+      "distribution": "scikit-image",
+      "version": "0.25.2",
+      "filename": "scikit_image-0.25.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/6b/b5/b75527c0f9532dd8a93e8e7cd8e62e547b9f207d4c11e24f0006e8646b36/scikit_image-0.25.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "a17e17eb8562660cc0d31bb55643a4da996a81944b82c54805c91b3fe66f4824",
+      "byteSize": 15003435,
+      "platform": "linux",
+      "pythonTag": "cp312",
+      "machine": "x86_64"
+    },
+    {
+      "distribution": "lazy-loader",
+      "version": "0.4",
+      "filename": "lazy_loader-0.4-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/83/60/d497a310bde3f01cb805196ac61b7ad6dc5dcf8dce66634dc34364b20b4f/lazy_loader-0.4-py3-none-any.whl",
+      "sha256": "342aa8e14d543a154047afb4ba8ef17f5563baad3fc610d7b15b213b0f119efc",
+      "byteSize": 12097,
+      "platform": "linux",
+      "pythonTag": "cp312",
+      "machine": "x86_64"
+    },
+    {
+      "distribution": "tifffile",
+      "version": "2025.6.11",
+      "filename": "tifffile-2025.6.11-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/3a/d8/1ba8f32bfc9cb69e37edeca93738e883f478fbe84ae401f72c0d8d507841/tifffile-2025.6.11-py3-none-any.whl",
+      "sha256": "32effb78b10b3a283eb92d4ebf844ae7e93e151458b0412f38518b4e6d2d7542",
+      "byteSize": 230800,
+      "platform": "linux",
+      "pythonTag": "cp312",
+      "machine": "x86_64"
+    },
+    {
+      "distribution": "joblib",
+      "version": "1.5.3",
+      "filename": "joblib-1.5.3-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/7b/91/984aca2ec129e2757d1e4e3c81c3fcda9d0f85b74670a094cc443d9ee949/joblib-1.5.3-py3-none-any.whl",
+      "sha256": "5fc3c5039fc5ca8c0276333a188bbd59d6b7ab37fe6632daa76bc7f9ec18e713",
+      "byteSize": 309071,
+      "platform": "linux",
+      "pythonTag": "cp312",
+      "machine": "x86_64"
+    },
+    {
+      "distribution": "defusedxml",
+      "version": "0.7.1",
+      "filename": "defusedxml-0.7.1-py2.py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl",
+      "sha256": "a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61",
+      "byteSize": 25604,
+      "platform": "linux",
+      "pythonTag": "cp312",
+      "machine": "x86_64"
+    }
+  ]
+}

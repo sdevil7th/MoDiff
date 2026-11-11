@@ -449,7 +449,7 @@ class DynamicBlockNode(NodeBase):
         workflow = select_modular_workflow(workflow_contract, task_id, kwargs)
         pipeline = binding.instantiate(components_manager=components, collection=self.node_id)
         torch_dtype = str_to_dtype(custom_config.default_dtype or "bfloat16")
-        configure_components_manager_offload(components, mode=offload_mode, device=device)
+        configure_components_manager_offload(components, mode=offload_mode, device=device, node_id=self.node_id)
 
         for param_name, param_config in node_config["params"].items():
             if param_name not in kwargs or kwargs[param_name] is None:

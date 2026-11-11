@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "distribution": "diffusers",
+  "version": "0.41.0.dev0",
+  "sourceArtifact": {
+    "kind": "github_commit_tarball",
+    "repository": "huggingface/diffusers",
+    "commit": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+    "archiveRoot": "diffusers-7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+    "filename": "diffusers-7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941.tar.gz",
+    "url": "https://codeload.github.com/huggingface/diffusers/tar.gz/7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+    "sha256": "84ee014d4acc0c7633d2778f2ac0125fa77a87e736c86a8092edb1d47a55a744",
+    "byteSize": 11802397
+  },
+  "recipe": "modiff_pure_python_wheel_v1",
+  "pythonTag": "py3",
+  "sourceDateEpoch": 315532800,
+  "sourceFiles": [
+    "LICENSE",
+    "README.md",
+    "pyproject.toml",
+    "setup.py"
+  ],
+  "sourceTrees": [
+    "src/diffusers"
+  ],
+  "buildDependencies": [],
+  "wheelMetadata": {
+    "summary": "State-of-the-art diffusion in PyTorch.",
+    "license": "Apache 2.0 License",
+    "requiresPython": ">=3.11.0",
+    "requiresDist": [
+      "importlib_metadata",
+      "filelock",
+      "huggingface-hub<3.0,>=1.32.0",
+      "numpy",
+      "regex!=2019.12.17",
+      "requests",
+      "safetensors>=0.8.0",
+      "Pillow"
+    ],
+    "consoleScripts": {
+      "diffusers-cli": "diffusers.commands.diffusers_cli:main"
+    },
+    "packageRoot": "src",
+    "licenseFile": "LICENSE"
+  },
+  "outputWheel": {
+    "distribution": "diffusers",
+    "version": "0.41.0.dev0",
+    "filename": "diffusers-0.41.0.dev0-py3-none-any.whl",
+    "sha256": "59c8eb8aaaa25fe5f912e09c48bf66f7e41655c468a7ec47f56da93d8ca40dbd",
+    "byteSize": 27721978,
+    "platform": "any",
+    "pythonTag": "py3",
+    "machine": "any"
+  }
+}

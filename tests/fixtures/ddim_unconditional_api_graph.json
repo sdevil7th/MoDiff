@@ -1,0 +1,333 @@
+{
+  "workflowId": "DDIMPipeline:unconditional_image",
+  "canonicalSourceSha256": "34441b9441448806f7f1354789fb91ec0f7982bb711075b0645658c13149589c",
+  "apiGraph": {
+    "sid": "canonical-qualification",
+    "nodes": {
+      "node-01": {
+        "module": "modules.DiffusersImage",
+        "action": "LoadPipeline",
+        "params": {
+          "auto_offload": {
+            "value": false
+          },
+          "conditioning_kind": {
+            "value": "none"
+          },
+          "conditioning_model_id": {
+            "value": "",
+            "display": "modelselect"
+          },
+          "conditioning_revision": {
+            "value": ""
+          },
+          "device": {
+            "value": "cuda:0"
+          },
+          "device_map": {
+            "value": "none"
+          },
+          "dtype": {
+            "value": "float32"
+          },
+          "enable_vae_slicing": {
+            "value": true
+          },
+          "enable_vae_tiling": {
+            "value": true
+          },
+          "execution_recipe": {
+            "display": "input",
+            "sourceId": "node-03",
+            "sourceKey": "execution_recipe"
+          },
+          "low_cpu_mem_usage": {
+            "value": true
+          },
+          "mode": {
+            "value": "unconditional_image"
+          },
+          "model_id": {
+            "value": {
+              "source": "hub",
+              "value": "google/ddpm-cifar10-32"
+            },
+            "display": "modelselect"
+          },
+          "offload_mode": {
+            "value": "none"
+          },
+          "pipeline_class": {
+            "value": "DDIMPipeline"
+          },
+          "quantization_mode": {
+            "value": "none"
+          },
+          "quantized_components": {
+            "value": [],
+            "display": "select"
+          },
+          "revision": {
+            "value": "267b167dc01f0e4e61923ea244e8b988f84deb80"
+          }
+        }
+      },
+      "node-02": {
+        "module": "modules.DiffusersRuntime",
+        "action": "PipelineQuantizationConfigV2",
+        "params": {
+          "backend": {
+            "value": "none"
+          },
+          "component_overrides": {
+            "value": "{}",
+            "display": "textarea"
+          },
+          "components": {
+            "value": [
+              "transformer"
+            ],
+            "display": "select"
+          },
+          "dtype": {
+            "value": "float32"
+          },
+          "excluded_modules": {
+            "value": "",
+            "display": "textarea"
+          }
+        }
+      },
+      "node-03": {
+        "module": "modules.DiffusersRuntime",
+        "action": "DiffusersExecutionRecipe",
+        "params": {
+          "attention_backend": {
+            "value": "_native_math"
+          },
+          "attention_components": {
+            "value": ""
+          },
+          "cache_options": {
+            "value": "{}",
+            "display": "textarea"
+          },
+          "cache_threshold": {
+            "value": 0.05
+          },
+          "channels_last": {
+            "value": false
+          },
+          "channels_last_components": {
+            "value": "unet,vae"
+          },
+          "compile_backend": {
+            "value": "inductor"
+          },
+          "compile_components": {
+            "value": "transformer"
+          },
+          "compile_dynamic": {
+            "value": false
+          },
+          "compile_fullgraph": {
+            "value": false
+          },
+          "compile_mode": {
+            "value": "default"
+          },
+          "denoiser_cache": {
+            "value": "none"
+          },
+          "device": {
+            "value": "cuda:0"
+          },
+          "device_map": {
+            "value": "none"
+          },
+          "device_map_overrides": {
+            "value": "{}",
+            "display": "textarea"
+          },
+          "layerwise_casting": {
+            "value": false
+          },
+          "layerwise_casting_components": {
+            "value": "transformer"
+          },
+          "layerwise_compute_dtype": {
+            "value": "bfloat16"
+          },
+          "layerwise_storage_dtype": {
+            "value": "float8_e4m3fn"
+          },
+          "max_memory": {
+            "value": "{}",
+            "display": "textarea"
+          },
+          "offload_mode": {
+            "value": "none"
+          },
+          "quantization_config": {
+            "display": "input",
+            "sourceId": "node-02",
+            "sourceKey": "quantization_config"
+          },
+          "regional_compile": {
+            "value": false
+          },
+          "vae_slicing": {
+            "value": false
+          },
+          "vae_tiling": {
+            "value": false
+          }
+        }
+      },
+      "node-04": {
+        "module": "modules.DiffusersImage",
+        "action": "UnconditionalGenerate",
+        "params": {
+          "batch_size": {
+            "value": 1
+          },
+          "class_label": {
+            "value": -1
+          },
+          "eta": {
+            "value": 0
+          },
+          "image_contract": {
+            "value": {
+              "actionFieldParams": {
+                "class_label": {
+                  "hidden": true
+                },
+                "eta": {
+                  "hidden": false
+                }
+              },
+              "actions": {
+                "UnconditionalGenerate": [
+                  "unconditional_image"
+                ]
+              },
+              "fieldParams": {
+                "cfg_normalize": {
+                  "hidden": true
+                },
+                "conditioning_scale": {
+                  "hidden": true
+                },
+                "control_guidance_end": {
+                  "hidden": true
+                },
+                "control_guidance_start": {
+                  "hidden": true
+                },
+                "guidance_scale": {
+                  "hidden": true
+                },
+                "height": {
+                  "hidden": true
+                },
+                "image_guidance_scale": {
+                  "hidden": true
+                },
+                "layers": {
+                  "hidden": true
+                },
+                "max_sequence_length": {
+                  "hidden": true
+                },
+                "negative_prompt": {
+                  "hidden": true
+                },
+                "padding_mask_crop": {
+                  "hidden": true
+                },
+                "pag_adaptive_scale": {
+                  "hidden": true
+                },
+                "pag_scale": {
+                  "hidden": true
+                },
+                "reference_strength": {
+                  "hidden": true
+                },
+                "resolution": {
+                  "hidden": true
+                },
+                "strength": {
+                  "hidden": true
+                },
+                "use_en_prompt": {
+                  "hidden": true
+                },
+                "width": {
+                  "hidden": true
+                }
+              },
+              "library": "diffusers",
+              "mediaKind": "image",
+              "mode": "unconditional_image",
+              "modes": [
+                "unconditional_image"
+              ],
+              "pipelineClass": "DDIMPipeline",
+              "schemaVersion": 1
+            }
+          },
+          "num_inference_steps": {
+            "value": 50,
+            "display": "slider"
+          },
+          "output_type": {
+            "value": "pil"
+          },
+          "pipeline": {
+            "display": "input",
+            "sourceId": "node-01",
+            "sourceKey": "pipeline"
+          },
+          "seed": {
+            "value": 42
+          }
+        }
+      },
+      "node-05": {
+        "module": "modules.Image",
+        "action": "Preview",
+        "params": {
+          "device": {
+            "value": "cpu:0"
+          },
+          "export": {
+            "value": "0"
+          },
+          "image": {
+            "display": "input",
+            "sourceId": "node-04",
+            "sourceKey": "images"
+          },
+          "preview": {
+            "display": "ui_image",
+            "sourceKey": "output"
+          },
+          "vae": {
+            "display": "input"
+          }
+        }
+      }
+    },
+    "paths": [
+      [
+        "node-02",
+        "node-03",
+        "node-01",
+        "node-04",
+        "node-05"
+      ]
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 from diffusers import ComponentsManager
+from modiff.component_bundle_contracts import qwen_t2i_bundle_input_param  # noqa: F401 - AST registry preload
 
 from modiff.diffusers_offload import (  # noqa: F401 - preloaded for AST registry evaluation
     OFFLOAD_MODE_GROUP_CPU,
@@ -69,4 +70,13 @@ from .reviewed_blocks import (  # noqa: E402,F401
     _REVIEWED_BLOCK_INPUT_ALIASES as _REVIEWED_BLOCK_INPUT_ALIASES,
     _REVIEWED_BLOCK_OUTPUT_PARAMS as _REVIEWED_BLOCK_OUTPUT_PARAMS,
     _REVIEWED_LOOP_PORT_PARAMS as _REVIEWED_LOOP_PORT_PARAMS,
+)
+
+from .workflow_blocks import (  # noqa: E402,F401 - AST registry schema constants
+    JOINT_AV_BEFORE_ENCODE_PARAMS as JOINT_AV_BEFORE_ENCODE_PARAMS,
+    JOINT_AV_TEXT_ENCODE_PARAMS as JOINT_AV_TEXT_ENCODE_PARAMS,
+    JOINT_AV_VAE_ENCODE_PARAMS as JOINT_AV_VAE_ENCODE_PARAMS,
+    JOINT_AV_DENOISE_PARAMS as JOINT_AV_DENOISE_PARAMS,
+    JOINT_AV_DECODE_PARAMS as JOINT_AV_DECODE_PARAMS,
+    JOINT_AV_REFERENCE_PARAMS as JOINT_AV_REFERENCE_PARAMS,
 )

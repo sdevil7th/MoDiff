@@ -44,6 +44,17 @@ def _source_files_under(target: Path) -> list[Path]:
 
 def _git_commit(root: Path) -> str | None:
     try:
+        top_level = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if (top_level.returncode != 0 or not top_level.stdout.strip()
+                or Path(top_level.stdout.strip()).resolve() != root.resolve()):
+            return None
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
             cwd=root,

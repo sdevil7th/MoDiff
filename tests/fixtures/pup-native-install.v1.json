@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "repo": "black-forest-labs/flux-3-image-klein-pup",
+  "revision": "3f3edb52b2c55de0d49feab28598b68f7f8e4830",
+  "scope": "Immutable publisher metadata and captured non-neural assets only; no weight bytes or qualification.",
+  "source": "https://huggingface.co/api/models/black-forest-labs/flux-3-image-klein-pup/revision/3f3edb52b2c55de0d49feab28598b68f7f8e4830?blobs=true",
+  "files": [
+    {
+      "path": "chat_template.jinja",
+      "byteSize": 7756,
+      "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+      "sha256Source": "captured immutable metadata file"
+    },
+    {
+      "path": "config.json",
+      "byteSize": 2903,
+      "sha256": "7d7fc026d8bcb9f1fc505af1004779330fe59bb3256fe0271ec2568e8dc89db1",
+      "sha256Source": "captured immutable metadata file"
+    },
+    {
+      "path": "generation_config.json",
+      "byteSize": 163,
+      "sha256": "e92258e3c39afbaa73fd53a98640c56f6d42fb091e1664697bd5396a1dcbb761",
+      "sha256Source": "captured immutable metadata file"
+    },
+    {
+      "path": "model.safetensors",
+      "byteSize": 18819722392,
+      "sha256": "f5062a1fba3e63afe5c88349a311903fec06c959b362f1247127e63d5c860ed4",
+      "sha256Source": "retained official publisher LFS metadata only; no weight bytes read"
+    },
+    {
+      "path": "preprocessor_config.json",
+      "byteSize": 443,
+      "sha256": "3a159dfec9978a186a72ba085e0ad6a050f3968d8b364218d7bd13f5c89381f2",
+      "sha256Source": "captured immutable metadata file"
+    },
+    {
+      "path": "processor_config.json",
+      "byteSize": 1191,
+      "sha256": "d89ef49ce9cd37fbf510158e13c1ef063d9286411c1ec9049932dbe0487143b1",
+      "sha256Source": "captured immutable metadata file"
+    },
+    {
+      "path": "system_prompts.json",
+      "byteSize": 12602,
+      "sha256": "b5da3ed8bc04ab59dbdb747930f7dbff847e868903fed8028f85ee1a4ac82fb4",
+      "sha256Source": "captured immutable metadata file"
+    },
+    {
+      "path": "tokenizer.json",
+      "byteSize": 19989325,
+      "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523",
+      "sha256Source": "publisher LFS plus retained actual tokenizer bytes"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "byteSize": 1164,
+      "sha256": "7488550a894dcf741616126e322ea31d66cf9457b59ec5825f4c7efdced421f8",
+      "sha256Source": "captured immutable metadata file"
+    }
+  ],
+  "exactBytes": 18839737939
+}

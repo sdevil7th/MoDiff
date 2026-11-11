@@ -10,6 +10,10 @@ disconnected for ordinary pipeline loading; graph repair must not supply an
 unrelated value for it. Connected overrides still require the reviewed component
 contract and exact base-pipeline identity.
 
+## Generic image stages
+
+Selected Fill, Control and Redux image tasks use `LoadPipeline → EncodeInputs → Denoise → DecodeLatents`. The frontend groups these as Model Setup, Encode Inputs, Denoise and Image Output; source images and masks stay connected. See [Image pipeline stages](../../docs/image-pipeline-stages.md) for the actual encoding boundaries, saved-workflow compatibility and LoRA loading restrictions.
+
 ## Unconditional image starters
 
 New canonical DDPM, DDIM and Consistency Model loaders use the existing reviewed
@@ -49,9 +53,10 @@ catalog revisions. Optional-runtime, resource, trust and local-file boundaries
 are unchanged. No downloads occur merely from catalog discovery.
 
 Component quantization constructs each config through its owning library.
-Diffusers-only transformer quantization does not import the optional Transformers
-package. Text-encoder quantization requires the reviewed, explicitly activated
-Transformers + PEFT runtime and reports that action when it is absent.
+Diffusers-only transformer quantization keeps Transformers imports lazy.
+Text-encoder quantization uses Transformers and PEFT from the required base
+installation. Additional quantization backends retain their separate verified
+dependency contracts.
 
 ## Optional typed call inputs
 

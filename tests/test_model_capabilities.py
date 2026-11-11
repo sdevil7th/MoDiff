@@ -78,6 +78,32 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("flux2-modular:equivalent-standard", DIFFUSERS_EXECUTION_PROFILES)
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES["flux2-modular:equivalent-standard"].public)
 
+    async def test_public_mode_dependencies_retain_exact_authoritative_safety_artifacts(self):
+        from copy import deepcopy
+        from modiff.server import STUDIO_MODEL_CAPABILITIES
+        from modiff.studio_execution_specs import studio_model_requirements_for_pair
+
+        original = deepcopy(STUDIO_MODEL_CAPABILITIES)
+        server = WebServer(module_registry.MODULE_MAP)
+        with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("Constructed executable node")):
+            response = await server.model_capabilities(FakeRequest())
+        capabilities = json.loads(response.text)["capabilities"]
+        for capability in capabilities:
+            for mode in capability["modes"]:
+                requirements = studio_model_requirements_for_pair(capability["modelType"], mode)
+                if requirements:
+                    with self.subTest(model=capability["modelType"], mode=mode):
+                        self.assertEqual(capability["modeRequirements"][mode]["modelRequirements"], requirements)
+        cosmos = next(item for item in capabilities if item["modelType"] == "Cosmos3OmniModularPipeline")
+        requirements = cosmos["modeRequirements"]["text_to_image"]["modelRequirements"]
+        self.assertEqual([item["repo"] for item in requirements], ["nvidia/Cosmos-Guardrail1", "Qwen/Qwen3Guard-Gen-0.6B"])
+        self.assertEqual([len(item["downloadFiles"]) for item in requirements], [79, 8])
+        self.assertIn("num_frames", cosmos["modeRequirements"]["text_to_image"]["note"])
+        self.assertFalse(cosmos["autoEligible"])
+        self.assertFalse(cosmos["galleryEligible"])
+        self.assertFalse(cosmos["liveProof"])
+        self.assertEqual(STUDIO_MODEL_CAPABILITIES, original)
+
     async def test_starter_endpoint_describes_nodes_without_construction_or_receipts(self):
         server = WebServer(module_registry.MODULE_MAP)
         selection = {"pipelineClass": "AnimaModularPipeline", "task": "text_to_image"}
@@ -430,7 +456,48 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 278)
+        public_flux3_spec_ids = {
+            "flux3-klein-base:official-provider:v1:edit-image:v1",
+            "flux3-klein-base:official-provider:v1:text-to-image:v1",
+            "flux3-klein:official-provider:v1:edit-image:v1",
+            "flux3-klein:official-provider:v1:text-to-image:v1",
+        }
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 289)
+        self.assertEqual(
+            {specification["id"] for specification in payload["studioExecutionSpecs"]
+             if specification["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
+            public_flux3_spec_ids,
+        )
+        # Three Pika source-supplement specs extend the previous 282. H3's
+        # replacement preserves its three old contracts in the private archive.
+        pika_ids = {
+            "pika-h3-flex:modular-text-to-video-with-audio:v1",
+            "pika-h3-flex:modular-first-last-frame-to-video-with-audio:v1",
+            "pika-h3-flex:modular-reference-to-video-with-audio:v1",
+        }
+        self.assertEqual(
+            {specification["id"].removeprefix("") for specification in payload["studioExecutionSpecs"]
+             if specification["pipelineClass"] == "PikaH3FlexModularPipeline"}, pika_ids,
+        )
+        self.assertEqual(
+            {specification['id'] for specification in payload['studioExecutionSpecs']
+             if specification['pipelineClass'] == 'WanTI2VImageToVideoPipeline'},
+            {'wan-22-ti2v-5b:image-to-video:v1'},
+        )
+        h3_image_ids = {
+            'minimax-h3-image:modular-text-to-image:v1',
+            'minimax-h3-image:modular-edit-image:v1',
+            'minimax-h3-image:modular-multi-image-reference-edit:v1',
+        }
+        self.assertEqual(
+            {specification['id'].removeprefix('') for specification in payload["studioExecutionSpecs"]
+             if specification['pipelineClass'] == 'MiniMaxH3ImageModularPipeline'}, h3_image_ids,
+        )
+        self.assertEqual(
+            sum(specification["id"] not in public_flux3_spec_ids | pika_ids | h3_image_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
+                for specification in payload["studioExecutionSpecs"]),
+            278,
+        )
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -1001,7 +1068,13 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["control_image", "control_edit_image", "control_inpaint"],
         )
         self.assertEqual(depth_spec["mode"], "control_image")
-        self.assertIn("diffusersImageControl", [item[0] for item in depth_spec["roles"]])
+        self.assertEqual([(role, key) for role, key, _x, _y in depth_spec["roles"]
+                          if role in {"imageEncode", "denoise", "decode"}], [
+            ("imageEncode", "modules.DiffusersImage.EncodeInputs"),
+            ("denoise", "modules.DiffusersImage.Denoise"),
+            ("decode", "modules.DiffusersImage.DecodeLatents"),
+        ])
+        self.assertNotIn("diffusersImageControl", [item[0] for item in depth_spec["roles"]])
         self.assertIn("loadImage", [item[0] for item in depth_spec["roles"]])
 
         canny_spec = by_model["FluxCannyPipeline"]["studioExecutionSpecs"][0]
@@ -1023,7 +1096,13 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(redux_spec["mode"], "edit_image")
         self.assertEqual(redux_multi_spec["pipelineClass"], "FluxReduxPipeline")
         self.assertNotEqual(redux_multi_spec["contentHash"], redux_spec["contentHash"])
-        self.assertIn("diffusersImageEdit", [item[0] for item in redux_spec["roles"]])
+        self.assertEqual([(role, key) for role, key, _x, _y in redux_spec["roles"]
+                          if role in {"imageEncode", "denoise", "decode"}], [
+            ("imageEncode", "modules.DiffusersImage.EncodeInputs"),
+            ("denoise", "modules.DiffusersImage.Denoise"),
+            ("decode", "modules.DiffusersImage.DecodeLatents"),
+        ])
+        self.assertNotIn("diffusersImageEdit", [item[0] for item in redux_spec["roles"]])
         redux_requirement = by_model["FluxReduxPipeline"]["modeRequirements"]["edit_image"]["modelRequirements"][0]
         self.assertEqual(redux_requirement["repo"], "black-forest-labs/FLUX.1-dev")
         self.assertEqual(
@@ -1057,7 +1136,13 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(fill_spec["pipelineClass"], "FluxFillPipeline")
         self.assertEqual(fill_outpaint_spec["pipelineClass"], "FluxFillPipeline")
         self.assertNotEqual(fill_outpaint_spec["contentHash"], fill_spec["contentHash"])
-        self.assertIn("diffusersImageInpaint", [item[0] for item in fill_spec["roles"]])
+        self.assertEqual([(role, key) for role, key, _x, _y in fill_spec["roles"]
+                          if role in {"imageEncode", "denoise", "decode"}], [
+            ("imageEncode", "modules.DiffusersImage.EncodeInputs"),
+            ("denoise", "modules.DiffusersImage.Denoise"),
+            ("decode", "modules.DiffusersImage.DecodeLatents"),
+        ])
+        self.assertNotIn("diffusersImageInpaint", [item[0] for item in fill_spec["roles"]])
         self.assertIn("loadMask", [item[0] for item in fill_spec["roles"]])
 
         klein_specs = by_model["Flux2KleinPipeline"]["studioExecutionSpecs"]
@@ -1090,7 +1175,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ti2v_spec["mode"], "text_to_video")
         self.assertEqual(ti2v_spec["pipelineClass"], "WanTI2VPipeline")
         self.assertIn("wanGenerate", [item[0] for item in ti2v_spec["roles"]])
-        self.assertFalse(by_model["WanTI2VPipeline"]["supportsImageInput"])
+        self.assertTrue(by_model["WanTI2VPipeline"]["supportsImageInput"])
+        ti2v_image_spec, = [spec for spec in by_model['WanTI2VPipeline']['studioExecutionSpecs']
+                           if spec['mode'] == 'image_to_video']
+        self.assertEqual(ti2v_image_spec['pipelineClass'], 'WanTI2VImageToVideoPipeline')
+        self.assertEqual(ti2v_image_spec['executionProfileId'], 'wan-22-ti2v-5b:image-direct:v1')
+        self.assertIn('loadImage', [item[0] for item in ti2v_image_spec['roles']])
         self.assertEqual(
             by_model["WanTI2VPipeline"]["revisionCandidates"],
             ["b8fff7315c768468a5333511427288870b2e9635"],

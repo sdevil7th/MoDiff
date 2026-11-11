@@ -18,6 +18,7 @@ import zipfile
 
 from modiff import optimization_packages
 from modiff import runtime_overlays
+from modiff import runtime_profile
 from modiff import install as modiff_install
 from modiff.optional_runtimes import (
     GALLERY_MEDIA_RUNTIME_PROFILE_ID,
@@ -50,6 +51,53 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
             runtime_overlays._wheel_target_path("ninja-1.13.0.data/scripts/ninja"),
             "bin/ninja",
         )
+
+    def test_target_data_scheme_is_sealed_normalized_and_drift_checked(self):
+        name = "demo_pkg-1.0.0.data/data/wordlist/profanity_wordlist.txt"
+        members = self._with_complete_record(
+            [*self._default_members(), (name, b"reviewed words\n")],
+            "demo_pkg-1.0.0.dist-info",
+        )
+        artifact, archive = self._create_locked_wheel(members)
+        seal = runtime_overlays.locked_artifact_file_seal([artifact], self.archive_root)
+        self.assertEqual(seal["wordlist/profanity_wordlist.txt"], hashlib.sha256(b"reviewed words\n").hexdigest())
+        self.assertNotIn(name, seal)
+        with zipfile.ZipFile(archive) as wheel:
+            for info in wheel.infolist():
+                if info.is_dir():
+                    continue
+                destination = self.site_packages / runtime_overlays._wheel_target_path(info.filename)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(wheel.read(info))
+        runtime_overlays.normalize_locked_wheel_install(self.site_packages, [artifact], self.archive_root)
+        anchor = runtime_overlays.verify_artifact_anchored_overlay(self.site_packages, [artifact], self.archive_root)
+        self.assertEqual(anchor["fileSeal"], seal)
+        (self.site_packages / "wordlist/profanity_wordlist.txt").write_bytes(b"replaced")
+        with self.assertRaisesRegex(RuntimeError, "differs"):
+            runtime_overlays.verify_artifact_anchored_overlay(self.site_packages, [artifact], self.archive_root)
+
+    def test_target_data_scheme_preserves_collision_and_path_guards(self):
+        with self.subTest("collision"):
+            members = self._with_complete_record(
+                [*self._default_members(), ("demo_pkg-1.0.0.data/data/demo_pkg/__init__.py", b"collision")],
+                "demo_pkg-1.0.0.dist-info",
+            )
+            self.assert_invalid_wheel(members)
+        for member in (
+            "demo_pkg-1.0.0.data/data/../escape",
+            "demo_pkg-1.0.0.data/data/sitecustomize.py",
+            "demo_pkg-1.0.0.data/data/activate.pth",
+            "demo_pkg-1.0.0.data/data/C:/escape",
+            "demo_pkg-1.0.0.data/headers/header.h",
+            "demo_pkg-1.0.0.data/unknown/payload",
+        ):
+            with self.subTest(member=member), self.assertRaises(RuntimeError):
+                runtime_overlays._wheel_target_path(member)
+
+    def test_target_data_payload_requires_complete_authenticated_record(self):
+        members = [*self._default_members(),
+                   ("demo_pkg-1.0.0.data/data/wordlist/profanity_wordlist.txt", b"unrecorded data")]
+        self.assert_invalid_wheel(members)
 
     @staticmethod
     def _with_complete_record(members, dist_info):
@@ -400,7 +448,7 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
             mock.patch.object(tags, "sys_tags", return_value=iter(linux_tags)),
         ):
             selected = optimization_packages._artifact_install_plan(profile)
-        self.assertEqual(len(selected), 12)
+        self.assertEqual(len(selected), 2)
         self.assertEqual(
             [item["distribution"] for item in selected[-2:]],
             ["opencv-python-headless", "av"],
@@ -414,15 +462,15 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
             "8a032e8d8ebc73dec079364b9b4a6837638a2d106e8472314e685ffbf163e700",
         )
 
-    def test_gallery_composite_alias_requires_both_current_exact_digests(self):
+    def test_gallery_auxiliary_profile_requires_its_exact_digest_and_has_no_core_alias(self):
         gallery = optimization_packages.OPTIONAL_RUNTIME_PROFILES[
             GALLERY_MEDIA_RUNTIME_PROFILE_ID
         ]
         main = optimization_packages.OPTIONAL_RUNTIME_PROFILES[
             TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
         ]
-        # The gallery composite satisfies the Linux main profile, not the
-        # cross-platform release profile used here as a negative control.
+        # Media codecs augment the native base; their receipt does not claim to
+        # supply an older Transformers/PEFT environment.
         gallery_spec = {
             "kind": "optional_runtime",
             "id": gallery.id,
@@ -438,56 +486,32 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
                 main_public,
             )
         )
-        linux_main_id, linux_main_digest = gallery.satisfies_profiles[0]
-        linux_main_public = {
-            "id": linux_main_id,
-            "specDigest": linux_main_digest,
-        }
+        self.assertEqual(gallery.satisfies_profiles, ())
+        gallery_public = {"id": gallery.id, "specDigest": gallery.spec_digest}
         self.assertTrue(
             optimization_packages._environment_spec_satisfies_optional_profile(
                 gallery_spec,
-                linux_main_public,
+                gallery_public,
             )
         )
         self.assertFalse(
             optimization_packages._environment_spec_satisfies_optional_profile(
                 {**gallery_spec, "specDigest": "sha256:" + "0" * 64},
-                linux_main_public,
+                gallery_public,
             )
         )
 
-    def test_base_installer_records_the_exact_uv_executable_for_overlay_reuse(self):
-        managed = self.root / "tool-managed"
-        tool_root = managed / "tools" / "uv"
-        tool_root.mkdir(parents=True)
-        executable = tool_root / "uv.exe"
-        executable.write_bytes(b"reviewed-uv-test-binary")
-        digest = hashlib.sha256(executable.read_bytes()).hexdigest()
-        lock = {
-            "url": "https://github.com/astral-sh/uv/releases/download/test/uv.zip",
-            "archiveSha256": "a" * 64,
-            "executable": "uv.exe",
-            "executableSha256": digest,
-        }
+    def test_base_installer_and_overlay_share_operator_uv_without_a_release_pin(self):
+        executable = self.root / "uv"
+        executable.write_bytes(b"operator uv")
+        from modiff import tool_locks
         with (
-            mock.patch.object(modiff_install, "MANAGED_ROOT", managed),
-            mock.patch.object(modiff_install, "UV_TOOL_LOCKS", {("windows", "x86_64"): lock}),
-            mock.patch.object(modiff_install, "normalized_os", return_value="windows"),
-            mock.patch.object(modiff_install, "normalized_arch", return_value="x86_64"),
+            mock.patch.object(tool_locks.shutil, "which", return_value=str(executable)),
+            mock.patch.object(tool_locks, "_uv_version", return_value="0.12.23"),
         ):
             self.assertEqual(Path(modiff_install._ensure_uv()), executable)
-        receipt = (tool_root / "receipt.json").read_text(encoding="utf-8")
-        self.assertIn(digest, receipt)
-        with (
-            mock.patch.object(optimization_packages, "MANAGED_ROOT", managed),
-            mock.patch.object(optimization_packages, "UV_TOOL_LOCKS", {("windows", "x86_64"): lock}),
-            mock.patch.object(optimization_packages, "_platform_name", return_value="windows"),
-            mock.patch.object(optimization_packages.platform, "machine", return_value="AMD64"),
-        ):
             self.assertEqual(Path(optimization_packages._verified_uv_executable()), executable)
-            executable.write_bytes(b"tampered")
-            with self.assertRaisesRegex(RuntimeError, "integrity check"):
-                optimization_packages._verified_uv_executable()
+        self.assertFalse((executable.parent / "receipt.json").exists())
 
     def test_normalization_removes_only_known_receipts_and_generated_scripts(self):
         artifact, archive = self._create_locked_wheel(
@@ -922,11 +946,19 @@ else:
         managed = self.root / "cancel-managed"
         lock_path = managed / "optimizations" / "install.lock"
         started = self.root / "cancel-started"
+        ready = self.root / "cancel-grandchild-ready"
+        release = self.root / "cancel-grandchild-release"
         escaped = self.root / "cancel-escaped"
-        grandchild = (
-            "import time; from pathlib import Path; "
-            f"time.sleep(1.0); Path({str(escaped)!r}).write_text('escaped')"
-        )
+        grandchild = f"""
+import time
+from pathlib import Path
+Path({str(ready)!r}).write_text('ready')
+deadline = time.monotonic() + 30
+while not Path({str(release)!r}).exists() and time.monotonic() < deadline:
+    time.sleep(0.01)
+if Path({str(release)!r}).exists():
+    Path({str(escaped)!r}).write_text('escaped')
+"""
         child = (
             "import subprocess, sys, time; from pathlib import Path; "
             f"subprocess.Popen([sys.executable, '-c', {grandchild!r}]); "
@@ -954,14 +986,19 @@ else:
             worker = threading.Thread(target=run_tree, daemon=True)
             worker.start()
             deadline = time.monotonic() + 10
-            while not started.exists() and time.monotonic() < deadline:
+            while not (started.exists() and ready.exists()) and time.monotonic() < deadline:
                 time.sleep(0.02)
             self.assertTrue(started.exists(), "benign child did not start")
+            self.assertTrue(ready.exists(), "benign grandchild did not become ready")
+            self.assertFalse(escaped.exists())
             self.assertTrue(runtime_overlays.cancel_install(lease.token))
             worker.join(timeout=10)
             runtime_overlays.release_install(lease)
         self.assertFalse(worker.is_alive())
         self.assertEqual(outcome, ["cancelled"])
+        # Exercise survival after cancellation acknowledgment, independent of
+        # process-tree enumeration latency before cancellation returns.
+        release.write_text("release after cancellation and worker acknowledgment")
         time.sleep(1.25)
         self.assertFalse(escaped.exists())
 
@@ -1007,11 +1044,19 @@ else:
         managed = self.root / "watchdog-managed"
         lock_path = managed / "optimizations" / "install.lock"
         started = self.root / "watchdog-started"
+        attempt_escape = self.root / "watchdog-attempt-escape"
         escaped = self.root / "watchdog-escaped"
-        grandchild = (
-            "import time; from pathlib import Path; "
-            f"time.sleep(1.5); Path({str(escaped)!r}).write_text('escaped')"
-        )
+        grandchild = f"""
+import time
+from pathlib import Path
+attempt_escape = Path({str(attempt_escape)!r})
+deadline = time.monotonic() + 30
+while not attempt_escape.exists() and time.monotonic() < deadline:
+    time.sleep(0.01)
+if attempt_escape.exists():
+    time.sleep(1.5)
+    Path({str(escaped)!r}).write_text('escaped')
+"""
         child = (
             "import subprocess, sys, time; from pathlib import Path; "
             f"subprocess.Popen([sys.executable, '-c', {grandchild!r}]); "
@@ -1045,8 +1090,13 @@ finally:
         while not started.exists() and time.monotonic() < deadline:
             time.sleep(0.02)
         self.assertTrue(started.exists(), "watchdog child did not start")
+        # A delayed test runner must not confuse work done before parent death
+        # with an escaped descendant. Start its escape clock only after death.
+        time.sleep(1.75)
+        self.assertFalse(escaped.exists())
         process.kill()
         process.wait(timeout=10)
+        attempt_escape.write_text("attempt escape after parent death")
 
         acquired = None
         with (
@@ -1129,6 +1179,60 @@ finally:
         selector.assert_called_once_with(future)
         installer.assert_not_called()
         reserve.assert_not_called()
+
+
+class RuntimeOverlayAcceleratorIdentityTests(unittest.TestCase):
+    @staticmethod
+    def _receipt(profile):
+        spec = runtime_profile.load_manifest()["profiles"][profile]
+        requirement = runtime_profile.PROJECT_ROOT / spec["requirements"]
+        return {
+            "profile": profile,
+            "runtime_contract_schema": runtime_profile.RUNTIME_CONTRACT_SCHEMA,
+            "lock_digest": runtime_profile.lock_digest(requirement, profile=profile),
+        }
+
+    def test_verified_base_retains_instinct_identity_and_index_binding(self):
+        receipt = self._receipt("amd-instinct-rocm-linux")
+        native = {"verified": True, "packages": {"torch": "2.10.0+rocm7.14.0"}, "current_digest": "a" * 64}
+        with (
+            mock.patch.object(runtime_profile, "read_state", return_value=receipt),
+            mock.patch("modiff.base_runtime.base_runtime_status", return_value=native),
+        ):
+            identity = runtime_overlays._accelerator_identity()
+
+        self.assertEqual(identity["profileId"], "amd-instinct-rocm-linux")
+        self.assertEqual(identity["lockDigest"], receipt["lock_digest"])
+        bound_paths = {item["path"] for item in identity["contractFiles"]}
+        spec = runtime_profile.load_manifest()["profiles"][identity["profileId"]]
+        self.assertIn(str((runtime_profile.PROJECT_ROOT / spec["requirements"]).resolve()), bound_paths)
+        self.assertIn(str((runtime_profile.PROJECT_ROOT / spec["uv_config"]).resolve()), bound_paths)
+
+    def test_verified_base_does_not_bypass_drifted_specialist_receipt(self):
+        receipt = self._receipt("amd-instinct-rocm-linux")
+        receipt["lock_digest"] = "0" * 64
+        with (
+            mock.patch.object(runtime_profile, "read_state", return_value=receipt),
+            mock.patch("modiff.base_runtime.base_runtime_status", return_value={"verified": True}),
+            self.assertRaisesRegex(RuntimeError, "lock has drifted"),
+        ):
+            runtime_overlays._accelerator_identity()
+
+    def test_uv_base_supersedes_a_stale_simple_accelerator_receipt(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            version_source = Path(temporary) / "version.py"
+            version_source.write_text("cuda = '12.8'\nhip = None\n", encoding="utf-8")
+            distribution = SimpleNamespace(locate_file=lambda _: version_source)
+            native = {"verified": True, "packages": {"torch": "2.12.1+cu128"}, "current_digest": "a" * 64}
+            with (
+                mock.patch.object(runtime_profile, "read_state", return_value={"profile": "cpu", "lock_digest": "0" * 64}),
+                mock.patch("modiff.base_runtime.base_runtime_status", return_value=native),
+                mock.patch.object(runtime_overlays.metadata, "distribution", return_value=distribution),
+            ):
+                identity = runtime_overlays._accelerator_identity()
+
+        self.assertEqual(identity["profileId"], "nvidia-cuda")
+        self.assertEqual(identity["lockDigest"], native["current_digest"])
 
 
 if __name__ == "__main__":

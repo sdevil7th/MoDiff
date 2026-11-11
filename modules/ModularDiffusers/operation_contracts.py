@@ -1,10 +1,12 @@
 """Operation bindings projected from the existing reviewed Modular owners."""
 
 from copy import deepcopy
+from modiff.h3_image_studio_specs import image_stage_field_overrides, image_stage_excluded_fields
+from modiff.component_bundle_contracts import with_qwen_t2i_bundle_contract
 
 from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS, MODULAR_AUXILIARY_OPERATION_BINDINGS
 from modiff.modular_block_contracts import load_reviewed_modular_block_snapshot
-from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_action_adapter
 from modiff.modular_task_adapters import modular_task_adapters as _task_adapters
 from modiff.modular_workflow_discovery import load_reviewed_modular_workflow_snapshot
 from modiff.operation_contracts import (
@@ -68,17 +70,25 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
     generic = {(c["pipelineClass"], c["nodeKey"]): c for c in get_modular_operation_contracts(modules)}
     snapshot = load_reviewed_modular_workflow_snapshot()
     blocks_snapshot = load_reviewed_modular_block_snapshot()
-    definitions = {d["id"]: d for d in blocks_snapshot["blockDefinitions"]}
-    workflows = {(w["pipelineClass"], w["workflowId"]): w for w in blocks_snapshot["workflows"]}
+    from modiff.supplemental_modular_contracts import reviewed_modular_source_supplements
+    supplements = reviewed_modular_source_supplements()
+    pipelines = [*snapshot['contracts'], *(contract for source in supplements for contract in source['contracts'])]
+    source_blocks = [blocks_snapshot, *(source['blocks'] for source in supplements)]
+    all_definitions = [definition for source in source_blocks for definition in source['blockDefinitions']]
+    all_workflows = [workflow for source in source_blocks for workflow in source['workflows']]
+    if len({row['id'] for row in all_definitions}) != len(all_definitions):
+        raise ValueError('Reviewed Modular source groups have conflicting block identities.')
+    definitions = {d["id"]: d for d in all_definitions}
+    workflows = {(w["pipelineClass"], w["workflowId"]): w for w in all_workflows}
     result = []
-    for pipeline in snapshot["contracts"]:
+    for pipeline in pipelines:
         pipeline_class = pipeline["pipelineClass"]
         for workflow in pipeline["workflows"]:
             workflow_id = workflow["id"]
             blocks = workflows[pipeline_class, workflow_id]
             root = definitions[blocks["rootBlockDefinitionId"]]
-            for task, adapter in _task_adapters(pipeline_class, workflow):
-                whole = reviewed_whole_workflow_graph_adapter(pipeline_class, workflow_id)
+            for task, adapter in _task_adapters(pipeline_class, workflow, authoring=True):
+                whole = reviewed_whole_workflow_action_adapter(pipeline_class, workflow_id, adapter['actionSequence'][0])
                 # A partial module registry must not advertise an executable
                 # workflow whose required stage action is absent.
                 node_keys = [MODULAR_ACTION_BINDINGS[key][1] for key in adapter["actionSequence"]]
@@ -97,22 +107,42 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     loader=True,
                 )
                 members = _loader_members(root, blocks, definitions, pipeline_class)
+                if pipeline_class == "QwenImageModularPipeline" and task == "text_to_image":
+                    # ModelsLoader groups only pretrained text encoders and
+                    # tokenizers; Guider is a separate controlled input.
+                    members["text_encoders"] = [item for item in members["text_encoders"]
+                                                if item["name"] in {"text_encoder", "tokenizer"}]
                 if loader:
                     for port in loader["ports"]:
                         if port["direction"] == "output" or port["name"] in {"unet", "vae", "controlnet"}:
                             port["roles"] = ["component"]
+                    execution_mode = None
+                    if adapter.get("source") == "mode" and task != adapter.get("adapterId"):
+                        from modiff.studio_execution_specs import studio_capability_definition
+
+                        capability = studio_capability_definition(pipeline_class)
+                        mode = adapter["adapterId"]
+                        if (
+                            capability and mode in capability.get("modes", ())
+                            and (capability.get("modeOutputKinds") or {}).get(
+                                mode, capability.get("outputKind")
+                            ) == "image"
+                        ):
+                            execution_mode = mode
                     loader = with_operation_semantics(
                         loader,
                         workflow_id=workflow_id,
                         values={
                             "model_type": pipeline_class,
                         },
+                        execution_mode=execution_mode,
                     )
-                    # Only the loader's existing allowlist can select workflow
-                    # pruning. Other loaders retain their current unscoped path.
+                    # Package-owned stage adapters require the same exact
+                    # workflow on their loader and sealed stage state. Other
+                    # loaders retain the existing pruning allowlist boundary.
                     from .loaders import REVIEWED_BUILTIN_WORKFLOWS
 
-                    if workflow_id in REVIEWED_BUILTIN_WORKFLOWS.get(pipeline_class, ()):
+                    if whole or workflow_id in REVIEWED_BUILTIN_WORKFLOWS.get(pipeline_class, ()):
                         loader["binding"]["values"]["workflow_id"] = workflow_id
                     for port in loader["ports"]:
                         if port["name"] in members:
@@ -132,7 +162,7 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     result.append(with_operation_semantics(helper, workflow_id=workflow_id,
                                                          values={"layout": "horizontal_reference"}))
                 actions = adapter["actionSequence"]
-                whole = reviewed_whole_workflow_graph_adapter(pipeline_class, workflow_id)
+                whole = reviewed_whole_workflow_action_adapter(pipeline_class, workflow_id, adapter['actionSequence'][0])
                 for index, action_key in enumerate(actions):
                     role, node_key = MODULAR_ACTION_BINDINGS[action_key]
                     if whole:
@@ -146,6 +176,10 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                             task=task,
                             operation_id=operation_id,
                             node_key=node_key,
+                            field_overrides=(image_stage_field_overrides(action_key, workflow_id)
+                                if pipeline_class == 'MiniMaxH3ImageModularPipeline' else None),
+                            excluded_fields=(image_stage_excluded_fields(action_key)
+                                if pipeline_class == 'MiniMaxH3ImageModularPipeline' else ()),
                         )
                         if record is None:
                             continue
@@ -208,11 +242,22 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     # Publish that requirement on the operation itself as well
                     # as the connected starter, including individually inserted nodes.
                     for port in record["ports"]:
+                        if action_key == 'workflow_joint_av_before_encode':
+                            # One generic stage has two distinct official task
+                            # input routes. Do not author a reference-list
+                            # supplier into a first/last-frame workflow.
+                            if port['name'] == 'references':
+                                port['hidden'] = 'references' not in adapter['requiredInputs']
+                            elif port['name'] in {'image', 'last_image'}:
+                                port['hidden'] = 'references' in adapter['requiredInputs']
+                        if port['name'] == 'num_inference_steps' and port['name'] in adapter['requiredInputs']:
+                            port['hidden'] = False
                         if (port["direction"] == "input" and port["semantics"]["kind"] == "media"
                                 and port["name"] in adapter["requiredInputs"]):
                             port["required"] = True
-                    result.append(record)
-                    helper_types.update(t for p in record["ports"] if p["direction"] == "input" for t in p["types"])
+                    result.append(with_qwen_t2i_bundle_contract(record))
+                    helper_types.update(t for p in record["ports"]
+                                        if p["direction"] == "input" and not p['hidden'] for t in p["types"])
                 for type_name in sorted(helper_types & MODULAR_AUXILIARY_OPERATION_BINDINGS.keys()):
                     operation_id, node_key = MODULAR_AUXILIARY_OPERATION_BINDINGS[type_name]
                     helper = build_pipeline_operation_contract(
@@ -220,8 +265,15 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     )
                     if helper:
                         helper.update(nodeType="reference_assembly", decomposition="bundle")
-                        result.append(with_operation_semantics(helper, workflow_id=workflow_id))
-                if pipeline_class == "StableDiffusionXLModularPipeline" and "custom_guider" in helper_types:
+                        helper_module, helper_action = node_key.rsplit('.', 1)
+                        # Shared helpers select their library; legacy helpers
+                        # already own one fixed schema and expose no selector.
+                        helper_values = ({'pipeline_class': pipeline_class}
+                            if 'pipeline_class' in modules[helper_module][helper_action]['params'] else {})
+                        result.append(with_operation_semantics(helper, workflow_id=workflow_id,
+                            values=helper_values))
+                metadata = get_model_type_metadata(pipeline_class) or {}
+                if metadata.get('guider_options') and "custom_guider" in helper_types:
                     helper = build_pipeline_operation_contract(
                         modules, pipeline_class=pipeline_class, task=task,
                         operation_id="diffusion.guidance", node_key="modules.ModularDiffusers.Guider",
@@ -237,7 +289,7 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     layers = build_pipeline_operation_contract(
                         modules, pipeline_class=pipeline_class, task=task,
                         operation_id="diffusion.guidance_layers", node_key="modules.ModularDiffusers.Layers",
-                    )
+                    ) if pipeline_class == "StableDiffusionXLModularPipeline" else None
                     if layers:
                         layers.update(nodeType="guidance_layers", decomposition="bundle")
                         result.append(with_operation_semantics(

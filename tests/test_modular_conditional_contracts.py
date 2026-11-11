@@ -27,11 +27,11 @@ class ModularConditionalContractTests(unittest.TestCase):
         snapshot = load_reviewed_modular_conditional_snapshot()
         self.assertEqual(snapshot["schemaVersion"], 1)
         self.assertEqual(snapshot["diffusersRevision"], PINNED_DIFFUSERS_REVISION)
-        self.assertEqual(len(snapshot["pipelines"]), 34)
-        self.assertEqual(len(snapshot["blockDefinitions"]), 632)
-        self.assertEqual(sum(len(item["placements"]) for item in snapshot["pipelines"]), 1051)
-        self.assertEqual(sum(len(item["conditionals"]) for item in snapshot["pipelines"]), 73)
-        self.assertEqual(sum(len(item["workflows"]) for item in snapshot["pipelines"]), 94)
+        self.assertEqual(len(snapshot["pipelines"]), 36)
+        self.assertEqual(len(snapshot["blockDefinitions"]), 662)
+        self.assertEqual(sum(len(item["placements"]) for item in snapshot["pipelines"]), 1105)
+        self.assertEqual(sum(len(item["conditionals"]) for item in snapshot["pipelines"]), 77)
+        self.assertEqual(sum(len(item["workflows"]) for item in snapshot["pipelines"]), 98)
 
     def test_ltx2_duration_keeps_run_and_skip_alternatives(self):
         snapshot = load_reviewed_modular_conditional_snapshot()

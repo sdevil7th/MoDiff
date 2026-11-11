@@ -5,6 +5,75 @@ import pytest
 from modiff.workflow_auto_resource import build_workflow_auto_plan
 
 
+@pytest.mark.parametrize('pipeline', ['Flux2KleinModularPipeline', 'FluxKontextModularPipeline'])
+@pytest.mark.parametrize('conflicting_explicit_modes', [False, True])
+@pytest.mark.parametrize('registered_profile', [False, True])
+def test_inferred_reviewed_edit_aliases_use_conservative_resource_mode(
+    monkeypatch, tmp_path, pipeline, conflicting_explicit_modes, registered_profile,
+):
+    from types import SimpleNamespace
+    from modiff import workflow_auto_resource as planner
+
+    graph = modular_graph(pipeline, 'edit_image')
+    if conflicting_explicit_modes:
+        graph['nodes']['loader']['params']['mode'] = {'value': 'edit_image'}
+        graph['nodes']['denoise']['params']['mode'] = {'value': 'multi_image_reference_edit'}
+    before = deepcopy(graph)
+    profile = SimpleNamespace(
+        id='test:reviewed-edit', model_type=pipeline,
+        modes=('edit_image', 'multi_image_reference_edit'),
+        loader_module='modules.ModularDiffusers', loader_action='ModelsLoader',
+        execution_path='modular-diffusers',
+    )
+    if registered_profile:
+        if pipeline == 'Flux2KleinModularPipeline':
+            from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+
+            registered = DIFFUSERS_EXECUTION_PROFILES['flux2-klein:modular']
+            graph['nodes']['loader']['params']['execution_profile_id'] = {'value': 'flux2-klein:modular'}
+            graph['nodes']['loader']['params']['repo_id'] = {'value': registered.default_repo}
+        profiles, reason = planner.resolve_execution_profiles_for_loader(
+            'modules.ModularDiffusers', 'ModelsLoader',
+            {field: param['value'] for field, param in graph['nodes']['loader']['params'].items()},
+        )
+        assert reason is None and len(profiles) == 1
+        profile = profiles[0]
+        before = deepcopy(graph)
+    monkeypatch.setattr(
+        planner, 'resolve_execution_profiles_for_loader',
+        lambda module, action, values: ((profile,), None) if action == 'ModelsLoader' else ((), None),
+    )
+    requests = []
+
+    def recipe(payload, **kwargs):
+        form = payload['form']
+        requests.append(deepcopy(form))
+        return {'candidates': [{
+            'id': 'reviewed-edit', 'executionProfileId': profile.id,
+            'modelRepo': form['modelRepo'], 'modelType': pipeline,
+            'mode': form['mode'], 'loaderModule': profile.loader_module,
+            'loaderAction': profile.loader_action, 'executionPath': profile.execution_path,
+            'dtype': 'float32', 'quantizationMode': 'none', 'offloadMode': 'none',
+            'autoOffload': False, 'canAutoRun': True, 'proof': {'status': 'declared_safe'},
+            'requirements': {'systemRamBytes': 1, 'vramBytes': 0, 'diskFreeBytes': 0},
+        }]}
+
+    result = planner.build_workflow_auto_plan(
+        graph, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path),
+        plan_recipe=recipe,
+        hardware={'systemMemory': {'availableBytes': 1000},
+                  'accelerator': {'freeBytes': 1000}, 'offloadDisk': {'freeBytes': 1000}},
+    )
+    assert graph == before
+    if conflicting_explicit_modes:
+        assert not result['canAutoRun'] and any('ambiguous' in issue for issue in result['issues'])
+        assert requests == []
+    else:
+        assert result['canAutoRun'], result['issues']
+        expected = 'multi_image_reference_edit' if 'multi_image_reference_edit' in profile.modes else 'edit_image'
+        assert requests[0]['mode'] == expected
+
+
 def modular_graph(pipeline, mode):
     from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS
     from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
@@ -43,16 +112,10 @@ def modular_graph(pipeline, mode):
 
 
 def test_auto_resolves_sdxl_img2img_from_the_executable_graph(monkeypatch, tmp_path):
-    from types import SimpleNamespace
     from modiff import workflow_auto_resource as planner
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
 
-    profile = SimpleNamespace(
-        model_type="StableDiffusionXLModularPipeline",
-        modes=("text_to_image", "image_to_image"),
-        loader_module="modules.ModularDiffusers",
-        loader_action="ModelsLoader",
-        execution_path="modular-diffusers",
-    )
+    profile = DIFFUSERS_EXECUTION_PROFILES["sdxl-base:modular"]
     monkeypatch.setattr(
         planner,
         "resolve_execution_profiles_for_loader",
@@ -74,7 +137,10 @@ def test_auto_resolves_sdxl_img2img_from_the_executable_graph(monkeypatch, tmp_p
         plan_recipe=recipe,
         hardware={"systemMemory": {}, "accelerator": {}, "offloadDisk": {}},
     )
-    assert requests and requests[0]["form"]["mode"] == "image_to_image"
+    # The actual registered profile names this upstream image-to-image task
+    # edit_image; task discovery must retain that exact recipe identity.
+    assert requests and requests[0]["form"]["mode"] == "edit_image"
+    assert requests[0]["form"]["executionProfileId"] == profile.id
     assert not result["canAutoRun"], "Resolving a task does not grant an unqualified resource recipe."
     assert graph == before
 
@@ -196,7 +262,49 @@ def test_output_history_uses_recognized_graph_task_without_rewriting_form():
     ]
 
 
-def test_conflicting_explicit_modes_remain_unresolved_even_for_a_single_mode_profile(monkeypatch, tmp_path):
+@pytest.mark.parametrize('module,loader,consumer,pipeline,task', [
+    ('DiffusersImage', 'LoadPipeline', 'Inpaint', 'ZImageInpaintPipeline', 'inpaint'),
+    ('DiffusersImage', 'LoadPipeline', 'Inpaint', 'ZImageInpaintPipeline', 'outpaint'),
+    ('DiffusersImage', 'LoadPipeline', 'PredictMap', 'MarigoldDepthPipeline', 'depth_estimation'),
+    ('DiffusersImage', 'LoadPipeline', 'UnconditionalGenerate', 'DDPMPipeline', 'unconditional_image'),
+    ('HuggingFaceTransformers', 'LoadDepthEstimationModel', 'PredictDepth', 'AutoModelForDepthEstimation', 'depth_estimation'),
+    ('HuggingFaceTransformers', 'LoadImageTextToTextModel', 'GenerateImageVideoText', 'AutoModelForImageTextToText', 'image_to_text'),
+    ('ImageOperations', 'ProcessImage', None, 'BuiltinImageOperationV1', 'image_crop'),
+])
+def test_ordinary_image_receipts_use_validated_consumer_task(module, loader, consumer, pipeline, task):
+    from modiff.execution_input_provenance import capture_generation_inputs, build_resolved_execution_inputs
+    from modiff.workflow_task_identity import graph_task_receipts
+
+    nodes = {'owner': {'module': 'modules.' + module, 'action': loader, 'params': {}}}
+    records = {'owner': capture_generation_inputs('owner', nodes['owner'], {'pipeline_class': pipeline})}
+    output_id = 'owner'
+    if consumer:
+        output_id = 'consumer'
+        nodes[output_id] = {'module': 'modules.' + module, 'action': consumer, 'params': {
+            'pipeline' if loader != 'LoadImageTextToTextModel' else 'model': {
+                'sourceId': 'owner', 'sourceKey': 'pipeline' if loader != 'LoadImageTextToTextModel' else 'model'}}}
+        records[output_id] = capture_generation_inputs(output_id, nodes[output_id], {'executed_task': task})
+    else:
+        records['owner'] = capture_generation_inputs('owner', nodes['owner'], {
+            'pipeline_class': pipeline, 'executed_task': task})
+    expected = [{'loaderId': 'owner', 'pipelineClass': pipeline, 'task': task}]
+    assert graph_task_receipts(nodes, records) == expected
+    receipt = build_resolved_execution_inputs({'nodes': nodes}, records, task_id='run', attempt_index=0, node_id=output_id)
+    assert receipt['graphTasks'] == expected
+    # An authoring label cannot rescue absent or conflicting consumed evidence.
+    nodes[output_id]['params']['mode'] = {'value': task}
+    records[output_id]['fields'].pop('executed_task')
+    assert graph_task_receipts(nodes, records)[0]['task'] is None
+    assert graph_task_receipts(nodes, {}) == []
+    if consumer:
+        records[output_id] = capture_generation_inputs(output_id, nodes[output_id], {'executed_task': 'video_to_video'})
+        assert graph_task_receipts(nodes, records)[0]['task'] is None
+
+
+
+@pytest.mark.parametrize('profile_identity', [{}, {'id': 'generic-single-mode-profile'}],
+                         ids=['missing-identity', 'unrelated-identity'])
+def test_conflicting_explicit_modes_remain_unresolved_even_for_a_single_mode_profile(monkeypatch, tmp_path, profile_identity):
     from types import SimpleNamespace
     from modiff import workflow_auto_resource as planner
 
@@ -206,6 +314,7 @@ def test_conflicting_explicit_modes_remain_unresolved_even_for_a_single_mode_pro
         loader_module="modules.ModularDiffusers",
         loader_action="ModelsLoader",
         execution_path="modular-diffusers",
+        **profile_identity,
     )
     monkeypatch.setattr(
         planner,
@@ -372,3 +481,34 @@ def test_explicit_upstream_composition_uses_validated_placements_and_rejects_par
     first = next(k for k in nodes if k != 'loader')
     nodes[first]['params']['block_contract_hash']['value'] = 'sha256:' + '0' * 64
     assert modular_graph_tasks(nodes, 'loader', list(nodes)[1:], 'QwenImageModularPipeline') == set()
+
+
+@pytest.mark.parametrize('pipeline', ['Flux3ModularPipeline', 'Flux3DistilledModularPipeline'])
+def test_source_wrapper_transports_match_only_the_complete_declared_bundle(pipeline):
+    from modiff.workflow_task_identity import modular_graph_tasks
+
+    nodes = modular_graph(pipeline, 'edit_image')['nodes']
+    nodes['loader']['params']['workflow_id'] = {'value': 'image_conditioned'}
+    consumers = list(nodes)[1:]
+    # Existing upstream-only topology stays recognizable; this grants no
+    # runtime/provider authority and does not mutate or repair saved graphs.
+    assert modular_graph_tasks(nodes, 'loader', consumers, pipeline) == {'edit_image'}
+    for target in ('text_encoder', 'denoise'):
+        nodes[target]['params']['reference_binding'] = {
+            'sourceId': 'vae_encoder', 'sourceKey': 'reference_binding',
+        }
+    before = deepcopy(nodes)
+    assert modular_graph_tasks(nodes, 'loader', consumers, pipeline) == {'edit_image'}
+    assert nodes == before
+    for target in ('text_encoder', 'denoise'):
+        partial = deepcopy(nodes)
+        del partial[target]['params']['reference_binding']
+        assert modular_graph_tasks(partial, 'loader', consumers, pipeline) == set()
+    forged = deepcopy(nodes)
+    forged['denoise']['params']['reference_binding']['sourceKey'] = 'unreviewed_binding'
+    assert modular_graph_tasks(forged, 'loader', consumers, pipeline) == set()
+    extra = deepcopy(nodes)
+    extra['denoise']['params']['unreviewed_transport'] = {
+        'sourceId': 'vae_encoder', 'sourceKey': 'reference_binding',
+    }
+    assert modular_graph_tasks(extra, 'loader', consumers, pipeline) == set()

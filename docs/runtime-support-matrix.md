@@ -1,5 +1,12 @@
 # Runtime support matrix
 
+Native uv setup includes Transformers and PEFT on every target. Ordinary
+generation uses eager PyTorch SDPA; Windows uses the default allocator and does
+not require Triton. Compiler-dependent optimizations require an executed kernel
+probe, and mandatory FlexAttention workflows check that capability before
+loading weights. The CI matrix exercises native CPU setup on Linux, Windows,
+and macOS; GPU and full-model claims still require the physical checks below.
+
 | Profile | Tier | Automated proof | Physical proof |
 |---|---|---|---|
 | NVIDIA CUDA (Windows/Ubuntu x64) | Supported | Manifest, resolver, CPU-host contract | Required for release |
@@ -12,6 +19,30 @@
 | CPU | Supported | Install and tensor smoke | Reference host required |
 
 “Supported” describes installation/runtime qualification, not model performance. `/model_capabilities` remains the source of graph capability. Exact model, dtype, placement, optimization, driver, and hardware qualification is receipt-specific; an unqualified recipe may be runnable with a warning but must not be described as optimized.
+
+## Physical release claims
+
+Use the generated release-candidate report's `physicallyObservedProfiles` and
+`physicallyQualifiedProfiles` separately from the installer tiers above. Keep
+the actual OS, device index, backend, runtime, model pin and resource recipe on
+each receipt. A successful Windows CUDA reference does not qualify Ubuntu CUDA
+or a larger model. CPU execution on a GPU host does not qualify its GPU profile.
+
+Conditional AMD/ROCm model evidence remains an observation under its captured
+tier. It does not promote an experimental stack or another AMD device. Likewise,
+macOS CI and an available MPS installer do not establish Apple Silicon model
+execution. When an Apple, Intel or Instinct reference host is unavailable, list
+its physical model qualification as unverified and keep the corresponding
+release gate held. Do not infer a hardware pass from registry discovery,
+installation, tensor-only tests, an output file without its original task, or
+another machine's success.
+
+Hardware registration checks the run's measured device/backend against captured
+host metadata, and requires complete original task, runtime and source evidence.
+Retained results keep their original capture time and source. Missing evidence
+is a recovery or qualification task; current metadata cannot replace an absent
+historical observation. These boundaries preserve useful local test results
+without making a release-wide model or memory-fit claim.
 
 Graph resource measurements use peak-accounting version 2. The serial worker
 preserves accelerator high-water marks across per-node counter resets, including
@@ -33,13 +64,17 @@ contain ordinary nodes; only genuine Modular routes expose upstream hierarchy.
 | --- | --- | --- |
 | Qwen Image | Reviewed text-to-image, image-to-image, inpaint, ControlNet, Edit/Edit Plus, and Layered routes; typed Modular composition, iteration links, saved User Nodes, and explicit repairs | Fine geometry and material instructions can drift. Multi-reference editing is not pixel-exact preservation; RGBA layers do not promise perfect object isolation. ControlNet conditions must have the channels required by the selected encoder; Canny has an explicit RGB option while retaining its grayscale default. |
 | FLUX | Native Modular FLUX.1, Kontext, FLUX.2, and Klein Base/Distilled routes; ordinary Fill, control, Redux, KV, and reviewed adapter paths | Dedicated Canny/Depth weights, separate ControlNets, ordinary Klein, and Klein KV have different contracts. Outpaint seams, masked details, colour adherence, and multi-reference dominance or duplicated subjects require visual review. Tiny attention/LoRA-scale effect tests do not establish full-weight native use with a loaded LoRA. |
-| Audio | MiniMax Music3's native Modular hierarchy and ordinary ACE-Step, LongCat AudioDiT, and AudioLDM2 adapters | Music, sound, lyrics, variation, and editing controls are task-specific. LongCat duration follows upstream VAE-frame quantization; do not pad a result to claim an exact duration. AudioLDM2 exposes candidate waveforms through Audio Variations. Successful delivery and repeatable hashes do not establish listening, lyric, seam, or publication approval. |
+| Audio | MiniMax Music3's native Modular hierarchy and ordinary ACE-Step, Stable Audio, LongCat AudioDiT, and AudioLDM2 adapters | Music, sound, lyrics, variation, and editing controls are task-specific. LongCat duration follows upstream VAE-frame quantization; do not pad a result to claim an exact duration. AudioLDM2 exposes candidate waveforms through Audio Variations. Successful delivery and repeatable hashes do not establish listening, lyric, seam, or publication approval. |
 
 Use [ordinary image node guidance](../modules/DiffusersImage/README.md) for
 FLUX entry selection, latent decode, attention arguments, and adapter inputs.
 Use the [Modular guide](../modules/ModularDiffusers/README.md) for editable
 upstream compositions and the [API reference](api-reference.md#studio-preview-state)
 for captured execution inputs and measured output metadata.
+The [audio workflow guide](audio-workflows.md) distinguishes integrated generation,
+native Music3 stages, speech transcription, deterministic processing and selected
+adapter authoring. Declared offload options and graph compatibility do not
+establish per-model Windows memory fit or Automatic eligibility.
 
 ## Acceptance and remaining qualification
 

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "kind": "versioned-creative-recipe-revision",
+  "revision": 3,
+  "status": "authored-native-acceptance-pending",
+  "reason": "User rejected the referenced paper boat's unrealistic powered-speedboat motion. Preserve v2; revise only these two Pika candidates.",
+  "baseDescriptor": "motion-recipes.v2.json",
+  "preserveApprovedOutputs": true,
+  "executionSettings": {
+    "modelBinding": "pika",
+    "width": 832,
+    "height": 480,
+    "numFrames": 124,
+    "fps": 24,
+    "seed": 20261102,
+    "sampler": "official-fixed-six-evaluations",
+    "offload": "group-disk",
+    "referenceShortEdge": 1024,
+    "runtimeOrSamplerChanges": false
+  },
+  "prompts": {
+    "reference_natural_drift": "subject_definitions: <Subject 1> is the small red folded-paper boat in <Picture 1>. Its triangular upper fold and hull are made from thin matte red paper. The picture supplies its exact folds, colour and small handmade proportions.\n\nsummary: [reference generation] A realistic observational shot of <Subject 1> floating on a quiet garden pond. Gentle natural drift and a smooth lateral camera move make the scene visibly change while the paper boat behaves like a very light floating object.\n\nretention_analysis: Preserve the red folded-paper construction, triangular fold, low paper hull and handmade proportions from <Picture 1>. Use the picture as identity guidance, not a fixed first or last composition. The subject remains a paper boat throughout.\n\ndetailed_description: [Shot 1] Natural live-action photography, one continuous five-second shot. A very light surface current carries <Subject 1> slowly to the right by about half its hull length over the whole shot. It bobs slightly and turns only a few degrees. Small soft ripples touch its sides and quickly settle into the surrounding water. The water stays calm, with a soft reflection close beneath the paper hull. A low camera slides smoothly sideways for forty centimetres and changes viewing angle by twenty degrees, revealing modest parallax between the boat, pond-edge plants and a distant wooden jetty. Most visible motion comes from this camera travel, not boat speed. Hold a medium-wide view with the entire paper boat and space around it visible from beginning to end; keep its apparent size nearly constant. Finish while it continues to drift gently.\n\noverall_soundscape: Quiet garden ambience, a light breeze in nearby leaves and very soft water lapping. These quiet sounds match the slow motion. No dialogue or music.\n\nnon_diegetic_music: N/A",
+    "first_frame_natural_drift": "For the target video, at 0.00 seconds into the target video, <Picture 1> (from [Shot 1]) is fully referenced.\n\nintegrated_multimodal_description: [Shot 1] Start with the small red folded-paper boat, quiet pond, colours and framing in <Picture 1>. Natural live-action photography, one continuous five-second shot. Preserve the thin red paper, triangular fold and handmade hull. A very light surface current carries the paper boat slowly to the right by about half its hull length during the shot. It bobs slightly and turns only a few degrees. Small soft ripples touch its sides and quickly settle; its reflection stays close beneath the low paper hull. After the opening moment the camera slides smoothly sideways for forty centimetres and changes viewing angle by twenty degrees. Nearby water details and pond-edge plants shift with modest visible parallax. Most motion comes from the camera, while the boat drifts gently. Keep the whole paper boat and surrounding water visible, with nearly constant apparent size and calm water throughout. End while the gentle drift continues.\n\noverall_soundscape: Quiet garden ambience, a light breeze in nearby leaves and very soft water lapping, aligned with the subtle movement. No dialogue or music.\n\nnon_diegetic_music: N/A"
+  },
+  "recipes": [
+    {
+      "id": "pika_reference_natural_drift_v3",
+      "title": "Pika — Referenced paper boat with natural drift — v3",
+      "task": "reference_to_video_with_audio",
+      "baseRecipeId": "pika_reference_motion_v2",
+      "promptKey": "reference_natural_drift",
+      "inputPolicy": "Same retained paper-boat identity reference; no silent subject replacement."
+    },
+    {
+      "id": "pika_first_frame_natural_drift_v3",
+      "title": "Pika — First-frame paper boat with natural drift — v3",
+      "task": "first_last_frame_to_video_with_audio",
+      "baseRecipeId": "pika_first_frame_v2",
+      "promptKey": "first_frame_natural_drift",
+      "inputPolicy": "Same retained opening image; last frame intentionally absent."
+    }
+  ],
+  "creativeAcceptance": [
+    "Recognizable folded-paper construction and original red boat identity",
+    "Plausible slow drift and subtle bobbing with small ripples",
+    "Visible camera travel or parallax without turning the paper boat into a powered craft",
+    "Entire boat stays visible with stable apparent size and temporal coherence",
+    "Original audio reviewed separately from visual and technical acceptance"
+  ],
+  "publicationApproved": false
+}

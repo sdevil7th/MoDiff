@@ -69,6 +69,11 @@ def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
     workflows = next((p['workflows'] for p in load_reviewed_modular_workflow_snapshot()['contracts']
                       if p['pipelineClass'] == pipeline_class), ())
     if not workflows:
+        from modiff.supplemental_modular_contracts import reviewed_supplemental_modular_contract
+
+        supplement = reviewed_supplemental_modular_contract(pipeline_class)
+        workflows = supplement['workflows'] if supplement else ()
+    if not workflows:
         return set()
     helpers = {binding[1] for binding in MODULAR_AUXILIARY_OPERATION_BINDINGS.values()}
     helpers.update({"modules.ModularDiffusers.Guider", "modules.ModularDiffusers.Layers"})
@@ -84,6 +89,14 @@ def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
     candidates = []
     routes = [(task, adapter, workflow['id']) for workflow in workflows
               for task, adapter in modular_task_adapters(pipeline_class, workflow)]
+    # Saved H3 actions remain recognized alongside the newer shared stages.
+    # This read-only projection never changes immutable library definitions or
+    # admits an edited composition, a model artifact or an Auto recipe.
+    from modiff.modular_whole_workflow_contracts import SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS
+
+    routes.extend((workflow['taskId'], adapter, workflow['id']) for workflow in workflows
+                  if (adapter := SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS.get((pipeline_class, workflow['id'])))
+                  and adapter not in [route for _, route, _ in routes])
     for task, route, workflow_id in routes:
         names = {
             action: MODULAR_ACTION_BINDINGS[action][1]
@@ -107,6 +120,15 @@ def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
         selected_workflow = nodes.get(loader_id, {}).get('params', {}).get('workflow_id', {}).get('value')
         if selected_workflow and selected_workflow != workflow_id:
             continue
+        if any(action.startswith('workflow_joint_av_') for action in route['actionSequence']):
+            if (selected_workflow != workflow_id
+                    or nodes.get(loader_id, {}).get('params', {}).get('model_type', {}).get('value') != pipeline_class
+                    or any(stages[ids[action]].get('params', {}).get('block_path') != {'value': block}
+                           or stages[ids[action]].get('params', {}).get('pipeline_components') != {
+                               'sourceId': loader_id, 'sourceKey': 'pipeline_components',
+                           }
+                           for action, block in zip(route['actionSequence'], route['upstreamBlockSequence']))):
+                continue
         expected = {
             (ids[e['producerAction']], e['producerOutput'], ids[e['consumerAction']], e['consumerInput'])
             for e in route['stateEdges']
@@ -122,6 +144,24 @@ def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
         actual = {
             edge for edge in actual if not (edge[1], edge[3]) in {("out_width", "width"), ("out_height", "height")}
         }
+        if actual != expected:
+            # Starters also wire complete source-declared wrapper transports.
+            # Accept that exact bundle, never an arbitrary extra stage link.
+            from modiff.studio_execution_specs import studio_execution_spec_for_pair
+
+            profile = nodes.get(loader_id, {}).get('params', {}).get('execution_profile_id', {}).get('value')
+            specification = studio_execution_spec_for_pair(
+                pipeline_class, task, execution_profile_id=profile,
+            )
+            if specification is not None:
+                by_key = {f"{node['module']}.{node['action']}": key for key, node in stages.items()}
+                roles = {role: by_key[key] for role, key, *_ in specification['roles'] if key in by_key}
+                expected |= {
+                    (roles[source], output, roles[target], field)
+                    for source, output, target, field in specification['edges']
+                    if source in roles and target in roles
+                    and (output, field) not in {('out_width', 'width'), ('out_height', 'height')}
+                }
         if actual == expected:
             candidates.append((task, route))
     # Some tasks share actions/wires but differ in optional conditioning inputs.
@@ -189,19 +229,149 @@ def resource_consumers(nodes: dict, loader_id: str, loader_ids: set[str]) -> lis
         found.update(additions)
 
 
+def direct_image_stage_owner(nodes: dict, stage_id: str) -> tuple[str, tuple[str, ...]]:
+    """Resolve one exclusive builtin pipeline/adapter route without execution.
+
+    This proves topology only, never adapter bytes, placement or warm storage.
+    Each intermediate output must feed the next adapter alone; the terminal
+    output must feed exactly the three distinct current image stage actions.
+    """
+    stages = {'EncodeInputs', 'Denoise', 'DecodeLatents'}
+    node = nodes.get(stage_id, {})
+    if node.get('module') != 'modules.DiffusersImage' or node.get('action') not in stages:
+        raise ValueError('A declared direct image stage is required.')
+    pipeline = node.get('params', {}).get('pipeline', {})
+    endpoint = (pipeline.get('sourceId'), pipeline.get('sourceKey'))
+    current, output = endpoint
+    reverse, seen = [], set()
+    while current:
+        if current in seen or len(reverse) > 32:
+            raise ValueError('The direct image adapter route is cyclic or exceeds 32 adapters.')
+        seen.add(current)
+        source = nodes.get(current, {})
+        identity = (source.get('module'), source.get('action'))
+        if identity == ('modules.DiffusersImage', 'LoadPipeline') and output == 'pipeline':
+            loader = current
+            break
+        if identity != ('modules.DiffusersImage', 'LoadAdapter') or output != 'output':
+            raise ValueError('The image stage needs a declared loader or ordered adapter output.')
+        reverse.append(current)
+        upstream = source.get('params', {}).get('pipeline', {})
+        current, output = upstream.get('sourceId'), upstream.get('sourceKey')
+    else:
+        raise ValueError('The image stage has no concrete pipeline owner.')
+    adapters = tuple(reversed(reverse))
+    links = [(loader, 'pipeline'), *((key, 'output') for key in adapters)]
+    for index, (source_id, source_key) in enumerate(links):
+        uses = [(key, field) for key, value in nodes.items()
+                for field, param in value['params'].items()
+                if (param.get('sourceId'), param.get('sourceKey')) == (source_id, source_key)]
+        if index < len(adapters):
+            if uses != [(adapters[index], 'pipeline')]:
+                raise ValueError('An intermediate image adapter output is shared or bypassed.')
+        elif (len(uses) != 3 or {field for _, field in uses} != {'pipeline'}
+              or {nodes[key]['action'] for key, _ in uses} != stages
+              or any(nodes[key]['module'] != 'modules.DiffusersImage' for key, _ in uses)
+              or stage_id not in {key for key, _ in uses}):
+            raise ValueError('The terminal image owner output needs its sole complete stage trio.')
+    return loader, adapters
+
+
+_IMAGE_OWNERS = {
+    ('modules.DiffusersImage', 'LoadPipeline'),
+    ('modules.HuggingFaceTransformers', 'LoadDepthEstimationModel'),
+    ('modules.HuggingFaceTransformers', 'LoadImageTextToTextModel'),
+    ('modules.ImageOperations', 'ProcessImage'),
+}
+
+_VIDEO_OWNERS = {('modules.DiffusersVideo', 'LoadPipeline')}
+_VIDEO_STAGES = {'EncodeInputs', 'Denoise', 'DecodeLatents'}
+
+
+def _ordinary_video_tasks(nodes, records, key, loaders, model):
+    """Observe successful exact video-stage calls, never authoring labels."""
+    from modiff.video_stage_contract import PROFILE_CLASSES
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+
+    profiles = [DIFFUSERS_EXECUTION_PROFILES[p] for p, cls in PROFILE_CLASSES.items() if cls == model]
+    if len(profiles) != 1:
+        return set()
+    stages = [c for c in resource_consumers(nodes, key, loaders)
+              if nodes[c]['module'] == 'modules.DiffusersVideo']
+    if {nodes[c]['action'] for c in stages} != _VIDEO_STAGES:
+        return set()
+    tasks = set()
+    for stage in stages:
+        task = records.get(stage, {}).get('fields', {}).get('executed_task', {}).get('value')
+        if not isinstance(task, str) or task not in profiles[0].modes:
+            return set()
+        tasks.add(task)
+    return tasks
+
+
+def _ordinary_image_tasks(nodes, records, key, loaders, model):
+    module, action = nodes[key]['module'], nodes[key]['action']
+    if module == 'modules.ImageOperations':
+        from modules.ImageOperations.main import IMAGE_OPERATION_MODES
+
+        actions = {action: set(IMAGE_OPERATION_MODES)} if model == 'BuiltinImageOperationV1' else {}
+        consumers = [key]
+    elif module == 'modules.DiffusersImage':
+        from modules.DiffusersImage.main import IMAGE_ACTION_MODES, IMAGE_PIPELINE_ADAPTERS, image_pipeline_contract
+
+        adapter = IMAGE_PIPELINE_ADAPTERS.get(model)
+        actions = {a: set(tasks) & set(adapter.modes) for a, tasks in IMAGE_ACTION_MODES.items()} if adapter else {}
+        stage_actions = {'EncodeInputs', 'Denoise', 'DecodeLatents'}
+        owner_task = records.get(key, {}).get('fields', {}).get('mode', {}).get('value')
+        if adapter and adapter.stage_adapter is not None and isinstance(owner_task, str) and owner_task in adapter.modes:
+            declared = image_pipeline_contract(adapter, owner_task)['actions']
+            actions.update({action: set(declared[action]) for action in stage_actions if action in declared})
+        consumers = resource_consumers(nodes, key, loaders)
+    else:
+        actions = {
+            'PredictDepth': {'depth_estimation'} if model == 'AutoModelForDepthEstimation' else set(),
+            'GenerateImageVideoText': {'image_to_text'} if model == 'AutoModelForImageTextToText' else set(),
+        }
+        consumers = resource_consumers(nodes, key, loaders)
+    tasks = set()
+    for consumer in consumers:
+        node = nodes[consumer]
+        if node['module'] != module:
+            continue
+        if module == 'modules.DiffusersImage' and node['action'] in stage_actions and node['action'] not in actions:
+            return set()  # Missing owner capture/undeclared stage is not an image-task guess.
+        if node['action'] not in actions:
+            continue
+        task = records.get(consumer, {}).get('fields', {}).get('executed_task', {}).get('value')
+        if not isinstance(task, str) or task not in actions[node['action']]:
+            return set()
+        tasks.add(task)
+    return tasks
+
+
 def graph_task_receipts(nodes, records):
-    """Recognize only the output ancestry with captured Modular loader identity."""
+    """Use captured owner identity and validated calls in output ancestry."""
+    # Legacy ordinary-video records had no task observations. Keep their old
+    # format; version two adds video ownership only for actual staged captures.
+    video_observed = any(node.get('module') == 'modules.DiffusersVideo' and node.get('action') in _VIDEO_STAGES
+                         and 'executed_task' in records.get(key, {}).get('fields', {})
+                         for key, node in nodes.items())
+    owners = _IMAGE_OWNERS | {('modules.ModularDiffusers', 'ModelsLoader')} | (_VIDEO_OWNERS if video_observed else set())
     loaders = {
         key
         for key, node in nodes.items()
-        if (node.get("module"), node.get("action")) == ("modules.ModularDiffusers", "ModelsLoader")
+        if (node.get("module"), node.get("action")) in owners
     }
     result = []
     for key in sorted(loaders):
-        model = records.get(key, {}).get("fields", {}).get("model_type", {}).get("value")
+        modular = nodes[key]['module'] == 'modules.ModularDiffusers'
+        model = records.get(key, {}).get("fields", {}).get("model_type" if modular else 'pipeline_class', {}).get("value")
         if not isinstance(model, str):
             return []  # Incomplete owner evidence must not select another owner's task.
-        tasks = modular_graph_tasks(nodes, key, resource_consumers(nodes, key, loaders), model)
+        tasks = (modular_graph_tasks(nodes, key, resource_consumers(nodes, key, loaders), model) if modular
+                 else _ordinary_video_tasks(nodes, records, key, loaders, model)
+                 if nodes[key]['module'] == 'modules.DiffusersVideo'
+                 else _ordinary_image_tasks(nodes, records, key, loaders, model))
         result.append(
             {"loaderId": key, "pipelineClass": model, "task": next(iter(tasks)) if len(tasks) == 1 else None}
         )

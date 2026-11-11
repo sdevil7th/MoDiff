@@ -1,4 +1,4 @@
-"""Resolve and validate the managed accelerator environment."""
+"""Observe application dependencies and validate the installed accelerator."""
 
 from __future__ import annotations
 
@@ -8,8 +8,11 @@ import json
 import os
 import platform
 from functools import lru_cache
+from importlib import metadata
 from pathlib import Path
 from typing import Any
+
+from modiff.base_runtime import base_runtime_status
 
 MANIFEST_PATH = Path(__file__).with_name("compatibility") / "accelerators.v1.json"
 PROJECT_ROOT = MANIFEST_PATH.parents[2]
@@ -119,6 +122,60 @@ def profile_for_installed_torch(
     return None
 
 
+def _native_instinct_device(hardware: dict[str, Any], spec: dict[str, Any]) -> bool:
+    """Identify the single dedicated SDK device without an installer receipt."""
+    torch_state = hardware.get("torch", {})
+    if normalized_os() not in spec["os"] or not torch_state.get("hip_version"):
+        return False
+    devices = [item for item in hardware.get("devices", []) if item.get("type") == "cuda"]
+    if torch_state.get("cuda_device_count") != 1 or len(devices) != 1:
+        return False
+    device = devices[0]
+    architecture = str(device.get("architecture") or "").split(":", 1)[0]
+    return (
+        device.get("device") == "cuda:0"
+        and device.get("memory_kind") == "dedicated"
+        and architecture in spec["device_families"]
+    )
+
+
+def _profile_package_issues(spec: dict[str, Any]) -> list[str]:
+    """Observe the reviewed SDK pins and package policy; import no runtimes."""
+    from packaging.requirements import Requirement
+    from packaging.utils import canonicalize_name
+
+    requirements = {}
+    for line in (PROJECT_ROOT / spec["requirements"]).read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or line == "-e .":
+            continue
+        requirement = Requirement(line)
+        if requirement.marker and not requirement.marker.evaluate():
+            continue
+        requirements[canonicalize_name(requirement.name)] = requirement
+    for name in spec.get("required", []):
+        requirements.setdefault(canonicalize_name(name), Requirement(name))
+    issues = []
+    for requirement in requirements.values():
+        try:
+            version = metadata.version(requirement.name)
+        except metadata.PackageNotFoundError:
+            issues.append(f"Missing reviewed SDK package: {requirement.name}.")
+            continue
+        if not isinstance(version, str) or not version.strip():
+            issues.append(f"{requirement.name} has invalid installed version metadata.")
+            continue
+        if requirement.specifier and not requirement.specifier.contains(version):
+            issues.append(f"{requirement.name} {version} does not satisfy the reviewed SDK pin {requirement.specifier}.")
+    for name in spec.get("prohibited", []):
+        try:
+            metadata.version(name)
+        except metadata.PackageNotFoundError:
+            continue
+        issues.append(f"The reviewed SDK profile prohibits installed package: {name}.")
+    return issues
+
+
 def _runtime_contract_status(
     saved: dict[str, Any] | None,
     *,
@@ -176,6 +233,14 @@ def _runtime_contract_status(
                 "installed_digest": saved_digest,
                 "current_digest": current_digest,
             }
+        return {
+            "status": "unverified",
+            "verified": False,
+            "matches": False,
+            "requirements": requirement_value,
+            "installed_digest": saved_digest if verified else None,
+            "current_digest": current_digest,
+        }
     matches = verified and saved_digest == current_digest
     return {
         "status": "verified" if matches else ("drifted" if verified else "unverified"),
@@ -218,21 +283,26 @@ def runtime_profile(
 ) -> dict[str, Any]:
     manifest = load_manifest()
     saved = read_state(venv)
-    requested = requested or (saved or {}).get("profile")
+    contract = base_runtime_status()
+    saved_profile = (saved or {}).get("profile")
+    # Accelerator extras select the installed native backend. Simple legacy
+    # receipts must not force a previous CPU/CUDA/XPU choice after uv sync.
+    # Specialist AMD receipts retain their external SDK/architecture selection.
+    if not requested and (not contract["verified"] or saved_profile in {
+        "amd-rocm-linux", "amd-instinct-rocm-linux", "amd-pytorch-windows",
+    }):
+        requested = saved_profile
+    selected_backend = requested or saved_profile
+    if not requested and saved_profile not in {
+        "amd-rocm-linux", "amd-instinct-rocm-linux", "amd-pytorch-windows",
+    } and _native_instinct_device(hardware, manifest["profiles"]["amd-instinct-rocm-linux"]):
+        selected_backend = "amd-instinct-rocm-linux"
     installed = profile_for_installed_torch(
         hardware.get("torch", {}),
-        selected_profile=requested,
+        selected_profile=selected_backend,
     )
     detected = hardware.get("detected_profile") or installed or "cpu"
     issues: list[dict[str, str]] = []
-    if not saved:
-        issues.append(
-            {
-                "code": "profile-unverified",
-                "severity": "warning",
-                "message": "This environment predates managed accelerator profiles.",
-            }
-        )
     if requested and installed and requested != installed:
         issues.append(
             {
@@ -251,51 +321,68 @@ def runtime_profile(
         )
     selected = requested or installed or detected
     spec = manifest["profiles"].get(selected)
-    contract = _runtime_contract_status(saved, selected=selected, spec=spec)
-    if saved and contract["status"] == "unavailable":
-        issues.append(
-            {
+    if selected in {"amd-rocm-linux", "amd-instinct-rocm-linux", "amd-pytorch-windows"} and spec:
+        # These SDK-specific installations still use reviewed requirement and
+        # index files. Native base metadata does not replace their availability
+        # contract, even when the installed package versions are compatible.
+        try:
+            lock_digest(PROJECT_ROOT / spec["requirements"], profile=selected)
+        except OSError:
+            contract = {
+                **contract,
+                "status": "unavailable",
+                "verified": False,
+                "matches": False,
+                "requirements": spec["requirements"],
+            }
+            issues.append({
                 "code": "runtime-contract-unavailable",
                 "severity": "error",
-                "message": (
-                    f"MoDiff cannot verify the files that define the managed {selected or 'runtime'} environment. "
-                    "Repair it before running workflows."
-                ),
+                "message": f"The reviewed {selected} requirement or index configuration is unavailable.",
+            })
+        else:
+            if saved and saved.get("profile") == selected:
+                specialist = _runtime_contract_status(saved, selected=selected, spec=spec)
+                specialist_verified = specialist["status"] == "verified"
+                if not specialist_verified:
+                    code = "runtime-contract-drift" if specialist["status"] == "drifted" else "runtime-contract-unverified"
+                    issues.append({
+                        "code": code,
+                        "severity": "error",
+                        "message": f"The reviewed {selected} installation receipt requires repair for this checkout.",
+                    })
+                # Native package metadata remains authoritative for the base,
+                # while a saved SDK profile must also match its reviewed files.
+                base_contract = contract
+                contract = {
+                    **base_contract,
+                    **specialist,
+                    "status": specialist["status"] if not specialist_verified else base_contract["status"],
+                    "verified": bool(base_contract["verified"] and specialist_verified),
+                    "matches": bool(base_contract["matches"] and specialist_verified),
+                    "baseRuntime": base_contract,
+                }
+    # Native uv installations have no MoDiff-specific installation receipt.
+    # Observe installed metadata instead, including the reviewed Diffusers
+    # source revision. A stale receipt from the former installer must not block
+    # an environment repaired with ordinary uv commands.
+    for message in contract["issues"]:
+        issues.append({"code": "base-dependency-incompatible", "severity": "error", "message": message})
+    if selected == "amd-instinct-rocm-linux" and spec:
+        try:
+            package_issues = _profile_package_issues(spec)
+        except (OSError, ValueError) as exc:
+            package_issues = [f"The reviewed SDK package contract is unavailable: {exc}."]
+        for message in package_issues:
+            issues.append({"code": "profile-package-mismatch", "severity": "error", "message": message})
+        if package_issues:
+            contract = {
+                **contract,
+                "status": "incompatible" if contract["verified"] else contract["status"],
+                "verified": False,
+                "matches": False,
+                "issues": [*contract["issues"], *package_issues],
             }
-        )
-    elif saved and contract["status"] == "unverified":
-        issues.append(
-            {
-                "code": "runtime-contract-unverified",
-                "severity": "error",
-                "message": (
-                    "This managed environment has no verifiable installation record. "
-                    "Repair it before running workflows."
-                ),
-            }
-        )
-    elif saved and contract["status"] == "drifted":
-        issues.append(
-            {
-                "code": "runtime-contract-drift",
-                "severity": "error",
-                "message": (
-                    f"The managed {selected} environment is out of date for this MoDiff checkout. "
-                    "Repair it before running workflows."
-                ),
-            }
-        )
-    elif saved and contract["status"] == "legacy":
-        issues.append(
-            {
-                "code": "runtime-contract-legacy",
-                "severity": "warning",
-                "message": (
-                    "This environment has a legacy installation record. "
-                    "It remains runnable; repair it when convenient to upgrade future integrity checks."
-                ),
-            }
-        )
     if spec and (normalized_os() not in spec["os"] or normalized_arch() not in spec["architectures"]):
         issues.append(
             {
@@ -331,34 +418,19 @@ def runtime_profile(
                     "message": f"Installed {installed} Torch failed a device tensor: {device_validation['message']}",
                 }
             )
-    if saved and selected == "amd-rocm-linux":
-        if not str(torch_state.get("version") or "").startswith("2.9.1+rocm7.2") or not str(
-            torch_state.get("hip_version") or ""
-        ).startswith("7.2"):
-            issues.append(
-                {
-                    "code": "profile-version-mismatch",
-                    "severity": "error",
-                    "message": "The managed AMD profile requires Torch 2.9.1 built for ROCm 7.2.",
-                }
-            )
-    if saved and selected == "intel-xpu" and not str(torch_state.get("version") or "").startswith("2.12.1"):
-        issues.append(
-            {
-                "code": "profile-version-mismatch",
-                "severity": "error",
-                "message": "The managed Intel XPU profile requires Torch 2.12.1 from the reviewed XPU index.",
-            }
+    if (saved or selected == "amd-instinct-rocm-linux") and selected in {"amd-rocm-linux", "amd-instinct-rocm-linux"} and spec:
+        version = str(torch_state.get("version") or "")
+        version_matches = version == spec["torch"] or (
+            selected == "amd-rocm-linux" and version.startswith(spec["torch"] + ".")
         )
-    if saved and selected == "amd-instinct-rocm-linux" and spec:
-        if str(torch_state.get("version") or "") != spec["torch"] or str(
+        if not version_matches or str(
             torch_state.get("hip_version") or ""
         ).split(".")[:2] != spec["rocm"].split("."):
             issues.append(
                 {
                     "code": "profile-version-mismatch",
                     "severity": "error",
-                    "message": f"The managed Instinct preview requires Torch {spec['torch']} / ROCm {spec['rocm']}.",
+                    "message": f"The reviewed {selected} profile requires Torch {spec['torch']} / ROCm {spec['rocm']}.",
                 }
             )
     ready = backend_usable and not any(i["severity"] == "error" for i in issues)
@@ -379,8 +451,18 @@ def runtime_profile(
         repair_command = f"./install.sh --accelerator {repair_accelerator} --repair"
         if experimental_repair:
             repair_command += " --allow-experimental"
-    installation = read_install_journal()
-    contract_repair_required = contract["status"] in {"unavailable", "unverified", "drifted"}
+    native_extra = {"nvidia-cuda": "cuda", "intel-xpu": "xpu", "cpu": "cpu"}.get(selected)
+    if native_extra:
+        repair_command = f"uv sync --extra {native_extra}"
+    elif selected == "apple-mps":
+        repair_command = "uv sync"
+    elif selected == "amd-instinct-rocm-linux" and saved_profile != selected:
+        repair_command = (
+            f"uv pip install --python .venv/bin/python --config-file {spec['uv_config']} "
+            f"-r {spec['requirements']}"
+        )
+    installation = read_install_journal() if saved and saved.get("profile") == selected else None
+    contract_repair_required = not contract["verified"]
     return {
         "requested": requested,
         "detected": detected,
@@ -394,7 +476,9 @@ def runtime_profile(
         ),
         "execution_ready": ready,
         "manifest_revision": manifest["revision"],
-        "support_tier": (saved or {}).get("support_tier") or (spec.get("tier") if spec else "unqualified"),
+        "support_tier": (
+            (saved or {}).get("support_tier") if saved_profile == selected else None
+        ) or (spec.get("tier") if spec else "unqualified"),
         "capabilities": spec.get("capabilities", []) if spec else [],
         "issues": issues,
         "repair_command": repair_command,

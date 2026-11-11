@@ -2067,7 +2067,11 @@ def validate_block_instance_v2(payload: Any) -> BlockInstanceV2:
     for node_id, layout_value in internal_layout.items():
         path = f"BlockInstanceV2.presentation.internalLayout.{node_id}"
         layout = _object(layout_value, path)
-        _exact_keys(layout, path, required={"x", "y"}, optional={"width", "height"})
+        _exact_keys(layout, path, required={"x", "y"}, optional={"width", "height", "sizeMode"})
+        # Presentation-only manual compact size. Absence preserves the client's
+        # migration of legacy expanded footprints; no execution identity changes.
+        if "sizeMode" in layout and layout["sizeMode"] != "compact":
+            raise ValueError(f"{path}.sizeMode must be compact.")
         _finite_number(layout["x"], f"{path}.x")
         _finite_number(layout["y"], f"{path}.y")
         for key in ("width", "height"):

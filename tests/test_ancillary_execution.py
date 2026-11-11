@@ -1,0 +1,1005 @@
+"""Ancillary-purpose selection through existing entrypoints; no models."""
+from copy import deepcopy
+from pathlib import Path
+import asyncio
+import hashlib
+import json
+from types import SimpleNamespace
+import pytest
+from modiff.server import WebServer
+from modiff import native_component_lora
+
+
+RAW_I2I_NF4_IDENTITIES = (
+    'flux3-klein:edit-image:prompt-preview-nf4-authoring:v1',
+    'flux3-klein-base:edit-image:prompt-preview-nf4-authoring:v1',
+)
+
+
+class ReachedPreflight(RuntimeError):
+    pass
+
+
+def graph():
+    return {'sid': None, 'nodes': {'plain': {'module': 'modules.Text', 'action': 'Text',
+        'params': {'text': {'value': 'kept'}}}}, 'paths': [['plain']]}
+
+
+def test_claimed_purpose_is_not_silently_dropped():
+    app = object.__new__(WebServer)
+    claimed = {'schemaVersion': 1, 'kind': 'workflow', 'bindings': [], 'target': None}
+    with pytest.raises(ValueError, match='(?i)ancillary|purpose'):
+        app._coerce_runtime_hints({'resourceMode': 'expert', 'executionPurpose': claimed})
+
+
+def test_invalid_claim_refuses_before_component_preflight(monkeypatch):
+    app = object.__new__(WebServer)
+    value = graph()
+    value['runtimeHints'] = {'executionPurpose': {'schemaVersion': 1, 'kind': 'foreign', 'bindings': [], 'target': None}}
+    def reached(*args, **kwargs):
+        raise ReachedPreflight('original invalid purpose reached component preflight')
+    monkeypatch.setattr(native_component_lora, 'preflight_component_graph', reached)
+    with pytest.raises(ValueError, match='(?i)ancillary|purpose'):
+        app._execute_graph(value)
+
+
+def test_unclaimed_graph_keeps_existing_preflight_path(monkeypatch):
+    app = object.__new__(WebServer)
+    def reached(*args, **kwargs):
+        raise ReachedPreflight('control reached existing component preflight')
+    monkeypatch.setattr(native_component_lora, 'preflight_component_graph', reached)
+    with pytest.raises(ReachedPreflight, match='control'):
+        app._execute_graph(graph())
+
+
+def test_unclaimed_hints_preserve_existing_values():
+    app = object.__new__(WebServer)
+    hints = {'resourceMode': 'expert', 'runInputHash': 'API-opaque-id', 'workflowCanvasEpoch': 4}
+    before = deepcopy(hints)
+    assert app._coerce_runtime_hints(hints) == hints == before
+
+
+def require_native_parent_apis():
+    """These private parent fixtures require the actual reviewed source classes.
+
+    Keep the installed-release lane honest: metadata/owner tests must not fail
+    inside their producer before reaching the boundary they claim to exercise.
+    No class, runtime activation or executable availability is manufactured.
+    """
+    import diffusers
+    from importlib import import_module
+    required = {
+        'Flux3ModularPipeline': 'diffusers.modular_pipelines.flux3.modular_pipeline',
+        'Flux3DistilledModularPipeline': 'diffusers.modular_pipelines.flux3.modular_pipeline',
+        'Flux3Transformer2DModel': 'diffusers.models.transformers.transformer_flux3',
+    }
+    for name, module_name in required.items():
+        value = getattr(diffusers, name, None)
+        if value is None:
+            pytest.skip('FLUX 3 source APIs are absent from the installed release; run the pinned source audit.')
+        if (not isinstance(value, type) or value.__module__ != module_name
+                or getattr(import_module(module_name), name) is not value):
+            pytest.fail('FLUX 3 fixture requires the actual native class identity: ' + name)
+
+
+@pytest.fixture
+def modules():
+    require_native_parent_apis()
+    import modules as registry
+    return registry.MODULE_MAP
+
+
+def parent_for(modules, index=0):
+    require_native_parent_apis()
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    identity = list(PRIVATE_PARENTS)[index]
+    return resolve_parent(modules, identity)
+
+
+def preview_graph(modules, index=0):
+    from modiff.ancillary_execution import adapter_binding
+    parent = parent_for(modules, index)
+    contract = parent['ancillaryOperations'][0]
+    owner_ids = {role: 'image-' + role for role, _key, _x, _y in parent['roles']}
+    child_ids = {'provider': 'provider', 'proposal': 'proposal'}
+    def node(key, **values):
+        module, action = key.rsplit('.', 1)
+        return {'module': module, 'action': action, 'params': {name: {'value': value} for name, value in values.items()}}
+    descriptor, _binding = adapter_binding()
+    nodes = {'provider': node('modules.HuggingFaceTransformers.LoadImageTextToTextModel',
+        model_id={'source': 'hub', 'value': descriptor['repository']}, revision=descriptor['revision'], dtype='float32', device='cpu'),
+        'proposal': node('modules.HuggingFaceTransformers.GenerateImageVideoText', operation='enhance_prompt',
+            prompt=' Original raw prompt ', layout_conditioning=None)}
+    nodes['proposal']['params']['model'] = {'sourceId': 'provider', 'sourceKey': 'model'}
+    path = ['provider']
+    reference = contract['bindings']['owner']['referenceSource']
+    if reference:
+        node_id = owner_ids[reference['role']]
+        nodes[node_id] = node('modules.Image.Load', file=['first.png', 'second.png'])
+        nodes['proposal']['params']['images'] = {'sourceId': node_id, 'sourceKey': 'image'}
+        path.append(node_id)
+    path.append('proposal')
+    binding = {'contractId': contract['id'], 'contentHash': contract['contentHash'],
+        'parent': {**contract['parent'], 'authoringContentHash': parent['contentHash']},
+        'parentRoleNodes': owner_ids, 'roleNodes': child_ids}
+    scope = {'schemaVersion': 1, 'kind': 'explicit_preview', 'bindings': [binding],
+        'target': {'nodeId': 'proposal', 'outputField': 'proposal_summary'}}
+    return {'sid': None, 'nodes': nodes, 'paths': [path], 'runtimeHints': {'executionPurpose': scope}}, parent
+
+
+@pytest.mark.parametrize('index', range(4))
+def test_four_private_parents_have_exact_hash_covered_optional_declaration(modules, index):
+    from modiff.ancillary_execution import validate_execution_purpose
+    from modiff.studio_execution_specs import _hash_string, _stable_json
+    value, parent = preview_graph(modules, index)
+    unsigned = {key: item for key, item in parent.items() if key != 'contentHash'}
+    assert parent['contentHash'] == 'studio-authoring-v1-' + _hash_string(_stable_json(unsigned))
+    child = parent['ancillaryOperations'][0]
+    assert child['contentHash'] == 'studio-ancillary-v1-' + _hash_string(_stable_json({k:v for k,v in child.items() if k != 'contentHash'}))
+    assert 'authoringContentHash' not in child['parent']
+    assert child['sourceRegions'] is False
+    assert 'layoutPolicy' not in child and 'layoutRequestSuffixSha256' not in child['verification']
+    assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i']
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+
+
+def test_valid_selection_survives_normalization_without_coercion(modules):
+    value, _ = preview_graph(modules)
+    app = object.__new__(WebServer)
+    actual = app._coerce_runtime_hints(value['runtimeHints'])
+    assert actual == value['runtimeHints']
+    assert actual is not value['runtimeHints']
+    assert actual['executionPurpose'] is not value['runtimeHints']['executionPurpose']
+
+
+@pytest.mark.parametrize('key', ['authoringContentHash', 'baseSpecContentHash', 'executionProfileId', 'task'])
+def test_mixed_or_stale_parent_refuses(modules, key):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value, _ = preview_graph(modules)
+    parent = value['runtimeHints']['executionPurpose']['bindings'][0]['parent']
+    parent[key] = parent[key].replace('v1-', 'v1-a', 1) if 'Hash' in key else 'foreign'
+    with pytest.raises(ValueError, match='ancillary'):
+        validate_execution_purpose(value, modules)
+
+
+def test_extra_image_owner_never_silently_pruned(modules):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value, _ = preview_graph(modules)
+    value['nodes']['image-models'] = {'module':'modules.ModularDiffusers','action':'ModelsLoader','params':{}}
+    value['paths'].insert(0, ['image-models'])
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match='image owner|unrelated'):
+        validate_execution_purpose(value, modules)
+    assert value == before
+
+
+def test_real_reference_order_and_no_owner_access_wire(modules):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value, _ = preview_graph(modules, 1)
+    before = deepcopy(value)
+    validate_execution_purpose(value, modules)
+    assert value == before
+    assert value['nodes']['image-loadImage']['params']['file']['value'] == ['first.png','second.png']
+    value['nodes']['proposal']['params']['images'] = {'sourceId':'provider','sourceKey':'receipt'}
+    with pytest.raises(ValueError, match='reference'):
+        validate_execution_purpose(value, modules)
+
+
+def test_bad_claim_refuses_auto_before_probe(modules):
+    app = object.__new__(WebServer)
+    app.modules = modules
+    app._runtime_fingerprint = lambda: pytest.fail('must not probe before purpose validation')
+    value = graph()
+    value['runtimeHints'] = {'executionPurpose': None}
+    with pytest.raises(ValueError, match='ancillary'):
+        app._build_workflow_auto_plan(value)
+
+
+def workflow_graph(modules, index=0):
+    from modiff.studio_execution_specs import (
+        STUDIO_EXECUTION_SPEC_DEFINITIONS, _public_spec, _execution_spec_role_params)
+    preview, parent = preview_graph(modules, index)
+    binding = preview['runtimeHints']['executionPurpose']['bindings'][0]
+    ids = binding['parentRoleNodes']
+    spec = _public_spec(parent['baseSpecId'], STUDIO_EXECUTION_SPEC_DEFINITIONS[parent['baseSpecId']])
+    nodes = {}
+    for role, key, _x, _y in parent['roles']:
+        module, action = key.rsplit('.', 1)
+        params = _execution_spec_role_params(spec, key, modules[module][action])
+        nodes[ids[role]] = {'module': module, 'action': action,
+            'params': {name: {'value': deepcopy(field.get('default'))}
+                       for name, field in params.items() if field.get('display') != 'output'}}
+    for source, output, target, input_ in parent['edges']:
+        nodes[ids[target]]['params'][input_] = {'sourceId': ids[source], 'sourceKey': output}
+    for role, name, source in parent['bindings']:
+        if source == 'pipelineClass':
+            nodes[ids[role]]['params'][name] = {'value': spec['pipelineClass']}
+    # Topological fixture ordering follows the actual declared edges, rather
+    # than diagram positions. This never executes a supplier.
+    order = []
+    remaining = list(nodes)
+    while remaining:
+        ready = [node_id for node_id in remaining if all(
+            item.get('sourceId') is None or item['sourceId'] in order
+            for item in nodes[node_id]['params'].values())]
+        assert ready, 'declared parent fixture is cyclic'
+        order.extend(ready)
+        remaining = [node_id for node_id in remaining if node_id not in ready]
+    scope = {'schemaVersion': 1, 'kind': 'workflow', 'bindings': [binding], 'target': None}
+    hints = {'executionPurpose': scope, 'modelType': spec['modelType'], 'mode': spec['mode'],
+        'studioExecutionSpec': {'schemaVersion': 1, 'id': spec['id'],
+                              'contentHash': spec['contentHash'], 'nodes': ids}}
+    return {'sid': None, 'nodes': nodes, 'paths': [order], 'runtimeHints': hints}
+
+
+@pytest.mark.parametrize('index', range(4))
+def test_workflow_preserves_real_main_spec_and_unrelated_branch(modules, index):
+    from modiff.ancillary_execution import validate_execution_purpose
+    from modiff.studio_execution_specs import assert_studio_execution_graph
+    value = workflow_graph(modules, index)
+    value['nodes'].update(graph()['nodes'])
+    value['paths'].append(['plain'])
+    before = deepcopy(value)
+    validate_execution_purpose(value, modules)
+    assert_studio_execution_graph(value, value['runtimeHints'])
+    assert value == before
+    value['runtimeHints']['studioExecutionSpec']['contentHash'] = 'studio-spec-v1-00000000'
+    # The existing late managed-graph receipt check remains independently live.
+    with pytest.raises(RuntimeError, match='specification'):
+        assert_studio_execution_graph(value, value['runtimeHints'])
+
+
+def test_workflow_with_preview_sink_refuses_instead_of_pruning(modules):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value = workflow_graph(modules)
+    extra, _parent = preview_graph(modules)
+    value['nodes'].update(extra['nodes'])
+    value['paths'] += extra['paths']
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match='Preview-only'):
+        validate_execution_purpose(value, modules)
+    assert value == before
+
+
+@pytest.mark.parametrize('role', ['models', 'guider'])
+def test_workflow_claim_binds_actual_selected_pipeline_literals(modules, role):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value = workflow_graph(modules, 2)
+    node_id = value['runtimeHints']['executionPurpose']['bindings'][0]['parentRoleNodes'][role]
+    value['nodes'][node_id]['params']['model_type'] = {'value': 'StableDiffusionXLModularPipeline'}
+    with pytest.raises(ValueError, match='pipeline selection'):
+        validate_execution_purpose(value, modules)
+
+
+@pytest.mark.parametrize('field', ['proposal_summary', 'result'])
+def test_static_output_cannot_be_supplied_as_input(modules, field):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value, _parent = preview_graph(modules)
+    value['nodes']['proposal']['params'][field] = {'value': 'forged'}
+    with pytest.raises(ValueError, match='output'):
+        validate_execution_purpose(value, modules)
+
+
+@pytest.mark.parametrize('mutation', [
+    'foreign_child_hash', 'unknown_parent', 'child_roles', 'parent_roles',
+    'wrong_output', 'wrong_edge', 'mutable_revision', 'local_provider',
+    'extra_param', 'video', 'inline_images', 'source_region', 'cycle',
+    'wrong_order', 'missing_path', 'loops'])
+def test_preview_related_wrong_scopes_refuse_without_mutation(modules, mutation):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value, _parent = preview_graph(modules)
+    scope = value['runtimeHints']['executionPurpose']
+    binding = scope['bindings'][0]
+    proposal = value['nodes']['proposal']['params']
+    if mutation == 'foreign_child_hash': binding['contentHash'] = 'studio-ancillary-v1-00000000'
+    elif mutation == 'unknown_parent': binding['parent']['authoringRecipeId'] = 'unknown'
+    elif mutation == 'child_roles': binding['roleNodes']['unexpected'] = 'unused'
+    elif mutation == 'parent_roles': binding['parentRoleNodes'].pop('prompt')
+    elif mutation == 'wrong_output': scope['target']['outputField'] = 'text'
+    elif mutation == 'wrong_edge': proposal['model']['sourceKey'] = 'receipt'
+    elif mutation == 'mutable_revision': value['nodes']['provider']['params']['revision']['value'] = 'main'
+    elif mutation == 'local_provider': value['nodes']['provider']['params']['model_id']['value']['source'] = 'local'
+    elif mutation == 'extra_param': proposal['not_declared'] = {'value': 1}
+    elif mutation == 'video': proposal['video'] = {'value': 'foreign.mp4'}
+    elif mutation == 'inline_images': proposal['images'] = {'value': ['foreign.png']}
+    elif mutation == 'source_region':
+        proposal['layout_conditioning']['value'] = {'schemaVersion': 1,
+            'coordinateSpace': 'normalized_xyxy',
+            'regions': [{'id': 'region1', 'description': 'subject', 'targetBox': [0, 0, 0.5, 0.5],
+                         'source': {'referenceIndex': 0, 'box': [0, 0, 0.5, 0.5]}}]}
+    elif mutation == 'cycle': value['nodes']['provider']['params']['model_id'] = {'sourceId': 'proposal', 'sourceKey': 'text'}
+    elif mutation == 'wrong_order': value['paths'][0].reverse()
+    elif mutation == 'missing_path': value['paths'] = [['proposal']]
+    elif mutation == 'loops': value['loops'] = {'unexpected': {}}
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match='ancillary'):
+        validate_execution_purpose(value, modules)
+    assert value == before
+
+
+@pytest.mark.parametrize('mutation', ['null', 'boolean_version', 'unknown_key', 'duplicate',
+                                   'role_collision', 'huge', 'nonfinite', 'non_json'])
+def test_selection_closed_json_bounds(modules, mutation):
+    from modiff.ancillary_execution import parse_execution_purpose
+    value, _parent = preview_graph(modules)
+    scope = value['runtimeHints']['executionPurpose']
+    if mutation == 'null': scope = None
+    elif mutation == 'boolean_version': scope['schemaVersion'] = True
+    elif mutation == 'unknown_key': scope['release'] = True
+    elif mutation == 'duplicate': scope['kind'] = 'workflow'; scope['target'] = None; scope['bindings'] *= 2
+    elif mutation == 'role_collision': scope['bindings'][0]['roleNodes']['proposal'] = 'provider'
+    elif mutation == 'huge': scope['target']['nodeId'] = 'x' * 131073
+    elif mutation == 'nonfinite': scope['schemaVersion'] = float('nan')
+    elif mutation == 'non_json': scope['schemaVersion'] = object()
+    with pytest.raises(ValueError, match='ancillary'):
+        parse_execution_purpose(scope)
+
+
+def test_invalid_claim_cannot_enter_queue_or_persistence(modules):
+    app = object.__new__(WebServer)
+    app.modules = modules
+    app._runtime_mutation_gate = None
+    app.queued_tasks = {}
+    app.task_graphs = {}
+    app._persist_supervisor_queue_state = lambda **_kwargs: pytest.fail('must not persist')
+    value, _parent = preview_graph(modules)
+    value['runtimeHints']['executionPurpose']['bindings'][0]['contentHash'] = 'studio-ancillary-v1-00000000'
+    with pytest.raises(ValueError, match='ancillary'):
+        asyncio.run(app.queue_task(lambda _graph: None, (value,), None, None, name='Graph execution'))
+    assert app.queued_tasks == app.task_graphs == {}
+
+
+def test_invalid_auto_request_refuses_before_busy_or_lease(modules):
+    app = object.__new__(WebServer)
+    app.modules = modules
+    app._workflow_auto_inspection_busy = lambda **_kwargs: pytest.fail('must not inspect busy state')
+    value, _parent = preview_graph(modules)
+    value['runtimeHints']['executionPurpose']['bindings'][0]['contentHash'] = 'studio-ancillary-v1-00000000'
+    async def body(): return {'schemaVersion': 1, 'graph': value}
+    response = asyncio.run(app.workflow_auto_resource_plan(SimpleNamespace(json=body)))
+    assert response.status == 400
+    assert 'ancillary' in json.loads(response.body)['message']
+
+
+def test_authored_target_layout_preserves_exact_dto_and_refuses_rounding_before_preparation(modules):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value, _parent = preview_graph(modules, 4)
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+        'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+            {'id': 'subject', 'description': ' paper crane ', 'action': 'place',
+             'targetBox': [0, 0.125, 0.5, 0.625]}]}
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    value['nodes']['proposal']['params']['layout_conditioning']['value']['regions'][0]['targetBox'][0] = 0.0001
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match='never rounded'):
+        validate_execution_purpose(value, modules)
+    assert value == before
+
+
+def test_authored_source_preview_keeps_binding_and_rejects_missing_actual_media_index(modules):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value, _parent = preview_graph(modules, 5)
+    layout = {'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [{
+        'id': 'subject', 'description': 'A subject.', 'action': 'remove', 'targetBox': None,
+        'source': {'referenceIndex': 1, 'box': [0, 0, 1, 1], 'expectedReferenceId': 'sha256:' + 'a' * 64}}]}
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = layout
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    layout['regions'][0]['source']['referenceIndex'] = 2
+    with pytest.raises(ValueError, match='ordered media context'):
+        validate_execution_purpose(value, modules)
+
+
+def test_legacy_plain_parent_dto_and_both_hashes_stay_exact(modules):
+    fixture = json.loads((Path(__file__).parent / 'fixtures/prompt-enhancement-legacy-parent.v1.json').read_text(encoding='utf-8'))
+    assert json.loads(json.dumps(parent_for(modules, 1))) == fixture['authoring']
+    assert parent_for(modules, 0)['contentHash'] == 'studio-authoring-v1-c39b36d8'
+    assert parent_for(modules, 1)['contentHash'] == 'studio-authoring-v1-d43668d0'
+    assert parent_for(modules, 1)['ancillaryOperations'][0]['contentHash'] == 'studio-ancillary-v1-95fc4619'
+
+
+def test_explicit_fp32_t2i_parent_is_available_without_rewriting_the_legacy_recipe(modules):
+    from modiff.ancillary_execution import resolve_parent
+    parent = resolve_parent(modules, 'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1')
+    child = parent['ancillaryOperations'][0]
+    values = {(role, field): value for role, field, value in child['initialValues']}
+    assert values['provider', 'dtype'] == 'float32'
+    assert values['provider', 'device'] == 'cuda:0'
+    assert values['provider', 'quantization_mode'] == 'none'
+    assert values['proposal', 'max_input_tokens'] == 4096
+    assert child['bindings']['owner']['referenceSource'] is None
+    assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i']
+
+
+@pytest.mark.parametrize('version', ['v1', 'v2'])
+def test_explicit_fp32_preview_dispatch_rejects_changed_fixed_inputs(modules, version):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    index = list(PRIVATE_PARENTS).index(f'flux3-klein:text-to-image:prompt-preview-fp32-authoring:{version}')
+    value, parent = preview_graph(modules, index)
+    declaration = parent['ancillaryOperations'][0]
+    roles = value['runtimeHints']['executionPurpose']['bindings'][0]['roleNodes']
+    for role, field, selected in declaration['initialValues']:
+        value['nodes'][roles[role]]['params'][field] = {'value': deepcopy(selected)}
+    if version == 'v2':
+        value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+            'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+                {'id': 'subject', 'description': ' paper crane ', 'action': 'place',
+                 'targetBox': [0, 0.125, 0.5, 0.625]}]}
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    for role, field, wrong in [('provider', 'dtype', 'bfloat16'),
+                                ('provider', 'quantization_mode', 'bnb_4bit'),
+                                ('provider', 'device', 'cpu'),
+                                ('proposal', 'max_input_tokens', 4095),
+                                ('proposal', 'max_input_tokens', 4096.0)]:
+        changed = deepcopy(value)
+        changed['nodes'][roles[role]]['params'][field] = {'value': wrong}
+        before = deepcopy(changed)
+        with pytest.raises(ValueError, match='FP32 Preview input selection changed'):
+            validate_execution_purpose(changed, modules)
+        assert changed == before
+
+
+def test_explicit_fp32_structured_t2i_keeps_the_same_recipe_and_no_reference_route(modules):
+    from modiff.ancillary_execution import resolve_parent
+    prefix = 'flux3-klein:text-to-image:prompt-preview-fp32-authoring:'
+    plain, structured = (resolve_parent(modules, prefix + version) for version in ('v1', 'v2'))
+    for key in ('baseSpecId', 'baseSpecContentHash', 'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert structured[key] == plain[key]
+    old_child, child = plain['ancillaryOperations'][0], structured['ancillaryOperations'][0]
+    assert structured['contentHash'] != plain['contentHash']
+    assert child['contentHash'] != old_child['contentHash']
+    assert child['initialValues'] == old_child['initialValues']
+    assert child['bindings'] == old_child['bindings']
+    assert child['bindings']['owner']['referenceSource'] is None
+    assert child['layoutPolicy'] == 'preserve-authored-v1'
+    assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i', 't2i_bbox', 'i2i_bbox']
+    assert child['verification']['layoutRequestSuffixSha256'].startswith('sha256:')
+    assert 'layoutPolicy' not in old_child
+    assert old_child['verification']['supportedPromptModes'] == ['t2i', 'i2i']
+
+
+def test_explicit_fp32_structured_registration_preserves_all_nine_existing_dtos(modules, monkeypatch):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
+    identity = 'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v2'
+    assert identity in PRIVATE_PARENTS and identity in _OPERATION_AUTHORING_RECIPES
+    previous = tuple(key for key in PRIVATE_PARENTS if key not in {identity,
+        'flux3-klein:edit-image:prompt-preview-authoring:v3',
+        'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3',
+        *BASE_APPEND_IDENTITIES, BASE_RAW_FP32_ID, *RAW_I2I_NF4_IDENTITIES})
+    assert len(previous) == 9
+
+    def encoded_parents():
+        return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
+                               separators=(',', ':')).encode('utf-8') for key in previous}
+
+    with_added = encoded_parents()
+    with monkeypatch.context() as scoped:
+        scoped.delitem(PRIVATE_PARENTS, identity)
+        scoped.delitem(_OPERATION_AUTHORING_RECIPES, identity)
+        without_added = encoded_parents()
+    assert with_added == without_added
+    assert {key: hashlib.sha256(raw).hexdigest() for key, raw in with_added.items()} == {
+        key: hashlib.sha256(raw).hexdigest() for key, raw in without_added.items()}
+
+
+def test_fp32_variant_preserves_all_eight_prior_full_dtos(modules):
+    from modiff.ancillary_execution import resolve_parent
+    # Captured from the reviewed structured-system source before adding FP32 T2I.
+    expected = {
+        'flux3-klein:text-to-image:prompt-preview-authoring:v1': '32aeb04804192951ed52461ef8b6621971f0f1776b39f322eeeadd5977433f94',
+        'flux3-klein:edit-image:prompt-preview-authoring:v1': 'dd9307b5470dac4d1455edf9c98df788f1b2ced8454e4c38d98de0d4ccb5697c',
+        'flux3-klein-base:text-to-image:prompt-preview-authoring:v1': '29b9708b61b0115653417e7be2869b0073981bce6f67642cd95ea5342a09334c',
+        'flux3-klein-base:edit-image:prompt-preview-authoring:v1': '6e8299402d516df85f342a3ce80b723f22b73dc130f1666e6e72c75176c1d96b',
+        'flux3-klein:text-to-image:prompt-preview-authoring:v2': '02c7dee4d5ff1d32c61e48df346ae62f48e23d0651277cbef19666e5805cc246',
+        'flux3-klein:edit-image:prompt-preview-authoring:v2': '99035db9a961439bee70fc4389afdb4291eee093c5d823e7f99f2e80bb5abc92',
+        'flux3-klein-base:text-to-image:prompt-preview-authoring:v2': '6d7faf3f20cf20d046676b26f61d0dfe11d54a6a2d314dd819082a3ea2cda6dd',
+        'flux3-klein-base:edit-image:prompt-preview-authoring:v2': 'ac6614bbaafc736599572b53ed0d0499f2ad492a8436e7bf0b6983a0bfbeff90',
+    }
+    for identity, digest in expected.items():
+        dto = resolve_parent(modules, identity)
+        assert hashlib.sha256(json.dumps(dto, sort_keys=True, ensure_ascii=False,
+            separators=(',', ':')).encode('utf-8')).hexdigest() == digest
+
+
+@pytest.mark.parametrize('index', range(4))
+def test_versioned_preservation_is_distinct_and_legacy_preview_still_refuses_layout(modules, index):
+    from modiff.ancillary_execution import validate_execution_purpose
+    from modiff import prompt_enhancement as adapter
+    legacy, structured = parent_for(modules, index), parent_for(modules, index + 4)
+    for key in ('baseSpecId', 'baseSpecContentHash', 'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert legacy[key] == structured[key]
+    assert structured['id'] == legacy['id'].replace(':v1', ':v2')
+    assert structured['contentHash'] != legacy['contentHash']
+    child = structured['ancillaryOperations'][0]
+    assert child['layoutPolicy'] == 'preserve-authored-v1'
+    assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i', 't2i_bbox', 'i2i_bbox']
+    assert child['verification']['layoutRequestSuffixSha256'].startswith('sha256:')
+    _raw, prompts = adapter._json_file(adapter.SYSTEM_PROMPTS, 32 * 1024)
+    assert legacy['ancillaryOperations'][0]['verification']['systemPromptSha256ByMode'] == {
+        mode: hashlib.sha256(text.encode('utf-8')).hexdigest() for mode, text in prompts.items()}
+    assert child['verification']['systemPromptSha256ByMode'] == {
+        mode: hashlib.sha256(adapter.request_system_prompt(prompts, mode).encode('utf-8')).hexdigest()
+        for mode in prompts}
+    value, _ = preview_graph(modules, index)
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+        'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': []}
+    with pytest.raises(ValueError, match='plain prompt enhancement'):
+        validate_execution_purpose(value, modules)
+
+
+@pytest.mark.parametrize('field,value', [('modelWeight', {}), ('transformersVersion', []),
+                                      ('processorClass', False), ('chatTemplateSha256', 'not-a-hash')])
+def test_malformed_selected_declaration_refuses_before_scope_use(modules, monkeypatch, field, value):
+    from modiff import prompt_enhancement, ancillary_execution
+    original = prompt_enhancement._json_file
+    def malformed(path, maximum):
+        raw, result = original(path, maximum)
+        if path == prompt_enhancement.DESCRIPTOR:
+            result[field] = value
+        return raw, result
+    monkeypatch.setattr(prompt_enhancement, '_json_file', malformed)
+    with pytest.raises(ValueError, match='ancillary'):
+        ancillary_execution.adapter_binding()
+
+
+def test_parent_guider_roles_match_existing_closed_vocabulary(modules):
+    for index in (2, 3):
+        parent = parent_for(modules, index)
+        assert ('guider', 'modules.ModularDiffusers.Guider', -360, 160) in parent['roles']
+        assert ['guider', 'guider_out', 'denoise', 'guider'] in [list(row) for row in parent['edges']]
+        assert all(row[0] != 'guidance' for row in parent['roles'])
+
+
+@pytest.mark.parametrize('index', range(4))
+def test_selected_t2i_nf4_recipe_is_visible_and_keeps_registered_generation_default(modules, index):
+    from modules.HuggingFaceTransformers import main as nodes
+    parent = parent_for(modules, index)
+    declaration = parent['ancillaryOperations'][0]
+    values = {(role, field): value for role, field, value in declaration['initialValues']}
+    runtime = declaration['verification']['runtimeInputs']
+    request = declaration['verification']['requestInputs']
+    recipe = {(runtime['role'], runtime['dtypeField']): 'bfloat16',
+              (runtime['role'], runtime['deviceField']): 'cuda:0',
+              (runtime['role'], runtime['quantizationField']): 'bnb_4bit',
+              (request['role'], request['maxInputTokensField']): 4096}
+    if declaration['parent']['task'] == 'text_to_image':
+        assert {key: values[key] for key in recipe} == recipe
+    else:
+        assert not set(values).intersection(recipe)
+    assert (request['role'], request['maxNewTokensField']) not in values
+    assert nodes.GenerateImageVideoText.params[request['maxNewTokensField']]['default'] == 3584
+    assert nodes.GenerateImageVideoText.params[request['maxNewTokensField']]['max'] == 3584
+    assert nodes.LoadImageTextToTextModel.params['dtype']['default'] == 'float32'
+    assert nodes.LoadImageTextToTextModel.params['device']['default'].startswith('cpu')
+    assert nodes.LoadImageTextToTextModel.params['quantization_mode']['default'] == 'none'
+
+
+def test_private_parent_fixture_matches_actual_api_availability_without_activation(monkeypatch):
+    """Declarative receipts and genuine executable API availability stay distinct."""
+    import diffusers
+    import transformers
+    import modules as registry
+    from modiff import optimization_packages
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modules.ModularDiffusers.modular_utils import require_modiff_node_contract
+    def factory_forbidden(*_args, **_kwargs):
+        pytest.fail('Private parent metadata must not activate or construct a model')
+    monkeypatch.setattr(optimization_packages, 'activate_runtime_overlay', factory_forbidden)
+    monkeypatch.setattr(transformers.AutoModelForImageTextToText, 'from_pretrained', factory_forbidden)
+    monkeypatch.setattr(transformers.AutoProcessor, 'from_pretrained', factory_forbidden)
+    monkeypatch.setattr(diffusers.DiffusionPipeline, 'from_pretrained', factory_forbidden)
+    identity = next(iter(PRIVATE_PARENTS))
+    declared = resolve_parent(registry.MODULE_MAP, identity)
+    assert declared['id'] == identity
+    assert declared['executionProfileIds'] == (PRIVATE_PARENTS[identity]['profileId'],)
+    assert declared['ancillaryOperations'][0]['parent']['pipelineClass'] == 'Flux3DistilledModularPipeline'
+    if getattr(diffusers, 'Flux3DistilledModularPipeline', None) is None:
+        # Source metadata may be authored without importing optional classes.
+        # Executable blocks and the genuine-source fixture must remain closed.
+        with pytest.raises(ValueError, match='Unknown Diffusers modular pipeline class'):
+            require_modiff_node_contract('Flux3DistilledModularPipeline', 'text_encoder')
+        with pytest.raises(pytest.skip.Exception, match='source APIs are absent'):
+            parent_for(registry.MODULE_MAP)
+    else:
+        parent = parent_for(registry.MODULE_MAP)
+        assert parent == declared == resolve_parent(registry.MODULE_MAP, identity)
+
+
+@pytest.mark.parametrize('name', ['Flux3ModularPipeline', 'Flux3DistilledModularPipeline', 'Flux3Transformer2DModel'])
+def test_private_parent_fixture_refuses_foreign_export_identity(modules, monkeypatch, name):
+    import diffusers
+    monkeypatch.setattr(diffusers, name, object())
+    with pytest.raises(pytest.fail.Exception, match='actual native class identity'):
+        parent_for(modules)
+
+
+
+APPEND_IDENTITIES = ('flux3-klein:edit-image:prompt-preview-authoring:v3',
+                     'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3')
+BASE_APPEND_IDENTITIES = ('flux3-klein-base:edit-image:prompt-preview-authoring:v3',
+                         'flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v3')
+BASE_RAW_FP32_ID = 'flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v1'
+
+
+def test_append_registration_preserves_all_ten_current_full_dtos(modules, monkeypatch):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
+    previous = tuple(key for key in PRIVATE_PARENTS
+                     if key not in APPEND_IDENTITIES + BASE_APPEND_IDENTITIES + (BASE_RAW_FP32_ID,) + RAW_I2I_NF4_IDENTITIES)
+    assert len(previous) == 10
+    def encoded():
+        return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
+                               separators=(',', ':')).encode('utf-8') for key in previous}
+    with_added = encoded()
+    with monkeypatch.context() as scoped:
+        for identity in APPEND_IDENTITIES:
+            scoped.delitem(PRIVATE_PARENTS, identity)
+            scoped.delitem(_OPERATION_AUTHORING_RECIPES, identity)
+        without_added = encoded()
+    assert with_added == without_added
+
+
+@pytest.mark.parametrize('identity', APPEND_IDENTITIES + BASE_APPEND_IDENTITIES)
+def test_append_policy_has_explicit_plain_publisher_operation_and_keeps_fixed_recipe(modules, identity):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent, validate_execution_purpose
+    from modiff.prompt_enhancement import SYSTEM_PROMPTS, _json_file
+    from modiff.prompt_enhancement_output import APPEND_REQUEST_TEMPLATE
+    parent = resolve_parent(modules, identity)
+    child = parent['ancillaryOperations'][0]
+    assert child['layoutPolicy'] == 'append-details-preserve-layout-v1'
+    assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i']
+    _, prompts = _json_file(SYSTEM_PROMPTS, 32768)
+    assert child['verification']['systemPromptSha256ByMode'] == {
+        mode: hashlib.sha256(text.encode()).hexdigest() for mode, text in prompts.items()}
+    assert child['verification']['layoutRequestSuffixSha256'] == 'sha256:' + hashlib.sha256(APPEND_REQUEST_TEMPLATE.encode()).hexdigest()
+    value, _ = preview_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    for role, name, literal_value in child['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(literal_value)}
+    proposal = value['nodes']['proposal']['params']
+    proposal['prompt']['value'] = 'Keep <subject>.'
+    proposal['layout_conditioning']['value'] = {'schemaVersion': 1,
+        'coordinateSpace': 'normalized_xyxy', 'regions': [
+            {'id': 'subject', 'description': 'An authored subject.', 'targetBox': [.123456, 0, 1, 1]}]}
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    proposal['operation']['value'] = 'enhance_prompt'
+    with pytest.raises(ValueError, match='operation|selection'):
+        validate_execution_purpose(value, modules)
+
+
+def test_old_recipe_cannot_forge_the_new_append_operation(modules):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value, _ = preview_graph(modules, 0)
+    value['nodes']['proposal']['params']['operation']['value'] = 'enhance_prompt_append_details'
+    with pytest.raises(ValueError, match='operation'):
+        validate_execution_purpose(value, modules)
+
+
+def test_base_append_registration_preserves_all_twelve_existing_full_dtos(modules, monkeypatch):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
+    assert all(identity in PRIVATE_PARENTS and identity in _OPERATION_AUTHORING_RECIPES
+               for identity in BASE_APPEND_IDENTITIES)
+    previous = tuple(key for key in PRIVATE_PARENTS
+                     if key not in BASE_APPEND_IDENTITIES + (BASE_RAW_FP32_ID,) + RAW_I2I_NF4_IDENTITIES)
+    assert len(previous) == 12
+
+    def encoded():
+        return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
+                               separators=(',', ':')).encode('utf-8') for key in previous}
+
+    with_added = encoded()
+    with monkeypatch.context() as scoped:
+        for identity in BASE_APPEND_IDENTITIES:
+            scoped.delitem(PRIVATE_PARENTS, identity)
+            scoped.delitem(_OPERATION_AUTHORING_RECIPES, identity)
+        without_added = encoded()
+    # Compare every field and both embedded hashes, not only the digest values.
+    assert with_added == without_added
+
+
+def test_base_raw_fp32_registration_preserves_all_fourteen_existing_full_dtos(modules, monkeypatch):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
+    previous = tuple(key for key in PRIVATE_PARENTS if key not in (BASE_RAW_FP32_ID,) + RAW_I2I_NF4_IDENTITIES)
+    assert len(previous) == 14
+
+    def encoded():
+        return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
+                               separators=(',', ':')).encode('utf-8') for key in previous}
+
+    with_added = encoded()
+    with monkeypatch.context() as scoped:
+        scoped.delitem(PRIVATE_PARENTS, BASE_RAW_FP32_ID)
+        scoped.delitem(_OPERATION_AUTHORING_RECIPES, BASE_RAW_FP32_ID)
+        without_added = encoded()
+    assert with_added == without_added
+
+
+@pytest.mark.parametrize('index', range(4))
+def test_normal_raw_and_append_offers_share_parent_graph_but_require_their_exact_layout_mode(modules, index):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent, validate_execution_purpose
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    from modiff.studio_execution_specs import studio_operation_authoring_selections
+    profiles = [DIFFUSERS_EXECUTION_PROFILES[key].to_public_dict()
+                for key in ('flux3-klein:modular', 'flux3-klein-base:modular')]
+    offer = studio_operation_authoring_selections(profiles)[index]
+    raw = resolve_parent(modules, offer['rawAuthoringRecipeId'])
+    append = resolve_parent(modules, offer['authoringRecipeId'])
+    for key in ('schemaVersion', 'canonicalizationVersion', 'baseSpecId', 'baseSpecContentHash',
+                'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert raw[key] == append[key]
+    child = raw['ancillaryOperations'][0]
+    appended = append['ancillaryOperations'][0]
+    assert 'layoutPolicy' not in child
+    for key in ('roles', 'edges', 'bindings', 'fieldOverrides', 'adapter', 'sourceRegions'):
+        assert child[key] == appended[key]
+    assert {(role, name): value for role, name, value in child['initialValues']} == {
+        **{(role, name): value for role, name, value in appended['initialValues']},
+        ('proposal', 'operation'): 'enhance_prompt'}
+    value, _parent = preview_graph(modules, list(PRIVATE_PARENTS).index(offer['rawAuthoringRecipeId']))
+    for role, name, selected in child['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(selected)}
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    layout = {'schemaVersion': 1, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+        {'id': 'subject', 'description': 'An authored subject.', 'targetBox': [0, 0, 1, 1]}]}
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = layout
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match='plain prompt enhancement only'):
+        validate_execution_purpose(value, modules)
+    assert value == before
+    if offer['task'] == 'text_to_image':
+        assert child['bindings']['owner']['referenceSource'] is None
+        fixed = {(role, name): selected for role, name, selected in child['initialValues']}
+        assert fixed['provider', 'dtype'] == 'float32'
+        assert fixed['provider', 'device'] == 'cuda:0'
+        assert fixed['provider', 'quantization_mode'] == 'none'
+        assert fixed['proposal', 'max_input_tokens'] == 4096
+        value['nodes']['proposal']['params']['layout_conditioning']['value'] = None
+        value['nodes']['provider']['params']['dtype']['value'] = 'bfloat16'
+        before = deepcopy(value)
+        with pytest.raises(ValueError, match='FP32 Preview input selection changed'):
+            validate_execution_purpose(value, modules)
+        assert value == before
+
+
+@pytest.mark.parametrize('profile_id', ('flux3-klein:modular', 'flux3-klein-base:modular'))
+def test_explicit_nf4_raw_choice_reuses_legacy_t2i_dto_without_changing_fp32_or_append(modules, profile_id):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent, validate_execution_purpose
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    from modiff.studio_execution_specs import studio_operation_authoring_selections
+    offer = next(row for row in studio_operation_authoring_selections([
+        DIFFUSERS_EXECUTION_PROFILES[profile_id].to_public_dict()]) if row['task'] == 'text_to_image')
+    choices = offer['rawAuthoringRecipeChoices']
+    assert len(choices) == 2 and choices[0]['authoringRecipeId'] == offer['rawAuthoringRecipeId']
+    selected = choices[1]['authoringRecipeId']
+    assert selected != offer['rawAuthoringRecipeId'] and selected != offer['authoringRecipeId']
+    assert PRIVATE_PARENTS[selected].get('providerRecipe') is None
+    parents = [resolve_parent(modules, identity) for identity in (
+        offer['authoringRecipeId'], offer['rawAuthoringRecipeId'], selected)]
+    for key in ('baseSpecId', 'baseSpecContentHash', 'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert parents[0][key] == parents[1][key] == parents[2][key]
+    child = parents[2]['ancillaryOperations'][0]
+    assert 'layoutPolicy' not in child and child['bindings']['owner']['referenceSource'] is None
+    fixed = {(role, name): value for role, name, value in child['initialValues']}
+    assert fixed['provider', 'dtype'] == 'bfloat16'
+    assert fixed['provider', 'device'] == 'cuda:0'
+    assert fixed['provider', 'quantization_mode'] == 'bnb_4bit'
+    assert fixed['proposal', 'max_input_tokens'] == 4096
+    assert fixed['proposal', 'operation'] == 'enhance_prompt'
+    value, _parent = preview_graph(modules, list(PRIVATE_PARENTS).index(selected))
+    for role, name, selected_value in child['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(selected_value)}
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+        'schemaVersion': 1, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+            {'id': 'subject', 'description': 'Authored subject.', 'targetBox': [0, 0, 1, 1]}]}
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match='plain prompt enhancement only'):
+        validate_execution_purpose(value, modules)
+    assert value == before
+
+
+@pytest.mark.parametrize('identity', BASE_APPEND_IDENTITIES)
+def test_base_append_keeps_the_base_graph_and_corresponding_distilled_child_contract(modules, identity):
+    from modiff.ancillary_execution import resolve_parent
+    parent = resolve_parent(modules, identity)
+    task = parent['ancillaryOperations'][0]['parent']['task']
+    mode = 'text-to-image' if task == 'text_to_image' else 'edit-image'
+    legacy = resolve_parent(modules, f'flux3-klein-base:{mode}:prompt-preview-authoring:v1')
+    distilled = resolve_parent(modules, identity.replace('flux3-klein-base:', 'flux3-klein:', 1))
+    for key in ('baseSpecId', 'baseSpecContentHash', 'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert parent[key] == legacy[key]
+    assert ('guider', 'modules.ModularDiffusers.Guider', -360, 160) in parent['roles']
+    child, counterpart = parent['ancillaryOperations'][0], distilled['ancillaryOperations'][0]
+    for key in ('roles', 'edges', 'bindings', 'initialValues', 'fieldOverrides', 'adapter',
+                'verification', 'sourceRegions', 'layoutPolicy'):
+        assert child[key] == counterpart[key]
+    assert parent['contentHash'] != legacy['contentHash']
+    assert child['contentHash'] != legacy['ancillaryOperations'][0]['contentHash']
+    assert child['parent']['pipelineClass'] == 'Flux3ModularPipeline'
+    assert child['parent']['executionProfileId'] == 'flux3-klein-base:modular'
+
+
+@pytest.mark.parametrize('identity', BASE_APPEND_IDENTITIES)
+def test_base_append_workflow_scope_keeps_the_existing_compiled_base_binding(modules, identity):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    from modiff.studio_execution_specs import assert_studio_execution_graph
+    value = workflow_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert_studio_execution_graph(value, value['runtimeHints'])
+    assert value == before
+    binding = value['runtimeHints']['executionPurpose']['bindings'][0]
+    assert binding['parent']['pipelineClass'] == 'Flux3ModularPipeline'
+    assert set(binding['roleNodes'].values()).isdisjoint(value['nodes'])
+
+
+@pytest.mark.parametrize('dtype', ['float32', 'bfloat16'])
+def test_base_append_i2i_retains_explicit_dense_precision_choice_and_real_reference_route(modules, dtype):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    identity = BASE_APPEND_IDENTITIES[0]
+    value, parent = preview_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    for role, name, literal_value in parent['ancillaryOperations'][0]['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(literal_value)}
+    value['nodes']['provider']['params'].update(dtype={'value': dtype},
+        device={'value': 'cuda:0'}, quantization_mode={'value': 'none'})
+    value['nodes']['proposal']['params']['prompt']['value'] = 'Keep <subject>.'
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+        'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+            {'id': 'subject', 'description': 'An authored subject.', 'action': 'place',
+             'targetBox': [.123456, 0, 1, 1]}]}
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    assert value['nodes']['proposal']['params']['images'] == {
+        'sourceId': 'image-loadImage', 'sourceKey': 'image'}
+
+
+def test_base_append_t2i_refuses_changed_fp32_literals_before_model_preparation(modules):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    identity = BASE_APPEND_IDENTITIES[1]
+    value, parent = preview_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    child = parent['ancillaryOperations'][0]
+    for role, name, literal_value in child['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(literal_value)}
+    value['nodes']['proposal']['params']['prompt']['value'] = 'Keep <subject>.'
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+        'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+            {'id': 'subject', 'description': 'An authored subject.', 'action': 'place',
+             'targetBox': [.123456, 0, 1, 1]}]}
+    assert child['bindings']['owner']['referenceSource'] is None
+    assert 'images' not in value['nodes']['proposal']['params']
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    for role, name, wrong in [('provider', 'dtype', 'bfloat16'),
+                             ('provider', 'quantization_mode', 'bnb_4bit'),
+                             ('provider', 'device', 'cpu'),
+                             ('proposal', 'max_input_tokens', 4095),
+                             ('proposal', 'max_input_tokens', 4096.0)]:
+        changed = deepcopy(value)
+        changed['nodes'][role]['params'][name] = {'value': wrong}
+        before = deepcopy(changed)
+        with pytest.raises(ValueError, match='FP32 Preview input selection changed'):
+            validate_execution_purpose(changed, modules)
+        assert changed == before
+
+
+@pytest.mark.parametrize('profile_id', ('flux3-klein:modular', 'flux3-klein-base:modular'))
+def test_raw_i2i_nf4_is_an_explicit_choice_with_the_same_parent_and_real_references(modules, profile_id):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent, validate_execution_purpose
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    from modiff.studio_execution_specs import studio_operation_authoring_selections
+    offer = next(row for row in studio_operation_authoring_selections([
+        DIFFUSERS_EXECUTION_PROFILES[profile_id].to_public_dict()]) if row['task'] == 'edit_image')
+    choices = offer['rawAuthoringRecipeChoices']
+    assert len(choices) == 2 and choices[0]['authoringRecipeId'] == offer['rawAuthoringRecipeId']
+    assert choices[0]['label'] == 'Raw wording: editable provider (FP32 default)'
+    selected = profile_id.removesuffix(':modular') + ':edit-image:prompt-preview-nf4-authoring:v1'
+    assert choices[1] == {'authoringRecipeId': selected, 'label': 'Raw wording: BF16 + NF4'}
+    assert PRIVATE_PARENTS[selected]['providerRecipe'] == 'bf16-nf4'
+    parents = [resolve_parent(modules, identity) for identity in (
+        offer['authoringRecipeId'], offer['rawAuthoringRecipeId'], selected)]
+    for key in ('schemaVersion', 'canonicalizationVersion', 'baseSpecId', 'baseSpecContentHash',
+                'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert parents[0][key] == parents[1][key] == parents[2][key]
+    default_child, child = (parent['ancillaryOperations'][0] for parent in parents[1:])
+    assert 'layoutPolicy' not in child
+    assert child['bindings'] == default_child['bindings']
+    assert child['bindings']['owner']['referenceSource'] == {'role': 'loadImage', 'field': 'image'}
+    default_values = {(role, name): value for role, name, value in default_child['initialValues']}
+    assert not any(('provider', field) in default_values for field in ('dtype', 'device', 'quantization_mode'))
+    fixed = {(role, name): value for role, name, value in child['initialValues']}
+    assert fixed['provider', 'dtype'] == 'bfloat16'
+    assert fixed['provider', 'device'] == 'cuda:0'
+    assert fixed['provider', 'quantization_mode'] == 'bnb_4bit'
+    assert fixed['proposal', 'max_input_tokens'] == 4096
+    assert fixed['proposal', 'operation'] == 'enhance_prompt'
+    value, _parent = preview_graph(modules, list(PRIVATE_PARENTS).index(selected))
+    for role, name, selected_value in child['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(selected_value)}
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    assert value['nodes']['proposal']['params']['images'] == {
+        'sourceId': 'image-loadImage', 'sourceKey': 'image'}
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+        'schemaVersion': 1, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+            {'id': 'subject', 'description': 'Authored subject.', 'targetBox': [0, 0, 1, 1]}]}
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match='plain prompt enhancement only'):
+        validate_execution_purpose(value, modules)
+    assert value == before
+    default, _ = preview_graph(modules, list(PRIVATE_PARENTS).index(offer['rawAuthoringRecipeId']))
+    # The legacy default still accepts its existing editable dense provider.
+    assert validate_execution_purpose(default, modules) == default['runtimeHints']['executionPurpose']
+
+
+def test_raw_i2i_nf4_registration_preserves_all_fifteen_existing_full_dtos(modules, monkeypatch):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
+    previous = tuple(key for key in PRIVATE_PARENTS if key not in RAW_I2I_NF4_IDENTITIES)
+    assert len(previous) == 15 and len(PRIVATE_PARENTS) == 17
+
+    def encoded():
+        return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
+                               separators=(',', ':')).encode('utf-8') for key in previous}
+
+    with_added = encoded()
+    with monkeypatch.context() as scoped:
+        for identity in RAW_I2I_NF4_IDENTITIES:
+            scoped.delitem(PRIVATE_PARENTS, identity)
+            scoped.delitem(_OPERATION_AUTHORING_RECIPES, identity)
+        without_added = encoded()
+    # Full data, including both nested hash identities, remains exact.
+    assert with_added == without_added
+
+
+@pytest.mark.parametrize('identity', RAW_I2I_NF4_IDENTITIES)
+@pytest.mark.parametrize('role,field,wrong', [
+    ('provider', 'dtype', 'float32'), ('provider', 'device', 'cpu'),
+    ('provider', 'quantization_mode', 'none'), ('proposal', 'max_input_tokens', 4095),
+    ('proposal', 'max_input_tokens', 4096.0), ('proposal', 'operation', 'enhance_prompt_append_details'),
+])
+def test_explicit_i2i_nf4_literals_refuse_changes_before_preparation(modules, identity, role, field, wrong):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    value, parent = preview_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    for child_role, name, selected in parent['ancillaryOperations'][0]['initialValues']:
+        value['nodes'][child_role]['params'][name] = {'value': deepcopy(selected)}
+    value['nodes'][role]['params'][field] = {'value': wrong}
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match=r'BF16 \+ NF4 Preview input selection changed'):
+        validate_execution_purpose(value, modules)
+    assert value == before
+
+
+@pytest.mark.parametrize('identity', RAW_I2I_NF4_IDENTITIES)
+@pytest.mark.parametrize('count', [0, 1, 10, 11])
+def test_explicit_i2i_nf4_keeps_ordered_reference_count_and_endpoint_bounds(modules, identity, count):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    value, parent = preview_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    for role, name, selected in parent['ancillaryOperations'][0]['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(selected)}
+    files = [f'reference-{index}.png' for index in range(count)]
+    value['nodes']['image-loadImage']['params']['file']['value'] = files
+    before = deepcopy(value)
+    if count in (1, 10):
+        assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    else:
+        with pytest.raises(ValueError, match='one to ten ordered'):
+            validate_execution_purpose(value, modules)
+    assert value == before
+    if count in (1, 10):
+        value['nodes']['proposal']['params']['images'] = {'sourceId': 'provider', 'sourceKey': 'image'}
+        before = deepcopy(value)
+        with pytest.raises(ValueError, match='real parent media endpoint'):
+            validate_execution_purpose(value, modules)
+        assert value == before

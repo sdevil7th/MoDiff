@@ -35,7 +35,48 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 278)
+        public_flux3_spec_ids = {
+            "flux3-klein-base:official-provider:v1:edit-image:v1",
+            "flux3-klein-base:official-provider:v1:text-to-image:v1",
+            "flux3-klein:official-provider:v1:edit-image:v1",
+            "flux3-klein:official-provider:v1:text-to-image:v1",
+        }
+        self.assertEqual(len(self.contracts), 289)
+        self.assertEqual(
+            {contract["id"] for contract in self.contracts
+             if contract["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
+            {f"task-template:{identity}" for identity in public_flux3_spec_ids},
+        )
+        # Three Pika source-supplement specs extend the previous 282. H3's
+        # replacement preserves its three old contracts in the private archive.
+        pika_ids = {
+            "pika-h3-flex:modular-text-to-video-with-audio:v1",
+            "pika-h3-flex:modular-first-last-frame-to-video-with-audio:v1",
+            "pika-h3-flex:modular-reference-to-video-with-audio:v1",
+        }
+        self.assertEqual(
+            {contract["id"].removeprefix("task-template:") for contract in self.contracts
+             if contract["pipelineClass"] == "PikaH3FlexModularPipeline"}, pika_ids,
+        )
+        self.assertEqual(
+            {contract['id'] for contract in self.contracts
+             if contract['pipelineClass'] == 'WanTI2VImageToVideoPipeline'},
+            {'task-template:wan-22-ti2v-5b:image-to-video:v1'},
+        )
+        h3_image_ids = {
+            'minimax-h3-image:modular-text-to-image:v1',
+            'minimax-h3-image:modular-edit-image:v1',
+            'minimax-h3-image:modular-multi-image-reference-edit:v1',
+        }
+        self.assertEqual(
+            {contract['id'].removeprefix('task-template:') for contract in self.contracts
+             if contract['pipelineClass'] == 'MiniMaxH3ImageModularPipeline'}, h3_image_ids,
+        )
+        self.assertEqual(
+            sum(contract["id"].removeprefix("task-template:") not in public_flux3_spec_ids | pika_ids | h3_image_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
+                for contract in self.contracts),
+            278,
+        )
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))
@@ -359,7 +400,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
         cosmos_video = self.contract_by_pair[("Cosmos3OmniModularPipeline", "text_to_video")]
         self.assertEqual(cosmos_image["mediaKind"], "image")
         self.assertEqual(cosmos_image["output"]["nodeKey"], "modules.Image.Preview")
-        self.assertEqual(cosmos_image["auxiliaryTerminalRoles"], ["afterDecode"])
+        self.assertEqual(cosmos_image["auxiliaryTerminalRoles"], [])
         self.assertEqual(cosmos_video["mediaKind"], "video")
         self.assertEqual(cosmos_video["output"]["nodeKey"], "modules.Video.Export")
         self.assertEqual(cosmos_video["auxiliaryTerminalRoles"], ["afterDecode"])

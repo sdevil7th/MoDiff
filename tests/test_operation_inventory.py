@@ -2,6 +2,7 @@
 
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 class OperationInventoryTests(unittest.TestCase):
@@ -10,12 +11,78 @@ class OperationInventoryTests(unittest.TestCase):
 
         generated = build_operation_inventory(Path(__file__).resolve().parents[1])
         self.assertEqual(generated, load_operation_inventory())
-        self.assertEqual(len(generated["pipelines"]), 334)
+        self.assertEqual(len(generated["pipelines"]), 340)
         flux = next(p for p in generated["pipelines"] if p["pipelineClass"] == "FluxPipeline")
         self.assertIn({"task": "text_to_image", "source": "auto", "workflowId": None}, flux["upstreamTasks"])
         qwen = next(p for p in generated["pipelines"] if p["pipelineClass"] == "QwenImageModularPipeline")
         self.assertTrue(any(t["workflowId"] == "inpainting" for t in qwen["upstreamTasks"]))
         self.assertTrue(all(p["upstreamTasks"] for p in generated["pipelines"]))
+        by_name = {row["pipelineClass"]: row for row in generated["pipelines"]}
+        self.assertEqual(by_name["QwenImage21Pipeline"]["upstreamTasks"], [
+            {"task": "text_to_image", "source": "auto", "workflowId": None},
+        ])
+        self.assertEqual({name for name, row in by_name.items() if row["coverage"] == "unreviewed"},
+                         {
+                "EchoModularPipeline", "Kandinsky6SRPipeline", "Kandinsky6TI2VAPipeline",
+                "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline", "SanaWMPipeline",
+            })
+        # Executable is the exact source-adapter taxonomy, not installed
+        # provider readiness, native model output, Auto or Gallery qualification.
+        for name in ("Flux3ModularPipeline", "Flux3DistilledModularPipeline"):
+            self.assertEqual(by_name[name], {
+                "pipelineClass": name, "coverage": "executable", "equivalentTo": [],
+                "reason": "At least one exact backend execution specification selects this upstream class.",
+                "upstreamTasks": [
+                    {"task": "text_to_image", "source": "modular", "workflowId": "text2image"},
+                    {"task": "edit_image", "source": "modular", "workflowId": "image_conditioned"},
+                ],
+            })
+        self.assertNotIn("Lumina2Text2ImgPipeline", by_name)
+        self.assertNotIn("LuminaText2ImgPipeline", by_name)
+
+    def test_inventory_reproduces_with_crlf_upstream_python_source(self):
+        from modiff.operation_inventory import build_operation_inventory, load_operation_inventory
+        from modiff.upstream_coverage import reviewed_diffusers_source
+
+        root = Path(__file__).resolve().parents[1]
+        source = reviewed_diffusers_source()
+        python_sources = {source / "__init__.py", source / "pipelines" / "auto_pipeline.py"}
+        read_bytes = Path.read_bytes
+
+        def windows_source_bytes(path):
+            body = read_bytes(path)
+            if path in python_sources:
+                return body.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+            return body
+
+        # Simulate the real pinned wheel's Windows Git checkout without changing
+        # installed files, model caches, or the reviewed JSON snapshot.
+        with patch.object(Path, "read_bytes", windows_source_bytes):
+            generated = build_operation_inventory(root)
+        self.assertEqual(generated, load_operation_inventory())
+
+    def test_inventory_source_receipts_still_detect_code_and_snapshot_byte_changes(self):
+        from modiff.operation_inventory import build_operation_inventory, load_operation_inventory
+        from modiff.upstream_coverage import reviewed_diffusers_source
+
+        root = Path(__file__).resolve().parents[1]
+        source = reviewed_diffusers_source()
+        reviewed = load_operation_inventory()
+        read_bytes = Path.read_bytes
+        for name, changed_path, extra_bytes in (
+            ("exports", source / "__init__.py", b"\n# source drift\n"),
+            ("autoTasks", source / "pipelines" / "auto_pipeline.py", b"\n# source drift\n"),
+            ("modularTasks", root / "data" / "modular-workflow-contracts.json", b" "),
+        ):
+            def changed_bytes(path):
+                body = read_bytes(path)
+                return body + extra_bytes if path == changed_path else body
+
+            with self.subTest(source=name), patch.object(Path, "read_bytes", changed_bytes):
+                generated = build_operation_inventory(root)
+            self.assertNotEqual(generated["sources"][name], reviewed["sources"][name])
+            self.assertNotEqual(generated["contentHash"], reviewed["contentHash"])
+            self.assertEqual(generated["pipelines"], reviewed["pipelines"])
 
     def test_conditional_auto_mappings_are_audited_and_new_task_categories_fail_closed(self):
         from modiff.operation_inventory import _auto_tasks

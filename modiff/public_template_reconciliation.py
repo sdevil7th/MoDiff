@@ -1,4 +1,4 @@
-"""Classify the 77 public templates without re-running graphs.
+"""Classify public templates without re-running graphs.
 
 The release contract already records which historical Gallery examples still
 match the current generic-node graphs. This module turns that evidence into a
@@ -28,6 +28,7 @@ STALE_STATUS = "stale"
 BUCKET_CURRENT = "current_keep"
 BUCKET_STALE = "stale_canary_required"
 BUCKET_NEVER = "never_had_example"
+BUCKET_UNMAPPED = "canonical_workflow_required"
 _BOUNDARY = {
     "blanketRerunForbidden": True,
     "graphsSubmitted": False,
@@ -81,16 +82,39 @@ def classify_public_template(template: dict) -> dict:
     workflow_id = template.get("canonicalWorkflowId")
     if not isinstance(template_id, str) or not template_id:
         raise PublicTemplateReconciliationError("Public template is missing an id.")
-    if not isinstance(workflow_id, str) or not workflow_id:
-        raise PublicTemplateReconciliationError(f"Public template {template_id} is missing canonicalWorkflowId.")
-
     historical = template.get("historicalEvidence")
     last_run = template.get("lastSuccessfulRealRun")
     missing = list(template.get("missingReleaseEvidence") or [])
     reasons = list((historical or {}).get("reasons") or []) if isinstance(historical, dict) else []
     missing_nodes = list((historical or {}).get("missingBackendNodes") or []) if isinstance(historical, dict) else []
 
-    if historical is None:
+    unmapped = "canonicalWorkflowId" in template and workflow_id is None
+    if unmapped:
+        if (
+            template.get("releaseEligible") is not False
+            or last_run is not None
+            or "graph_hash" not in missing
+            or (
+                historical is not None
+                and (
+                    not isinstance(historical, dict)
+                    or historical.get("status") != "no_canonical_workflow"
+                    or "canonical_workflow" not in reasons
+                )
+            )
+        ):
+            raise PublicTemplateReconciliationError(
+                f"Public template {template_id} has inconsistent missing canonical workflow authority."
+            )
+        bucket = BUCKET_UNMAPPED
+        action = "establish_canonical_workflow_before_canary"
+        note = (
+            "No supported canonical workflow is bound. Retain historical media, keep release held, "
+            "and establish reviewed workflow authority before planning a canary."
+        )
+    elif not isinstance(workflow_id, str) or not workflow_id:
+        raise PublicTemplateReconciliationError(f"Public template {template_id} is missing canonicalWorkflowId.")
+    elif historical is None:
         bucket = BUCKET_NEVER
         action = "plan_first_example_canary_on_qualification_host"
         note = (
@@ -161,7 +185,7 @@ def build_public_template_reconciliation(root: Path, *, release_contract: dict |
         raise PublicTemplateReconciliationError("Release contract contains duplicate public template ids.")
 
     local_workflows = _local_receipt_workflow_ids(root)
-    public_workflows = {item["canonicalWorkflowId"] for item in items}
+    public_workflows = {item["canonicalWorkflowId"] for item in items if item["canonicalWorkflowId"] is not None}
     overlap = sorted(local_workflows & public_workflows)
     if overlap:
         raise PublicTemplateReconciliationError(
@@ -197,6 +221,7 @@ def build_public_template_reconciliation(root: Path, *, release_contract: dict |
             "currentKeepCount": counts[BUCKET_CURRENT],
             "staleCanaryCount": counts[BUCKET_STALE],
             "neverHadExampleCount": counts[BUCKET_NEVER],
+            "canonicalWorkflowRequiredCount": counts[BUCKET_UNMAPPED],
             "staleReasonCounts": dict(sorted(reason_counts.items())),
             "localTechnicalReceiptOverlapCount": len(overlap),
         },
@@ -207,9 +232,10 @@ def build_public_template_reconciliation(root: Path, *, release_contract: dict |
         raise PublicTemplateReconciliationError(
             "current_keep count drifted from release-contract coverage.currentHistoricalEvidenceCount."
         )
-    if isinstance(expected_historical, int) and expected_historical != counts[BUCKET_CURRENT] + counts[BUCKET_STALE]:
+    historical_count = sum(item["historicalEvidenceStatus"] is not None for item in items)
+    if isinstance(expected_historical, int) and expected_historical != historical_count:
         raise PublicTemplateReconciliationError(
-            "current+stale count drifted from release-contract coverage.historicalEvidenceCount."
+            "Historical evidence count drifted from release-contract coverage.historicalEvidenceCount."
         )
     ledger["contentHash"] = canonical_content_hash(ledger)
     return ledger
@@ -221,6 +247,7 @@ def render_public_template_reconciliation_html(ledger: dict) -> str:
         (BUCKET_CURRENT, "Keep (do not rerun)"),
         (BUCKET_STALE, "Stale canary (qualification host only)"),
         (BUCKET_NEVER, "Never had an example (first-example canary)"),
+        (BUCKET_UNMAPPED, "Canonical workflow required (release held)"),
     )
     for bucket, title in titles:
         rows = [item for item in ledger["items"] if item["bucket"] == bucket]
@@ -235,7 +262,7 @@ def render_public_template_reconciliation_html(ledger: dict) -> str:
                 "<article>"
                 f"<h3>{item['templateId']}</h3>"
                 f"<p>{item['label']}</p>"
-                f"<p><code>{item['canonicalWorkflowId']}</code></p>"
+                f"<p><code>{item['canonicalWorkflowId'] or 'No supported canonical workflow'}</code></p>"
                 f"<p>{item['note']}</p>"
                 f"{extra}"
                 "</article>"
@@ -249,9 +276,10 @@ def render_public_template_reconciliation_html(ledger: dict) -> str:
         "article{margin:0 0 20px;padding:0 0 16px;border-bottom:1px solid #ccc}"
         "code{font-size:12px}</style></head><body>"
         "<h1>Public template reconciliation</h1>"
-        "<p>No graph was submitted. Keep the 26 current historical examples. "
+        f"<p>No graph was submitted. Keep the {summary['currentKeepCount']} current historical examples. "
         f"Plan canaries only for {summary['staleCanaryCount']} stale templates and "
-        f"{summary['neverHadExampleCount']} templates that never had an example.</p>"
+        f"{summary['neverHadExampleCount']} templates that never had an example. "
+        f"Keep {summary['canonicalWorkflowRequiredCount']} templates without canonical workflows held.</p>"
         + "".join(sections)
         + "</body></html>\n"
     )

@@ -1,0 +1,217 @@
+{
+  "schemaVersion": 1,
+  "originalReviewedRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+  "originalModuleSha256": "59206575f988315da524f206822ca6186bf713a46325ce130918825008c9a2aa",
+  "reviews": {
+    "flux-dev:img2img-direct/edit_image": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "flux-dev:modular",
+      "nativeTask": "image_to_image",
+      "source": "modular_pipelines/flux/modular_blocks_flux.py",
+      "limitations": [
+        "The standard edit_image task names the native image2image workflow, not Kontext editing."
+      ]
+    },
+    "flux-dev:img2img-direct/edit_image@black-forest-labs/FLUX.1-dev-FP8": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "artifact_blocked",
+      "reason": "root_checkpoint_has_no_reviewed_modular_component_layout",
+      "source": "modules/ModularDiffusers/loaders.py:_validate_reviewed_pipeline_index",
+      "limitations": [
+        "A root FP8/NVFP4 checkpoint is not a Diffusers component repository. No reviewed native conversion or dequantization recipe is declared; do not substitute base weights."
+      ]
+    },
+    "flux-kontext:direct/multi_image_reference_edit": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "flux-kontext:modular",
+      "nativeTask": "multi_image_reference_edit",
+      "source": "modules/ImageOperations/main.py:stitch_reference_images",
+      "limitations": [
+        "Visible bounded equal-height horizontal composition precedes the native VAE encoder. Native lists alone represent a batch, not multiple references for one result."
+      ]
+    },
+    "flux-kontext:direct/multi_image_reference_edit@black-forest-labs/FLUX.1-Kontext-dev-NVFP4": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "artifact_blocked",
+      "reason": "root_checkpoint_has_no_reviewed_modular_component_layout",
+      "source": "modules/ModularDiffusers/loaders.py:_validate_reviewed_pipeline_index",
+      "limitations": [
+        "A root FP8/NVFP4 checkpoint is not a Diffusers component repository. No reviewed native conversion or dequantization recipe is declared; do not substitute base weights."
+      ]
+    },
+    "flux-krea:direct/text_to_image": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "flux-krea:modular",
+      "nativeTask": "text_to_image",
+      "source": "modular_pipelines/flux/before_denoise.py",
+      "limitations": [
+        "Separate Krea artifact; 28 steps and guidance 3.5; no inherited dev output proof."
+      ]
+    },
+    "flux-schnell:direct/text_to_image": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "flux-schnell:modular",
+      "nativeTask": "text_to_image",
+      "source": "modular_pipelines/flux/before_denoise.py",
+      "limitations": [
+        "Four steps, guidance zero, 256-token encoder limit; guidance_embeds comes from the transformer config."
+      ]
+    },
+    "flux2-dev:direct/multi_image_reference_edit": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "flux2:modular",
+      "nativeTask": "multi_image_reference_edit",
+      "source": "modular_pipelines/flux2/encoders.py",
+      "limitations": [
+        "One to eight ordered independent references, not an image batch or stitched canvas."
+      ]
+    },
+    "flux2-klein-kv:direct/edit_image": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "upstream_exception",
+      "reason": "pinned_modular_klein_has_no_kv_extract_cached_path",
+      "source": "pipelines/flux2/pipeline_flux2_klein_kv.py",
+      "limitations": [
+        "The standard KV pipeline extracts reference K/V once and reuses it on later steps. Pinned modular Klein does not implement kv_cache_mode=extract/cached; keep the exact standard KV executor for reference tasks."
+      ]
+    },
+    "flux2-klein-kv:direct/multi_image_reference_edit": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "upstream_exception",
+      "reason": "pinned_modular_klein_has_no_kv_extract_cached_path",
+      "source": "pipelines/flux2/pipeline_flux2_klein_kv.py",
+      "limitations": [
+        "The standard KV pipeline extracts reference K/V once and reuses it on later steps. Pinned modular Klein does not implement kv_cache_mode=extract/cached; keep the exact standard KV executor for reference tasks."
+      ]
+    },
+    "flux2-klein-kv:direct/text_to_image": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "flux2-klein-kv:t2i-modular",
+      "nativeTask": "text_to_image",
+      "source": "pipelines/flux2/pipeline_flux2_klein_kv.py",
+      "limitations": [
+        "Text-only takes the standard-forward branch, with no reference K/V cache. Exact 9B KV index declares Flux2KleinPipeline, is_distilled=true, and the normal Flux2 transformer/VAE; this does not admit its cached-reference tasks or inherit 4B memory qualification."
+      ]
+    },
+    "flux2-klein:direct/multi_image_reference_edit": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "flux2-klein:modular",
+      "nativeTask": "multi_image_reference_edit",
+      "source": "modular_pipelines/flux2/encoders.py",
+      "limitations": [
+        "Distilled 4B weights; one to eight ordered independent references; no Klein KV equivalence."
+      ]
+    },
+    "sdxl-pag-controlnet-canny:direct/control_image": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "sdxl-pag:modular",
+      "nativeTask": "control_image",
+      "source": "guiders/perturbed_attention_guidance.py",
+      "limitations": [
+        "Native PAG uses the pinned guider's exclusive start boundary: step zero is unperturbed.",
+        "Fixed PAG scale only; adaptive PAG scale remains a standard-pipeline feature.",
+        "Explicit mid-block preset targets all ten SDXL transformer layers; not bitwise equivalence."
+      ]
+    },
+    "sdxl-pag-controlnet-canny:img2img-direct/control_edit_image": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "sdxl-pag:modular",
+      "nativeTask": "control_edit_image",
+      "source": "guiders/perturbed_attention_guidance.py",
+      "limitations": [
+        "Native PAG uses the pinned guider's exclusive start boundary: step zero is unperturbed.",
+        "Fixed PAG scale only; adaptive PAG scale remains a standard-pipeline feature.",
+        "Explicit mid-block preset targets all ten SDXL transformer layers; not bitwise equivalence."
+      ]
+    },
+    "sdxl-pag:direct/text_to_image": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "sdxl-pag:modular",
+      "nativeTask": "text_to_image",
+      "source": "guiders/perturbed_attention_guidance.py",
+      "limitations": [
+        "Native PAG uses the pinned guider's exclusive start boundary: step zero is unperturbed.",
+        "Fixed PAG scale only; adaptive PAG scale remains a standard-pipeline feature.",
+        "Explicit mid-block preset targets all ten SDXL transformer layers; not bitwise equivalence."
+      ]
+    },
+    "sdxl-pag:img2img-direct/edit_image": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "sdxl-pag:modular",
+      "nativeTask": "image_to_image",
+      "source": "guiders/perturbed_attention_guidance.py",
+      "limitations": [
+        "Native PAG uses the pinned guider's exclusive start boundary: step zero is unperturbed.",
+        "Fixed PAG scale only; adaptive PAG scale remains a standard-pipeline feature.",
+        "Explicit mid-block preset targets all ten SDXL transformer layers; not bitwise equivalence."
+      ]
+    },
+    "sdxl-pag:inpaint-direct/inpaint": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "sdxl-pag:modular",
+      "nativeTask": "inpaint",
+      "source": "guiders/perturbed_attention_guidance.py",
+      "limitations": [
+        "Native PAG uses the pinned guider's exclusive start boundary: step zero is unperturbed.",
+        "Fixed PAG scale only; adaptive PAG scale remains a standard-pipeline feature.",
+        "Explicit mid-block preset targets all ten SDXL transformer layers; not bitwise equivalence."
+      ]
+    },
+    "sdxl-turbo:direct/text_to_image": {
+      "status": "reviewed",
+      "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "liveQualification": "not_established_by_review",
+      "decision": "native_recipe",
+      "nativeProfileId": "sdxl-turbo:modular",
+      "nativeTask": "text_to_image",
+      "source": "modular_pipelines/stable_diffusion_xl/denoise.py",
+      "limitations": [
+        "512px, one step, CFG disabled, repository scheduler and exact fp16 weight variant."
+      ]
+    }
+  }
+}

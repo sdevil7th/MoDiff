@@ -45,8 +45,8 @@ class OperationCatalogTests(unittest.TestCase):
         from modiff.operation_catalog import build_operation_catalog
         from modiff.diffusers_profiles import public_execution_profiles
 
-        # Exercise missing-overlay support even on hosts whose reviewed profile
-        # delivers these dependencies in the base environment.
+        # Core model libraries are included in the native base. Genuine optional
+        # requirements must still independently block execution when missing.
         profiles = public_execution_profiles(platform_name="linux", machine="x86_64")
         for profile in profiles:
             requirement = profile["optionalRuntimeRequirement"]
@@ -58,7 +58,19 @@ class OperationCatalogTests(unittest.TestCase):
         qwen = next(t for t in by_class["QwenImageModularPipeline"]["tasks"] if t["task"] == "text_to_image")
         self.assertEqual(qwen["execution"], "adapter")
         self.assertEqual(qwen["decomposition"], "stages")
-        self.assertEqual(qwen["dependencies"], "blocked")
+        self.assertEqual(qwen["dependencies"], "ready")
+        for profile in profiles:
+            if profile["pipeline_class"] == "QwenImageModularPipeline":
+                profile["optionalRuntimeRequirement"].update(
+                    delivery="optional_overlay", requiredNow=True,
+                    state="missing", reason="optional_runtime_missing",
+                )
+        _, missing_support = build_operation_catalog(MODULE_MAP, profiles, catalog_resolver=lambda: {})
+        missing_qwen = next(p for p in missing_support if p["pipelineClass"] == "QwenImageModularPipeline")
+        missing_task = next(t for t in missing_qwen["tasks"] if t["task"] == "text_to_image")
+        self.assertEqual(missing_task["dependencies"], "blocked")
+        self.assertEqual(missing_task["execution"], qwen["execution"])
+        self.assertEqual(missing_task["decomposition"], qwen["decomposition"])
         krea = next(t for t in by_class["Krea2ModularPipeline"]["tasks"] if t["task"] == "text_to_image")
         self.assertEqual(krea["execution"], "declared")
         self.assertEqual(krea["dependencies"], "unknown")
@@ -92,8 +104,8 @@ class OperationCatalogTests(unittest.TestCase):
         from modiff.operation_catalog import build_operation_catalog
 
         for platform_name, machine, expected in (
-            ("linux", "x86_64", "blocked"),
-            ("windows", "x86_64", "blocked"),
+            ("linux", "x86_64", "ready"),
+            ("windows", "x86_64", "ready"),
             ("macos", "arm64", "ready"),
         ):
             with self.subTest(platform=platform_name, machine=machine):
@@ -106,6 +118,7 @@ class OperationCatalogTests(unittest.TestCase):
                 pipeline = next(p for p in support if p["pipelineClass"] == "QwenImageModularPipeline")
                 task = next(t for t in pipeline["tasks"] if t["task"] == "text_to_image")
                 self.assertEqual(task["dependencies"], expected)
+                self.assertTrue(all(not r["requiredNow"] for r in task["runtimeRequirements"]))
 
     def test_semantic_connections_do_not_equate_different_state_stages_or_model_domains(self):
         from modiff.operation_catalog import operation_port_compatibility

@@ -5,7 +5,6 @@
       "data": {
         "connectionType": "image"
       },
-      "edgeType": "default",
       "id": "edge-01",
       "markerEnd": {
         "color": "#60A5FA",
@@ -18,8 +17,91 @@
       "style": {
         "stroke": "#60A5FA"
       },
-      "target": "node-06",
-      "targetHandle": "image",
+      "target": "node-08",
+      "targetHandle": "image"
+    },
+    {
+      "className": "category-int",
+      "data": {
+        "connectionType": "int"
+      },
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "#84CC16",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "height_out",
+      "style": {
+        "stroke": "#84CC16"
+      },
+      "target": "node-01",
+      "targetHandle": "height",
+      "type": "default"
+    },
+    {
+      "className": "category-image_latent_binding",
+      "data": {
+        "connectionType": "image_latent_binding"
+      },
+      "id": "edge-03",
+      "markerEnd": {
+        "color": "hsl(151 75% 65%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "latent_binding",
+      "style": {
+        "stroke": "hsl(151 75% 65%)"
+      },
+      "target": "node-01",
+      "targetHandle": "latent_binding",
+      "type": "default"
+    },
+    {
+      "className": "category-tensor",
+      "data": {
+        "connectionType": "tensor"
+      },
+      "id": "edge-04",
+      "markerEnd": {
+        "color": "#A5B4FC",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "latents_out",
+      "style": {
+        "stroke": "#A5B4FC"
+      },
+      "target": "node-01",
+      "targetHandle": "latents",
+      "type": "default"
+    },
+    {
+      "className": "category-int",
+      "data": {
+        "connectionType": "int"
+      },
+      "id": "edge-05",
+      "markerEnd": {
+        "color": "#84CC16",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "width_out",
+      "style": {
+        "stroke": "#84CC16"
+      },
+      "target": "node-01",
+      "targetHandle": "width",
       "type": "default"
     },
     {
@@ -27,15 +109,14 @@
       "data": {
         "connectionType": "image_diffusion_pipeline"
       },
-      "edgeType": "default",
-      "id": "edge-02",
+      "id": "edge-06",
       "markerEnd": {
         "color": "#FB7185",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-02",
+      "source": "node-03",
       "sourceHandle": "pipeline",
       "style": {
         "stroke": "#FB7185"
@@ -45,47 +126,106 @@
       "type": "default"
     },
     {
+      "className": "category-image_diffusion_pipeline",
+      "data": {
+        "connectionType": "image_diffusion_pipeline"
+      },
+      "id": "edge-07",
+      "markerEnd": {
+        "color": "#FB7185",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "pipeline",
+      "style": {
+        "stroke": "#FB7185"
+      },
+      "target": "node-02",
+      "targetHandle": "pipeline",
+      "type": "default"
+    },
+    {
+      "className": "category-image_diffusion_pipeline",
+      "data": {
+        "connectionType": "image_diffusion_pipeline"
+      },
+      "id": "edge-08",
+      "markerEnd": {
+        "color": "#FB7185",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "pipeline",
+      "style": {
+        "stroke": "#FB7185"
+      },
+      "target": "node-06",
+      "targetHandle": "pipeline",
+      "type": "default"
+    },
+    {
       "className": "category-quantization_config",
       "data": {
         "connectionType": "quantization_config"
       },
-      "edgeType": "default",
-      "id": "edge-03",
+      "id": "edge-09",
       "markerEnd": {
         "color": "#FDE68A",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-03",
+      "source": "node-04",
       "sourceHandle": "quantization_config",
       "style": {
         "stroke": "#FDE68A"
       },
-      "target": "node-04",
-      "targetHandle": "quantization_config",
-      "type": "default"
+      "target": "node-05",
+      "targetHandle": "quantization_config"
     },
     {
       "className": "category-diffusers_execution_recipe",
       "data": {
         "connectionType": "diffusers_execution_recipe"
       },
-      "edgeType": "default",
-      "id": "edge-04",
+      "id": "edge-10",
       "markerEnd": {
         "color": "#C4B5FD",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-04",
+      "source": "node-05",
       "sourceHandle": "execution_recipe",
       "style": {
         "stroke": "#C4B5FD"
       },
+      "target": "node-03",
+      "targetHandle": "execution_recipe"
+    },
+    {
+      "className": "category-image_conditioning",
+      "data": {
+        "connectionType": "image_conditioning"
+      },
+      "id": "edge-11",
+      "markerEnd": {
+        "color": "hsl(24 77% 65%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-06",
+      "sourceHandle": "encoded_inputs",
+      "style": {
+        "stroke": "hsl(24 77% 65%)"
+      },
       "target": "node-02",
-      "targetHandle": "execution_recipe",
+      "targetHandle": "encoded_inputs",
       "type": "default"
     },
     {
@@ -93,20 +233,19 @@
       "data": {
         "connectionType": "image"
       },
-      "edgeType": "default",
-      "id": "edge-05",
+      "id": "edge-12",
       "markerEnd": {
         "color": "#60A5FA",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-05",
+      "source": "node-07",
       "sourceHandle": "image",
       "style": {
         "stroke": "#60A5FA"
       },
-      "target": "node-01",
+      "target": "node-06",
       "targetHandle": "control_image",
       "type": "default"
     }
@@ -114,303 +253,284 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "1dc0a89f18ba4e4b336ebe8bd1ddfe682c1c75e92ce6cc5ab2bbefe88672cd9a",
+    "positionHash": "3e2f709e5e1447c7d8496c04b70afa2e0943df5150ed6fa1ad576a464ade3b38",
     "verticalGap": 72
   },
   "nodes": [
     {
       "data": {
-        "action": "ControlGenerate",
+        "action": "DecodeLatents",
         "cache": false,
         "category": "Diffusers Image",
-        "description": "Generate from a control image with a Diffusers image pipeline.",
-        "label": "Diffusers.Control",
+        "description": "Decode the selected pipeline's explicit latent output, not starting noise.",
+        "label": "Decode Latents",
         "memory": [
           0,
           0,
           0
         ],
         "module": "modules.DiffusersImage",
+        "operationAuthoring": {
+          "authored": [
+            "output_type"
+          ],
+          "defaults": {
+            "height": 1024,
+            "output_type": "pil",
+            "width": 1024
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "FluxControlPipeline",
+              "values": {}
+            },
+            "blockName": null,
+            "decomposition": "bundle",
+            "nodeKey": "modules.DiffusersImage.DecodeLatents",
+            "nodeType": "decoder",
+            "operationId": "diffusion.decode_latents",
+            "pipelineClass": "FluxControlPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline",
+                "semantics": {
+                  "kind": "pipeline",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "image_diffusion_pipeline"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "latents",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "latents",
+                "semantics": {
+                  "kind": "latents",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "latent_binding",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "latent_binding",
+                "semantics": {
+                  "kind": "state",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "image_latent_binding"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "width",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "width",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "height",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "height",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "output_type",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "output_type",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "images",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "images",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "width_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "width_out",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "height_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "height_out",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "control_image",
+            "workflowId": null
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
-          "cfg_normalize": {
-            "default": false,
-            "disabled": false,
-            "hidden": true,
-            "label": "Normalize CFG",
-            "type": "bool"
-          },
-          "conditioning_scale": {
-            "default": 1,
-            "disabled": false,
-            "display": "slider",
-            "hidden": true,
-            "label": "Conditioning Scale",
-            "max": 2,
-            "min": 0,
-            "step": 0.05,
-            "type": "float"
-          },
-          "control_guidance_end": {
-            "default": 1,
-            "disabled": false,
-            "display": "slider",
-            "hidden": true,
-            "label": "Control Guidance End",
-            "max": 1,
-            "min": 0,
-            "step": 0.01,
-            "type": "float"
-          },
-          "control_guidance_start": {
-            "default": 0,
-            "disabled": false,
-            "display": "slider",
-            "hidden": true,
-            "label": "Control Guidance Start",
-            "max": 1,
-            "min": 0,
-            "step": 0.01,
-            "type": "float"
-          },
-          "control_image": {
-            "display": "input",
-            "isConnected": true,
-            "label": "Control Image",
-            "required": true,
-            "type": "image"
-          },
-          "guidance_scale": {
-            "default": 0,
-            "disabled": false,
-            "display": "slider",
-            "hidden": false,
-            "label": "Guidance",
-            "max": 20,
-            "min": 0,
-            "step": 0.1,
-            "type": "float",
-            "value": 30
-          },
           "height": {
             "default": 1024,
-            "disabled": false,
-            "hidden": false,
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Height",
-            "max": 2048,
-            "min": 16,
-            "step": 16,
+            "max": 4096,
+            "min": 64,
             "type": "int",
             "value": 1024
           },
           "height_out": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Height",
             "type": "int"
           },
-          "image_contract": {
-            "default": {
-              "actions": {
-                "Generate": [
-                  "text_to_image"
-                ]
-              },
-              "fieldParams": {
-                "cfg_normalize": {
-                  "hidden": true
-                },
-                "conditioning_scale": {
-                  "hidden": true
-                },
-                "control_guidance_end": {
-                  "hidden": true
-                },
-                "control_guidance_start": {
-                  "hidden": true
-                },
-                "guidance_scale": {
-                  "hidden": false
-                },
-                "height": {
-                  "hidden": false
-                },
-                "image_guidance_scale": {
-                  "hidden": true
-                },
-                "layers": {
-                  "hidden": true
-                },
-                "max_sequence_length": {
-                  "hidden": false
-                },
-                "negative_prompt": {
-                  "hidden": false
-                },
-                "padding_mask_crop": {
-                  "hidden": true
-                },
-                "pag_adaptive_scale": {
-                  "hidden": true
-                },
-                "pag_scale": {
-                  "hidden": true
-                },
-                "reference_strength": {
-                  "hidden": true
-                },
-                "resolution": {
-                  "hidden": true
-                },
-                "strength": {
-                  "hidden": true
-                },
-                "use_en_prompt": {
-                  "hidden": true
-                },
-                "width": {
-                  "hidden": false
-                }
-              },
-              "library": "diffusers",
-              "mediaKind": "image",
-              "mode": "text_to_image",
-              "modes": [
-                "text_to_image"
-              ],
-              "pipelineClass": "FluxPipeline",
-              "schemaVersion": 1
-            },
-            "hidden": true,
-            "label": "Image Contract",
-            "type": "object",
-            "value": {
-              "actions": {
-                "ControlGenerate": [
-                  "control_image"
-                ]
-              },
-              "fieldParams": {
-                "cfg_normalize": {
-                  "hidden": true
-                },
-                "conditioning_scale": {
-                  "hidden": true
-                },
-                "control_guidance_end": {
-                  "hidden": true
-                },
-                "control_guidance_start": {
-                  "hidden": true
-                },
-                "guidance_scale": {
-                  "hidden": false
-                },
-                "height": {
-                  "hidden": false
-                },
-                "image_guidance_scale": {
-                  "hidden": true
-                },
-                "layers": {
-                  "hidden": true
-                },
-                "max_sequence_length": {
-                  "hidden": false
-                },
-                "negative_prompt": {
-                  "hidden": true
-                },
-                "padding_mask_crop": {
-                  "hidden": true
-                },
-                "pag_adaptive_scale": {
-                  "hidden": true
-                },
-                "pag_scale": {
-                  "hidden": true
-                },
-                "reference_strength": {
-                  "hidden": true
-                },
-                "resolution": {
-                  "hidden": true
-                },
-                "strength": {
-                  "hidden": true
-                },
-                "use_en_prompt": {
-                  "hidden": true
-                },
-                "width": {
-                  "hidden": false
-                }
-              },
-              "library": "diffusers",
-              "mediaKind": "image",
-              "mode": "control_image",
-              "modes": [
-                "control_image"
-              ],
-              "pipelineClass": "FluxControlPipeline",
-              "schemaVersion": 1
-            }
-          },
-          "image_guidance_scale": {
-            "default": 1.5,
-            "disabled": false,
-            "display": "slider",
-            "hidden": true,
-            "label": "Image Guidance",
-            "max": 20,
-            "min": 1,
-            "step": 0.1,
-            "type": "float"
-          },
           "images": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Images",
             "type": "image"
           },
-          "layers": {
-            "default": 4,
-            "disabled": false,
-            "hidden": true,
-            "label": "Layers",
-            "max": 10,
-            "min": 1,
-            "type": "int"
+          "latent_binding": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Latent binding",
+            "required": false,
+            "type": "image_latent_binding"
           },
-          "max_sequence_length": {
-            "default": 256,
-            "disabled": false,
-            "hidden": false,
-            "label": "Max Sequence Length",
-            "max": 512,
-            "min": 1,
-            "type": "int",
-            "value": 512
-          },
-          "negative_prompt": {
-            "default": "",
-            "disabled": false,
-            "display": "textarea",
-            "hidden": true,
-            "label": "Negative Prompt",
-            "type": "text",
-            "value": ""
-          },
-          "num_inference_steps": {
-            "default": 4,
-            "display": "slider",
-            "label": "Steps",
-            "max": 100,
-            "min": 1,
-            "type": "int",
-            "value": 50
+          "latents": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Latents",
+            "required": true,
+            "type": "tensor"
           },
           "output_type": {
             "default": "pil",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Output type",
             "options": [
               {
@@ -436,85 +556,898 @@
                 "label": "pt",
                 "schemaVersion": 1,
                 "value": "pt"
-              }
-            ],
-            "type": "string",
-            "value": "pil"
-          },
-          "padding_mask_crop": {
-            "default": 0,
-            "disabled": false,
-            "hidden": true,
-            "label": "Padding Mask Crop",
-            "max": 512,
-            "min": 0,
-            "step": 8,
-            "type": "int"
-          },
-          "pag_adaptive_scale": {
-            "default": 0,
-            "disabled": false,
-            "display": "slider",
-            "hidden": true,
-            "label": "PAG Adaptive Scale",
-            "max": 20,
-            "min": 0,
-            "step": 0.1,
-            "type": "float"
-          },
-          "pag_scale": {
-            "default": 3,
-            "disabled": false,
-            "display": "slider",
-            "hidden": true,
-            "label": "PAG Scale",
-            "max": 20,
-            "min": 0,
-            "step": 0.1,
-            "type": "float"
-          },
-          "pipeline": {
-            "disabled": true,
-            "display": "input",
-            "isConnected": true,
-            "label": "Pipeline",
-            "required": true,
-            "signal": {
-              "direction": "input"
-            },
-            "type": "image_diffusion_pipeline"
-          },
-          "prompt": {
-            "default": "",
-            "display": "textarea",
-            "label": "Prompt",
-            "type": "text",
-            "value": "Strictly follow the supplied depth map as authoritative for the camera, boat-repair shed geometry, timber ribs, workbench positions, skiff hull, open doorway, floor plane and occlusion. Render a real working wooden-boat repair shed on an overcast morning: one partially restored clinker-built fishing skiff resting securely on two timber trestles, old structural framing, steel hand tools, two naturally coiled ropes, scattered sawdust and cool daylight entering through the open doors. Preserve every major depth boundary and vanishing line while adding only scale-compatible construction detail. Use natural documentary exposure, believable worn timber, oxidized metal, fibrous rope, grounded furniture and directional floor shadows."
-          },
-          "resolution": {
-            "default": 640,
-            "disabled": false,
-            "hidden": true,
-            "label": "Resolution",
-            "options": [
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "640",
-                "schemaVersion": 1,
-                "value": "640"
               },
               {
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
-                "label": "1024",
+                "label": "latent",
                 "schemaVersion": 1,
-                "value": "1024"
+                "value": "latent"
               }
             ],
+            "type": "string",
+            "value": "pil"
+          },
+          "pipeline": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Pipeline",
+            "required": true,
+            "signalCompatibility": {
+              "action": "$node",
+              "required": true
+            },
+            "type": "image_diffusion_pipeline"
+          },
+          "width": {
+            "default": 1024,
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Width",
+            "max": 4096,
+            "min": 64,
+            "type": "int",
+            "value": 1024
+          },
+          "width_out": {
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Width",
             "type": "int"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioRole": "decode",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 2200,
+        "y": 159
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "Denoise",
+        "cache": false,
+        "category": "Diffusers Image",
+        "description": "Execute the selected owner's official denoising call with owned inputs.",
+        "label": "Denoise",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.DiffusersImage",
+        "operationAuthoring": {
+          "authored": [
+            "width",
+            "height",
+            "seed",
+            "num_inference_steps",
+            "guidance_scale",
+            "strength",
+            "max_sequence_length"
+          ],
+          "defaults": {
+            "guidance_scale": 3.5,
+            "height": 1024,
+            "max_sequence_length": 256,
+            "num_inference_steps": 28,
+            "seed": 0,
+            "width": 1024
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "FluxControlPipeline",
+              "values": {}
+            },
+            "blockName": null,
+            "decomposition": "bundle",
+            "nodeKey": "modules.DiffusersImage.Denoise",
+            "nodeType": "denoise",
+            "operationId": "diffusion.denoise",
+            "pipelineClass": "FluxControlPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "latents",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "latents",
+                "semantics": {
+                  "kind": "latents",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "masked_image_latents",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "masked_image_latents",
+                "semantics": {
+                  "kind": "latents",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "generator",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "generator",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "generator"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "sigmas",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "sigmas",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "joint_attention_kwargs",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "joint_attention_kwargs",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline",
+                "semantics": {
+                  "kind": "pipeline",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "image_diffusion_pipeline"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "image_contract",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "image_contract",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "width",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "width",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "height",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "height",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "seed",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "seed",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "num_inference_steps",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "num_inference_steps",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guidance_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "guidance_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "strength",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "strength",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "max_sequence_length",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "max_sequence_length",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "encoded_inputs",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "encoded_inputs",
+                "semantics": {
+                  "kind": "conditioning",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "image_conditioning"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "latents_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "latents_out",
+                "semantics": {
+                  "kind": "latents",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "latent_binding",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "latent_binding",
+                "semantics": {
+                  "kind": "state",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "image_latent_binding"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "width_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "width_out",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "height_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "height_out",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "control_image",
+            "workflowId": null
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
+        "params": {
+          "encoded_inputs": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Encoded inputs",
+            "required": true,
+            "type": "image_conditioning"
+          },
+          "generator": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "hidden": false,
+            "isConnected": false,
+            "label": "Generator",
+            "type": "generator"
+          },
+          "guidance_scale": {
+            "default": 0,
+            "display": "slider",
+            "hidden": false,
+            "label": "Guidance",
+            "max": 30,
+            "min": 0,
+            "step": 0.1,
+            "type": "float",
+            "value": 30
+          },
+          "height": {
+            "default": 1024,
+            "hidden": false,
+            "label": "Height",
+            "max": 2048,
+            "min": 16,
+            "step": 16,
+            "type": "int",
+            "value": 1024
+          },
+          "height_out": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Height",
+            "type": "int"
+          },
+          "image_contract": {
+            "default": {
+              "actions": {
+                "Generate": [
+                  "text_to_image"
+                ]
+              },
+              "connectionActions": {
+                "DecodeLatents": [
+                  "text_to_image"
+                ],
+                "Generate": [
+                  "text_to_image"
+                ]
+              },
+              "fieldParams": {
+                "cfg_normalize": {
+                  "hidden": true
+                },
+                "conditioning_scale": {
+                  "hidden": true
+                },
+                "control_guidance_end": {
+                  "hidden": true
+                },
+                "control_guidance_start": {
+                  "hidden": true
+                },
+                "generator": {
+                  "hidden": false
+                },
+                "guidance_scale": {
+                  "hidden": false,
+                  "label": "True CFG"
+                },
+                "guidance_scale_2": {
+                  "default": 3.5,
+                  "description": "Used only when its override toggle is enabled; otherwise retain the upstream default.",
+                  "hidden": false,
+                  "label": "Distilled Guidance"
+                },
+                "height": {
+                  "hidden": false
+                },
+                "image_guidance_scale": {
+                  "hidden": true
+                },
+                "ip_adapter_image": {
+                  "hidden": false
+                },
+                "ip_adapter_image_embeds": {
+                  "hidden": false
+                },
+                "joint_attention_kwargs": {
+                  "hidden": false
+                },
+                "latents": {
+                  "hidden": false
+                },
+                "latents_out": {
+                  "hidden": false
+                },
+                "layers": {
+                  "hidden": true
+                },
+                "max_sequence_length": {
+                  "hidden": false
+                },
+                "negative_ip_adapter_image": {
+                  "hidden": false
+                },
+                "negative_ip_adapter_image_embeds": {
+                  "hidden": false
+                },
+                "negative_pooled_prompt_embeds": {
+                  "hidden": false
+                },
+                "negative_prompt": {
+                  "hidden": false
+                },
+                "negative_prompt_2": {
+                  "hidden": false
+                },
+                "negative_prompt_embeds": {
+                  "hidden": false
+                },
+                "num_images_per_prompt": {
+                  "hidden": false
+                },
+                "output_type": {
+                  "options": [
+                    "pil",
+                    "np",
+                    "pt",
+                    "latent"
+                  ]
+                },
+                "padding_mask_crop": {
+                  "hidden": true
+                },
+                "pag_adaptive_scale": {
+                  "hidden": true
+                },
+                "pag_scale": {
+                  "hidden": true
+                },
+                "pooled_prompt_embeds": {
+                  "hidden": false
+                },
+                "prompt_2": {
+                  "hidden": false
+                },
+                "prompt_embeds": {
+                  "hidden": false
+                },
+                "reference_strength": {
+                  "hidden": true
+                },
+                "resolution": {
+                  "hidden": true
+                },
+                "sigmas": {
+                  "hidden": false
+                },
+                "strength": {
+                  "hidden": true
+                },
+                "use_en_prompt": {
+                  "hidden": true
+                },
+                "use_guidance_scale_2": {
+                  "default": false,
+                  "hidden": false,
+                  "label": "Override Distilled Guidance"
+                },
+                "width": {
+                  "hidden": false
+                }
+              },
+              "library": "diffusers",
+              "mediaKind": "image",
+              "mode": "text_to_image",
+              "modes": [
+                "text_to_image"
+              ],
+              "pipelineClass": "FluxPipeline",
+              "schemaVersion": 1
+            },
+            "hidden": true,
+            "label": "Image Contract",
+            "type": "object",
+            "value": {
+              "actions": {
+                "ControlGenerate": [
+                  "control_image"
+                ],
+                "DecodeLatents": [
+                  "control_image"
+                ],
+                "Denoise": [
+                  "control_image"
+                ],
+                "EncodeInputs": [
+                  "control_image"
+                ]
+              },
+              "connectionActions": {
+                "ControlGenerate": [
+                  "control_image"
+                ],
+                "DecodeLatents": [
+                  "control_image"
+                ],
+                "Denoise": [
+                  "control_image"
+                ],
+                "EncodeInputs": [
+                  "control_image"
+                ]
+              },
+              "fieldParams": {
+                "cfg_normalize": {
+                  "hidden": true
+                },
+                "conditioning_scale": {
+                  "hidden": true
+                },
+                "control_guidance_end": {
+                  "hidden": true
+                },
+                "control_guidance_start": {
+                  "hidden": true
+                },
+                "generator": {
+                  "hidden": false
+                },
+                "guidance_scale": {
+                  "hidden": false,
+                  "max": 30
+                },
+                "height": {
+                  "hidden": false
+                },
+                "image_guidance_scale": {
+                  "hidden": true
+                },
+                "joint_attention_kwargs": {
+                  "hidden": false
+                },
+                "latents": {
+                  "hidden": false
+                },
+                "latents_out": {
+                  "hidden": false
+                },
+                "layers": {
+                  "hidden": true
+                },
+                "max_sequence_length": {
+                  "hidden": false
+                },
+                "negative_prompt": {
+                  "hidden": true
+                },
+                "num_images_per_prompt": {
+                  "hidden": false
+                },
+                "output_type": {
+                  "options": [
+                    "pil",
+                    "np",
+                    "pt",
+                    "latent"
+                  ]
+                },
+                "padding_mask_crop": {
+                  "hidden": true
+                },
+                "pag_adaptive_scale": {
+                  "hidden": true
+                },
+                "pag_scale": {
+                  "hidden": true
+                },
+                "pooled_prompt_embeds": {
+                  "hidden": false
+                },
+                "prompt_2": {
+                  "hidden": false
+                },
+                "prompt_embeds": {
+                  "hidden": false
+                },
+                "reference_strength": {
+                  "hidden": true
+                },
+                "resolution": {
+                  "hidden": true
+                },
+                "sigmas": {
+                  "hidden": false
+                },
+                "strength": {
+                  "hidden": true
+                },
+                "use_en_prompt": {
+                  "hidden": true
+                },
+                "width": {
+                  "hidden": false
+                }
+              },
+              "library": "diffusers",
+              "mediaKind": "image",
+              "mode": "control_image",
+              "modes": [
+                "control_image"
+              ],
+              "pipelineClass": "FluxControlPipeline",
+              "schemaVersion": 1
+            }
+          },
+          "joint_attention_kwargs": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "hidden": false,
+            "isConnected": false,
+            "label": "Joint Attention Kwargs",
+            "type": "object"
+          },
+          "latent_binding": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Latent binding",
+            "type": "image_latent_binding"
+          },
+          "latents": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "hidden": false,
+            "isConnected": false,
+            "label": "Latents",
+            "type": "tensor"
+          },
+          "latents_out": {
+            "display": "output",
+            "hidden": false,
+            "isConnected": true,
+            "label": "Latents",
+            "type": "tensor"
+          },
+          "masked_image_latents": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "hidden": true,
+            "isConnected": false,
+            "label": "Masked Image Latents",
+            "type": "tensor"
+          },
+          "max_sequence_length": {
+            "default": 256,
+            "hidden": false,
+            "label": "Max Sequence Length",
+            "max": 512,
+            "min": 1,
+            "type": "int",
+            "value": 512
+          },
+          "num_inference_steps": {
+            "default": 4,
+            "display": "slider",
+            "label": "Steps",
+            "max": 100,
+            "min": 1,
+            "type": "int",
+            "value": 50
+          },
+          "pipeline": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressAutomaticSignalAction": true
+            },
+            "isConnected": true,
+            "label": "Pipeline",
+            "required": true,
+            "signal": {
+              "direction": "output"
+            },
+            "signalCompatibility": {
+              "action": "$node",
+              "required": true
+            },
+            "type": "image_diffusion_pipeline"
           },
           "seed": {
             "default": 0,
@@ -528,9 +1461,16 @@
               "value": 8409
             }
           },
+          "sigmas": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "hidden": false,
+            "isConnected": false,
+            "label": "Sigmas",
+            "type": "float"
+          },
           "strength": {
             "default": 0.8,
-            "disabled": false,
             "display": "slider",
             "hidden": true,
             "label": "Strength",
@@ -540,16 +1480,8 @@
             "type": "float",
             "value": 0.8
           },
-          "use_en_prompt": {
-            "default": false,
-            "disabled": false,
-            "hidden": true,
-            "label": "Use English Auto-caption",
-            "type": "bool"
-          },
           "width": {
             "default": 1024,
-            "disabled": false,
             "hidden": false,
             "label": "Width",
             "max": 2048,
@@ -560,28 +1492,26 @@
           },
           "width_out": {
             "display": "output",
-            "isConnected": false,
+            "isConnected": true,
             "label": "Width",
             "type": "int"
           }
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
-        "studioRole": "diffusersImageControl",
+        "studioRole": "denoise",
         "style": {},
         "time": [
           0,
           0,
           0
         ],
-        "type": "custom",
-        "uiState": {}
+        "type": "custom"
       },
-      "id": "node-01",
+      "id": "node-02",
       "position": {
-        "x": 1320,
-        "y": 14
+        "x": 1760,
+        "y": 19
       },
       "type": "custom"
     },
@@ -591,16 +1521,550 @@
         "cache": false,
         "category": "Diffusers Image",
         "description": "Load a generic Diffusers image pipeline.",
-        "label": "Diffusers.LoadPipeline",
+        "label": "Load Models",
         "memory": [
           0,
           0,
           0
         ],
         "module": "modules.DiffusersImage",
+        "operationAuthoring": {
+          "authored": [
+            "dtype",
+            "device",
+            "quantization_mode",
+            "quantized_components",
+            "auto_offload",
+            "offload_mode"
+          ],
+          "defaults": {
+            "auto_offload": true,
+            "device": "cpu:0",
+            "device_map": "none",
+            "dtype": "bfloat16",
+            "enable_vae_slicing": true,
+            "enable_vae_tiling": true,
+            "low_cpu_mem_usage": true,
+            "mode": "control_image",
+            "model_id": {
+              "source": "hub",
+              "value": "black-forest-labs/FLUX.1-Depth-dev"
+            },
+            "offload_mode": "model_cpu",
+            "pipeline_class": "FluxControlPipeline",
+            "quantization_mode": "none",
+            "quantized_components": [],
+            "revision": "fb5e9b1bae41b8c8adcea4ea2a87b74dd298f07a"
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "FluxControlPipeline",
+              "values": {
+                "mode": "control_image",
+                "pipeline_class": "FluxControlPipeline"
+              }
+            },
+            "blockName": null,
+            "decomposition": "loader",
+            "nodeKey": "modules.DiffusersImage.LoadPipeline",
+            "nodeType": "loader",
+            "operationId": "diffusion.load_models",
+            "pipelineClass": "FluxControlPipeline",
+            "ports": [
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "pipeline",
+                "required": false,
+                "roles": [
+                  "pipeline"
+                ],
+                "semanticName": "pipeline",
+                "semantics": {
+                  "kind": "pipeline",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "image_diffusion_pipeline"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "model_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "model_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline_class",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pipeline_class",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "execution_profile_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "execution_profile_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "revision",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "revision",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "conditioning_kind",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "conditioning_kind",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "conditioning_model_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "conditioning_model_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "conditioning_revision",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "conditioning_revision",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "dtype",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "dtype",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "device",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "device",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "quantization_mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "quantization_mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "quantized_components",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "quantized_components",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "execution_recipe",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "execution_recipe",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_execution_recipe"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prequantized_transformer",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prequantized_transformer",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "any"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "image_prompt_adapter",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "image_prompt_adapter",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_image_prompt_adapter"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "control_components",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "control_components",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_control_components"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "device_map",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "device_map",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "auto_offload",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "auto_offload",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "offload_mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "offload_mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "enable_vae_slicing",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "enable_vae_slicing",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "enable_vae_tiling",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "enable_vae_tiling",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "low_cpu_mem_usage",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "low_cpu_mem_usage",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "resolved_artifact",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "resolved_artifact",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "control_image",
+            "workflowId": null
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
           "auto_offload": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Auto offload",
             "type": "bool",
             "value": true
@@ -608,8 +2072,10 @@
           "conditioning_kind": {
             "default": "none",
             "fieldOptions": {
-              "noValidation": true
+              "noValidation": true,
+              "suppressInitialFieldAction": true
             },
+            "hidden": true,
             "label": "Conditioning Kind",
             "options": [
               {
@@ -619,22 +2085,6 @@
                 "label": "none",
                 "schemaVersion": 1,
                 "value": "none"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "controlnet",
-                "schemaVersion": 1,
-                "value": "controlnet"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "t2i_adapter",
-                "schemaVersion": 1,
-                "value": "t2i_adapter"
               }
             ],
             "type": "string",
@@ -645,37 +2095,62 @@
             "fieldOptions": {
               "filter": {
                 "hub": {
-                  "className": [
-                    "ControlNetModel"
-                  ]
+                  "className": []
                 }
               },
               "noValidation": true,
               "sources": [
                 "hub"
-              ]
+              ],
+              "suppressInitialFieldAction": true
             },
+            "hidden": true,
             "label": "Conditioning Model",
             "type": "string",
             "value": ""
           },
           "conditioning_revision": {
             "default": "",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
             "label": "Conditioning Revision",
             "type": "string",
             "value": ""
           },
+          "control_components": {
+            "description": "Optional exact configurations replace the single conditioning-model selection. Loaded as independently owned upstream ControlNet components.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Control Components",
+            "type": "diffusers_control_components"
+          },
           "device": {
             "default": "cpu:0",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Device",
             "options": [
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "This device is not available in the current runtime.",
+                "installationState": "unavailable",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              },
               {
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
-                "label": "cpu:0",
+                "label": "cuda:0",
                 "schemaVersion": 1,
-                "value": "cpu:0"
+                "value": "cuda:0"
               },
               {
                 "availability": "installed",
@@ -691,6 +2166,9 @@
           },
           "device_map": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Device Map",
             "options": [
               {
@@ -742,10 +2220,14 @@
                 "value": "cpu"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "none"
           },
           "dtype": {
             "default": "bfloat16",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "DType",
             "options": [
               {
@@ -757,10 +2239,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -779,40 +2260,82 @@
           },
           "enable_vae_slicing": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE slicing",
-            "type": "bool"
+            "type": "bool",
+            "value": true
           },
           "enable_vae_tiling": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE tiling",
-            "type": "bool"
+            "type": "bool",
+            "value": true
+          },
+          "execution_profile_id": {
+            "default": "",
+            "fieldOptions": {
+              "noValidation": true,
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Execution Profile",
+            "type": "string",
+            "value": "flux-depth:direct"
           },
           "execution_recipe": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Execution Recipe",
+            "required": false,
             "type": "diffusers_execution_recipe"
+          },
+          "image_prompt_adapter": {
+            "description": "Optional pinned configuration. Attach to this loader before offload; supported FLUX.1 pipelines only.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Image Prompt Adapter",
+            "type": "diffusers_image_prompt_adapter"
           },
           "low_cpu_mem_usage": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Low CPU memory",
-            "type": "bool"
+            "type": "bool",
+            "value": true
           },
           "mode": {
             "default": "control_image",
-            "disabled": false,
             "fieldOptions": {
-              "noValidation": true
+              "noValidation": true,
+              "suppressInitialFieldAction": true
             },
             "label": "Mode",
+            "onChange": "update_pipeline_contract",
             "options": [
-              "control_image"
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "control_image",
+                "schemaVersion": 1,
+                "value": "control_image"
+              }
             ],
             "type": "string",
             "value": "control_image"
           },
           "model_id": {
-            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "filter": {
@@ -831,9 +2354,11 @@
               "sources": [
                 "hub",
                 "local"
-              ]
+              ],
+              "suppressInitialFieldAction": true
             },
             "label": "Model",
+            "onChange": "update_pipeline_contract",
             "type": "string",
             "value": {
               "source": "hub",
@@ -842,6 +2367,9 @@
           },
           "offload_mode": {
             "default": "model_cpu",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Offload Mode",
             "options": [
               {
@@ -897,23 +2425,155 @@
             "value": "group_cpu"
           },
           "pipeline": {
-            "disabled": true,
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Pipeline",
             "signal": {
               "direction": "output",
-              "origin": "pipeline_class"
+              "origin": "pipeline_class",
+              "value": {
+                "actions": {
+                  "ControlGenerate": [
+                    "control_image"
+                  ],
+                  "DecodeLatents": [
+                    "control_image"
+                  ],
+                  "Denoise": [
+                    "control_image"
+                  ],
+                  "EncodeInputs": [
+                    "control_image"
+                  ]
+                },
+                "connectionActions": {
+                  "ControlGenerate": [
+                    "control_image"
+                  ],
+                  "DecodeLatents": [
+                    "control_image"
+                  ],
+                  "Denoise": [
+                    "control_image"
+                  ],
+                  "EncodeInputs": [
+                    "control_image"
+                  ]
+                },
+                "fieldParams": {
+                  "cfg_normalize": {
+                    "hidden": true
+                  },
+                  "conditioning_scale": {
+                    "hidden": true
+                  },
+                  "control_guidance_end": {
+                    "hidden": true
+                  },
+                  "control_guidance_start": {
+                    "hidden": true
+                  },
+                  "generator": {
+                    "hidden": false
+                  },
+                  "guidance_scale": {
+                    "hidden": false,
+                    "max": 30
+                  },
+                  "height": {
+                    "hidden": false
+                  },
+                  "image_guidance_scale": {
+                    "hidden": true
+                  },
+                  "joint_attention_kwargs": {
+                    "hidden": false
+                  },
+                  "latents": {
+                    "hidden": false
+                  },
+                  "latents_out": {
+                    "hidden": false
+                  },
+                  "layers": {
+                    "hidden": true
+                  },
+                  "max_sequence_length": {
+                    "hidden": false
+                  },
+                  "negative_prompt": {
+                    "hidden": true
+                  },
+                  "num_images_per_prompt": {
+                    "hidden": false
+                  },
+                  "output_type": {
+                    "options": [
+                      "pil",
+                      "np",
+                      "pt",
+                      "latent"
+                    ]
+                  },
+                  "padding_mask_crop": {
+                    "hidden": true
+                  },
+                  "pag_adaptive_scale": {
+                    "hidden": true
+                  },
+                  "pag_scale": {
+                    "hidden": true
+                  },
+                  "pooled_prompt_embeds": {
+                    "hidden": false
+                  },
+                  "prompt_2": {
+                    "hidden": false
+                  },
+                  "prompt_embeds": {
+                    "hidden": false
+                  },
+                  "reference_strength": {
+                    "hidden": true
+                  },
+                  "resolution": {
+                    "hidden": true
+                  },
+                  "sigmas": {
+                    "hidden": false
+                  },
+                  "strength": {
+                    "hidden": true
+                  },
+                  "use_en_prompt": {
+                    "hidden": true
+                  },
+                  "width": {
+                    "hidden": false
+                  }
+                },
+                "library": "diffusers",
+                "mediaKind": "image",
+                "mode": "control_image",
+                "modes": [
+                  "control_image"
+                ],
+                "pipelineClass": "FluxControlPipeline",
+                "schemaVersion": 1
+              }
             },
             "type": "image_diffusion_pipeline"
           },
           "pipeline_class": {
             "default": "FluxPipeline",
-            "disabled": false,
             "fieldOptions": {
-              "noValidation": true
+              "noValidation": true,
+              "suppressInitialFieldAction": true
             },
             "label": "Pipeline Class",
+            "onChange": "update_pipeline_contract",
             "options": [
               {
                 "availability": "installed",
@@ -938,6 +2598,14 @@
                 "label": "ConsistencyModelPipeline",
                 "schemaVersion": 1,
                 "value": "ConsistencyModelPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "QwenImage21Pipeline",
+                "schemaVersion": 1,
+                "value": "QwenImage21Pipeline"
               },
               {
                 "availability": "installed",
@@ -1471,6 +3139,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "Flux2Pipeline",
+                "schemaVersion": 1,
+                "value": "Flux2Pipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "Flux2KleinPipeline",
                 "schemaVersion": 1,
                 "value": "Flux2KleinPipeline"
@@ -1482,6 +3158,14 @@
                 "label": "Flux2KleinInpaintPipeline",
                 "schemaVersion": 1,
                 "value": "Flux2KleinInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux2KleinKVPipeline",
+                "schemaVersion": 1,
+                "value": "Flux2KleinKVPipeline"
               },
               {
                 "availability": "installed",
@@ -1506,6 +3190,30 @@
                 "label": "FluxFillPipeline",
                 "schemaVersion": 1,
                 "value": "FluxFillPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FluxControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "FluxControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FluxControlNetImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "FluxControlNetImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FluxControlNetInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "FluxControlNetInpaintPipeline"
               },
               {
                 "availability": "installed",
@@ -1599,8 +3307,21 @@
             "type": "string",
             "value": "FluxControlPipeline"
           },
+          "prequantized_transformer": {
+            "description": "Optional reviewed single-file transformer component for exact base-pipeline assembly.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Pre-quantized Transformer",
+            "required": false,
+            "type": "any"
+          },
           "quantization_mode": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Quantization",
             "options": [
               {
@@ -1612,55 +3333,49 @@
                 "value": "none"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "bnb_4bit",
                 "schemaVersion": 1,
                 "value": "bnb_4bit"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "bnb_8bit",
                 "schemaVersion": 1,
                 "value": "bnb_8bit"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Quanto package is not installed",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "quanto_float8",
                 "schemaVersion": 1,
                 "value": "quanto_float8"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Quanto package is not installed",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "quanto_int8",
                 "schemaVersion": 1,
                 "value": "quanto_int8"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires TorchAO and a qualified NVIDIA compute capability of at least 8.9",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "torchao_float8",
                 "schemaVersion": 1,
                 "value": "torchao_float8"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "TorchAO package is not installed",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "torchao_int8_weight_only",
                 "schemaVersion": 1,
                 "value": "torchao_int8_weight_only"
@@ -1673,7 +3388,8 @@
             "default": [],
             "display": "select",
             "fieldOptions": {
-              "multiple": true
+              "multiple": true,
+              "suppressInitialFieldAction": true
             },
             "label": "Quantized Components",
             "options": [
@@ -1723,12 +3439,17 @@
           },
           "resolved_artifact": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Resolved Artifact",
             "type": "string"
           },
           "revision": {
             "default": "",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Revision",
             "type": "string",
             "value": "fb5e9b1bae41b8c8adcea4ea2a87b74dd298f07a"
@@ -1736,7 +3457,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "diffusersImagePipeline",
         "style": {},
         "time": [
@@ -1744,10 +3464,9 @@
           0,
           0
         ],
-        "type": "custom",
-        "uiState": {}
+        "type": "custom"
       },
-      "id": "node-02",
+      "id": "node-03",
       "position": {
         "x": 880,
         "y": 14
@@ -1770,6 +3489,9 @@
         "params": {
           "backend": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Backend",
             "options": [
               {
@@ -1781,55 +3503,49 @@
                 "value": "none"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "bnb_4bit",
                 "schemaVersion": 1,
                 "value": "bnb_4bit"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "bnb_8bit",
                 "schemaVersion": 1,
                 "value": "bnb_8bit"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Quanto package is not installed",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "quanto_float8",
                 "schemaVersion": 1,
                 "value": "quanto_float8"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Quanto package is not installed",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "quanto_int8",
                 "schemaVersion": 1,
                 "value": "quanto_int8"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires TorchAO and a qualified NVIDIA compute capability of at least 8.9",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "torchao_float8",
                 "schemaVersion": 1,
                 "value": "torchao_float8"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "TorchAO package is not installed",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "torchao_int8_weight_only",
                 "schemaVersion": 1,
                 "value": "torchao_int8_weight_only"
@@ -1841,8 +3557,12 @@
           "component_overrides": {
             "default": "{}",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Per-component Overrides (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "components": {
             "default": [
@@ -1850,7 +3570,8 @@
             ],
             "display": "select",
             "fieldOptions": {
-              "multiple": true
+              "multiple": true,
+              "suppressInitialFieldAction": true
             },
             "label": "Components",
             "options": [
@@ -1902,6 +3623,9 @@
           },
           "dtype": {
             "default": "bfloat16",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compute DType",
             "options": [
               {
@@ -1913,10 +3637,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -1937,25 +3660,32 @@
             "default": "",
             "description": "Comma-separated module paths or patterns to keep in their original precision.",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Preserve Modules",
-            "type": "text"
+            "type": "text",
+            "value": ""
           },
           "quantization_config": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Quant Config",
             "type": "quantization_config"
           },
           "summary": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Summary",
             "type": "string"
           }
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "diffusersQuantization",
         "style": {},
         "time": [
@@ -1965,7 +3695,7 @@
         ],
         "type": "custom"
       },
-      "id": "node-03",
+      "id": "node-04",
       "position": {
         "x": 0,
         "y": 0
@@ -1988,6 +3718,9 @@
         "params": {
           "attention_backend": {
             "default": "auto",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Attention Backend",
             "options": [
               {
@@ -2007,19 +3740,17 @@
                 "value": "native"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_flash",
                 "schemaVersion": 1,
                 "value": "_native_flash"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_efficient",
                 "schemaVersion": 1,
                 "value": "_native_efficient"
@@ -2033,136 +3764,121 @@
                 "value": "_native_math"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires NVIDIA CUDA",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_cudnn",
                 "schemaVersion": 1,
                 "value": "_native_cudnn"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a PyTorch accelerator build with FlexAttention",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "flex",
                 "schemaVersion": 1,
                 "value": "flex"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "flash",
                 "schemaVersion": 1,
                 "value": "flash"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "flash_hub",
                 "schemaVersion": 1,
                 "value": "flash_hub"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires flash-attn",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "flash_varlen",
                 "schemaVersion": 1,
                 "value": "flash_varlen"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "flash_varlen_hub",
                 "schemaVersion": 1,
                 "value": "flash_varlen_hub"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires Hub kernels and NVIDIA compute capability 9.0 or newer",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "flash_4_hub",
                 "schemaVersion": 1,
                 "value": "flash_4_hub"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires the FlashAttention 3 interface on NVIDIA Hopper",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_flash_3",
                 "schemaVersion": 1,
                 "value": "_flash_3"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires the FlashAttention 3 interface on NVIDIA Hopper",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_flash_varlen_3",
                 "schemaVersion": 1,
                 "value": "_flash_varlen_3"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires Hub kernels on NVIDIA Hopper",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_flash_3_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_hub"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires Hub kernels on NVIDIA Hopper",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "sage",
                 "schemaVersion": 1,
                 "value": "sage"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "sage_hub",
                 "schemaVersion": 1,
                 "value": "sage_hub"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires SageAttention",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "sage_varlen",
                 "schemaVersion": 1,
                 "value": "sage_varlen"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "MoDiff only enables xFormers on NVIDIA CUDA",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "xformers",
                 "schemaVersion": 1,
                 "value": "xformers"
@@ -2173,6 +3889,9 @@
           },
           "attention_components": {
             "default": "",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Attention Components",
             "type": "string",
             "value": ""
@@ -2180,48 +3899,82 @@
           "cache_options": {
             "default": "{}",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Cache Options (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "cache_threshold": {
             "default": 0.05,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Cache Threshold",
             "min": 0,
-            "type": "float"
+            "type": "float",
+            "value": 0.05
           },
           "channels_last": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Channels Last",
             "type": "bool",
             "value": false
           },
           "channels_last_components": {
             "default": "unet,vae",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Channels Last Components",
-            "type": "string"
+            "type": "string",
+            "value": "unet,vae"
           },
           "compile_backend": {
             "default": "inductor",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Backend",
-            "type": "string"
+            "type": "string",
+            "value": "inductor"
           },
           "compile_components": {
             "default": "transformer",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Components",
-            "type": "string"
+            "type": "string",
+            "value": "transformer"
           },
           "compile_dynamic": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Dynamic Shapes",
-            "type": "bool"
+            "type": "bool",
+            "value": false
           },
           "compile_fullgraph": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Full Graph",
-            "type": "bool"
+            "type": "bool",
+            "value": false
           },
           "compile_mode": {
             "default": "default",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Mode",
             "options": [
               {
@@ -2249,10 +4002,14 @@
                 "value": "max-autotune"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "default"
           },
           "denoiser_cache": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Denoiser Cache",
             "options": [
               {
@@ -2317,12 +4074,18 @@
           },
           "device": {
             "default": "cuda:0",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Execution Device",
             "type": "string",
             "value": "cuda:0"
           },
           "device_map": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Device Placement",
             "options": [
               {
@@ -2389,28 +4152,44 @@
             "default": "{}",
             "description": "Used only with manual placement, for example {\"transformer\": 0, \"text_encoder_2\": \"cpu\"}.",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Manual Device Map (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "execution_recipe": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Execution Recipe",
             "type": "diffusers_execution_recipe"
           },
           "layerwise_casting": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Casting",
             "type": "bool",
             "value": false
           },
           "layerwise_casting_components": {
             "default": "transformer",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Casting Components",
-            "type": "string"
+            "type": "string",
+            "value": "transformer"
           },
           "layerwise_compute_dtype": {
             "default": "bfloat16",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Compute DType",
             "options": [
               {
@@ -2438,10 +4217,14 @@
                 "value": "float32"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "bfloat16"
           },
           "layerwise_storage_dtype": {
             "default": "float8_e4m3fn",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Storage DType",
             "options": [
               {
@@ -2461,17 +4244,25 @@
                 "value": "float8_e5m2"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "float8_e4m3fn"
           },
           "max_memory": {
             "default": "{}",
             "description": "Optional device limits, for example {\"0\": \"16GiB\", \"cpu\": \"48GiB\"}.",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Max Memory (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "offload_mode": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Runtime Offload",
             "options": [
               {
@@ -2520,30 +4311,43 @@
           },
           "quantization_config": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Quant Config",
             "type": "quantization_config"
           },
           "regional_compile": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Regional Compile",
             "type": "bool",
             "value": false
           },
           "summary": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Summary",
             "type": "string"
           },
           "vae_slicing": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE Slicing",
             "type": "bool",
             "value": true
           },
           "vae_tiling": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE Tiling",
             "type": "bool",
             "value": true
@@ -2551,7 +4355,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "diffusersRecipe",
         "style": {},
         "time": [
@@ -2561,9 +4364,1525 @@
         ],
         "type": "custom"
       },
-      "id": "node-04",
+      "id": "node-05",
       "position": {
         "x": 440,
+        "y": 14
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "EncodeInputs",
+        "cache": false,
+        "category": "Diffusers Image",
+        "description": "Execute the selected owner's actual input encoder once.",
+        "label": "Encode Image",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.DiffusersImage",
+        "operationAuthoring": {
+          "authored": [
+            "prompt",
+            "negative_prompt",
+            "width",
+            "height",
+            "seed",
+            "max_sequence_length"
+          ],
+          "defaults": {
+            "height": 1024,
+            "max_sequence_length": 256,
+            "num_images_per_prompt": 1,
+            "prompt": "A detailed photograph following the structure of the control image, with soft natural lighting.",
+            "seed": 0,
+            "width": 1024
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "FluxControlPipeline",
+              "values": {}
+            },
+            "blockName": null,
+            "decomposition": "bundle",
+            "nodeKey": "modules.DiffusersImage.EncodeInputs",
+            "nodeType": "image_encoder",
+            "operationId": "diffusion.encode_image",
+            "pipelineClass": "FluxControlPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "latents",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "latents",
+                "semantics": {
+                  "kind": "latents",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prompt_embeds",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt_embeds",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pooled_prompt_embeds",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pooled_prompt_embeds",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "negative_prompt_embeds",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_prompt_embeds",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "negative_pooled_prompt_embeds",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_pooled_prompt_embeds",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "masked_image_latents",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "masked_image_latents",
+                "semantics": {
+                  "kind": "latents",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "generator",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "generator",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "generator"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prompt_2",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt_2",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "negative_prompt_2",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_prompt_2",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "num_images_per_prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "num_images_per_prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "text_encoder_out_layers",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "text_encoder_out_layers",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "caption_upsample_temperature",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "caption_upsample_temperature",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "max_area",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "max_area",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "_auto_resize",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "_auto_resize",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "image_reference",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "image_reference",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "prompt_embeds_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt_embeds_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "pooled_prompt_embeds_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pooled_prompt_embeds_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "joint_attention_kwargs",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "joint_attention_kwargs",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "attention_kwargs",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "attention_kwargs",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "ip_adapter_image",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "ip_adapter_image",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "negative_ip_adapter_image",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_ip_adapter_image",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "ip_adapter_image_embeds",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "ip_adapter_image_embeds",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "negative_ip_adapter_image_embeds",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_ip_adapter_image_embeds",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "control_mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "control_mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "use_kv_cache",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "use_kv_cache",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline",
+                "semantics": {
+                  "kind": "pipeline",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "image_diffusion_pipeline"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "image_contract",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "image_contract",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "negative_prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "width",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "width",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "height",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "height",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "seed",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "seed",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "max_sequence_length",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "max_sequence_length",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "image",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "image",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "reference_strength",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "reference_strength",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "mask_image",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "mask_image",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "control_image",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "control_image",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "encoded_inputs",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "encoded_inputs",
+                "semantics": {
+                  "kind": "conditioning",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "FluxControlPipeline",
+                  "state": null
+                },
+                "types": [
+                  "image_conditioning"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "control_image",
+            "workflowId": null
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
+        "params": {
+          "_auto_resize": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Auto Resize",
+            "type": "bool"
+          },
+          "attention_kwargs": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Attention Kwargs",
+            "type": "object"
+          },
+          "caption_upsample_temperature": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Caption Upsample Temperature",
+            "type": "float"
+          },
+          "control_image": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Control Image",
+            "required": true,
+            "type": "image"
+          },
+          "control_mode": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Control Mode",
+            "type": "int"
+          },
+          "encoded_inputs": {
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Encoded inputs",
+            "type": "image_conditioning"
+          },
+          "generator": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Generator",
+            "type": "generator"
+          },
+          "height": {
+            "default": 1024,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Height",
+            "max": 2048,
+            "min": 16,
+            "step": 16,
+            "type": "int",
+            "value": 1024
+          },
+          "image": {
+            "description": "A single source image or a list of references for pipelines that support multi-reference editing.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Image or references",
+            "required": false,
+            "type": "image"
+          },
+          "image_contract": {
+            "default": {
+              "actions": {
+                "Generate": [
+                  "text_to_image"
+                ]
+              },
+              "connectionActions": {
+                "DecodeLatents": [
+                  "text_to_image"
+                ],
+                "Generate": [
+                  "text_to_image"
+                ]
+              },
+              "fieldParams": {
+                "cfg_normalize": {
+                  "hidden": true
+                },
+                "conditioning_scale": {
+                  "hidden": true
+                },
+                "control_guidance_end": {
+                  "hidden": true
+                },
+                "control_guidance_start": {
+                  "hidden": true
+                },
+                "generator": {
+                  "hidden": false
+                },
+                "guidance_scale": {
+                  "hidden": false,
+                  "label": "True CFG"
+                },
+                "guidance_scale_2": {
+                  "default": 3.5,
+                  "description": "Used only when its override toggle is enabled; otherwise retain the upstream default.",
+                  "hidden": false,
+                  "label": "Distilled Guidance"
+                },
+                "height": {
+                  "hidden": false
+                },
+                "image_guidance_scale": {
+                  "hidden": true
+                },
+                "ip_adapter_image": {
+                  "hidden": false
+                },
+                "ip_adapter_image_embeds": {
+                  "hidden": false
+                },
+                "joint_attention_kwargs": {
+                  "hidden": false
+                },
+                "latents": {
+                  "hidden": false
+                },
+                "latents_out": {
+                  "hidden": false
+                },
+                "layers": {
+                  "hidden": true
+                },
+                "max_sequence_length": {
+                  "hidden": false
+                },
+                "negative_ip_adapter_image": {
+                  "hidden": false
+                },
+                "negative_ip_adapter_image_embeds": {
+                  "hidden": false
+                },
+                "negative_pooled_prompt_embeds": {
+                  "hidden": false
+                },
+                "negative_prompt": {
+                  "hidden": false
+                },
+                "negative_prompt_2": {
+                  "hidden": false
+                },
+                "negative_prompt_embeds": {
+                  "hidden": false
+                },
+                "num_images_per_prompt": {
+                  "hidden": false
+                },
+                "output_type": {
+                  "options": [
+                    "pil",
+                    "np",
+                    "pt",
+                    "latent"
+                  ]
+                },
+                "padding_mask_crop": {
+                  "hidden": true
+                },
+                "pag_adaptive_scale": {
+                  "hidden": true
+                },
+                "pag_scale": {
+                  "hidden": true
+                },
+                "pooled_prompt_embeds": {
+                  "hidden": false
+                },
+                "prompt_2": {
+                  "hidden": false
+                },
+                "prompt_embeds": {
+                  "hidden": false
+                },
+                "reference_strength": {
+                  "hidden": true
+                },
+                "resolution": {
+                  "hidden": true
+                },
+                "sigmas": {
+                  "hidden": false
+                },
+                "strength": {
+                  "hidden": true
+                },
+                "use_en_prompt": {
+                  "hidden": true
+                },
+                "use_guidance_scale_2": {
+                  "default": false,
+                  "hidden": false,
+                  "label": "Override Distilled Guidance"
+                },
+                "width": {
+                  "hidden": false
+                }
+              },
+              "library": "diffusers",
+              "mediaKind": "image",
+              "mode": "text_to_image",
+              "modes": [
+                "text_to_image"
+              ],
+              "pipelineClass": "FluxPipeline",
+              "schemaVersion": 1
+            },
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Image Contract",
+            "type": "object",
+            "value": {
+              "actions": {
+                "ControlGenerate": [
+                  "control_image"
+                ],
+                "DecodeLatents": [
+                  "control_image"
+                ],
+                "Denoise": [
+                  "control_image"
+                ],
+                "EncodeInputs": [
+                  "control_image"
+                ]
+              },
+              "connectionActions": {
+                "ControlGenerate": [
+                  "control_image"
+                ],
+                "DecodeLatents": [
+                  "control_image"
+                ],
+                "Denoise": [
+                  "control_image"
+                ],
+                "EncodeInputs": [
+                  "control_image"
+                ]
+              },
+              "fieldParams": {
+                "cfg_normalize": {
+                  "hidden": true
+                },
+                "conditioning_scale": {
+                  "hidden": true
+                },
+                "control_guidance_end": {
+                  "hidden": true
+                },
+                "control_guidance_start": {
+                  "hidden": true
+                },
+                "generator": {
+                  "hidden": false
+                },
+                "guidance_scale": {
+                  "hidden": false,
+                  "max": 30
+                },
+                "height": {
+                  "hidden": false
+                },
+                "image_guidance_scale": {
+                  "hidden": true
+                },
+                "joint_attention_kwargs": {
+                  "hidden": false
+                },
+                "latents": {
+                  "hidden": false
+                },
+                "latents_out": {
+                  "hidden": false
+                },
+                "layers": {
+                  "hidden": true
+                },
+                "max_sequence_length": {
+                  "hidden": false
+                },
+                "negative_prompt": {
+                  "hidden": true
+                },
+                "num_images_per_prompt": {
+                  "hidden": false
+                },
+                "output_type": {
+                  "options": [
+                    "pil",
+                    "np",
+                    "pt",
+                    "latent"
+                  ]
+                },
+                "padding_mask_crop": {
+                  "hidden": true
+                },
+                "pag_adaptive_scale": {
+                  "hidden": true
+                },
+                "pag_scale": {
+                  "hidden": true
+                },
+                "pooled_prompt_embeds": {
+                  "hidden": false
+                },
+                "prompt_2": {
+                  "hidden": false
+                },
+                "prompt_embeds": {
+                  "hidden": false
+                },
+                "reference_strength": {
+                  "hidden": true
+                },
+                "resolution": {
+                  "hidden": true
+                },
+                "sigmas": {
+                  "hidden": false
+                },
+                "strength": {
+                  "hidden": true
+                },
+                "use_en_prompt": {
+                  "hidden": true
+                },
+                "width": {
+                  "hidden": false
+                }
+              },
+              "library": "diffusers",
+              "mediaKind": "image",
+              "mode": "control_image",
+              "modes": [
+                "control_image"
+              ],
+              "pipelineClass": "FluxControlPipeline",
+              "schemaVersion": 1
+            }
+          },
+          "image_reference": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Image Reference",
+            "type": "image"
+          },
+          "ip_adapter_image": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Ip Adapter Image",
+            "type": "image"
+          },
+          "ip_adapter_image_embeds": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Ip Adapter Image Embeds",
+            "type": "tensor"
+          },
+          "joint_attention_kwargs": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Joint Attention Kwargs",
+            "type": "object"
+          },
+          "latents": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Latents",
+            "type": "tensor"
+          },
+          "mask_image": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Mask",
+            "required": false,
+            "type": "image"
+          },
+          "masked_image_latents": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Masked Image Latents",
+            "type": "tensor"
+          },
+          "max_area": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Max Area",
+            "type": "int"
+          },
+          "max_sequence_length": {
+            "default": 256,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Max Sequence Length",
+            "max": 512,
+            "min": 1,
+            "type": "int",
+            "value": 512
+          },
+          "negative_ip_adapter_image": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Negative Ip Adapter Image",
+            "type": "image"
+          },
+          "negative_ip_adapter_image_embeds": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Negative Ip Adapter Image Embeds",
+            "type": "tensor"
+          },
+          "negative_pooled_prompt_embeds": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Negative Pooled Prompt Embeds",
+            "type": "tensor"
+          },
+          "negative_prompt": {
+            "default": "",
+            "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Negative Prompt",
+            "type": "text",
+            "value": ""
+          },
+          "negative_prompt_2": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Negative Prompt 2",
+            "type": "text"
+          },
+          "negative_prompt_embeds": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Negative Prompt Embeds",
+            "type": "tensor"
+          },
+          "num_images_per_prompt": {
+            "default": 1,
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Num Images Per Prompt",
+            "type": "int"
+          },
+          "pipeline": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
+            },
+            "label": "Pipeline",
+            "onSignal": [
+              {
+                "action": "value",
+                "target": "image_contract"
+              },
+              {
+                "action": "exec",
+                "data": "update_image_contract"
+              }
+            ],
+            "required": true,
+            "signalCompatibility": {
+              "action": "$node",
+              "required": true
+            },
+            "type": "image_diffusion_pipeline"
+          },
+          "pooled_prompt_embeds": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Pooled Prompt Embeds",
+            "type": "tensor"
+          },
+          "pooled_prompt_embeds_scale": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Pooled Prompt Embeds Scale",
+            "type": "float"
+          },
+          "prompt": {
+            "default": "",
+            "display": "textarea",
+            "fieldOptions": {
+              "exampleAttribution": "MoDiff task example",
+              "suppressInitialFieldAction": true
+            },
+            "label": "Prompt",
+            "type": "text",
+            "value": "Strictly follow the supplied depth map as authoritative for the camera, boat-repair shed geometry, timber ribs, workbench positions, skiff hull, open doorway, floor plane and occlusion. Render a real working wooden-boat repair shed on an overcast morning: one partially restored clinker-built fishing skiff resting securely on two timber trestles, old structural framing, steel hand tools, two naturally coiled ropes, scattered sawdust and cool daylight entering through the open doors. Preserve every major depth boundary and vanishing line while adding only scale-compatible construction detail. Use natural documentary exposure, believable worn timber, oxidized metal, fibrous rope, grounded furniture and directional floor shadows."
+          },
+          "prompt_2": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Prompt 2",
+            "type": "text"
+          },
+          "prompt_embeds": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Prompt Embeds",
+            "type": "tensor"
+          },
+          "prompt_embeds_scale": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Prompt Embeds Scale",
+            "type": "float"
+          },
+          "reference_strength": {
+            "default": 1,
+            "description": "Relative influence of every reference after the first composition anchor, when supported by the selected adapter.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Secondary reference strength",
+            "max": 1,
+            "min": 0,
+            "step": 0.05,
+            "type": "float"
+          },
+          "seed": {
+            "default": 0,
+            "display": "random",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Seed",
+            "max": 4294967295,
+            "min": 0,
+            "type": "int",
+            "value": {
+              "isRandom": false,
+              "value": 8409
+            }
+          },
+          "text_encoder_out_layers": {
+            "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Text Encoder Out Layers",
+            "type": "int"
+          },
+          "use_kv_cache": {
+            "description": "Prefill fixed prompt and reference context once, then reuse it during denoising. Uses extra memory. Changing this setting can change reduced-precision outputs. The cache belongs to one generation and is never shared with another request.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Reuse attention context",
+            "type": "bool"
+          },
+          "width": {
+            "default": 1024,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Width",
+            "max": 2048,
+            "min": 16,
+            "step": 16,
+            "type": "int",
+            "value": 1024
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioRole": "imageEncode",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-06",
+      "position": {
+        "x": 1320,
         "y": 14
       },
       "type": "custom"
@@ -2661,7 +5980,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "loadImage",
         "style": {},
         "time": [
@@ -2671,7 +5989,7 @@
         ],
         "type": "custom"
       },
-      "id": "node-05",
+      "id": "node-07",
       "position": {
         "x": 0,
         "y": 346
@@ -2694,7 +6012,9 @@
         "params": {
           "device": {
             "default": "cpu:0",
-            "hidden": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "options": {
               "cpu": {
                 "availability": "installed",
@@ -2705,30 +6025,61 @@
                 "value": "cpu"
               },
               "cpu:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "This device is not available in the current runtime.",
+                "installationState": "unavailable",
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
               }
             },
-            "type": "string"
+            "type": "string",
+            "value": "cpu:0"
           },
           "export": {
             "default": "0",
             "description": "Export the image at the given index. Leave empty to export all images.",
-            "type": "str"
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "type": "str",
+            "value": "0"
           },
           "filtered": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Selected image",
             "type": "image"
           },
           "image": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "onChange": {
+              "action": "show",
+              "condition": {
+                "type": "latent"
+              },
+              "data": {
+                "false": [],
+                "true": [
+                  "vae",
+                  "device"
+                ]
+              }
+            },
             "type": [
               "image",
               "latent"
@@ -2736,26 +6087,31 @@
           },
           "output": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "All images",
             "type": "image"
           },
           "preview": {
             "dataSource": "output",
             "display": "ui_image",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": "url"
           },
           "vae": {
             "display": "input",
-            "hidden": true,
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE",
             "type": "pipeline"
           }
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "preview",
         "style": {},
         "time": [
@@ -2765,9 +6121,9 @@
         ],
         "type": "custom"
       },
-      "id": "node-06",
+      "id": "node-08",
       "position": {
-        "x": 1760,
+        "x": 2640,
         "y": 187
       },
       "type": "custom"

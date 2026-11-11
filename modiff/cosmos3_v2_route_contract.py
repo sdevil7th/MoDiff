@@ -33,6 +33,14 @@ COSMOS3_GUARDRAIL = {
     "package": "cosmos-guardrail",
     "packageVersion": "0.3.1",
 }
+COSMOS3_TEXT_GUARD = {
+    "id": "cosmos3-mandatory-text-safety-classifier",
+    "kind": "safety_checker",
+    "repository": "Qwen/Qwen3Guard-Gen-0.6B",
+    "revision": "fada3b2f655b89601929198343c94cd2f64d93cc",
+    "package": "cosmos-guardrail",
+    "packageVersion": "0.3.1",
+}
 
 _COSMOS3_DISTILLED_COMMON_DIFFUSERS_FILES = (
     "README.md",
@@ -196,7 +204,7 @@ def _route(
         "artifact": deepcopy(artifact),
         "tranche": tranche,
         "sealedDefaults": dict(sealed_defaults),
-        "modelDependencies": (deepcopy(COSMOS3_GUARDRAIL),),
+        "modelDependencies": (deepcopy(COSMOS3_GUARDRAIL), deepcopy(COSMOS3_TEXT_GUARD)),
         "blockers": (*route_blockers, *_COMMON_STRUCTURAL_BLOCKERS),
         "claim": "structural_research_only",
     }

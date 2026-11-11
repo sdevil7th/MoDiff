@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import re
 from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from pathlib import Path
@@ -284,8 +285,15 @@ def _checked_path(value: Any, label: str, *, allow_root: bool = False) -> tuple[
     return tuple(_name(segment, f"{label} segment") for segment in value)
 
 
-def validate_modular_conditional_snapshot(value: Any) -> dict[str, Any]:
+def validate_modular_conditional_snapshot(
+    value: Any, *, source_revision: str = PINNED_DIFFUSERS_REVISION,
+    workflow_snapshot: Mapping[str, Any] | None = None,
+    block_snapshot: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Validate, cross-check, and detach the complete unpruned snapshot."""
+
+    if type(source_revision) is not str or re.fullmatch(r'[0-9a-f]{40}', source_revision) is None:
+        raise ModularConditionalContractError('Conditional source requires an immutable revision.')
 
     try:
         encoded = json.dumps(value, allow_nan=False, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
@@ -303,7 +311,7 @@ def validate_modular_conditional_snapshot(value: Any) -> dict[str, Any]:
         raise ModularConditionalContractError("Conditional snapshot has missing or unknown top-level fields.")
     if (
         normalized.get("schemaVersion") != MODULAR_CONDITIONAL_CONTRACT_SCHEMA_VERSION
-        or normalized.get("diffusersRevision") != PINNED_DIFFUSERS_REVISION
+        or normalized.get("diffusersRevision") != source_revision
     ):
         raise ModularConditionalContractError("Conditional snapshot does not match the pinned Diffusers revision.")
     definitions = normalized.get("blockDefinitions")
@@ -328,8 +336,12 @@ def validate_modular_conditional_snapshot(value: Any) -> dict[str, Any]:
             raise ModularConditionalContractError("Conditional block definition ids must be unique.")
         definitions_by_id[definition_id] = validated_definition
 
-    reviewed_workflows = load_reviewed_modular_workflow_snapshot()
-    reviewed_blocks = load_reviewed_modular_block_snapshot()
+    # Explicit source companions supply already validated reviewed contracts.
+    # The ordinary/historical reader retains its exact pinned defaults.
+    if (workflow_snapshot is None) != (block_snapshot is None):
+        raise ModularConditionalContractError('Both reviewed source companions are required.')
+    reviewed_workflows = workflow_snapshot if workflow_snapshot is not None else load_reviewed_modular_workflow_snapshot()
+    reviewed_blocks = block_snapshot if block_snapshot is not None else load_reviewed_modular_block_snapshot()
     expected_workflows = {
         contract["pipelineClass"]: {workflow["id"] for workflow in contract["workflows"]}
         for contract in reviewed_workflows["contracts"]
@@ -565,6 +577,21 @@ def load_reviewed_modular_conditional_snapshot(
 
 def reviewed_modular_conditional_snapshot() -> dict[str, Any]:
     return json.loads(json.dumps(load_reviewed_modular_conditional_snapshot(), allow_nan=False))
+
+
+def reviewed_modular_conditional_collection() -> dict[str, Any]:
+    """Mixed-source API envelope; each source snapshot keeps its own identity."""
+    from modiff.supplemental_modular_contracts import (
+        reviewed_modular_source_providers, reviewed_supplemental_modular_conditionals,
+    )
+    return {
+        **reviewed_modular_conditional_snapshot(),
+        "schemaVersion": 2,
+        "sourceSupplements": [
+            reviewed_supplemental_modular_conditionals(pipeline)["snapshot"]
+            for pipeline in reviewed_modular_source_providers()
+        ],
+    }
 
 
 def select_conditional_branch(conditional: Mapping[str, Any], present_inputs: Sequence[str]) -> str | None:

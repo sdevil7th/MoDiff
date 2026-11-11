@@ -1,0 +1,174 @@
+"""Pika loading declarations do not imply public templates or model fit."""
+import json
+from pathlib import Path
+from types import SimpleNamespace
+from copy import deepcopy
+
+import pytest
+
+from modiff.joint_av_model_adapters import PIKA_PIPELINE, PIKA_REPOSITORY, PIKA_REVISION
+from modiff.model_artifact_catalog import require_catalog_revision
+from modiff.modular_workflow_contracts import (
+    PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES,
+    require_reviewed_modular_repository_workflow,
+    reviewed_modular_component_load_types,
+)
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_model_types
+from modules.ModularDiffusers import loaders
+from modules.ModularDiffusers.modular_utils import PIKA_H3_FLEX_PIPELINE_CONFIG
+
+
+def test_source_authoring_metadata_does_not_require_the_optional_class_or_a_runtime_activation():
+    from unittest.mock import patch
+    from modules.ModularDiffusers import modular_utils
+    with patch.object(modular_utils, '_get_registry_instance', side_effect=AssertionError('No installed-class lookup')):
+        metadata = modular_utils.get_model_type_metadata(PIKA_PIPELINE)
+        assert metadata['default_repo'] == PIKA_REPOSITORY
+        assert metadata['required_diffusers_provider'] == 'huggingface-diffusers-video-d0b9b1b'
+        assert metadata['execution_status'] == 'expert_only'
+        assert modular_utils.pipeline_authoring_identity(PIKA_PIPELINE,
+            class_resolver=lambda value: pytest.fail('Authoring must not import the optional pipeline')) == PIKA_PIPELINE
+
+
+def test_exact_artifact_and_loading_policy_remain_separate_from_historical_source():
+    assert require_catalog_revision(PIKA_REPOSITORY, model_type=PIKA_PIPELINE) == PIKA_REVISION
+    assert PIKA_H3_FLEX_PIPELINE_CONFIG.default_repo == PIKA_REPOSITORY
+    assert PIKA_H3_FLEX_PIPELINE_CONFIG.default_dtype == 'bfloat16'
+    assert dict(PIKA_H3_FLEX_PIPELINE_CONFIG.component_dtype_overrides) == {'vae': 'float32', 'audio_vae': 'float32'}
+    assert PIKA_PIPELINE in reviewed_whole_workflow_model_types()
+    assert PIKA_REPOSITORY not in PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES
+    assert reviewed_modular_component_load_types(PIKA_REPOSITORY) == {'tokenizer': ('transformers', 'Qwen2TokenizerFast')}
+    assert reviewed_modular_component_load_types('unreviewed/repo') == {}
+
+
+@pytest.mark.parametrize('workflow', ['t2va', 'fl2va', 'ref2va'])
+def test_loader_requires_one_exact_workflow_before_loading_components(workflow):
+    assert loaders._reviewed_builtin_workflow_id(PIKA_PIPELINE, workflow) == workflow
+    require_reviewed_modular_repository_workflow(PIKA_PIPELINE, PIKA_REPOSITORY, PIKA_REVISION, workflow)
+
+
+@pytest.mark.parametrize('workflow', ['', 'default', 't2v', 'unknown'])
+def test_loader_never_implicitly_loads_both_partitions(workflow):
+    with pytest.raises(ValueError, match='exact reviewed workflow'):
+        loaders._reviewed_builtin_workflow_id(PIKA_PIPELINE, workflow)
+
+
+def test_raw_selection_cannot_change_the_reviewed_pika_repository_or_revision():
+    for repository, revision, workflow in [('other/model', PIKA_REVISION, 't2va'),
+                                          (PIKA_REPOSITORY, 'main', 't2va'),
+                                          (PIKA_REPOSITORY, PIKA_REVISION, 'default')]:
+        with pytest.raises(ValueError):
+            require_reviewed_modular_repository_workflow(PIKA_PIPELINE, repository, revision, workflow)
+
+
+@pytest.fixture
+def published_index_preflight(monkeypatch):
+    from diffusers.pipelines import pipeline_loading_utils
+    document = json.loads((Path(__file__).parent / 'fixtures/pika_h3_flex_modular_index.v1.json').read_bytes())
+    specs = {name: SimpleNamespace(type_hint=tuple(value[:2]),
+        default_creation_method='from_config' if len(value) == 2 else 'from_pretrained')
+        for name, value in document.items() if not name.startswith('_') and isinstance(value, list)}
+    # The official blocks declare the slow base, while this exact published
+    # model index and the reviewed loading adapter select the fast tokenizer.
+    specs['tokenizer'].type_hint = ('transformers', 'Qwen2Tokenizer')
+    class RegisteredPipeline:
+        def __init__(self):
+            self.config = {'_blocks_class_name': document['_blocks_class_name']}
+            self._component_specs = specs
+    monkeypatch.setattr(loaders, 'pipeline_class_from_model_type', lambda _: RegisteredPipeline)
+    monkeypatch.setattr(pipeline_loading_utils, '_get_pipeline_class', lambda *a, **kw: RegisteredPipeline)
+    monkeypatch.setattr(pipeline_loading_utils, '_fetch_class_library_tuple', lambda value: value)
+    monkeypatch.setattr(loaders, '_load_reviewed_pipeline_index', lambda *a: (loaders.ModularPipeline.config_name, deepcopy(document)))
+    return document
+
+
+def test_index_preflight_uses_the_same_reviewed_tokenizer_as_loading(published_index_preflight):
+    _filename, observed = loaders._validate_reviewed_pipeline_index(PIKA_PIPELINE, PIKA_REPOSITORY, PIKA_REVISION)
+    assert observed == published_index_preflight
+
+
+@pytest.mark.parametrize('modular_index', [False, True])
+def test_loading_alias_preserves_the_full_pretrained_component_declaration(monkeypatch, modular_index):
+    from modules.ModularDiffusers import native_blocks
+
+    document = json.loads((Path(__file__).parent / 'fixtures/pika_h3_flex_modular_index.v1.json').read_bytes())
+    if not modular_index:
+        document['tokenizer'] = document['tokenizer'][:2]
+    original = deepcopy(document)
+    captured = {}
+
+    class RegisteredPipeline:
+        blocks = object()
+
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(loaders, 'pipeline_class_from_model_type', lambda _: RegisteredPipeline)
+    monkeypatch.setattr(native_blocks, 'prepare_native_pipeline_blocks', lambda _class, blocks: blocks)
+    loaders._instantiate_reviewed_builtin_pipeline(PIKA_PIPELINE, PIKA_REPOSITORY,
+        index_filename=loaders.ModularPipeline.config_name if modular_index else 'model_index.json',
+        index_document=document, components_manager=object(), collection='pika-fixture-owner', workflow_id='t2va')
+    selected = captured['modular_config_dict' if modular_index else 'config_dict']['tokenizer']
+    assert selected[:2] == ['transformers', 'Qwen2TokenizerFast']
+    if modular_index:
+        assert len(selected) == 3
+        assert selected[2] == original['tokenizer'][2]
+    assert document == original
+
+
+@pytest.mark.parametrize('substitution', ['outer', 'inner', 'slow', 'foreign-repository'])
+def test_pika_index_alias_does_not_admit_other_classes_or_sources(published_index_preflight, substitution):
+    repository = PIKA_REPOSITORY
+    if substitution == 'outer':
+        published_index_preflight['tokenizer'][:2] = ['untrusted', 'RemoteTokenizer']
+    elif substitution == 'inner':
+        published_index_preflight['tokenizer'][2]['type_hint'] = ['transformers', 'OtherTokenizer']
+    elif substitution == 'slow':
+        published_index_preflight['tokenizer'][:2] = ['transformers', 'Qwen2Tokenizer']
+        published_index_preflight['tokenizer'][2]['type_hint'] = ['transformers', 'Qwen2Tokenizer']
+    else:
+        repository = 'unreviewed/repo'
+    with pytest.raises(ValueError):
+        loaders._validate_reviewed_pipeline_index(PIKA_PIPELINE, repository, PIKA_REVISION)
+
+
+def test_actual_installed_pipeline_accepts_the_pinned_index_before_weight_loading(monkeypatch):
+    from modiff.runtime_overlays import active_diffusers_provider
+    provider = active_diffusers_provider()
+    if not provider or provider.get('profileId') != 'huggingface-diffusers-video-d0b9b1b':
+        pytest.skip('Requires the installed exact reviewed video provider')
+    document = json.loads((Path(__file__).parent / 'fixtures/pika_h3_flex_modular_index.v1.json').read_bytes())
+    monkeypatch.setattr(loaders, '_load_reviewed_pipeline_index', lambda *a: (loaders.ModularPipeline.config_name, deepcopy(document)))
+    assert loaders._validate_reviewed_pipeline_index(PIKA_PIPELINE, PIKA_REPOSITORY, PIKA_REVISION)[1] == document
+
+
+@pytest.mark.parametrize('workflow', ['t2va', 'fl2va', 'ref2va'])
+def test_actual_reviewed_factory_prunes_published_index_without_loading_weights(workflow):
+    from modiff.runtime_overlays import active_diffusers_provider
+    provider = active_diffusers_provider()
+    if not provider or provider.get('profileId') != 'huggingface-diffusers-video-d0b9b1b':
+        pytest.skip('Requires the installed and validated exact newer video provider')
+    from diffusers import ComponentsManager, ModularPipeline
+    from transformers import Qwen2TokenizerFast
+    # Publisher metadata only, from the exact Pika revision above; no weights.
+    fixture = Path(__file__).parent / 'fixtures/pika_h3_flex_modular_index.v1.json'
+    manager = ComponentsManager()
+    pipeline = loaders._instantiate_reviewed_builtin_pipeline(PIKA_PIPELINE, PIKA_REPOSITORY,
+        index_filename=ModularPipeline.config_name, index_document=json.loads(fixture.read_bytes()),
+        components_manager=manager, collection='pika-fixture-owner', workflow_id=workflow)
+    partition = 'transformer_ref' if workflow == 'ref2va' else 'transformer'
+    names = set(pipeline.pretrained_component_names)
+    assert partition in names and not ({'transformer', 'transformer_ref'} - {partition}) & names
+    assert {'text_encoder', 'tokenizer', 'processor'} <= names
+    assert pipeline._component_specs['tokenizer'].type_hint is Qwen2TokenizerFast
+    spec = pipeline._component_specs['tokenizer']
+    assert spec.default_creation_method == 'from_pretrained'
+    assert spec.pretrained_model_name_or_path == PIKA_REPOSITORY and spec.subfolder == 'tokenizer'
+    from tokenizers import Tokenizer
+    from tokenizers.models import WordLevel
+    tiny = Qwen2TokenizerFast(tokenizer_object=Tokenizer(WordLevel({'[UNK]': 0}, unk_token='[UNK]')))
+    pipeline.register_components(tokenizer=tiny)
+    component = loaders.node_get_component_info('pika-fixture-owner', manager, 'tokenizer')
+    assert manager.get_one(component['model_id']) is tiny
+    assert loaders.ModelsLoader._reviewed_builtin_selection(model_type=PIKA_PIPELINE,
+        repo_id={'source': 'hub', 'value': PIKA_REPOSITORY}, revision=None) == ('hub', PIKA_REPOSITORY, PIKA_REVISION)

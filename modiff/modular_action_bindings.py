@@ -5,6 +5,7 @@ runtime registry. Keep saved action names stable.
 """
 
 MODULAR_ACTION_BINDINGS = {
+    'workflow_prepare_images': ('beforeEncode', 'modules.ModularDiffusers.WorkflowPrepareImages'),
     "text_encoder": ("prompt", "modules.ModularDiffusers.EncodePrompt"),
     "image_encoder": ("imageEmbeddings", "modules.ModularDiffusers.ImageEmbeddings"),
     "vae_encoder": ("imageEncode", "modules.ModularDiffusers.ImageEncode"),
@@ -170,6 +171,11 @@ MODULAR_ACTION_BINDINGS = {
         "decode",
         "modules.ModularDiffusers.WorkflowMiniMaxH3Decode",
     ),
+    "workflow_joint_av_before_encode": ("beforeEncode", "modules.ModularDiffusers.WorkflowJointAVBeforeEncode"),
+    "workflow_joint_av_text_encoder": ("prompt", "modules.ModularDiffusers.WorkflowJointAVTextEncode"),
+    "workflow_joint_av_vae_encoder": ("imageEncode", "modules.ModularDiffusers.WorkflowJointAVVaeEncode"),
+    "workflow_joint_av_denoise": ("denoise", "modules.ModularDiffusers.WorkflowJointAVDenoise"),
+    "workflow_joint_av_decoder": ("decode", "modules.ModularDiffusers.WorkflowJointAVDecode"),
     "workflow_ltx25_text_encoder": (
         "prompt",
         "modules.ModularDiffusers.WorkflowLTX25TextEncode",
@@ -228,6 +234,10 @@ MODULAR_ACTION_BINDINGS = {
 # Existing typed media helpers are offered where a reviewed stage consumes their
 # output. They are ordinary nodes, not additional upstream stages or state edges.
 MODULAR_AUXILIARY_OPERATION_BINDINGS = {
+    "joint_av_references": (
+        "diffusion.assemble_references",
+        "modules.ModularDiffusers.WorkflowJointAVReferenceAssembler",
+    ),
     "minimax_h3_references": (
         "diffusion.assemble_references",
         "modules.ModularDiffusers.WorkflowMiniMaxH3ReferenceAssembler",

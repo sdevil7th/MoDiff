@@ -12,6 +12,6 @@ fi
 if [[ -f ./.modiff/install-state.json ]]; then
   echo "The managed MoDiff environment is missing or unusable. Run ./install.sh --repair before starting." >&2
 else
-  echo "No managed MoDiff environment was found. Run ./install.sh before starting." >&2
+  echo "No MoDiff environment was found. Run uv sync --extra cuda (NVIDIA) or uv sync --extra cpu before starting." >&2
 fi
 exit 2

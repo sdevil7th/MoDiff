@@ -3,9 +3,11 @@ from modiff.NodeBase import NodeBase
 from PIL import Image, ImageColor, ImageOps
 from modiff.config import CONFIG
 from modiff.path_identifiers import resolve_runtime_input_path
+from io import BytesIO
 import logging
 from utils.torch_utils import DEVICE_LIST, DEFAULT_DEVICE
 from utils.paths import parse_filename
+from utils.image import has_transparency
 import hashlib
 import json
 
@@ -73,8 +75,8 @@ def flatten_pil_image_collection(value):
     return None
 
 def alpha_to_mask(image):
-    if "A" in image.getbands():
-        return image.getchannel("A").convert("L")
+    if has_transparency(image):
+        return image.convert("RGBA").getchannel("A")
     return Image.new("L", image.size, 255)
 
 class Load(NodeBase):
@@ -135,25 +137,27 @@ class Load(NodeBase):
 
                     imported = import_web_media(f)
                     content = imported.read_bytes()
-                    image = ImageOps.exif_transpose(Image.open(imported))
-                    source_hash = hashlib.sha256(content).hexdigest()
                 else:
                     f = resolve_runtime_input_path(f)
                     if not f.exists():
                         continue
                     content = f.read_bytes()
-                    image = ImageOps.exif_transpose(Image.open(f))
-                    source_hash = hashlib.sha256(content).hexdigest()
 
-                image.load()
+                # Decode the exact snapshot whose bytes were hashed. Opening the
+                # path again can read a replacement file after the hash read.
+                source_hash = hashlib.sha256(content).hexdigest()
+                with Image.open(BytesIO(content)) as decoded:
+                    image = ImageOps.exif_transpose(decoded)
+                    image.load()
                 mask = alpha_to_mask(image)
                 image = image.copy()
 
                 alpha_channel = kwargs.get("alpha_channel", "ignore")
                 if alpha_channel == "add alpha" and image.mode != "RGBA":
                     image = image.convert("RGBA")
-                elif alpha_channel == "remove alpha" and image.mode == "RGBA":
-                    image = image.convert("RGB")
+                elif alpha_channel == "remove alpha" and has_transparency(image):
+                    image = image.convert("RGBA").convert("RGB")
+                    image.info.pop("transparency", None)
                 images.append(image)
                 widths.append(image.width)
                 heights.append(image.height)
@@ -165,6 +169,14 @@ class Load(NodeBase):
 
         if len(images) == 0:
             raise ValueError("Load Image could not load any selected image. Check that the file or URL exists and is a supported image.")
+
+        self.record_generation_inputs({
+            "alpha_channel": kwargs.get("alpha_channel", "ignore"),
+            "source_hashes": source_hashes,
+            "source_widths": widths,
+            "source_heights": heights,
+            "source_modes": [image.mode for image in images],
+        })
 
         return {
             "image": collapse_single(images),
@@ -225,6 +237,7 @@ class Save(NodeBase):
             "display": "ui_image",
             "type": "url",
             "dataSource": "saved_image_data",
+            "fieldOptions": {"format": "PNG"},
         },
     }
 
@@ -241,6 +254,7 @@ class Save(NodeBase):
         metadata = kwargs.get("metadata")
         output = []
         saved_images = []
+        last_error = None
 
         for index, img in enumerate(image):
             if img is None:
@@ -283,9 +297,13 @@ class Save(NodeBase):
                 saved_images.append(img.copy())
             except Exception as e:
                 logger.error(f"Error saving image {parsed_filename}: {e}")
+                last_error = e
 
         if len(output) == 0:
-            output = None
+            raise ValueError(
+                "Save Image could not save any selected image. "
+                "Check the input images, output filename, format and write access."
+            ) from last_error
         if len(output) == 1:
             output = output[0]
 
@@ -355,6 +373,9 @@ class Preview(NodeBase):
             except Exception:
                 pass
 
+        self.record_field_accounting(kwargs,
+            consumed={'export': export, **({'device': kwargs['device']} if decoded_images is None else {})},
+            inactive={'device': 'already-decoded-image'} if decoded_images is not None else {})
         return {"output": output, "filtered": filtered}
 
 class Resize(NodeBase):
