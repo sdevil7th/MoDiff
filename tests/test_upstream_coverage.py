@@ -52,6 +52,20 @@ class UpstreamCoverageTests(unittest.TestCase):
     def setUpClass(cls):
         cls.ledger = load_upstream_coverage()
 
+    def test_h3_scene_adds_only_an_experimental_contract_without_public_output(self):
+        workflow = next(row for row in self.ledger["canonicalWorkflows"]
+                        if row["id"] == "MiniMaxH3ImageModularPipeline:text_to_image")
+        template = next(row for row in self.ledger["publicTemplates"]
+                        if row["id"] == "minimax_h3_image_old_town_cat")
+        self.assertEqual(workflow["status"], "contract-only")
+        self.assertEqual(workflow["qualificationStatus"], "graph-qualified-execution-pending")
+        self.assertEqual(workflow["publicTemplateIds"], [template["id"]])
+        self.assertEqual(template["status"], "contract-only")
+        self.assertFalse(template["galleryExamplePresent"])
+        self.assertFalse(template["reviewedGalleryExample"])
+        self.assertEqual(template["verificationStatus"], "unverified")
+        self.assertEqual(template["executionSelection"]["memoryPolicy"], "custom_experimental")
+
     def test_template_inventory_handles_eager_browser_store_imports_without_network(self):
         with tempfile.TemporaryDirectory() as temporary:
             bundle = Path(temporary) / "catalog.mjs"
@@ -139,8 +153,8 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 209,
-                "canonicalWorkflowsWithPublicTemplates": 60,
+                "canonicalWorkflowCount": 210,
+                "canonicalWorkflowsWithPublicTemplates": 61,
                 "canonicalWorkflowsWithoutPublicTemplates": 149,
                 "diffusersPipelineSymbolCount": 340,
                 "pipelineStatusCounts": {
@@ -151,10 +165,10 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "research-blocked": 116,
                     "unreviewed": 6,
                 },
-                "publicTemplateCount": 90,
+                "publicTemplateCount": 91,
                 "reviewedGalleryTemplateCount": 80,
                 "templateStatusCounts": {
-                    "contract-only": 10,
+                    "contract-only": 11,
                     "equivalent": 0,
                     "executable": 80,
                     "intentionally-excluded": 0,
@@ -173,7 +187,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "unreviewed": 0,
                 },
                 "workflowStatusCounts": {
-                    "contract-only": 6,
+                    "contract-only": 7,
                     "equivalent": 0,
                     "executable": 203,
                     "intentionally-excluded": 0,
@@ -447,18 +461,19 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(_canonical_json_sha256(graph_path), item["graphHash"], workflow_id)
 
         templates = self.ledger["publicTemplates"]
-        self.assertEqual(len({item["id"] for item in templates}), 90)
+        self.assertEqual(len({item["id"] for item in templates}), 91)
         self.assertTrue(all(item["canonicalWorkflowId"] in ledger_workflows for item in templates))
         self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 80)
         self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 80)
-        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 60)
+        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 61)
         contract_only = [item for item in templates if item["status"] == "contract-only"]
-        self.assertEqual(len(contract_only), 10)
+        self.assertEqual(len(contract_only), 11)
+        self.assertEqual(sum(item["reviewedGalleryExample"] for item in contract_only), 10)
         for item in contract_only:
             self.assertIn(item["canonicalWorkflowId"], experimental)
             self.assertEqual(item["verificationStatus"], "unverified")
             self.assertEqual(item["executionSelection"]["memoryPolicy"], "custom_experimental")
-            self.assertTrue(item["reviewedGalleryExample"])
+            self.assertEqual(item["galleryExamplePresent"], item["reviewedGalleryExample"])
 
         experimental_public_pairs = {
             "flux2_dev_text_to_image": (
@@ -482,7 +497,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             sum({**supported, **experimental}[item["canonicalWorkflowId"]]["mediaKind"] == "image"
                 for item in templates),
-            66,
+            67,
         )
         for template_id, (workflow_id, profile_id) in experimental_public_pairs.items():
             item = public_by_id[template_id]

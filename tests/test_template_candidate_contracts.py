@@ -72,12 +72,12 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 209,
-                "publicTemplateCount": 90,
-                "canonicalWorkflowsWithPublicTemplates": 60,
+                "canonicalWorkflowCount": 210,
+                "publicTemplateCount": 91,
+                "canonicalWorkflowsWithPublicTemplates": 61,
                 "canonicalWorkflowsWithExecutablePublicTemplates": 54,
-                "candidateContractCount": 155,
-                "mediaKindCounts": {"audio": 6, "image": 106, "json": 10, "video": 33},
+                "candidateContractCount": 156,
+                "mediaKindCounts": {"audio": 6, "image": 107, "json": 10, "video": 33},
                 "contractsRequiringInputExamples": 96,
                 "contractsWithComfyResearchRecords": 11,
                 "comfyResearchRecordCount": 14,
@@ -137,16 +137,16 @@ class TemplateCandidateContractTests(unittest.TestCase):
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 
-        self.assertEqual(len(public_templates), 90)
+        self.assertEqual(len(public_templates), 91)
         experimental_public_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "contract-only"}
-        self.assertEqual(len(experimental_public_ids), 6)
+        self.assertEqual(len(experimental_public_ids), 7)
         self.assertTrue(experimental_public_ids <= set(contracts_by_id))
         self.assertEqual(len(public_workflow_ids), 54)
         self.assertEqual(public_workflow_ids, coverage_public_workflow_ids)
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)
         self.assertFalse(set(contracts_by_id) & public_workflow_ids)
-        self.assertEqual(len(contracts_by_id), 155)
+        self.assertEqual(len(contracts_by_id), 156)
         experimental_public_pairs = {
             "flux2_dev_text_to_image": "Flux2ModularPipeline:text_to_image",
             "cosmos3_super_text_to_image": "Cosmos3OmniModularPipeline:text_to_image",

@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:34084e067cd84106c411661d881c36c5ac0855d74a1bc399e03e3ac8d9bf211c",
+  "contentHash": "sha256:cb628cb3377348066339e19b5eebb4c69239fb3fe69fc3e2d80512e7b334545e",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -4153,6 +4153,43 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
+      "canonicalWorkflowId": "MiniMaxH3ImageModularPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "0a4914ebe5958e8e0007952e0a68f6cc58a9bdd84f4408a1ec56dfc443fb5002",
+      "graphPath": "experimental/mini-max-h3-image-modular-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "MiniMaxH3ImageModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "MiniMaxH3ImageModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "MiniMaxAI/MiniMax-H3-Image"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
       "canonicalWorkflowId": "MochiPipeline:text_to_video",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -6966,20 +7003,20 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:9ad7b43627b58efe072794fde5513b3dcacfc1ead6fb18e4ac16fe783fe8d555",
+      "contentHash": "sha256:787ec1c0206e526175afa50b9091989823fa47cf9e910fc0fa8fde849d5fae98",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:fa7e4c293233fbe104e6a8567fceea8e6b7f780a3792ef5d881592f17e830ebf"
+      "sha256": "sha256:45bf0d388e3f991924571102c4d88e1f275f30622a817f43874d40f7773a9498"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:f70acb9c2fa51ad4476c63058dfdd8f14664f4470610603cb7b30aa7b2231ff6"
+      "sha256": "sha256:5b667b400607a47934f087e269b2ba3a8370ab2b0041b510d069df48ac98874d"
     }
   },
   "summary": {
-    "candidateContractCount": 155,
-    "canonicalWorkflowCount": 209,
+    "candidateContractCount": 156,
+    "canonicalWorkflowCount": 210,
     "canonicalWorkflowsWithExecutablePublicTemplates": 54,
-    "canonicalWorkflowsWithPublicTemplates": 60,
+    "canonicalWorkflowsWithPublicTemplates": 61,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
@@ -6988,10 +7025,10 @@
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 6,
-      "image": 106,
+      "image": 107,
       "json": 10,
       "video": 33
     },
-    "publicTemplateCount": 90
+    "publicTemplateCount": 91
   }
 }

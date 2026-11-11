@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:245807b26065337df3418be1bdcae49eca6603ccda947d2ea3f7a33aeb762222",
+  "contentHash": "sha256:b029176c24e2a73aa6ee72b90cb0c3862de99481cf7684a9d1fa30e2e23cb255",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:34084e067cd84106c411661d881c36c5ac0855d74a1bc399e03e3ac8d9bf211c",
+      "contentHash": "sha256:cb628cb3377348066339e19b5eebb4c69239fb3fe69fc3e2d80512e7b334545e",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:d89428fe1aa9909e0904545bb0f55bc0a94fc0509861ecfb797c523b5b2bb1a5"
+      "sha256": "sha256:ce24617400ea6340ed5625579d480a4c2bfa9ff07205a64292777ba18aa8f5d7"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:f70acb9c2fa51ad4476c63058dfdd8f14664f4470610603cb7b30aa7b2231ff6"
+      "sha256": "sha256:5b667b400607a47934f087e269b2ba3a8370ab2b0041b510d069df48ac98874d"
     }
   },
   "specifications": [
@@ -12907,6 +12907,109 @@
         "cacheState": "must_be_rechecked_through_app_before_generation",
         "componentRequirements": [],
         "requiredArtifacts": [
+          "MiniMaxAI/MiniMax-H3-Image"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_execution_pending",
+      "canonicalGraph": {
+        "path": "experimental/mini-max-h3-image-modular-pipeline/text-to-image.json",
+        "sha256": "0a4914ebe5958e8e0007952e0a68f6cc58a9bdd84f4408a1ec56dfc443fb5002"
+      },
+      "canonicalWorkflowId": "MiniMaxH3ImageModularPipeline:text_to_image",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "height",
+            "role": "denoise",
+            "value": 2048
+          },
+          {
+            "parameter": "seed",
+            "role": "denoise",
+            "value": {
+              "isRandom": false,
+              "value": 11426
+            }
+          },
+          {
+            "parameter": "width",
+            "role": "denoise",
+            "value": 2048
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "0a4914ebe5958e8e0007952e0a68f6cc58a9bdd84f4408a1ec56dfc443fb5002",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:MiniMaxH3ImageModularPipeline:text_to_image",
+      "inputPlan": {
+        "items": [],
+        "status": "not_applicable"
+      },
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelFamily": "MiniMax Image",
+      "modelType": "MiniMaxH3ImageModularPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact MiniMax Image text to image workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "not_applicable",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "MiniMax Image — Text To Image [MiniMaxH3ImageModularPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
           "genmo/mochi-1-preview"
         ]
       },
@@ -22132,16 +22235,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 155,
+    "authoringSpecCount": 156,
     "authoringStateCounts": {
-      "draft_complete_execution_pending": 59,
+      "draft_complete_execution_pending": 60,
       "draft_complete_input_selection_pending": 96
     },
-    "canonicalDefaultsCapturedCount": 155,
-    "generationPendingCount": 155,
+    "canonicalDefaultsCapturedCount": 156,
+    "generationPendingCount": 156,
     "inputSelectionPendingCount": 96,
-    "promptDraftedCount": 129,
+    "promptDraftedCount": 130,
     "promptNotApplicableCount": 26,
-    "rightsReviewPendingCount": 155
+    "rightsReviewPendingCount": 156
   }
 }

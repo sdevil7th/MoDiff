@@ -53,16 +53,16 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 155,
-                "promptDraftedCount": 129,
+                "authoringSpecCount": 156,
+                "promptDraftedCount": 130,
                 "promptNotApplicableCount": 26,
-                "canonicalDefaultsCapturedCount": 155,
+                "canonicalDefaultsCapturedCount": 156,
                 "inputSelectionPendingCount": 96,
-                "rightsReviewPendingCount": 155,
-                "generationPendingCount": 155,
+                "rightsReviewPendingCount": 156,
+                "generationPendingCount": 156,
                 "assetCount": 0,
                 "authoringStateCounts": {
-                    "draft_complete_execution_pending": 59,
+                    "draft_complete_execution_pending": 60,
                     "draft_complete_input_selection_pending": 96,
                 },
             },
@@ -112,6 +112,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             set(experimental),
             {
+                "MiniMaxH3ImageModularPipeline:text_to_image",
                 "Flux3DistilledModularPipeline:text_to_image",
                 "Flux3DistilledModularPipeline:edit_image",
                 "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",

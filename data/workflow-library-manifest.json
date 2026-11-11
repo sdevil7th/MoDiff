@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-27T10:42:00.294Z",
+  "generatedAt": "2026-11-11T07:16:38.912Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 283,
+  "supportedCanonicalPairCount": 290,
   "supportedPairCount": 203,
   "workflows": [
     {
@@ -6763,7 +6763,7 @@
       "graphHash": "7ee01e2afe78fce2875e8e83df6e805f116ca64c4f5529775b4a0a36cb72705b"
     }
   ],
-  "experimentalWorkflowCount": 6,
+  "experimentalWorkflowCount": 7,
   "experimentalWorkflows": [
     {
       "id": "Flux3DistilledModularPipeline:text_to_image",
@@ -6932,6 +6932,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "experimental/flux3-modular-pipeline/edit-image.json",
       "graphHash": "f89d49ce7200e92860d3d34ba2186a3dee13fe4ebaa0295d1f3844acb411e557"
+    },
+    {
+      "id": "MiniMaxH3ImageModularPipeline:text_to_image",
+      "modelType": "MiniMaxH3ImageModularPipeline",
+      "modelFamily": "MiniMax Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "experimental",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "MiniMaxAI/MiniMax-H3-Image"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "MiniMaxH3ImageModularPipeline"
+      ],
+      "sourceTemplateId": "minimax_h3_image_old_town_cat",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "experimental/mini-max-h3-image-modular-pipeline/text-to-image.json",
+      "graphHash": "0a4914ebe5958e8e0007952e0a68f6cc58a9bdd84f4408a1ec56dfc443fb5002"
     }
   ]
 }

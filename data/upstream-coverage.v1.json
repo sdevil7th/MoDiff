@@ -1515,6 +1515,19 @@
       "status": "executable"
     },
     {
+      "graphHash": "0a4914ebe5958e8e0007952e0a68f6cc58a9bdd84f4408a1ec56dfc443fb5002",
+      "graphPath": "experimental/mini-max-h3-image-modular-pipeline/text-to-image.json",
+      "id": "MiniMaxH3ImageModularPipeline:text_to_image",
+      "mode": "text_to_image",
+      "modelType": "MiniMaxH3ImageModularPipeline",
+      "publicTemplateIds": [
+        "minimax_h3_image_old_town_cat"
+      ],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
       "graphHash": "357b868b4b00010f91d2345f1790bd4b1fa9fe68fa8bfcc2d962a69df869c4cf",
       "graphPath": "studio/mini-max-music3-modular-pipeline/text-to-audio.json",
       "id": "MiniMaxMusic3ModularPipeline:text_to_audio",
@@ -2458,7 +2471,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:9ad7b43627b58efe072794fde5513b3dcacfc1ead6fb18e4ac16fe783fe8d555",
+  "contentHash": "sha256:787ec1c0206e526175afa50b9091989823fa47cf9e910fc0fa8fde849d5fae98",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -9222,6 +9235,37 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "MiniMaxH3ImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "MiniMaxH3ImageModularPipeline"
+        },
+        "executionProfileId": "minimax-h3-image:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "MiniMaxH3ImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": null,
+      "galleryVerificationStatus": null,
+      "id": "minimax_h3_image_old_town_cat",
+      "mode": "text_to_image",
+      "modelType": "MiniMaxH3ImageModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": false,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "MiniMaxMusic3ModularPipeline:text_to_audio",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -10276,7 +10320,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "efbd0d6ac293136c557e77c5dec3c953780b62a3f9308a17c3dd18d280c79f80",
+    "templateBundleSha256": "e3b8eaaaad2d8379d8c31d491954a4da23765d711319a9cf915e79db74e98151",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -10323,8 +10367,8 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 209,
-    "canonicalWorkflowsWithPublicTemplates": 60,
+    "canonicalWorkflowCount": 210,
+    "canonicalWorkflowsWithPublicTemplates": 61,
     "canonicalWorkflowsWithoutPublicTemplates": 149,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
@@ -10335,10 +10379,10 @@
       "research-blocked": 116,
       "unreviewed": 6
     },
-    "publicTemplateCount": 90,
+    "publicTemplateCount": 91,
     "reviewedGalleryTemplateCount": 80,
     "templateStatusCounts": {
-      "contract-only": 10,
+      "contract-only": 11,
       "equivalent": 0,
       "executable": 80,
       "intentionally-excluded": 0,
@@ -10357,7 +10401,7 @@
       "unreviewed": 0
     },
     "workflowStatusCounts": {
-      "contract-only": 6,
+      "contract-only": 7,
       "equivalent": 0,
       "executable": 203,
       "intentionally-excluded": 0,
