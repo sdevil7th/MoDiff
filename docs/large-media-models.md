@@ -87,6 +87,21 @@ checkpoint determines whether ordinary I2V guidance is allowed. Image dimensions
 belong to the VAE input stage and are not injected into the downstream denoiser.
 Saved authored settings are not rewritten.
 
+Explicit Modular denoise stages share the same temporary progress bridge into
+the existing task queue. It instruments the executing loop tree, reports actual
+completed steps and estimates, respects Stop after a model step, and restores
+upstream progress methods after success or failure. Loading shard counts are
+not sampling steps. The client must honor explicit null telemetry when the
+backend moves to a different phase; omitted legacy fields remain unchanged.
+
+Weight placement and decode working memory are separate requirements. Hunyuan's
+native VAE defaults to untiled decoding; full GPU residency is not proof that a
+720p clip's temporary decode allocation fits. The existing explicit VAE Tiling
+policy uses the official VAE hooks. Batch slicing alone does not reduce memory
+for a single video. Failed ordinary graph attempts currently release all runtime
+caches; successful upstream latents are not durable recovery checkpoints.
+Do not promise decode-only recovery after that cleanup or a worker restart.
+
 Isolated official stages retain the connected transformer's dtype and target
 size, and the connected VAE's latent geometry, through explicit component
 dependencies. Splitting the visual stages must not substitute fallback geometry

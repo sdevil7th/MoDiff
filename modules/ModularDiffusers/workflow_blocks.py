@@ -260,6 +260,13 @@ class _OfficialWorkflowBlockMixin:
     stage = ""
     action_key = ""
 
+    def _run_pipeline(self, pipeline, **kwargs):
+        # Instrument the actual owned loop tree, not the public authoring copy.
+        # The shared bridge also preserves Stop and restores overrides on errors.
+        from .progress import modular_loop_progress
+        with modular_loop_progress(self, pipeline):
+            return pipeline(**kwargs)
+
     def _prepare_pipeline(self, *, pipeline_components, pipeline_class, workflow_id, block_path):
         _contract, _action_index, expected_stage = _reviewed_action_stage(
             pipeline_class,
@@ -592,7 +599,7 @@ class WorkflowErnieImageDenoise(_OfficialWorkflowBlockMixin, NodeBase):
             raise ValueError("The official ERNIE Image denoise block is missing its guidance component.")
         pipeline.update_components(guider=pipeline.guider.new(guidance_scale=1.0))
         generator = modular_generator_from_seed(kwargs.get("seed", 0), pipeline)
-        state = pipeline(
+        state = self._run_pipeline(pipeline,
             state=state,
             width=width,
             height=height,
@@ -791,7 +798,7 @@ class WorkflowDenoise(_OfficialWorkflowBlockMixin, NodeBase):
             workflow_id=_MINIMAX_WORKFLOW,
             completed_stage="semantic_generator",
         )
-        state = pipeline(state=state, num_inference_steps=steps)
+        state = self._run_pipeline(pipeline, state=state, num_inference_steps=steps)
         return {
             "state_out": _issue_workflow_state(
                 token=token,
@@ -1190,7 +1197,7 @@ class WorkflowImageDenoise(_OfficialWorkflowBlockMixin, NodeBase):
             if not 0.0 < strength <= 1.0:
                 raise ValueError("Anima image-to-image strength must be greater than 0 and at most 1.")
             call_kwargs["strength"] = strength
-        state = pipeline(**call_kwargs)
+        state = self._run_pipeline(pipeline, **call_kwargs)
         return {
             "state_out": _issue_workflow_state(
                 token=token,
@@ -1672,7 +1679,7 @@ class WorkflowVideoDenoise(_OfficialWorkflowBlockMixin, NodeBase):
             if sigma_values["video_noise_sigma_min"] > sigma_values["video_noise_sigma_max"]:
                 raise ValueError("Helios video noise sigma minimum cannot exceed its maximum.")
             call_kwargs.update(sigma_values)
-        state = pipeline(**call_kwargs)
+        state = self._run_pipeline(pipeline, **call_kwargs)
         return {
             "state_out": _issue_workflow_state(
                 token=token,
@@ -2071,7 +2078,7 @@ class WorkflowHunyuanVideo15Denoise(_OfficialWorkflowBlockMixin, NodeBase):
         )
         if workflow_id == "text2video":
             call_kwargs.update(width=width, height=height)
-        state = pipeline(**call_kwargs)
+        state = self._run_pipeline(pipeline, **call_kwargs)
         return _hunyuan_video_15_state_result(
             workflow_id=workflow_id,
             token=token,
@@ -2425,7 +2432,7 @@ class WorkflowStableDiffusion3Denoise(_OfficialWorkflowBlockMixin, NodeBase):
             if not math.isfinite(strength) or not 0.0 < strength <= 1.0:
                 raise ValueError("Stable Diffusion 3 image-to-image strength must be greater than 0 and at most 1.")
             call_kwargs["strength"] = strength
-        state = pipeline(**call_kwargs)
+        state = self._run_pipeline(pipeline, **call_kwargs)
         return _stable_diffusion_3_state_result(
             workflow_id=workflow_id,
             token=token,
@@ -2704,7 +2711,7 @@ class WorkflowKrea2Denoise(_OfficialWorkflowBlockMixin, NodeBase):
         if getattr(pipeline, "guider", None) is None or not callable(getattr(pipeline.guider, "new", None)):
             raise ValueError("The official Krea 2 denoise block is missing its reviewed guider component.")
         pipeline.update_components(guider=pipeline.guider.new(guidance_scale=guidance_scale))
-        state = pipeline(
+        state = self._run_pipeline(pipeline,
             state=state,
             width=width,
             height=height,
@@ -2770,7 +2777,7 @@ class WorkflowKrea2TurboDenoise(_OfficialWorkflowBlockMixin, NodeBase):
         width = kwargs.get("width", 1024)
         height = kwargs.get("height", 1024)
         _krea_2_dimensions(width, height)
-        state = pipeline(
+        state = self._run_pipeline(pipeline,
             state=state,
             width=width,
             height=height,
@@ -3091,7 +3098,7 @@ class WorkflowIdeogram4Denoise(_OfficialWorkflowBlockMixin, NodeBase):
         }
         if guidance_schedule is not None:
             call_kwargs["guidance_schedule"] = guidance_schedule
-        state = pipeline(**call_kwargs)
+        state = self._run_pipeline(pipeline, **call_kwargs)
         return _ideogram_4_state_result(token=token, stage=self.stage, state=state)
 
 
@@ -3408,7 +3415,7 @@ class WorkflowCosmos3DistilledDenoise(_OfficialWorkflowBlockMixin, NodeBase):
         guidance_scale = float(kwargs.get("guidance_scale", 1.0))
         if guidance_scale != 1.0:
             raise ValueError("Cosmos 3 Distilled uses the official fixed guidance scale of 1.")
-        state = pipeline(
+        state = self._run_pipeline(pipeline,
             state=state,
             num_inference_steps=steps,
             guidance_scale=guidance_scale,
@@ -3825,7 +3832,7 @@ class WorkflowCosmos3OmniDenoise(_OfficialWorkflowBlockMixin, NodeBase):
         guidance_scale = float(kwargs.get("guidance_scale", 6.0))
         if not math.isfinite(guidance_scale) or not 1.0 <= guidance_scale <= 20.0:
             raise ValueError("Cosmos 3 Omni guidance scale must be finite and from 1 through 20.")
-        state = pipeline(
+        state = self._run_pipeline(pipeline,
             state=state,
             num_inference_steps=steps,
             guidance_scale=guidance_scale,
@@ -4443,9 +4450,7 @@ class WorkflowMiniMaxH3Denoise(_OfficialWorkflowBlockMixin, NodeBase):
                     maximum=360,
                 ),
             )
-        from .progress import modular_loop_progress
-        with modular_loop_progress(self, pipeline):
-            state = pipeline(**call_kwargs)
+        state = self._run_pipeline(pipeline, **call_kwargs)
         return _minimax_h3_state_result(
             pipeline_class=kwargs.get("pipeline_class"),
             workflow_id=workflow_id,
@@ -5299,7 +5304,7 @@ class WorkflowLTX25Denoise(_OfficialWorkflowBlockMixin, NodeBase):
         }
         if workflow_id == "text2video":
             call_kwargs.update(width=width, height=height)
-        state = pipeline(**call_kwargs)
+        state = self._run_pipeline(pipeline, **call_kwargs)
         return _ltx25_state_result(
             workflow_id=workflow_id,
             token=token,
@@ -5751,7 +5756,7 @@ class WorkflowWanAnimateDenoise(_OfficialWorkflowBlockMixin, NodeBase):
         if getattr(pipeline, "guider", None) is None or not callable(getattr(pipeline.guider, "new", None)):
             raise ValueError("The official Wan Animate 2 denoise block is missing its reviewed guider component.")
         pipeline.update_components(guider=pipeline.guider.new(guidance_scale=guidance_scale))
-        state = pipeline(
+        state = self._run_pipeline(pipeline,
             state=state,
             num_inference_steps=steps,
             generator=modular_generator_from_seed(kwargs.get("seed", 0), pipeline),
