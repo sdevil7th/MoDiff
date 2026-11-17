@@ -2193,7 +2193,8 @@ def download_hub_model(
 
     try:
         emit('planning', 0.0)
-        # All app-owned model transfers use the bounded standard Hub HTTP path.
+        # Ordinary transfers use bounded standard Hub HTTP. Oversized blobs
+        # use official Xet in a separate process with a finite lifetime.
         # Normal downloads share the server's transfer window, while repair is
         # exclusive because it validates and may replace partial target files.
         with app_hub_download_mode(repair=repair):
@@ -2218,9 +2219,15 @@ def download_hub_model(
                     }
                     if requested_files:
                         download_kwargs['allow_patterns'] = requested_files
-                    downloaded_snapshot = snapshot_download(
-                        **download_kwargs,
-                    )
+                    from modiff.hub_large_transfer import download, requires_large_transfer
+
+                    if requires_large_transfer(plan):
+                        if plan.get('files_truncated'):
+                            raise ValueError('Select a finite file set before downloading an oversized Hub blob.')
+                        download_kwargs['allow_patterns'] = [row['name'] for row in plan['files']]
+                        downloaded_snapshot = download(download_kwargs)
+                    else:
+                        downloaded_snapshot = snapshot_download(**download_kwargs)
                     if isinstance(downloaded_snapshot, (str, os.PathLike)):
                         # Carry the authoritative path returned by the Hub into
                         # every post-download validation step. This also covers

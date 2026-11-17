@@ -121,6 +121,14 @@ uv pip check --python .venv/bin/python
 
 The wrapper applies the installed accelerator profile's process environment before Python imports Torch. On Windows, run `.venv/Scripts/python.exe` directly in the equivalent commands.
 
+Native field accounting distinguishes an empty image execution-profile selector
+from a selected stage route. The whole-pipeline loader records an empty selector
+as inactive; a bound stage profile is recorded only after its existing route
+validation succeeds. This does not change model execution or grant qualification.
+Keep the paired client's closed accounting validator and the normal-export DDIM
+protocol fixture aligned when changing this optional evidence field. Retain old
+incomplete native receipts rather than filling in their missing observations.
+
 `pytest.ini` limits default discovery to the maintained `tests/` directory. Keep
 preserved source snapshots and executable review helpers outside that directory;
 ignored review archives must not run during the ordinary verification command.

@@ -159,6 +159,16 @@ def runtime(tmp_path, monkeypatch):
     monkeypatch.setattr(server, '_gpu_process_snapshot', lambda: {'observation': 'unobserved-CPU-unit-diagnostic'})
     monkeypatch.setattr(server, '_record_auto_resource_success', lambda *_args, **_kwargs: None)
     monkeypatch.setattr(server, '_record_optimization_observations', lambda *_args, **_kwargs: [])
+    # Warm ownership is a headroom contract, not a promise to retain models
+    # under whatever physical RAM pressure the test host happens to have.
+    # Observe deterministic CPU capacity while keeping the real release policy.
+    capacity = {'ram_total': 64 * 1024**3, 'ram_available': 48 * 1024**3}
+    monkeypatch.setattr('modiff.server.get_hardware_snapshot', lambda *_args, **_kwargs: {
+        'system': dict(capacity), 'devices': [],
+    })
+    monkeypatch.setattr('modiff.hardware.system_memory_snapshot', lambda: {
+        'total_bytes': capacity['ram_total'], 'available_bytes': capacity['ram_available'],
+    })
     actual_dispatch = server.execute_node
     dispatch_overrides = {}
     class LoadOnlyCheckpoint(Exception):
@@ -179,6 +189,7 @@ def runtime(tmp_path, monkeypatch):
                              references=references, ready=ready, observations=observations, run=run)
     result.dispatch_overrides = dispatch_overrides
     result.actual_dispatch = actual_dispatch
+    result.capacity = capacity
     yield result
     server.node_cache.clear()
     memory_manager.cache.clear()
@@ -230,6 +241,16 @@ def test_actual_source_same_owner_warm_and_order_scale_remove(runtime, tmp_path)
     source['nodes']['models']['params']['lora_list']['value'] = None
     node = runtime.run(source)
     assert not getattr(node.loader.transformer, 'peft_config', {})
+
+
+def test_low_observed_ram_releases_complete_native_owner(runtime, tmp_path):
+    source = graph([descriptor(tmp_path)])
+    runtime.run(source)
+    initial = weakref.ref(runtime.server.node_cache['models'].loader)
+    runtime.capacity['ram_available'] = 1024**3
+    runtime.run(source)
+    assert initial() is None
+    assert runtime.server.node_cache['models']._native_disk_lora_state['componentComplete'] is True
 
 
 @pytest.mark.parametrize('change', ['frame', 'pipeline', 'task', 'stage_path', 'edge', 'revision', 'unknown_consumer', 'foreign_owner'])

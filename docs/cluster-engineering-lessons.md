@@ -96,6 +96,22 @@ unreasonable user expectations. The corrective obligations are:
 
 ## Cross-machine preservation and merge
 
+Shared value edits must inspect the complete connected authoring graph when a
+nested container consumes a loader owned outside it. Resolve each visible alias
+through its declared control binding before finding its scoped peers; a local
+container graph cannot prove those external relationships. Apply value changes
+atomically through the existing field writers, preserve sealed controls and
+unrelated shots, and keep model/task adaptation restrictions separate. Regression
+tests must call the real exposed-control setter and cover both directions,
+Undo/Redo and save/reopen; mutating an already-flat test graph misses this defect.
+
+When composing stage Blocks inside another Block, preserve exact child-port
+field identities (including colon-qualified keys); sanitize only the new public
+port identifier. Remap advisory references across sibling containers together,
+not only inside each container. Test repeated real branches sharing one model,
+their independent paired controls, common mirrored inputs, save/reopen and scoped
+Run. A routing flag or a single-branch test cannot prove a sequence template.
+
 Before retiring a machine, preserve code history, all secondary worktrees,
 uncommitted changes, generated media, reference inputs, saved workflows/User
 Nodes, run receipts, exact parameters, test evidence and session handoffs.

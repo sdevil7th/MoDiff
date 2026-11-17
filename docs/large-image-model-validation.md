@@ -123,3 +123,13 @@ admission merely because cloud preparation or one task passed.
 - [Cosmos3 Super original text-to-image model card](https://huggingface.co/nvidia/Cosmos3-Super-Text2Image)
 - [Cosmos3 Super 4-Step model card](https://huggingface.co/nvidia/Cosmos3-Super-Text2Image-4Step)
 - [AMD Instinct product information](https://www.amd.com/en/products/accelerators/instinct/mi300.html)
+
+Model setup references distinguish retained inactive auxiliary selections from
+required artifacts. The generic image loader declares
+`fieldOptions.modelReferenceInactiveWhenHidden` only on its conditioning model.
+Its selected-adapter schema hides that field when no conditioning component is
+used. The client reads this policy from the current registry; workflow-supplied
+opt-out hints cannot suppress a reference. Hidden primary models and active
+conditioning models remain checked. This changes setup inspection only: saved
+choices, execution inputs, model pins and backend resource/consent checks remain
+unchanged.

@@ -63,6 +63,11 @@ def actual_graph_runtime(tmp_path, monkeypatch):
     monkeypatch.setattr('modiff.server.get_hardware_snapshot', lambda *args, **kwargs: {
         'system': {'ram_total': 64 * 1024**3, 'ram_available': 48 * 1024**3}, 'devices': [],
     })
+    # Cache-reuse assertions need the same synthetic capacity at the CPU
+    # eviction boundary, rather than the operator's changing host RAM.
+    monkeypatch.setattr('modiff.hardware.system_memory_snapshot', lambda: {
+        'total_bytes': 64 * 1024**3, 'available_bytes': 48 * 1024**3,
+    })
 
     def cached_construction(cls, repository, **kwargs):
         assert kwargs['local_files_only'] is True and kwargs['use_safetensors'] is True
@@ -203,6 +208,27 @@ def test_actual_graph_released_owner_dies_but_detached_material_output_survives(
     assert pixels.shape == (1, 3, 64, 64) and torch.isfinite(pixels).all()
     # Actual owner/cache object lifetime is proved here. This does not prove
     # physical allocator/RSS reclamation or disk-hook qualification.
+
+
+def test_actual_graph_ram_pressure_rebuilds_redux_encoding_for_the_new_owner(actual_graph_runtime, monkeypatch):
+    from modiff.server import memory_manager
+    app, events, _refs = actual_graph_runtime
+    graph = stage_graph()
+    dispatch(app, graph)
+    old_owner = weakref.ref(app.node_cache['models'].output['pipeline'])
+    monkeypatch.setattr('modiff.hardware.system_memory_snapshot', lambda: {
+        'total_bytes': 64 * 1024**3, 'available_bytes': 1024**3,
+    })
+    assert memory_manager._evict_system_ram_pressure()
+    monkeypatch.setattr('modiff.hardware.system_memory_snapshot', lambda: {
+        'total_bytes': 64 * 1024**3, 'available_bytes': 48 * 1024**3,
+    })
+    events.clear()
+    graph['nodes']['denoise']['params']['seed']['value'] = 6
+    dispatch(app, graph)
+    assert [event[0] for event in events] == ['prior', 'base']
+    assert events[-1] == ('base', 'latent', 6, 3)
+    assert app.node_cache['models'].output['pipeline'] is not old_owner()
 
 
 @pytest.mark.parametrize('recipe,expected_map', [(None, 'none'),

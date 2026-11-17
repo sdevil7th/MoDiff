@@ -2567,8 +2567,8 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             ):
                 _validate_reviewed_pipeline_index(
                     model_type,
-                    config.default_repo,
-                    require_catalog_revision(config.default_repo, model_type=model_type),
+                    'example/installed-component-contract',
+                    'c' * 40,
                 )
 
 

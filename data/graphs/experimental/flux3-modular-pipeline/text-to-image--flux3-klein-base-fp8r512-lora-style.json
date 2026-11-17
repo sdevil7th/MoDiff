@@ -38,7 +38,8 @@
         "stroke": "#60A5FA"
       },
       "target": "node-06",
-      "targetHandle": "image"
+      "targetHandle": "image",
+      "type": "default"
     },
     {
       "className": "category-latents",
@@ -58,8 +59,7 @@
         "stroke": "#6366F1"
       },
       "target": "node-02",
-      "targetHandle": "latents",
-      "type": "default"
+      "targetHandle": "latents"
     },
     {
       "className": "category-custom_guider",
@@ -285,7 +285,7 @@
             "min": -20,
             "step": 0.1,
             "type": "float",
-            "value": 1
+            "value": 0.65
           },
           "scheduler_class": {
             "fieldOptions": {
@@ -498,7 +498,8 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "visualStageSourceIndex": 1
       },
       "id": "node-02",
       "position": {
@@ -833,24 +834,33 @@
         "params": {
           "doc": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Doc",
             "type": "string"
           },
           "embeddings": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Text Embeddings *",
             "type": "embeddings"
           },
           "guider": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Guider",
             "type": "custom_guider"
           },
           "height": {
             "default": 1024,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Height",
             "min": 64,
             "step": 16,
@@ -859,27 +869,38 @@
           },
           "image_cond_latents": {
             "display": "input",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Reference Latents",
             "type": "latents"
           },
           "latents": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Latents",
             "type": "latents"
           },
           "num_images_per_prompt": {
             "default": 1,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Images Per Prompt",
             "max": 8,
             "min": 1,
             "step": 1,
-            "type": "int"
+            "type": "int",
+            "value": 1
           },
           "num_inference_steps": {
             "default": 50,
             "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Steps",
             "max": 100,
             "min": 1,
@@ -893,19 +914,18 @@
               "referenceBinding": {
                 "maxReferences": 10,
                 "schemaVersion": 1
-              }
+              },
+              "suppressInitialFieldAction": true
             },
-            "isConnected": false,
             "label": "Reference Binding",
             "type": "reference_conditioning"
           },
           "scheduler": {
             "display": "input",
-            "isConnected": true,
-            "label": "Scheduler *",
-            "signal": {
-              "direction": "output"
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
             },
+            "label": "Scheduler *",
             "signalCompatibility": {
               "role": "scheduler"
             },
@@ -914,26 +934,37 @@
           "seed": {
             "default": 0,
             "display": "random",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Seed",
             "max": 4294967295,
             "min": 0,
             "type": "int",
             "value": {
               "isRandom": false,
-              "value": 481105
+              "value": 481405
             }
           },
           "unet": {
             "display": "input",
             "fieldOptions": {
-              "suppressAutomaticSignalAction": true
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
             },
-            "isConnected": true,
             "label": "Denoise Model *",
+            "onSignal": [
+              "update_node",
+              {
+                "action": "signal",
+                "target": "guider"
+              },
+              {
+                "action": "signal",
+                "target": "controlnet_bundle"
+              }
+            ],
             "required": true,
-            "signal": {
-              "direction": "output"
-            },
             "signalCompatibility": {
               "role": "denoiser"
             },
@@ -941,6 +972,9 @@
           },
           "width": {
             "default": 1024,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Width",
             "min": 64,
             "step": 16,
@@ -957,7 +991,8 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "visualStageSourceIndex": 0
       },
       "id": "node-03",
       "position": {
@@ -2601,6 +2636,14 @@
                 "schemaVersion": 1,
                 "value": "LTX25ModularPipeline"
               },
+              "MiniMaxH3ImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MiniMax H3 Image",
+                "schemaVersion": 1,
+                "value": "MiniMaxH3ImageModularPipeline"
+              },
               "MiniMaxH3ModularPipeline": {
                 "availability": "installed",
                 "compatibility": "compatible",
@@ -2616,6 +2659,14 @@
                 "label": "MiniMax Music 3",
                 "schemaVersion": 1,
                 "value": "MiniMaxMusic3ModularPipeline"
+              },
+              "PikaH3FlexModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Pika H3 Flex",
+                "schemaVersion": 1,
+                "value": "PikaH3FlexModularPipeline"
               },
               "QwenImageEditModularPipeline": {
                 "availability": "installed",
@@ -3539,7 +3590,7 @@
             },
             "label": "Prompt *",
             "type": "string",
-            "value": "mnt_oil, an oil painting of a single red fox standing on a moss-covered rock in an ancient forest. The fox is clearly separated from the trees and foliage, with soft morning light filtering through the canopy. Preserve one coherent fox, a readable rock silhouette and a balanced square composition. No ornamental card frame, lettering, logos, signatures or watermarks."
+            "value": "mnt_oil, a full-bleed impressionist oil painting of a single red fox walking through sunlit meadow grass beside a quiet woodland pond. The fox has a clear natural silhouette, one head, one bushy tail and coherent legs. Loose broken brushstrokes and luminous green and gold reflections contrast with soft blue shadows. Grass, reeds, water and dappled foliage fill the entire square canvas from edge to edge. The lower corners are softly painted meadow grass and pond reflections, continuous with the rest of the scene. A simple peaceful composition, natural morning light, no people, no lettering, no frame."
           },
           "prompt_input": {
             "description": "Optional connected prompt. When connected, this replaces the inline Prompt value.",
@@ -3895,8 +3946,8 @@
     }
   ],
   "viewport": {
-    "x": 0,
-    "y": 0,
-    "zoom": 1
+    "x": -835.3191489361702,
+    "y": 87.67021276595744,
+    "zoom": 0.8308510638297872
   }
 }

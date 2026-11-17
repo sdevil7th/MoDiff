@@ -118,17 +118,17 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
             historical_modular_classes,
         )
 
-        source_only_exports = {
-            "Flux3ModularPipeline", "Flux3DistilledModularPipeline",
-            "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline",
-        }
         imported_source = Path(diffusers.__file__).resolve().parent
         if imported_source == reviewed_diffusers_source().resolve():
             self.assertEqual(exported_modular_classes, historical_modular_classes)
         else:
-            self.assertEqual(diffusers.__version__, "0.41.0")
-            self.assertEqual(exported_modular_classes, historical_modular_classes - source_only_exports)
-            self.assertTrue(all(getattr(diffusers, name, None) is None for name in source_only_exports))
+            self.assertEqual(diffusers.__version__, "0.43.0")
+            stable_additions = {
+                "KandinskyS2VDistilledModularPipeline", "KandinskyS2VModularPipeline",
+                "MiniMaxH3ImageModularPipeline", "PAN2ModularPipeline",
+                "PH3ImageModularPipeline", "PikaH3FlexModularPipeline",
+            }
+            self.assertEqual(exported_modular_classes, historical_modular_classes | stable_additions)
         self.assertNotIn("EchoModularPipeline", get_all_model_types(include_contract_only=True))
 
         for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:

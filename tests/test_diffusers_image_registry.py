@@ -123,6 +123,17 @@ def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revisi
 
 
 class DiffusersImageRegistryTests(unittest.TestCase):
+    def test_inactive_conditioning_model_has_explicit_readiness_metadata(self):
+        from modules.DiffusersImage.main import image_loader_field_params
+
+        auxiliary = LoadPipeline.params["conditioning_model_id"]
+        self.assertIs(auxiliary["fieldOptions"].get("modelReferenceInactiveWhenHidden"), True)
+        self.assertNotIn("modelReferenceInactiveWhenHidden", LoadPipeline.params["model_id"]["fieldOptions"])
+        self.assertTrue(image_loader_field_params(IMAGE_PIPELINE_ADAPTERS["FluxFillPipeline"])
+                        ["conditioning_model_id"]["hidden"])
+        self.assertFalse(image_loader_field_params(IMAGE_PIPELINE_ADAPTERS["StableDiffusionControlNetPipeline"])
+                         ["conditioning_model_id"]["hidden"])
+
     def test_missing_base_transformers_quantization_error_requests_setup_repair(self):
         from modules.DiffusersImage.main import build_qwen_pipeline_quantization_config
 
@@ -4180,9 +4191,14 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         class FakeTransformer:
             def __init__(self):
                 self.backends = []
+                self.processor = SimpleNamespace(_attention_backend=None)
+
+            def modules(self):
+                return [self]
 
             def set_attention_backend(self, backend):
                 self.backends.append(backend)
+                self.processor._attention_backend = backend
 
         class FakePipeline:
             def __init__(self):

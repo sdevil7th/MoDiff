@@ -362,6 +362,26 @@ def require_attention_backend(backend: str) -> None:
         raise RuntimeError("Native flash SDPA is unavailable in this Torch build. Select auto attention.")
 
 
+def _dispatcher_attention_processors(component: Any) -> list[Any]:
+    """Inspect the processor contract used by the official ModelMixin setter.
+
+    Older models inherit that setter but their processors call Torch directly.
+    A successful setter call alone therefore does not establish backend support.
+    Keep upstream processors intact rather than replacing them or overriding
+    Torch's process-wide kernel policy.
+    """
+    modules = getattr(component, "modules", None)
+    if not callable(modules):
+        return []
+    processors = [
+        processor for module in modules()
+        if (processor := getattr(module, "processor", None)) is not None
+    ]
+    if not processors or any(not hasattr(processor, "_attention_backend") for processor in processors):
+        return []
+    return processors
+
+
 def apply_attention_backend(pipeline: Any, backend: str, components: Any = None) -> dict[str, Any]:
     requested = str(backend or "auto")
     if requested not in ATTENTION_BACKENDS:
@@ -398,8 +418,15 @@ def apply_attention_backend(pipeline: Any, backend: str, components: Any = None)
             if not callable(setter):
                 unsupported.append(name)
                 continue
+            processors = _dispatcher_attention_processors(component)
+            if not processors:
+                unsupported.append(name)
+                continue
             try:
                 setter(requested)
+                if any(getattr(processor._attention_backend, "value", processor._attention_backend) != requested
+                       for processor in processors):
+                    raise RuntimeError("the selected attention processors did not retain the requested backend")
             except Exception as exc:
                 raise RuntimeError(f"Could not apply attention backend {requested!r} to {name}: {exc}") from exc
             applied.append(name)
@@ -407,7 +434,8 @@ def apply_attention_backend(pipeline: Any, backend: str, components: Any = None)
         if requested != "auto" and not applied:
             raise RuntimeError(
                 f"Attention backend {requested!r} could not be applied because the selected pipeline components "
-                "do not expose set_attention_backend()."
+                "have no compatible attention processors that honor the Diffusers dispatcher. "
+                "Select auto attention for this model."
             )
     finally:
         # ``reset_attention_backend`` in the pinned Diffusers revision clears

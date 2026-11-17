@@ -384,8 +384,25 @@ class Load(NodeBase):
                 f"Load Audio accepts at most {MAX_AUDIO_OPERATION_FILE_BYTES} bytes per decoded WAV input."
             )
 
-        loaded = _bounded_audio_object(_read_wav(path), label="Loaded audio")
+        from modiff.builtin_media_evidence import begin_media_capture, enabled
+        files = {}
+        if enabled():
+            from io import BytesIO
+            import hashlib
+            with path.open('rb') as stream:
+                content = stream.read(MAX_AUDIO_OPERATION_FILE_BYTES + 1)
+            if len(content) > MAX_AUDIO_OPERATION_FILE_BYTES:
+                raise ValueError('Load Audio input exceeds its decoded WAV byte limit.')
+            # Decode exactly the hashed WAV snapshot. Conversions still expose
+            # their actual decoded-file identity rather than claiming the
+            # original compressed container was read by this WAV decoder.
+            loaded = _bounded_audio_object(_read_wav(BytesIO(content)), label="Loaded audio")
+            files['file'] = [{'sourceValue': kwargs.get('file'), 'sha256': hashlib.sha256(content).hexdigest(),
+                              'byteSize': len(content), 'converted': str(_resolve_file(kwargs.get('file'))) != str(path)}]
+        else:
+            loaded = _bounded_audio_object(_read_wav(path), label="Loaded audio")
         loaded["path"] = str(path)
+        begin_media_capture(self, {}, inputs={}, files=files).finish({'audio': loaded})
         return {
             "audio": loaded,
             "filename": loaded["path"],
@@ -804,6 +821,8 @@ class Export(NodeBase):
         audio = kwargs.get("audio")
         if audio is None:
             raise ValueError("Export Audio needs audio input.")
+        from modiff.builtin_media_evidence import begin_media_capture
+        capture = begin_media_capture(self, kwargs, inputs={'audio': audio})
         samples, detected_sample_rate = _audio_to_numpy(audio)
         sample_rate = int(kwargs.get("sample_rate") or detected_sample_rate or 48000)
         if sample_rate not in {int(value) for value in AUDIO_SAMPLE_RATE_OPTIONS}:
@@ -822,6 +841,7 @@ class Export(NodeBase):
         if not parsed_filename.is_absolute():
             parsed_filename = Path(CONFIG.paths["data"]) / parsed_filename
         _write_wav(parsed_filename, samples, sample_rate)
+        capture.finish({'file': str(parsed_filename)})
         return {
             "file": str(parsed_filename),
             "duration_seconds": float(samples.shape[0] / sample_rate) if sample_rate else 0.0,
@@ -901,6 +921,11 @@ class ProcessAudio(NodeBase):
         if kwargs.get("source") is None:
             raise ValueError("Built-in audio operations require source audio.")
         source = _bounded_audio_object(kwargs.get("source"), label="Source audio")
+        from modiff.builtin_media_evidence import begin_media_capture
+        reference = None
+        if operation != 'audio_trim' and kwargs.get('reference') is not None:
+            reference = _bounded_audio_object(kwargs.get('reference'), label='Reference audio')
+        capture = begin_media_capture(self, kwargs, inputs={'source': source, 'reference': reference})
 
         if operation == "audio_trim":
             start_seconds = float(kwargs.get("start_seconds") or 0)
@@ -935,7 +960,6 @@ class ProcessAudio(NodeBase):
         else:
             if kwargs.get("reference") is None:
                 raise ValueError(f"{operation.replace('_', ' ').title()} requires reference audio.")
-            reference = _bounded_audio_object(kwargs.get("reference"), label="Reference audio")
             if operation == "audio_join":
                 boundary_fade_seconds = float(kwargs.get("boundary_fade_seconds") or 0)
                 if not np.isfinite(boundary_fade_seconds) or not 0 <= boundary_fade_seconds <= 1:
@@ -973,6 +997,7 @@ class ProcessAudio(NodeBase):
                     max_adjustment_db=max_adjustment_db,
                 )
         output = result["output"]
+        capture.finish({'output': output})
         return {
             "output": output,
             "sample_rate": int(output["sample_rate"]),

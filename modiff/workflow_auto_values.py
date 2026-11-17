@@ -13,6 +13,11 @@ DATA_ACTIONS = {
     ('modules.DiffusersRuntime', 'DiffusersExecutionRecipe'),
     ('modules.DiffusersImage', 'OutpaintCanvas'),
     ('modules.VideoConditioning', 'Normalize'),
+    ('modules.VideoConditioning', 'Storyboard'),
+    ('modules.VideoConditioning', 'ShotInputs'),
+    ('modules.VideoConditioning', 'ShotPrompt'),
+    ('modules.VideoConditioning', 'OutpaintCanvas'),
+    ('modules.VideoConditioning', 'AlignMask'),
 }
 
 
@@ -205,6 +210,35 @@ def inspect_native_runtime_controls(nodes, loader_id, literal):
     return {field: normalized.get(field, controls[field]) for field in controls}
 
 
+def inspect_video_canvas_geometry(nodes, canvas_id, *, literal):
+    """Forecast declared canvas geometry without reading frames or dispatching nodes."""
+    canvas = nodes[canvas_id]
+    video = canvas['params'].get('video', {})
+    normalize_id = video.get('sourceId')
+    normalize = nodes.get(normalize_id, {})
+    if ((canvas.get('module'), canvas.get('action')) != ('modules.VideoConditioning', 'OutpaintCanvas')
+            or (normalize.get('module'), normalize.get('action'), video.get('sourceKey')) != (
+                'modules.VideoConditioning', 'Normalize', 'output')):
+        raise ValueError('Video canvas Auto geometry needs the exact Normalize Video source.')
+
+    def whole(item, label, minimum=1):
+        if type(item) is not int or not minimum <= item <= 9_007_199_254_740_991:
+            raise ValueError(f'{label} needs a finite whole pixel/frame count.')
+        return item
+
+    width, height, frames = [whole(literal(nodes, normalize_id, name), name)
+                             for name in ('width', 'height', 'num_frames')]
+    preparation = literal(nodes, canvas_id, 'preparation') if 'preparation' in canvas['params'] else 'expand'
+    if preparation not in {'prepared', 'expand'}:
+        raise ValueError('Video canvas preparation must be prepared or expand.')
+    if preparation == 'expand':
+        borders = {name: whole(literal(nodes, canvas_id, name) if name in canvas['params'] else 0, name, 0)
+                   for name in ('left', 'right', 'top', 'bottom')}
+        width = whole(width + borders['left'] + borders['right'], 'Canvas width')
+        height = whole(height + borders['top'] + borders['bottom'], 'Canvas height')
+    return {'width': width, 'height': height, 'frames': frames}
+
+
 def inspect_resource_value(nodes, node_id, field, visited=frozenset()):
     key = (node_id, field)
     if key in visited or len(visited) > 128:
@@ -218,6 +252,34 @@ def inspect_resource_value(nodes, node_id, field, visited=frozenset()):
     source = nodes[source_id]
     def value(name):
         return inspect_resource_value(nodes, source_id, name, visited | {key})
+    if source['module'] == 'modules.VideoConditioning':
+        action = source['action']
+        if action in {'Storyboard', 'ShotInputs', 'ShotPrompt'}:
+            from modules.VideoConditioning.main import (Storyboard, ShotInputs, ShotPrompt,
+                evaluate_storyboard, evaluate_shot_inputs, evaluate_shot_prompt)
+            from modiff.NodeBase import recursive_type_cast
+            helpers = {'Storyboard': (Storyboard, evaluate_storyboard),
+                       'ShotInputs': (ShotInputs, evaluate_shot_inputs),
+                       'ShotPrompt': (ShotPrompt, evaluate_shot_prompt)}
+            # Resolve data controls only. These helpers are shared pure logic;
+            # no node constructor, execute callback, media read or model runs.
+            args = {name: value(name) for name, item in source['params'].items()
+                    if item.get('display') != 'output'}
+            cls, helper = helpers[action]
+            # Numeric widgets may serialize strings. Apply the ordinary declared
+            # scalar conversion, while keeping bools out of integer controls.
+            args = {name: recursive_type_cast(item, cls.params.get(name, {}).get('type'), name)
+                    if isinstance(item, str) and cls.params.get(name, {}).get('type') in {'int', 'float', 'bool'}
+                    else item for name, item in args.items()}
+            outputs = helper(args)
+            if source_field not in outputs:
+                raise ValueError(f'{source_id} has no data output {source_field}.')
+            return outputs[source_field]
+        if action == 'OutpaintCanvas' and source_field in {'width', 'height', 'frames'}:
+            # This is a symbolic allocation forecast. The existing dispatch
+            # boundary compares these scalars with the actual prepared outputs.
+            return inspect_video_canvas_geometry(nodes, source_id,
+                literal=lambda graph, target, name: inspect_resource_value(graph, target, name, visited | {key}))[source_field]
     if (
         (nodes[node_id]['module'], nodes[node_id]['action']) == ('modules.ModularDiffusers', 'DecodeLatents')
         and (source['module'], source['action']) == ('modules.ModularDiffusers', 'Denoise')

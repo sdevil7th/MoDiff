@@ -16,6 +16,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 
+from modiff.hunyuan_video15_artifacts import (
+    HUNYUAN_720P_T2V_REPOSITORY, HUNYUAN_720P_I2V_REPOSITORY,
+)
+
+
 PINNED_DIFFUSERS_REVISION = "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941"
 WAN_T2V_REPOSITORY = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
 WAN_T2V_14B_REPOSITORY = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
@@ -77,6 +82,8 @@ PINNED_MODULAR_REPOSITORY_VARIANTS = {
     "HunyuanVideo15ModularPipeline": (
         HUNYUAN_VIDEO_15_T2V_REPOSITORY,
         HUNYUAN_VIDEO_15_I2V_REPOSITORY,
+        HUNYUAN_720P_T2V_REPOSITORY,
+        HUNYUAN_720P_I2V_REPOSITORY,
     ),
     # One immutable Modular index contains both transformer partitions. The
     # loader's separately reviewed workflow ID selects ``transformer`` for
@@ -98,6 +105,8 @@ PINNED_MODULAR_REPOSITORY_VARIANTS = {
 # the BlockDefinitionV2 graph. A missing entry means the registered artifact
 # remains the sole choice for that workflow.
 PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS = {
+    ("HunyuanVideo15ModularPipeline", "text2video"): (HUNYUAN_VIDEO_15_T2V_REPOSITORY, HUNYUAN_720P_T2V_REPOSITORY),
+    ("HunyuanVideo15ModularPipeline", "image2video"): (HUNYUAN_VIDEO_15_I2V_REPOSITORY, HUNYUAN_720P_I2V_REPOSITORY),
     ("Cosmos3OmniModularPipeline", "text2image"): (COSMOS3_NANO_REPOSITORY, COSMOS3_SUPER_T2I_REPOSITORY),
     ("ErnieImageModularPipeline", "text2image"): (ERNIE_IMAGE_TURBO_REPOSITORY,),
     ("QwenImageModularPipeline", "text2image"): (
@@ -165,6 +174,10 @@ def effective_reviewed_modular_selector(
 # This exact checkpoint is reviewed for T2I only; neither raw kwargs nor a
 # connected sealed bundle may turn it into a Nano video/action checkpoint.
 PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS = {
+    ("HunyuanVideo15ModularPipeline", HUNYUAN_VIDEO_15_T2V_REPOSITORY): frozenset({"text2video"}),
+    ("HunyuanVideo15ModularPipeline", HUNYUAN_VIDEO_15_I2V_REPOSITORY): frozenset({"image2video"}),
+    ("HunyuanVideo15ModularPipeline", HUNYUAN_720P_T2V_REPOSITORY): frozenset({"text2video"}),
+    ("HunyuanVideo15ModularPipeline", HUNYUAN_720P_I2V_REPOSITORY): frozenset({"image2video"}),
     ('MiniMaxH3ImageModularPipeline', 'MiniMaxAI/MiniMax-H3-Image'): frozenset({'text2image', 'image_conditioned'}),
     ("Cosmos3OmniModularPipeline", COSMOS3_SUPER_T2I_REPOSITORY): frozenset({"text2image"}),
 }
@@ -342,6 +355,8 @@ PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES = {
     HUNYUAN_VIDEO_15_I2V_REPOSITORY: {
         "tokenizer": ("transformers", "Qwen2TokenizerFast"),
     },
+    HUNYUAN_720P_T2V_REPOSITORY: {"tokenizer": ("transformers", "Qwen2TokenizerFast")},
+    HUNYUAN_720P_I2V_REPOSITORY: {"tokenizer": ("transformers", "Qwen2TokenizerFast")},
     # The exact conversion source at PINNED_DIFFUSERS_REVISION writes the fast
     # concrete tokenizer into modular_model_index.json, while the H3 blocks
     # declare the public Qwen2Tokenizer base. Keep that one alias repository

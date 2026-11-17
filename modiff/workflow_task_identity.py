@@ -293,12 +293,27 @@ def _ordinary_video_tasks(nodes, records, key, loaders, model):
     from modiff.video_stage_contract import PROFILE_CLASSES
     from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
 
+    stages = [c for c in resource_consumers(nodes, key, loaders)
+              if nodes[c]['module'] == 'modules.DiffusersVideo']
+    if stages and all(nodes[c]['action'] in {'Generate', 'GenerateVideoAudio'} for c in stages):
+        from modules.DiffusersVideo.main import VIDEO_PIPELINE_ADAPTERS, _adapter_signal
+
+        adapter = VIDEO_PIPELINE_ADAPTERS.get(model)
+        if adapter is None:
+            return set()
+        declared = _adapter_signal(adapter)['actions']
+        tasks = set()
+        for stage in stages:
+            task = records.get(stage, {}).get('fields', {}).get('executed_task', {}).get('value')
+            if task not in declared.get(nodes[stage]['action'], ()):
+                return set()
+            tasks.add(task)
+        return tasks
     profiles = [DIFFUSERS_EXECUTION_PROFILES[p] for p, cls in PROFILE_CLASSES.items() if cls == model]
     if len(profiles) != 1:
         return set()
-    stages = [c for c in resource_consumers(nodes, key, loaders)
-              if nodes[c]['module'] == 'modules.DiffusersVideo']
-    if {nodes[c]['action'] for c in stages} != _VIDEO_STAGES:
+    expected = {'EncodeInputs', 'Generate'} if model == 'WanVACEPipeline' else _VIDEO_STAGES
+    if {nodes[c]['action'] for c in stages} != expected:
         return set()
     tasks = set()
     for stage in stages:
@@ -352,8 +367,9 @@ def _ordinary_image_tasks(nodes, records, key, loaders, model):
 def graph_task_receipts(nodes, records):
     """Use captured owner identity and validated calls in output ancestry."""
     # Legacy ordinary-video records had no task observations. Keep their old
-    # format; version two adds video ownership only for actual staged captures.
-    video_observed = any(node.get('module') == 'modules.DiffusersVideo' and node.get('action') in _VIDEO_STAGES
+    # format; version two adds ownership only after an actual successful call.
+    video_observed = any(node.get('module') == 'modules.DiffusersVideo'
+                         and node.get('action') in _VIDEO_STAGES | {'Generate', 'GenerateVideoAudio'}
                          and 'executed_task' in records.get(key, {}).get('fields', {})
                          for key, node in nodes.items())
     owners = _IMAGE_OWNERS | {('modules.ModularDiffusers', 'ModelsLoader')} | (_VIDEO_OWNERS if video_observed else set())

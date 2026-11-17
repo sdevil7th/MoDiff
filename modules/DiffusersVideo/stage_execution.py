@@ -79,8 +79,15 @@ def bind_owner(pipeline, values):
     if isinstance(previous, Owner) and previous.profile_id == profile.id:
         require_owner(pipeline)
         return
-    components = tuple((name, weakref.ref(getattr(pipeline, name)))
-                       for name in ('text_encoder', 'tokenizer', 'transformer', 'vae', 'scheduler'))
+    names = ('text_encoder', 'tokenizer', 'transformer', 'vae', 'scheduler')
+    if any(getattr(pipeline, name, None) is None for name in names):
+        raise ValueError('Video stage ownership requires all selected base components.')
+    if profile.pipeline_class == 'WanImageToVideoPipeline':
+        if getattr(pipeline, 'transformer_2', None) is None:
+            raise ValueError('The selected A14B stage owner requires both denoising experts.')
+        names += ('transformer_2', 'image_encoder', 'image_processor')
+    components = tuple((name, weakref.ref(value) if value is not None else None)
+                       for name in names for value in (getattr(pipeline, name, None),))
     pipeline._modiff_video_stage_owner = Owner(weakref.ref(pipeline), profile.id,
                                               profile.pipeline_class, tuple(profile.modes), components,
                                               profile.default_repo, values['revision'])
@@ -93,7 +100,8 @@ def require_owner(pipeline, expected=None):
             or vars(pipeline).get('_modiff_video_pipeline_class') != record.pipeline_class
             or vars(pipeline).get('_modiff_video_repo') != record.repository
             or vars(pipeline).get('_modiff_video_revision') != record.revision
-            or any(reference() is None or getattr(pipeline, name, None) is not reference()
+            or any((reference() is None or getattr(pipeline, name, None) is not reference())
+                   if reference is not None else getattr(pipeline, name, None) is not None
                    for name, reference in record.components)):
         raise ValueError('Video stage ownership is incomplete, replaced or stale. Rerun Model Setup.')
     return record
@@ -129,7 +137,9 @@ def _stamp(tensor):
 def _material(value):
     # Reuse existing bounded material normalization and mutation checks.
     from modules.DiffusersImage.stage_execution import _freeze_material
-    return _freeze_material(value)
+    # A declared 241-frame masked video owns two aligned frame collections.
+    # Keep the image default and the common byte/depth/container bounds intact.
+    return _freeze_material(value, max_items=512)
 
 
 def _video_source_evidence(material, stamps):
@@ -200,19 +210,33 @@ def _encode(pipeline, values):
     if not 1 <= length <= (adapter.max_prompt_tokens or 512):
         raise ValueError('Video sequence length is outside the declared encoder bound.')
     video = ensure_video_list(values.get('video'), 'video')
+    mask = ensure_video_list(values.get('mask'), 'mask')
     references = ensure_reference_images(values.get('reference_images'))
+    last = ensure_reference_images(values.get('last_image'))
+    if last and (owner.pipeline_class != 'WanImageToVideoPipeline' or len(last) != 1):
+        raise ValueError('The selected video route does not accept this last-image conditioning.')
+    if owner.pipeline_class == 'WanImageToVideoPipeline' and (not references or len(references) != 1 or video is not None):
+        raise ValueError('The A14B image route needs exactly one opening image and no source video.')
     if owner.pipeline_class == 'WanTI2VImageToVideoPipeline' and (not references or len(references) != 1):
         raise ValueError('The dense Wan 5B image route needs exactly one opening image.')
     if (mode == 'text_to_video' and (video is not None or references)
             or mode in ('image_to_video', 'reference_to_video') and not references
-            or mode == 'video_to_video' and video is None):
+            or mode in ('video_to_video', 'video_color_edit') and video is None):
         raise ValueError('Video source media does not match the selected task.')
-    if video is not None and len(video) > 192:
-        raise ValueError('Separate video input encoding currently supports at most 192 source frames.')
+    if owner.pipeline_class == 'WanVideoToVideoPipeline' and references:
+        raise ValueError('The selected Wan video-to-video task does not accept reference images.')
+    if owner.pipeline_class == 'WanVACEPipeline':
+        from .main import _validate_wan_vace_media_contract
+        _validate_wan_vace_media_contract(mode, {**values, 'num_frames': len(video) if video else 81,
+            'video': video, 'mask': mask, 'reference_images': references})
+    elif mask:
+        raise ValueError('The selected separate video encoder does not accept a mask.')
     # Keep the shared finite-list and total-byte bounds, while allowing the
     # existing 81/121/161-frame video recipes rather than image-batch lengths.
     chunks = [video[i:i + 64] for i in range(0, len(video), 64)] if video is not None else None
-    material, stamps, _logical, _copied = _material({'video_chunks': chunks, 'reference_images': references})
+    mask_chunks = [mask[i:i + 64] for i in range(0, len(mask), 64)] if mask is not None else None
+    material, stamps, _logical, _copied = _material({'video_chunks': chunks, 'reference_images': references,
+                                                   'last_image': last[0] if last else None, 'mask_chunks': mask_chunks})
     device = getattr(pipeline, '_execution_device', None) or 'cpu'
     output = pipeline.encode_prompt(prompt=prompt, negative_prompt=negative,
         do_classifier_free_guidance=guidance > 1, num_videos_per_prompt=1,
@@ -228,6 +252,20 @@ def _encode(pipeline, values):
                                         **_video_source_evidence(material, stamps)}))
     _ENCODINGS.add(result)
     return result
+
+
+def encoded_values(pipeline, values):
+    """Restore only genuine owned, frozen encoding inputs for the existing adapter."""
+    encoding = require_encoding(pipeline, values.get('encoded_inputs'), values.get('mode'), values.get('guidance_scale'))
+    restored = {**values, 'prompt': None, 'negative_prompt': None,
+                'max_sequence_length': encoding.max_sequence_length}
+    for field, key in (('video', 'video_chunks'), ('mask', 'mask_chunks')):
+        chunks = encoding.media[key]
+        restored[field] = [frame for chunk in chunks for frame in chunk] if chunks is not None else None
+    references = encoding.media['reference_images']
+    restored['reference_images'] = list(references) if references is not None else None
+    restored['last_image'] = encoding.media['last_image']
+    return encoding, restored
 
 
 def issue_latent(pipeline, encoding, tensor, geometry, generator):

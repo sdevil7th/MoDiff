@@ -160,7 +160,9 @@ class HunyuanVideo15ArtifactReviewTests(unittest.TestCase):
         self.assertEqual(HUNYUAN_VIDEO_15_I2V_REPOSITORY, HUNYUAN_VIDEO_15_I2V_REPO)
         self.assertEqual(
             PINNED_MODULAR_REPOSITORY_VARIANTS["HunyuanVideo15ModularPipeline"],
-            (HUNYUAN_VIDEO_15_T2V_REPO, HUNYUAN_VIDEO_15_I2V_REPO),
+            (HUNYUAN_VIDEO_15_T2V_REPO, HUNYUAN_VIDEO_15_I2V_REPO,
+             'hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_t2v',
+             'hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_i2v'),
         )
         self.assertEqual(
             _REVIEWED_STANDARD_PIPELINE_MODEL_NAMES["HunyuanVideo15Pipeline"],

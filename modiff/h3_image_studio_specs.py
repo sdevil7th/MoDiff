@@ -96,7 +96,7 @@ def image_stage_field_overrides(action, workflow):
         return {**{name: {'hidden': True} for name in (
             'guidance_scale', 'num_inference_steps', 'num_images_per_prompt', 'strength')},
             'min_generation_area': {'hidden': False},
-            **{name: {'default': 2048, 'min': 32, 'max': 8192, 'step': 32} for name in ('width', 'height')}}
+            **{name: {'default': 2048, 'min': 1, 'max': 2**53 - 1, 'step': 32} for name in ('width', 'height')}}
     return {}
 
 

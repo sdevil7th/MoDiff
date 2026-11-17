@@ -2816,6 +2816,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 return False, f"{normalized_value} is not supported by the active runtime."
         return True, None
 
+    @staticmethod
+    def _runtime_device_field(field_name):
+        normalized = str(field_name or "").strip().lower()
+        return normalized in {
+            "device", "execution_device", "generator_device", "offload_device",
+        } or normalized.endswith("_device")
+
     def _option_descriptors(self, field_name, field_definition):
         options = field_definition.get("options")
         if not isinstance(options, (list, tuple, dict)):
@@ -2830,13 +2837,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             dependencies = source if isinstance(source, dict) else None
 
         entries = []
-        normalized_field_name = str(field_name or "").strip().lower()
-        is_device_field = normalized_field_name in {
-            "device",
-            "execution_device",
-            "generator_device",
-            "offload_device",
-        } or normalized_field_name.endswith("_device")
+        is_device_field = self._runtime_device_field(field_name)
         available_devices = set(self._available_runtime_devices()) if is_device_field else None
         if available_devices is not None:
             declared = options.keys() if isinstance(options, dict) else options
@@ -2911,9 +2912,22 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             if not isinstance(field_definition, dict):
                 continue
             field_definition.pop("postProcess", None)
+            field_definition.pop("runtimeOptions", None)
             option_descriptors = self._option_descriptors(field_name, field_definition)
             if option_descriptors is not None:
                 field_definition["options"] = option_descriptors
+                # The server owns these hardware/package statuses. Dynamic
+                # model actions may still own other fields and enum membership.
+                # Never inherit this marker from uploaded/saved field metadata.
+                if "optionsSource" not in field_definition:
+                    normalized = str(field_name or "").strip().lower()
+                    if self._runtime_device_field(field_name):
+                        field_definition["runtimeOptions"] = "choices"
+                    elif normalized in {
+                        "dtype", "compute_dtype", "bnb_4bit_compute_dtype",
+                        "attention_backend", "backend", "quant_type", "quantization_mode",
+                    }:
+                        field_definition["runtimeOptions"] = "availability"
         return described
 
     async def runtime_options(self, _request):

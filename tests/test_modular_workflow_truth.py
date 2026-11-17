@@ -139,7 +139,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         self.assertEqual(PINNED_DIFFUSERS_REVISION, "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941")
         dependency_contract = Path("pyproject.toml").read_text(encoding="utf-8")
         self.assertIn(
-            "diffusers==0.41.0",
+            "diffusers==0.43.0",
             dependency_contract,
             "Runtime readiness uses the reviewed release pin independently of historical workflow provenance.",
         )

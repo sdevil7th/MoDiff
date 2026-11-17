@@ -4,6 +4,10 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 
 ## Read By Goal
 
+[Workflow and template suite roadmap](workflow-template-roadmap.md) defines the
+complete local task suite, the original 89-case milestone, FLUX 3/H3 feature gaps,
+delivery phases and the evidence required before claiming support.
+
 [Video pipeline stages](video-pipeline-stages.md) describes the shared selected
 LTX/Wan stages, retained template finishing steps and native proof boundaries.
 [Video prompting and motion examples](video-prompting.md) covers camera paths,
@@ -17,6 +21,7 @@ continuation/timeline examples with user-supplied media.
 | Install, verify, run a first workflow, configure, or update MoDiff       | [Project README](../README.md) and [`config.example.ini`](../config.example.ini)            |
 | Set up the backend and client with native uv/npm commands                  | [Developer setup](developer-setup.md)                                                       |
 | Understand HTTP and WebSocket surfaces                                   | [API reference](api-reference.md)                                                           |
+| Capture and verify ordinary image/audio/video utility inputs and outputs | [Deterministic media evidence](builtin-media-evidence.md) |
 | Diagnose startup, ports, slow/stalled runs, devices, downloads, or media | [Troubleshooting](troubleshooting.md)                                                       |
 | Compare the qualified accelerator profiles and their proof levels        | [Runtime support matrix](runtime-support-matrix.md)                                         |
 | Understand Auto planning, independent model lifetimes and release checks | [Workflow Auto memory contracts](workflow-auto-memory.md) |

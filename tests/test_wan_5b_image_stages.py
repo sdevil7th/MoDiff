@@ -1,4 +1,5 @@
 """No-weight coverage of the dense Wan 5B image route and retained text identity."""
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -62,6 +63,7 @@ def test_wan_5b_image_loader_uses_the_official_i2v_class_with_optional_clip_abse
     node = LoadPipeline('wan-5b-image-loader-unit')
     vae, pipeline = object(), SimpleNamespace()
     with (
+        patch('modules.DiffusersVideo.main.exact_cached_snapshot_path', return_value=Path('installed-wan-5b')),
         patch('diffusers.AutoencoderKLWan.from_pretrained', return_value=vae) as load_vae,
         patch('diffusers.WanImageToVideoPipeline.from_pretrained', return_value=pipeline) as load,
         patch('modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline'),
@@ -74,7 +76,7 @@ def test_wan_5b_image_loader_uses_the_official_i2v_class_with_optional_clip_abse
             'execution_recipe': {'device': 'cpu', 'offload_mode': 'none'},
         })
     assert result is pipeline
-    assert load.call_args.args == (REPO,)
+    assert load.call_args.args == (Path('installed-wan-5b'),)
     assert load.call_args.kwargs['vae'] is vae
     assert load.call_args.kwargs['revision'] == require_catalog_revision(REPO)
     assert load.call_args.kwargs['image_encoder'] is None

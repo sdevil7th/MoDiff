@@ -4267,6 +4267,7 @@ class LoadPipeline(NodeBase):
             "value": {"source": "hub", "value": SD15_CONTROLNET_CANNY_REPO},
             "fieldOptions": {
                 "noValidation": True,
+                "modelReferenceInactiveWhenHidden": True,
                 "sources": ["hub"],
                 "filter": {"hub": {"className": ["ControlNetModel"]}},
             },
@@ -4749,6 +4750,12 @@ class LoadPipeline(NodeBase):
             pipeline._modiff_stage_loading_contract = (offload_mode, device_map, quant_config is not None)
             _bind_loaded_image_stage(pipeline, adapter, kwargs)
         accounting_inactive = {}
+        if 'execution_profile_id' in kwargs:
+            if adapter.stage_adapter is not None and kwargs['execution_profile_id'] not in (None, ''):
+                # _bind_loaded_image_stage validated and bound this exact route.
+                effective_load_inputs['execution_profile_id'] = kwargs['execution_profile_id']
+            else:
+                accounting_inactive['execution_profile_id'] = 'adapter-inactive'
         if conditioning_selection is None:
             accounting_inactive.update(conditioning_model_id='adapter-inactive', conditioning_revision='adapter-inactive')
         else:

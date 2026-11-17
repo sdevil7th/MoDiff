@@ -32,6 +32,6 @@ def test_reviewed_published_wheel_install_uses_the_dependency_lock(tmp_path):
     assert "git+" not in command[-1]
     assert command[-1].startswith("https://files.pythonhosted.org/")
     assert command[-1].endswith(
-        "diffusers-0.41.0-py3-none-any.whl#sha256=ea8918b7dfd92ce793b6db689a551b8cd25d52c6c0fcd3ade0706a5fd2a25990"
+        "diffusers-0.43.0-py3-none-any.whl#sha256=8afb8ff1b09d693854de0412d8bdc94fc9e6e6e4efefb2386c616f64a4dc9ac6"
     )
     assert run.call_args.kwargs == {}

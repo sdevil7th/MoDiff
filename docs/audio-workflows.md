@@ -33,6 +33,26 @@ Keep upload, preview, playback and seek available on that source. Continuation
 can retain separate loudness-match and join operations; repaint keeps its bounded
 time interval. These operations do not disappear when Model Setup is grouped.
 
+ACE source-audio variation uses native `cover` conditioning through `src_audio`,
+not the separate timbre-only `reference_audio` input. It requires both registered
+`audio_tokenizer` and `audio_token_detokenizer` components in the selected
+checkpoint. Their absence is an explicit compatibility error before source
+tensor allocation or inference. The curated Turbo snapshot lacks those optional
+components; its text generation, continuation and repaint routes are separate.
+An alternate compatible checkpoint needs its own immutable revision, complete
+artifact/resource admission and real source-conditioned output proof. Historical
+reference-only receipts remain truthful records of the earlier behavior and
+must not be relabeled as source-melody conditioning.
+
+The curated source-cover template selects
+`ACE-Step/acestep-v15-xl-base-diffusers` at
+`8f40447d21ee59ad4dcee6c99ce248027410bfec`, with its native audio tokenizer and
+detokenizer components. It retains the same generic Model Setup, Audio Input,
+Generate and Audio Output stages. Its accepted recipe uses 50 steps, guidance 7
+and Expert memory policy. This additional compatible artifact does not extend
+the Turbo/Runware adapter-authoring grant or claim Base Auto/hardware
+qualification. Older Turbo source-cover records stay historical.
+
 An audio input can upload an MP4 containing a real soundtrack, as advertised by
 its file picker. The upload preserves the original bytes and reports the actual
 video-container kind; its audio preview extracts the soundtrack into a separate

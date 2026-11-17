@@ -223,8 +223,8 @@ def _official_stage_block(blocks, block_path):
 def _official_stage_component_dependencies(block, *, pipeline_class, block_path, definition):
     """Retain reviewed cross-stage component geometry without copying model math.
 
-    The pinned Anima stage specs omit components used by pipeline properties:
-    denoise reads vae_scale_factor; VAE encode reads num_channels_latents.
+    Some official stage specs omit components used by pipeline properties or
+    the stage call: for example Hunyuan text encoding reads transformer.dtype.
     Use the full official definition's specs and the same bound loader objects.
     """
     required = {
@@ -232,6 +232,9 @@ def _official_stage_component_dependencies(block, *, pipeline_class, block_path,
         (_ANIMA_PIPELINE, "vae_encoder"): ("transformer",),
         ('MiniMaxH3ImageModularPipeline', 'denoise'): ('vae',),
         ('MiniMaxH3ImageModularPipeline', 'decode'): ('transformer',),
+        (_HUNYUAN_VIDEO_15_PIPELINE, 'text_encoder'): ('transformer',),
+        (_HUNYUAN_VIDEO_15_PIPELINE, 'vae_encoder'): ('transformer',),
+        (_HUNYUAN_VIDEO_15_PIPELINE, 'denoise'): ('vae',),
     }.get((pipeline_class, block_path), ())
     if not required:
         return block
@@ -2037,18 +2040,23 @@ class WorkflowHunyuanVideo15Denoise(_OfficialWorkflowBlockMixin, NodeBase):
         )
         if (num_frames - 1) % 4:
             raise ValueError("HunyuanVideo 1.5 frame count must equal 4n + 1.")
-        default_steps = 12 if workflow_id == "image2video" else 50
+        from modiff.hunyuan_video15_artifacts import HUNYUAN_720P_I2V_REPOSITORY, HUNYUAN_720P_I2V_REVISION
+        # Sampling follows the connected immutable checkpoint, not an editable label.
+        full_i2v = (getattr(token, "_repo_id", None), getattr(token, "_revision", None)) == (
+            HUNYUAN_720P_I2V_REPOSITORY, HUNYUAN_720P_I2V_REVISION)
+        step_distilled = workflow_id == "image2video" and not full_i2v
+        default_steps = 12 if step_distilled else 50
         steps = _bounded_integer(
             kwargs.get("num_inference_steps", default_steps),
             label="HunyuanVideo 1.5 inference steps",
             minimum=1,
             maximum=100,
         )
-        default_guidance = 1.0 if workflow_id == "image2video" else 6.0
+        default_guidance = 1.0 if step_distilled else 6.0
         guidance_scale = float(kwargs.get("guidance_scale", default_guidance))
         if not math.isfinite(guidance_scale) or not 1.0 <= guidance_scale <= 20.0:
             raise ValueError("HunyuanVideo 1.5 guidance scale must be finite and from 1 through 20.")
-        if workflow_id == "image2video" and guidance_scale != 1.0:
+        if step_distilled and guidance_scale != 1.0:
             raise ValueError(
                 "HunyuanVideo 1.5 step-distilled image-to-video uses the reviewed fixed guidance scale of 1."
             )

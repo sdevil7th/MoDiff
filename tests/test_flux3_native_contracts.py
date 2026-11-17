@@ -282,7 +282,20 @@ def test_retained_private_specs_use_actual_registered_ports_and_stay_unpublished
         assert profile.public is False
         assert profile.live_proof is False
         assert profile.quantizable_components == ()
-        assert profile.adapter_authoring is None
+        # Exact private graph-edit permission is independent of publication,
+        # fit and the legacy capability flag checked below.
+        assert profile.adapter_authoring is not None
+        assert profile.adapter_authoring.adapter_node_key == 'modules.ModularDiffusers.Lora'
+        assert profile.adapter_authoring.tasks == ('text_to_image', 'edit_image')
+        assert profile.adapter_authoring.repository_revisions == (
+            (profile.default_repo, definition['capability']['revisionCandidates'][0]),
+        )
+        assert dict(profile.adapter_authoring.required_controls) == {
+            'offload_mode': 'none', 'auto_offload': False,
+            'weight_loading_mode': 'cpu', 'quant_config': None,
+            'unet': None, 'vae': None, 'controlnet': None,
+            'trust_remote_code': False,
+        }
         capability = definition['capability']
         for key in ('autoEligible', 'templateEligible', 'galleryEligible', 'liveProof', 'supportsLora'):
             assert capability[key] is False

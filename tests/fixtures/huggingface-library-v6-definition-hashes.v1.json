@@ -1,8 +1,6 @@
 {
-  "schemaVersion": 1,
-  "memberSchemaVersion": 6,
+  "backendBaseline": "c820db3aa9369370d7e2e14c98484d8abf9aedbf",
   "catalogRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
-  "backendBaseline": "016fcaf6dea46feaad4058ac00140cec420b1430",
   "definitions": {
     "diffusers.composite:AceStepAudioPipeline:audio_continuation": "sha256:c7c3ae8cb498e0145b689b84a68f89f16df921975e54c052ac113a1593d52400",
     "diffusers.composite:AceStepAudioPipeline:audio_repaint": "sha256:ede7a99838c13cca360c494d745b25879c8de3ae192f2521a4e88284309c191a",
@@ -127,7 +125,7 @@
     "diffusers.modular:StableDiffusionXLModularPipeline:ip_adapter_text2image": "sha256:3c93a493d0f34252aa0dbe903cc003a8eb5e310c6edfd0b91a039092899c84c4",
     "diffusers.modular:StableDiffusionXLModularPipeline:text2image": "sha256:883a84f9ee24ac053fa00707daccf144fcbe6c83a5451de2e8c22524e93bc8ea",
     "diffusers.modular:Wan22Image2VideoModularPipeline:default": "sha256:248476fdfc8386db1421e9c682e57fd88673571838465e684366805b749e7c14",
-    "diffusers.modular:Wan22ModularPipeline:default": "sha256:188390a2fa13aa6c448d8f311fa77a53a0ddeea929800822e20afaa6e3c9bfd0",
+    "diffusers.modular:Wan22ModularPipeline:default": "sha256:8a21bc6f3e23265427e021bd467024677fecf9cec4fba84be8cf0ff3d1d9f885",
     "diffusers.modular:WanAnimate2DistilledModularPipeline:default": "sha256:313755c79acfe503f3597b082a213c36b7c83c56fb70560752b251ce73d72b73",
     "diffusers.modular:WanAnimate2ModularPipeline:default": "sha256:1575deb86d25a6b1d4b87077e7aafc9be2d7b66794ed8fae62fc6a8b173f9d20",
     "diffusers.modular:WanImage2VideoModularPipeline:flf2v": "sha256:92152087d128d27539ce3ccbad6e013fb3469fccfa1ceffe38ed08a047944a03",
@@ -135,13 +133,17 @@
     "diffusers.modular:WanModularPipeline:default": "sha256:7ff62b15a056411d18ef6fcc3406621bab88bd4d08850ff294f4dcfc914e20d7",
     "diffusers.modular:ZImageModularPipeline:image2image": "sha256:af0650eda36a076e95dfda6f5e525d96c594eaebb221c7d12547c267f7783c38",
     "diffusers.modular:ZImageModularPipeline:text2image": "sha256:d9a597cd848e21713970daf1c6d52314a2157d1e6a4359ecc2a34e5bf1f9a5eb",
-    "transformers.composite:HuggingFaceAnyToAnyModel:image_to_text": "sha256:3c8581dd36fb231c752f25792ab4ecc94954416170c564486c9a9f5d4e81e64c",
-    "transformers.composite:HuggingFaceAnyToAnyModel:text_generation": "sha256:98147a08217cd1b758fe75398356c2f8b650d21ed4b8444a422ffe15fc3be9a0",
-    "transformers.composite:HuggingFaceAnyToAnyModel:text_to_image": "sha256:9a4de4fd6bd371da59eb2799deec9d1ebf0055c4de4fb65229dcd1010c83fe9c",
-    "transformers.composite:HuggingFaceCTCSpeechRecognitionModel:speech_to_text": "sha256:d57f7ecdb741ec9d41a4d6bbd0c9769c99cd69495770616f0fd2e91d60aa6bfe",
-    "transformers.composite:HuggingFaceImageTextToTextModel:image_to_text": "sha256:7fc169a13d9f1a905aaca7ccd2df85b70863bd3f509de1bbc27a55449f01d008",
-    "transformers.composite:HuggingFaceSpeechRecognitionModel:speech_to_text": "sha256:00517febc489698fb740473c841ef1945c1a83f9a9de166b2dc5316cbda5b970",
-    "transformers.composite:HuggingFaceSpeechRecognitionModel:speech_translation": "sha256:9299a0d203a6b7f4cacc474a6297be661a2b8f00972900c84745cd4580878c00",
-    "transformers.composite:HuggingFaceTextGenerationModel:text_generation": "sha256:e982d1206b2cc0b6154de3e90bedcb8fb012cb9c010406f79c7fe49fd56c8e88"
-  }
+    "transformers.composite:HuggingFaceAnyToAnyModel:image_to_text": "sha256:52724da00ad661dec53c9b84ef3dfad0c5c59c4b3e2d7ec85c6baf14194e82c6",
+    "transformers.composite:HuggingFaceAnyToAnyModel:text_generation": "sha256:4466173226db0e1ca825e0903ad81b3889f1b06280b3936f61f2345cdf2aabb0",
+    "transformers.composite:HuggingFaceAnyToAnyModel:text_to_image": "sha256:d5ca9e565a06a6fdead466c480d6eaa1183b0e3aed2e3d2f5ce8c4c9453f7566",
+    "transformers.composite:HuggingFaceCTCSpeechRecognitionModel:speech_to_text": "sha256:7e8d62f390f900af7a6a4550a197615bd5e57d50c9a0add57ab9131ea4f0ddce",
+    "transformers.composite:HuggingFaceImageTextToTextModel:image_to_text": "sha256:8f38e0387f7bd51e6a48f827e9437809963fcf603f510de42502ac07098fc55b",
+    "transformers.composite:HuggingFaceSpeechRecognitionModel:speech_to_text": "sha256:abd9de4f0495851770fb69db92665d8c2b990362b5a420aeca8c4b4f2b7d27eb",
+    "transformers.composite:HuggingFaceSpeechRecognitionModel:speech_translation": "sha256:c0d43e70581851a03fc9c55f8dfd1e32758e552e23c84ee6e5e91a26fd1b0479",
+    "transformers.composite:HuggingFaceTextGenerationModel:text_generation": "sha256:7df9c6510eb0a7d779a662a9907f318a1a08956d6a094681060e9a23ebb4aff1"
+  },
+  "generationScope": "Current paired source with reviewed dependency and Wan guidance changes; no model execution",
+  "memberSchemaVersion": 6,
+  "reviewedRuntimeDigest": "sha256:111b6c7b46b8e674c8f5abf2c24b90494ab16c511064b9c3286704de5ba87d95",
+  "schemaVersion": 1
 }

@@ -9,6 +9,18 @@ The executable contract lives in `modiff/block_definition_v2.py`,
 `modiff/composite_migration.py`, and the client’s `blockSchemaV2.ts`,
 `blockRuntimeV2.ts`, `registeredBlockAdapterV2.ts` and persistence modules.
 Keep client/backend canonicalization, validators and shared fixtures aligned.
+Ordinary finite scalar/media union sockets retain a pipe-separated `valueType`,
+for example `video|str|image`. The paired validators compare its individual
+alternatives with the native field's type array, and the canvas projects that
+array for connections. Collection expressions remain opaque; `list[video|image]`
+is not an image socket. Unrelated media types remain incompatible. This is a
+presentation/interface representation, not permission to coerce runtime values.
+Graph-field bindings preserve native spawned item keys such as
+`item>>>shot-2`: one `>>>` followed by a nonempty ASCII letter/digit/underscore/
+hyphen item suffix, within the existing 384-character field bound. Internal edge
+endpoints use the same grammar. Public node/port/control identities and workflow
+selectors keep their existing stricter grammar. Bare, partial or repeated `>`
+qualifiers are rejected; grouping must never sanitize an executable field key.
 See the [API reference](api-reference.md) for HTTP persistence/migration and
 [workbench acceptance](workbench-acceptance.md) for qualification boundaries.
 

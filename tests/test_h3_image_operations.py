@@ -17,7 +17,12 @@ def test_h3_starter_uses_generic_nodes_and_fixed_sampler(task):
     denoise = nodes['diffusion.denoise']
     assert denoise['action'] == 'WorkflowImageDenoise'
     assert denoise['params']['width']['value'] == 2048
-    assert denoise['params']['width']['max'] == 8192
+    # The only integer ceiling is the graph/JavaScript representation boundary,
+    # rather than an invented model resolution limit.
+    assert denoise['params']['width']['max'] == 2**53 - 1
+    assert denoise['params']['width']['min'] == 1
+    assert denoise['params']['min_generation_area']['min'] == 1024
+    assert denoise['params']['min_generation_area']['max'] == 16777216
     for name in ['num_inference_steps', 'guidance_scale', 'strength', 'num_images_per_prompt']:
         assert name not in denoise['params']
     assert not denoise['params']['min_generation_area']['hidden']
@@ -157,13 +162,22 @@ def test_h3_cancellation_is_checked_before_preparing_a_stage():
     node._prepare_pipeline.assert_not_called()
 
 
-def test_h3_records_consumed_numeric_values_after_native_field_normalization(monkeypatch):
+@pytest.mark.parametrize('width,height,area', [
+    (2048, 2048, 4194304),
+    (4736, 3552, 4194304), (5024, 3360, 4194304),
+    (5472, 3072, 4194304), (6272, 2688, 4194304),
+    (3552, 4736, 4194304), (3360, 5024, 4194304),
+    (3072, 5472, 4194304), (2688, 6272, 4194304),
+    (9000, 64, 16777216), (31, 47, 1024),
+])
+def test_h3_records_consumed_numeric_values_after_native_field_normalization(monkeypatch, width, height, area):
     from copy import deepcopy
     from types import SimpleNamespace
     from unittest.mock import Mock
     from diffusers.modular_pipelines import SequentialPipelineBlocks, LoopSequentialPipelineBlocks
     from modules.ModularDiffusers import workflow_blocks
     from modules.ModularDiffusers.h3_image_adapter import execute_image_stage
+    from modules.ModularDiffusers import h3_image_adapter
 
     class Pipeline:
         _execution_device = 'cpu'
@@ -181,17 +195,106 @@ def test_h3_records_consumed_numeric_values_after_native_field_normalization(mon
             return {'completed': True}
 
     pipeline = Pipeline()
+    # This argument-binding fixture does not supply the optional H3 provider;
+    # actual upstream geometry is exercised separately below in that runtime.
+    monkeypatch.setattr(h3_image_adapter, '_canvas_size', lambda _pipeline, args: (args['height'], args['width']))
     node = SimpleNamespace(stage='denoise', action_key='workflow_image_denoise', _interrupt=False,
         _prepare_pipeline=lambda **kw: (object(), pipeline), record_generation_inputs=Mock(), progress=Mock())
     monkeypatch.setattr(workflow_blocks, '_reviewed_preceding_stage', lambda *a: None)
     monkeypatch.setattr(workflow_blocks, '_issue_workflow_state', lambda **kw: kw['state'])
     execute_image_stage(node, {'pipeline_class': PIPELINE, 'workflow_id': 'text2image', 'block_path': 'denoise',
-                              'width': '2048', 'height': '2048', 'min_generation_area': '4194304', 'seed': '11423'})
+                              'width': str(width), 'height': str(height),
+                              'min_generation_area': str(area), 'seed': '11423'})
     captured = node.record_generation_inputs.call_args.args[0]
     assert {k: captured[k] for k in ('width', 'height', 'min_generation_area', 'seed')} == {
-        'width': 2048, 'height': 2048, 'min_generation_area': 4194304, 'seed': 11423}
+        'width': width, 'height': height, 'min_generation_area': area, 'seed': 11423}
     assert pipeline.values['generator'].initial_seed() == 11423
     assert node.progress.call_args.kwargs['current_step'] == 6
+
+
+@pytest.mark.parametrize('field,value', [
+    ('width', 0), ('height', -1), ('width', True), ('height', 1.5),
+    ('width', ' 2048'), ('width', '02'), ('width', 2**53),
+    ('min_generation_area', 1023), ('min_generation_area', 16777217),
+    ('min_generation_area', float('inf')),
+])
+def test_h3_invalid_geometry_is_rejected_before_pipeline_preparation(field, value):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+    from modules.ModularDiffusers.h3_image_adapter import execute_image_stage
+    node = SimpleNamespace(stage='denoise', _interrupt=False,
+                           _prepare_pipeline=Mock(side_effect=AssertionError('Must not prepare')))
+    with pytest.raises(ValueError, match='integer'):
+        execute_image_stage(node, {'pipeline_class': PIPELINE, 'workflow_id': 'text2image', field: value})
+    node._prepare_pipeline.assert_not_called()
+
+
+def test_h3_impossible_output_allocation_reports_machine_capacity_before_loading(monkeypatch):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+    from modiff import hardware
+    from modules.ModularDiffusers.h3_image_adapter import execute_image_stage
+    monkeypatch.setattr(hardware, 'system_memory_snapshot', lambda: {'available_bytes': 4096})
+    node = SimpleNamespace(stage='denoise', _interrupt=False,
+                           _prepare_pipeline=Mock(side_effect=AssertionError('Must not prepare')))
+    with pytest.raises(ValueError, match='available system memory'):
+        execute_image_stage(node, {'pipeline_class': PIPELINE, 'workflow_id': 'text2image',
+                                  'width': 128, 'height': 128})
+    node._prepare_pipeline.assert_not_called()
+
+
+def test_h3_reference_preparation_preserves_order_without_an_invented_eight_image_cap(monkeypatch):
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+    from PIL import Image
+    from modules.ModularDiffusers import workflow_blocks, h3_image_adapter
+    images = [Image.new('RGB', (32, 32), (index, 0, 0)) for index in range(9)]
+    pipeline = Mock(_blocks=object(), return_value={'prepared': True})
+    node = SimpleNamespace(stage='before_encode', action_key='workflow_before_encode', _interrupt=False,
+                           _prepare_pipeline=lambda **kw: (object(), pipeline), record_generation_inputs=Mock())
+    monkeypatch.setattr(workflow_blocks, '_reviewed_preceding_stage', lambda *a: None)
+    monkeypatch.setattr(workflow_blocks, '_issue_workflow_state', lambda **kw: kw['state'])
+    monkeypatch.setattr(h3_image_adapter, 'workflow_stage_progress', lambda *a: nullcontext())
+    h3_image_adapter.execute_image_stage(node, {'pipeline_class': PIPELINE, 'workflow_id': 'image_conditioned',
+                                               'image': images})
+    assert pipeline.call_args.kwargs['image'] == images
+    assert all(a is b for a, b in zip(pipeline.call_args.kwargs['image'], images))
+
+
+def test_h3_canvas_allocation_is_checked_after_upstream_rounding(monkeypatch):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+    from modiff import hardware
+    from modules.ModularDiffusers import h3_image_adapter
+    monkeypatch.setattr(hardware, 'system_memory_snapshot', lambda: {'available_bytes': 65536})
+    canvas = Mock(return_value=(32000, 32000))
+    monkeypatch.setattr(h3_image_adapter, '_canvas_size', canvas)
+    pipeline = Mock()
+    node = SimpleNamespace(stage='denoise', _interrupt=False,
+                           _prepare_pipeline=Mock(return_value=(object(), pipeline)))
+    with pytest.raises(ValueError, match='available system memory'):
+        h3_image_adapter.execute_image_stage(node, {'pipeline_class': PIPELINE, 'workflow_id': 'text2image',
+                                                  'width': 32, 'height': 32})
+    canvas.assert_called_once()
+    pipeline.assert_not_called()
+
+
+@pytest.mark.parametrize('width,height,area,expected', [
+    (4736, 3552, 4194304, (3552, 4736)),
+    (5472, 3072, 4194304, (3072, 5472)),
+    (1024, 1024, 4194304, (2048, 2048)),
+    (31, 47, 1024, (32, 32)),
+])
+def test_h3_geometry_uses_the_selected_official_canvas_function(width, height, area, expected):
+    from types import SimpleNamespace
+    from modiff.runtime_overlays import active_diffusers_provider
+    provider = active_diffusers_provider()
+    if not provider or provider.get('profileId') != 'huggingface-diffusers-h3-image-875373a':
+        pytest.skip('Requires the exact installed and verified H3 Image provider')
+    from modules.ModularDiffusers.h3_image_adapter import _canvas_size
+    assert _canvas_size(SimpleNamespace(canvas_multiple=32), {
+        'width': width, 'height': height, 'min_generation_area': area}) == expected
 
 
 def test_shared_workflow_progress_reaches_nested_loops_and_restores_their_methods():

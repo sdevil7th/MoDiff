@@ -54,7 +54,6 @@
       "mode": "text_to_audio",
       "modelType": "AceStepAudioPipeline",
       "publicTemplateIds": [
-        "ace_step_lyric_music_video",
         "ace_step_text_to_audio"
       ],
       "qualificationStatus": "graph-qualified",
@@ -82,6 +81,19 @@
       "modelType": "AceStepAudioPipeline",
       "publicTemplateIds": [
         "ace_step_custom_lora"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "d81f7c5f844bc3e3c080f956fe05ec87cf056fa8e6c667907cd0182af606dd12",
+      "graphPath": "studio/ace-step-audio-pipeline/text-to-audio--ace-step-lyric-music-video.json",
+      "id": "AceStepAudioPipeline:text_to_audio:ace_step_lyric_music_video",
+      "mode": "text_to_audio",
+      "modelType": "AceStepAudioPipeline",
+      "publicTemplateIds": [
+        "ace_step_lyric_music_video"
       ],
       "qualificationStatus": "graph-qualified-gallery-review-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
@@ -519,7 +531,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "01cc6213daa98b045bcc448f12ed5eb6fef2f658cc1801135671ee31eb77ae31",
+      "graphHash": "d831b1695bf5dec13209ed34f51487c738eaed845ea86737129a42bbb6136646",
       "graphPath": "studio/ddim-pipeline/unconditional-image.json",
       "id": "DDIMPipeline:unconditional_image",
       "mode": "unconditional_image",
@@ -618,7 +630,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "2f8f943a4bb7b1317cf8a60a29446b85108a3995e20c7f593bbbe93dd7b47b0d",
+      "graphHash": "a9f2f6997c96449438f233e0976e4c87d0d56be5dd482c859988d0de70b1ea9a",
       "graphPath": "studio/flux2-klein-pipeline/edit-image.json",
       "id": "Flux2KleinPipeline:edit_image",
       "mode": "edit_image",
@@ -631,7 +643,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "250ec75ab720d55a719be8d1dff2270916857fed1f45a03c3c06bb63eefba866",
+      "graphHash": "4ea40415e341b67b17ef0346baefe083f89db753ad716529998933a8012f9424",
       "graphPath": "studio/flux2-klein-pipeline/multi-image-reference-edit.json",
       "id": "Flux2KleinPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
@@ -644,7 +656,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "b55065a934b38e2c3663aa4efa20fcfa972c9fe349848b2cdec655e5f5b737c6",
+      "graphHash": "74520e036168aed6b50561104c40acf585047cc0c3a4396b8b0c246d15ba7ac5",
       "graphPath": "studio/flux2-klein-pipeline/text-to-image.json",
       "id": "Flux2KleinPipeline:text_to_image",
       "mode": "text_to_image",
@@ -675,11 +687,34 @@
       "id": "Flux3DistilledModularPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "Flux3DistilledModularPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "421ceaf85243cf2032e9aff24a815cfc173075208d36879767f70db2203218dc",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/edit-image--flux3-klein-fp8r512-multi-reference-edit.json",
+      "id": "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_multi_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
       "publicTemplateIds": [
-        "flux3_klein_fp8r512_multi_reference_edit",
+        "flux3_klein_fp8r512_multi_reference_edit"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "ff89d1f943168108f66e75bd70b761bdd806d0ad57e23d2aafc202371bf2a1a3",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/edit-image--flux3-klein-fp8r512-single-reference-edit.json",
+      "id": "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_single_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "publicTemplateIds": [
         "flux3_klein_fp8r512_single_reference_edit"
       ],
-      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
       "status": "contract-only"
     },
@@ -689,16 +724,13 @@
       "id": "Flux3DistilledModularPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "Flux3DistilledModularPipeline",
-      "publicTemplateIds": [
-        "flux3_klein_fp8r512_raw_coordinate_prompt",
-        "flux3_klein_fp8r512_text_to_image"
-      ],
+      "publicTemplateIds": [],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
       "status": "contract-only"
     },
     {
-      "graphHash": "27636a699bfc7ecd672e6a7cc351050b91b0f075d7786b4160c63b7d8429f5b3",
+      "graphHash": "31a7a0a5ea0da7c692dcb1063eb3cb38eb405449d5fcfed716ddc564607a0af5",
       "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-lora-style.json",
       "id": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
       "mode": "text_to_image",
@@ -711,16 +743,65 @@
       "status": "contract-only"
     },
     {
+      "graphHash": "6bffcb8a964c27ce32c3aad01543ca3bfea7a46f7b6b42d48f32844d1029277c",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-raw-coordinate-prompt.json",
+      "id": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_raw_coordinate_prompt",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "publicTemplateIds": [
+        "flux3_klein_fp8r512_raw_coordinate_prompt"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "099763a4e3be64def724ff84637fa6fcb7f6cee3abcffd6746fef136bcd1e0e1",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-text-to-image.json",
+      "id": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "publicTemplateIds": [
+        "flux3_klein_fp8r512_text_to_image"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
       "graphHash": "f89d49ce7200e92860d3d34ba2186a3dee13fe4ebaa0295d1f3844acb411e557",
       "graphPath": "experimental/flux3-modular-pipeline/edit-image.json",
       "id": "Flux3ModularPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "Flux3ModularPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "eecbaafc7c6e6e3ef20dd63cc3bfb3e293d07a4dc76df570786eac7e6e4b58db",
+      "graphPath": "experimental/flux3-modular-pipeline/edit-image--flux3-klein-base-fp8r512-multi-reference-edit.json",
+      "id": "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_multi_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
       "publicTemplateIds": [
-        "flux3_klein_base_fp8r512_multi_reference_edit",
+        "flux3_klein_base_fp8r512_multi_reference_edit"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "fd300c33b7dc6e6ef295022c146a95fcdbe2698aa403ca6f54d6667724fa1e4e",
+      "graphPath": "experimental/flux3-modular-pipeline/edit-image--flux3-klein-base-fp8r512-single-reference-edit.json",
+      "id": "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_single_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "publicTemplateIds": [
         "flux3_klein_base_fp8r512_single_reference_edit"
       ],
-      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
       "status": "contract-only"
     },
@@ -730,22 +811,45 @@
       "id": "Flux3ModularPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "Flux3ModularPipeline",
-      "publicTemplateIds": [
-        "flux3_klein_base_fp8r512_raw_coordinate_prompt",
-        "flux3_klein_base_fp8r512_text_to_image"
-      ],
+      "publicTemplateIds": [],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
       "status": "contract-only"
     },
     {
-      "graphHash": "cd1664d47d78625d96540266dddec9b6b2ec27a486ed73989ff601abc61d04ef",
+      "graphHash": "c93ea8bf093dd6aa36c2c3f44fcaec70c78aaec2cb18c2cbc2f94c60f1ea86db",
       "graphPath": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-lora-style.json",
       "id": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
       "mode": "text_to_image",
       "modelType": "Flux3ModularPipeline",
       "publicTemplateIds": [
         "flux3_klein_base_fp8r512_lora_style"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "d9097def8b0ac618a907a243c7ac1684f03f0694188bf329ba2afd667de4cf23",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-raw-coordinate-prompt.json",
+      "id": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_raw_coordinate_prompt",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "publicTemplateIds": [
+        "flux3_klein_base_fp8r512_raw_coordinate_prompt"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "5af1acbd2111c5a12e3ac064f3635b3dd52e7a59fdf8d94c224c1b68b0ff99c1",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-text-to-image.json",
+      "id": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "publicTemplateIds": [
+        "flux3_klein_base_fp8r512_text_to_image"
       ],
       "qualificationStatus": "graph-qualified-gallery-review-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
@@ -763,7 +867,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "932406161bede54f441595b58be51d52f828468e7c56ca896486cbb8de4f7420",
+      "graphHash": "f23b64a256eef3ade388154c0349d0ecd6dd45ba109ca09a27e9a0a7bf99f9dc",
       "graphPath": "studio/flux-canny-pipeline/control-image.json",
       "id": "FluxCannyPipeline:control_image",
       "mode": "control_image",
@@ -798,7 +902,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "6bce7f3b71f77b21b259cae200e851ed84f6b180777bf2c26019b90b71d55012",
+      "graphHash": "297683c2136ec8058aaceee53ca7b5e1e3a4239e9006a258edec633e3dd1ce4b",
       "graphPath": "studio/flux-depth-pipeline/control-image.json",
       "id": "FluxDepthPipeline:control_image",
       "mode": "control_image",
@@ -844,7 +948,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "7febbd05b10f0ed56c1c1e0717c0ed04d2c50df30d18c88d50fc042e5e8d8d2c",
+      "graphHash": "ae9090fb616b1eb1535f99a0ce78a60ed4e5337f353e8818508ed3bd3cdb17c3",
       "graphPath": "studio/flux-dev-pipeline/text-to-image.json",
       "id": "FluxDevPipeline:text_to_image",
       "mode": "text_to_image",
@@ -857,7 +961,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "d0f6916bc99ca5c16f0a143856f63a3c73f166d82d6719c40d93307b40b23aa8",
+      "graphHash": "080ce71fb2e7f705222e6683456b8292e51c6691bfafef42b74da1a5e97e8421",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-cinematic-octane-3d.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_cinematic_octane_3d",
       "mode": "text_to_image",
@@ -870,7 +974,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "ca66c44152bf613277ff855177d6d2f57610ea831b150aab80119289847d0512",
+      "graphHash": "a3da0b3f8930d0b976b231e18789a67ee89f7fa00408afbdf0b6bdc792c2b394",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-film-noir.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_film_noir",
       "mode": "text_to_image",
@@ -883,7 +987,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "7aa11fab6ea03f57e8d010fdcd8219ba5b863cc2512aaa8af0c3bbe1f1778ba8",
+      "graphHash": "96d9f17a0cbfb5a729ebe93de880d465e813fc4741e854ed636fccc37257a5e5",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-ghibli-story.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_ghibli_story",
       "mode": "text_to_image",
@@ -896,7 +1000,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "aaeeca6dcb46f2a6c7c507ae59a88d55c2c6640747969b27c6591127f977fe6f",
+      "graphHash": "32a781cfbe6fccd1d7a47cf8dc30203d1986d176c3a2e01a993cdd54b58d66bb",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-oil-painting.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_oil_painting",
       "mode": "text_to_image",
@@ -909,7 +1013,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "ddb42979471f0e86dbf45ffa873d08a7b772db0c6c10fbfad02b6fae2a9a6bcc",
+      "graphHash": "8cbd2e50917a2a686348365140352b95d4c5c604fc8460b7cc9889296f9b85c6",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-paper-cutout.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_paper_cutout",
       "mode": "text_to_image",
@@ -922,7 +1026,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "2f1d86a41641424ce6e5d9516e199cb72a0627508972337f3e87e47287193991",
+      "graphHash": "68dec836f89812ec19c8431f675aa41c5273681fe8f3011e468d18bea1506789",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-photoreal-documentary.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_photoreal_documentary",
       "mode": "text_to_image",
@@ -935,7 +1039,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5db7fc90973002f065e687e4f335ed2ea2aa4b1ea4fed93351a16fb00f20e252",
+      "graphHash": "4eee84313763956208d08ac0c5d2b875c4efa3a0ae547e5c296654371d29ce22",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-retro-comic.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_retro_comic",
       "mode": "text_to_image",
@@ -948,7 +1052,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "161a5e6a0926d5cc943afd25055c26f811a5a092e81121f858b88244e969d0a4",
+      "graphHash": "5ff849b7c4a08f3ca7f84d6b392d654d5df165016a87198ded7c4453540d9a64",
       "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-watercolor.json",
       "id": "FluxDevPipeline:text_to_image:flux_lora_watercolor",
       "mode": "text_to_image",
@@ -961,7 +1065,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "c16db181498fc65031fd04a67d8b89c05986bcbb694bf1fed65c4171ecc84488",
+      "graphHash": "05d244c41dc3e5945dbe5c4477bb4af5d862c785c2a78c73905b96fc9f129f1e",
       "graphPath": "studio/flux-fill-pipeline/inpaint.json",
       "id": "FluxFillPipeline:inpaint",
       "mode": "inpaint",
@@ -974,7 +1078,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "a6431f367e163244190d7d3adc6f08c8dea8426e29aa991e857387db936b81fd",
+      "graphHash": "fcd19772a99a7c850b866747c3f5382e478e4c5b2ac017b18252f461e2e48c73",
       "graphPath": "studio/flux-fill-pipeline/outpaint.json",
       "id": "FluxFillPipeline:outpaint",
       "mode": "outpaint",
@@ -1009,7 +1113,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "90962e61d36035746a8e642ccd449fdba2d8b851d834af189ba464ff09a3303b",
+      "graphHash": "25e42638aea800941c7994b730d07b4eaf5b98172ce83fb437c2accc1ff56288",
       "graphPath": "studio/flux-kontext-pipeline/edit-image.json",
       "id": "FluxKontextPipeline:edit_image",
       "mode": "edit_image",
@@ -1022,7 +1126,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "c5cbf0ee2b8f8a7c33bb2c4820457f32a99d826d0aa3856900b3961d42cddcac",
+      "graphHash": "2247d4c7bf6413e2bc37f7a78952c52c0fd9c332abdb9ee7f0db834f18dab682",
       "graphPath": "studio/flux-kontext-pipeline/multi-image-reference-edit.json",
       "id": "FluxKontextPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
@@ -1035,7 +1139,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "163741593beacbf8ae6ab7ba6ceb8396d7f9621863893d10d8531df587eb5de9",
+      "graphHash": "0c883122625df560b091d43d43208b28380c2b2ed506f68d1b58ecb1371ca5cd",
       "graphPath": "studio/flux-krea-pipeline/text-to-image.json",
       "id": "FluxKreaPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1061,7 +1165,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "ea5cd03da3c4830e84642d73f4597e5b0ffe11a93f78d8001cb314f4e2d901f9",
+      "graphHash": "537e3ada521f1848cb61705556a488953b2e2d6aa8cb07cdf06140217aa4e5d0",
       "graphPath": "studio/flux-redux-pipeline/multi-image-reference-edit.json",
       "id": "FluxReduxPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
@@ -1074,7 +1178,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "797e80892cd6d77a4c42450029cd8578ba21fcd1c12342a53a072b31bc810dac",
+      "graphHash": "e383f27c7bdffadbaf4b185c3aea0a023823e34789fc4298b13bd4ca1f957070",
       "graphPath": "studio/flux-schnell-pipeline/text-to-image.json",
       "id": "FluxSchnellPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1362,21 +1466,33 @@
       "status": "executable"
     },
     {
-      "graphHash": "d240918b9459c4ba76e044d0019dd1bd9be80f4c6dafc7ff42ef511368c4b690",
+      "graphHash": "005ffa59e7d7ea2b646f806a201f81bf41345df5dc0771673a32feb24a7b3b71",
       "graphPath": "studio/ltx-video-pipeline/image-to-video.json",
       "id": "LTXVideoPipeline:image_to_video",
       "mode": "image_to_video",
       "modelType": "LTXVideoPipeline",
       "publicTemplateIds": [
-        "ltx_video_image_to_video",
-        "ltx_video_long_showcase"
+        "ltx_video_image_to_video"
       ],
       "qualificationStatus": "execution-qualified-gallery-review-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
     },
     {
-      "graphHash": "414ea93fcfbdf9465a4f76d87fabb3e6e0bc51d0fa0bb34f17a88d566e7a41eb",
+      "graphHash": "9af7cf4c724c6f4e6c4c51b8de7bd66b1d54b1c47cf699665b20b560a385da23",
+      "graphPath": "studio/ltx-video-pipeline/image-to-video--ltx-video-long-showcase.json",
+      "id": "LTXVideoPipeline:image_to_video:ltx_video_long_showcase",
+      "mode": "image_to_video",
+      "modelType": "LTXVideoPipeline",
+      "publicTemplateIds": [
+        "ltx_video_long_showcase"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "1805f6d93f104e7b296bf68fa8471a83e7f4e7fd709da65ab9fc4ff86be8c9c2",
       "graphPath": "studio/ltx-video-pipeline/reference-to-video.json",
       "id": "LTXVideoPipeline:reference_to_video",
       "mode": "reference_to_video",
@@ -1389,13 +1505,12 @@
       "status": "executable"
     },
     {
-      "graphHash": "cc90010efb55def035916f7f77d04c2f6e001a258c05cef3c0d8c58b6f76c9ee",
+      "graphHash": "e659042053071808250206aefc41822ceeb9a97b25aa9d2c6c1fabac8cfd7cbf",
       "graphPath": "studio/ltx-video-pipeline/text-to-video.json",
       "id": "LTXVideoPipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "LTXVideoPipeline",
       "publicTemplateIds": [
-        "ltx_video_animated_story",
         "ltx_video_text_to_video"
       ],
       "qualificationStatus": "execution-qualified-gallery-review-pending",
@@ -1403,7 +1518,20 @@
       "status": "executable"
     },
     {
-      "graphHash": "64a2640aa4a1dcf3e94071b965f969de0158df18d06fe3e387755a7164a6cff7",
+      "graphHash": "b1a72a22e06e120e6a770fcd55488b7d1f1e886c2b28f621750efad565ad0ff3",
+      "graphPath": "studio/ltx-video-pipeline/text-to-video--ltx-video-animated-story.json",
+      "id": "LTXVideoPipeline:text_to_video:ltx_video_animated_story",
+      "mode": "text_to_video",
+      "modelType": "LTXVideoPipeline",
+      "publicTemplateIds": [
+        "ltx_video_animated_story"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "943ccf98245f0a8064a4a4791f4256dada2c81b60aab85f72713c8fa59959aa4",
       "graphPath": "studio/ltx-video-pipeline/video-to-video.json",
       "id": "LTXVideoPipeline:video_to_video",
       "mode": "video_to_video",
@@ -1520,10 +1648,21 @@
       "id": "MiniMaxH3ImageModularPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "MiniMaxH3ImageModularPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "9fd8878406fb7788b0c11e8020efa317a53fc7da60e112a3be923efa0aa9f72f",
+      "graphPath": "experimental/mini-max-h3-image-modular-pipeline/text-to-image--minimax-h3-image-old-town-cat.json",
+      "id": "MiniMaxH3ImageModularPipeline:text_to_image:minimax_h3_image_old_town_cat",
+      "mode": "text_to_image",
+      "modelType": "MiniMaxH3ImageModularPipeline",
       "publicTemplateIds": [
         "minimax_h3_image_old_town_cat"
       ],
-      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
       "status": "contract-only"
     },
@@ -1651,7 +1790,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "b2ed511947e0b4350041a9031f63da2b72b1efc974d0a746ed4e0d181892cd02",
+      "graphHash": "0ea2bd89226e214295a7a0963dc3d7a3b09f3c67c786258c8286b88373d351ca",
       "graphPath": "studio/qwen-image-edit-modular-pipeline/edit-image.json",
       "id": "QwenImageEditModularPipeline:edit_image",
       "mode": "edit_image",
@@ -1666,7 +1805,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "e029898c2cedb74093de4ffae139e2de241dadcab18bbc58da7a86653dde58c9",
+      "graphHash": "2da0c3dc8e0978b38c587720d4f946bda7d1fc0107f0be3062eedb1ecad073a3",
       "graphPath": "studio/qwen-image-edit-modular-pipeline/inpaint.json",
       "id": "QwenImageEditModularPipeline:inpaint",
       "mode": "inpaint",
@@ -1705,21 +1844,33 @@
       "status": "executable"
     },
     {
-      "graphHash": "9376e37fa757fe020272d8e36f38a4a4fabf8d98f87031d6600482f342090771",
+      "graphHash": "c3687ae24bc9cf5380e91d5ed9ce336e7ebba9c8d1088b2c44b473073e60497a",
       "graphPath": "studio/qwen-image-edit-plus-modular-pipeline/edit-image.json",
       "id": "QwenImageEditPlusModularPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "QwenImageEditPlusModularPipeline",
       "publicTemplateIds": [
-        "character_edit",
-        "qwen_edit_plus_single_image"
+        "character_edit"
       ],
       "qualificationStatus": "graph-qualified",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
     },
     {
-      "graphHash": "b0df810b24901b2457c8800dcf3ffc2b04ebfd75b6892d5d202ed9fe9147655a",
+      "graphHash": "6c4cc7c73a56324eb45d6ede5e77e53cd2add38786580241a99ce49ba3df20f5",
+      "graphPath": "studio/qwen-image-edit-plus-modular-pipeline/edit-image--qwen-edit-plus-single-image.json",
+      "id": "QwenImageEditPlusModularPipeline:edit_image:qwen_edit_plus_single_image",
+      "mode": "edit_image",
+      "modelType": "QwenImageEditPlusModularPipeline",
+      "publicTemplateIds": [
+        "qwen_edit_plus_single_image"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "adbe18206ca9f14be5fe58c77d43dad5a479633fdc0bd60ec1193e40c18cfd2a",
       "graphPath": "studio/qwen-image-edit-plus-modular-pipeline/multi-image-reference-edit.json",
       "id": "QwenImageEditPlusModularPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
@@ -1758,7 +1909,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "6ac076e6ac4c0be9ac77d73a946291d3a15533e71d4ba717bc0b318cf082698a",
+      "graphHash": "d4a69d44d7c905ba9beb19c588bfebc06fffd611a252ea34def06852c8e11c86",
       "graphPath": "studio/qwen-image-layered-modular-pipeline/layer-decomposition.json",
       "id": "QwenImageLayeredModularPipeline:layer_decomposition",
       "mode": "layer_decomposition",
@@ -1782,7 +1933,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "ad4a19ee1c8fe689b750a580724439dbf60fb806f124365ad6aba07cc16bce03",
+      "graphHash": "6b71e088991f45593d8ad2f0580d9d6968b0ee0abf9d7599be358959b265c43c",
       "graphPath": "studio/qwen-image-modular-pipeline/control-image.json",
       "id": "QwenImageModularPipeline:control_image",
       "mode": "control_image",
@@ -1818,7 +1969,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "1e3e888ff8b75135363d5c8670726f566e197aee817090c1e743ee0c241307f5",
+      "graphHash": "44e385ba7fda42a8630f36d5d2d4e4828b0d1b7d372f64bb4a7e0b9990509cac",
       "graphPath": "studio/qwen-image-modular-pipeline/text-to-image.json",
       "id": "QwenImageModularPipeline:text_to_image",
       "mode": "text_to_image",
@@ -1830,10 +1981,22 @@
         "qwen_low_vram_text_rendering",
         "qwen_poster_logo_text",
         "qwen_product_mockup",
-        "qwen_text_rendering",
-        "qwen_upscale_finish"
+        "qwen_text_rendering"
       ],
       "qualificationStatus": "graph-qualified",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "350203fdeff8721c25475ef301d8d2ba93fd2fd7f94fcdba794212a006018447",
+      "graphPath": "studio/qwen-image-modular-pipeline/text-to-image--qwen-upscale-finish.json",
+      "id": "QwenImageModularPipeline:text_to_image:qwen_upscale_finish",
+      "mode": "text_to_image",
+      "modelType": "QwenImageModularPipeline",
+      "publicTemplateIds": [
+        "qwen_upscale_finish"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
     },
@@ -2304,7 +2467,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "0f20c2ea221d9215d2ec157e288a69b7059e00d10e00396d82fcf1044b9cfa4e",
+      "graphHash": "8c3c86cb4167edbd31c65bbdd97d17936b535fca2e3266247549036920176786",
       "graphPath": "studio/wan-vace-pipeline/control-to-video.json",
       "id": "WanVACEPipeline:control_to_video",
       "mode": "control_to_video",
@@ -2341,7 +2504,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "007a52f48ea999bdd6c676b39d409c1ca3eb02b4ec58529fdc40f0a4fba875a1",
+      "graphHash": "68508c2a03cb5050b2232ca2773fa64c461da1a881a06b94b1b2f2ec8c40ad93",
       "graphPath": "studio/wan-vace-pipeline/video-outpaint.json",
       "id": "WanVACEPipeline:video_outpaint",
       "mode": "video_outpaint",
@@ -2354,22 +2517,34 @@
       "status": "executable"
     },
     {
-      "graphHash": "7067b270e8df16bb12096ed2aab776664c076552321029c9b1adcdfc7c308918",
+      "graphHash": "ed9451f2568cda62137fbeb0ff30ffeeaf39765d4b9cef70e39f6d56eccfc4cc",
       "graphPath": "studio/wan-video-pipeline/text-to-video.json",
       "id": "WanVideoPipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "WanVideoPipeline",
       "publicTemplateIds": [
         "wan_21_t2v_13b_seed_vault",
-        "wan_vace_cinematic_text_to_video",
-        "wan_video_long_showcase"
+        "wan_vace_cinematic_text_to_video"
       ],
       "qualificationStatus": "execution-qualified-gallery-review-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
     },
     {
-      "graphHash": "81c281e1ba46d918349cba13587300563aa2a0fde18297402e7629f40e603c0b",
+      "graphHash": "e3440e24a453a8987e12980ca2e973ecde5686a1449e0428a5b6847e233451f9",
+      "graphPath": "studio/wan-video-pipeline/text-to-video--wan-video-long-showcase.json",
+      "id": "WanVideoPipeline:text_to_video:wan_video_long_showcase",
+      "mode": "text_to_video",
+      "modelType": "WanVideoPipeline",
+      "publicTemplateIds": [
+        "wan_video_long_showcase"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "820f9d7007fd0dac50ac61d1bbf6af78d12ec254e8f4b9e2e924c8d22c2af11e",
       "graphPath": "studio/wan-video-pipeline/video-color-edit.json",
       "id": "WanVideoPipeline:video_color_edit",
       "mode": "video_color_edit",
@@ -2382,7 +2557,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "03d7c2c2818005700d0e0f2938d62125d1c9809f8577111bb6088c15e612dbcd",
+      "graphHash": "325a0db82612d56cc3f355ceceeea0ac40d587e86866d030727836a630eac53a",
       "graphPath": "studio/wan-video-pipeline/video-to-video.json",
       "id": "WanVideoPipeline:video_to_video",
       "mode": "video_to_video",
@@ -2428,7 +2603,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "d45f6573caf28815891a4bc1b30aabd615dfe652347c50a1b0b68d0cc7ee4725",
+      "graphHash": "ffa328ad5741d99d8687aac703c9794779295c8ef7daab7daf3c9d99ddc9042f",
       "graphPath": "studio/z-image-modular-pipeline/text-to-image.json",
       "id": "ZImageModularPipeline:text_to_image",
       "mode": "text_to_image",
@@ -2445,7 +2620,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "09560e6bdd8cdf0303141f700013f94201bf18a850eb181191242609a29705fb",
+      "graphHash": "5fd71799b6478e391e7c6056598f5781442d2d391f0cd0bf1c6335356f39e0d3",
       "graphPath": "studio/z-image-modular-pipeline/text-to-image--fast-lora.json",
       "id": "ZImageModularPipeline:text_to_image:fast_lora",
       "mode": "text_to_image",
@@ -2458,7 +2633,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "7ee01e2afe78fce2875e8e83df6e805f116ca64c4f5529775b4a0a36cb72705b",
+      "graphHash": "9ee4b633175e6683a9713a0a8040bbea92355f4bad53ab3dc5ee63207bf63e08",
       "graphPath": "studio/z-image-modular-pipeline/text-to-image--z-image-lora-style.json",
       "id": "ZImageModularPipeline:text_to_image:z_image_lora_style",
       "mode": "text_to_image",
@@ -2471,7 +2646,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:e08b70d68864d6c3ea172ff0f6aad753f4024755e2b5460cb1db90751a62d33f",
+  "contentHash": "sha256:4d7481826d5737426e32487ffb158cfd05e166a8f7d98acf96bb74203e9ba7a4",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -4493,12 +4668,33 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "kandinsky6-av:image_to_video:v1",
+          "mode": "image_to_video",
+          "modelType": "Kandinsky6TI2VAPipeline"
+        },
+        {
+          "id": "kandinsky6-av:image_to_video_with_audio:v1",
+          "mode": "image_to_video_with_audio",
+          "modelType": "Kandinsky6TI2VAPipeline"
+        },
+        {
+          "id": "kandinsky6-av:text_to_video:v1",
+          "mode": "text_to_video",
+          "modelType": "Kandinsky6TI2VAPipeline"
+        },
+        {
+          "id": "kandinsky6-av:text_to_video_with_audio:v1",
+          "mode": "text_to_video_with_audio",
+          "modelType": "Kandinsky6TI2VAPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "Kandinsky6TI2VAPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "unreviewed"
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -7855,7 +8051,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "AceStepAudioPipeline:text_to_audio",
+      "canonicalWorkflowId": "AceStepAudioPipeline:text_to_audio:ace_step_lyric_music_video",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -8169,7 +8365,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image",
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_multi_reference_edit",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -8200,7 +8396,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image",
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_raw_coordinate_prompt",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -8231,7 +8427,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image",
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_single_reference_edit",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -8262,7 +8458,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image",
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_text_to_image",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -8327,7 +8523,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image",
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_multi_reference_edit",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -8358,7 +8554,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image",
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_raw_coordinate_prompt",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -8389,7 +8585,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image",
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_single_reference_edit",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -8420,7 +8616,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image",
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_text_to_image",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -8707,16 +8903,16 @@
         "schemaVersion": 1,
         "task": "text_to_image"
       },
-      "galleryExamplePresent": false,
+      "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": null,
-      "galleryVerificationStatus": null,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "flux_lora_cinematic_octane_3d",
       "mode": "text_to_image",
       "modelType": "FluxDevPipeline",
       "readinessPolicy": "runnable",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
-      "reviewedGalleryExample": false,
+      "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
@@ -9081,16 +9277,32 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "LTXVideoPipeline:text_to_video",
+      "canonicalWorkflowId": "LTXVideoPipeline:text_to_video:ltx_video_animated_story",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "text_to_video",
+          "modelType": "LTXVideoPipeline"
+        },
+        "executionProfileId": "ltx-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "LTXConditionPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_video"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "ltx_video_animated_story",
       "mode": "text_to_video",
       "modelType": "LTXVideoPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -9127,16 +9339,32 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "LTXVideoPipeline:image_to_video",
+      "canonicalWorkflowId": "LTXVideoPipeline:image_to_video:ltx_video_long_showcase",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "image_to_video",
+          "modelType": "LTXVideoPipeline"
+        },
+        "executionProfileId": "ltx-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "LTXConditionPipeline",
+        "schemaVersion": 1,
+        "task": "image_to_video"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "ltx_video_long_showcase",
       "mode": "image_to_video",
       "modelType": "LTXVideoPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -9216,7 +9444,7 @@
         },
         "executionProfileId": "ltx-video:direct",
         "implementation": "pipeline_stages",
-        "note": "Encode Inputs reuses official text encoding and owns source media; the official Denoise call prepares media latents and Video Output decodes and exports the matching result.",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
         "pipelineClass": "LTXConditionPipeline",
         "schemaVersion": 1,
         "task": "video_to_video"
@@ -9235,7 +9463,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "MiniMaxH3ImageModularPipeline:text_to_image",
+      "canonicalWorkflowId": "MiniMaxH3ImageModularPipeline:text_to_image:minimax_h3_image_old_town_cat",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -9282,16 +9510,16 @@
         "schemaVersion": 1,
         "task": "text_to_audio"
       },
-      "galleryExamplePresent": false,
+      "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": null,
-      "galleryVerificationStatus": null,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "minimax_music3_chamber_pop",
       "mode": "text_to_audio",
       "modelType": "MiniMaxMusic3ModularPipeline",
       "readinessPolicy": "runnable",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
-      "reviewedGalleryExample": false,
+      "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
@@ -9356,7 +9584,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "QwenImageEditPlusModularPipeline:edit_image",
+      "canonicalWorkflowId": "QwenImageEditPlusModularPipeline:edit_image:qwen_edit_plus_single_image",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -9930,7 +10158,7 @@
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+      "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image:qwen_upscale_finish",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
       "executionRecipeSource": "backend_operation_starter",
@@ -9991,30 +10219,62 @@
     },
     {
       "canonicalWorkflowId": "WanVideoPipeline:text_to_video",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "text_to_video",
+          "modelType": "WanVideoPipeline"
+        },
+        "executionProfileId": "wan-text-to-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "WanPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_video"
+      },
       "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": null,
       "galleryVerificationStatus": null,
       "id": "wan_21_t2v_13b_seed_vault",
       "mode": "text_to_video",
       "modelType": "WanVideoPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": false,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "WanImageToVideoPipeline:image_to_video",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "image_to_video",
+          "modelType": "WanImageToVideoPipeline"
+        },
+        "executionProfileId": "wan-22-image-to-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "WanImageToVideoPipeline",
+        "schemaVersion": 1,
+        "task": "image_to_video"
+      },
       "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": null,
       "galleryVerificationStatus": null,
       "id": "wan_22_i2v_seed_vault",
       "mode": "image_to_video",
       "modelType": "WanImageToVideoPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": false,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -10032,7 +10292,7 @@
         },
         "executionProfileId": "wan-22-ti2v-5b:direct",
         "implementation": "pipeline_stages",
-        "note": "Encode Inputs reuses official text encoding and owns source media; the official Denoise call prepares media latents and Video Output decodes and exports the matching result.",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
         "pipelineClass": "WanTI2VPipeline",
         "schemaVersion": 1,
         "task": "text_to_video"
@@ -10052,106 +10312,218 @@
     },
     {
       "canonicalWorkflowId": "WanVideoPipeline:text_to_video",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "text_to_video",
+          "modelType": "WanVideoPipeline"
+        },
+        "executionProfileId": "wan-text-to-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "WanPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_video"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "wan_vace_cinematic_text_to_video",
       "mode": "text_to_video",
       "modelType": "WanVideoPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "WanVACEPipeline:control_to_video",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "control_to_video",
+          "modelType": "WanVACEPipeline"
+        },
+        "executionProfileId": "wan-vace:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "WanVACEPipeline",
+        "schemaVersion": 1,
+        "task": "control_to_video"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "wan_vace_grayscale_control",
       "mode": "control_to_video",
       "modelType": "WanVACEPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "WanVACEPipeline:video_inpaint",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "video_inpaint",
+          "modelType": "WanVACEPipeline"
+        },
+        "executionProfileId": "wan-vace:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "WanVACEPipeline",
+        "schemaVersion": 1,
+        "task": "video_inpaint"
+      },
       "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": null,
       "galleryVerificationStatus": null,
       "id": "wan_vace_masked_object_replace",
       "mode": "video_inpaint",
       "modelType": "WanVACEPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": false,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "WanVACEPipeline:video_outpaint",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "video_outpaint",
+          "modelType": "WanVACEPipeline"
+        },
+        "executionProfileId": "wan-vace:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "WanVACEPipeline",
+        "schemaVersion": 1,
+        "task": "video_outpaint"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "wan_vace_outpaint_reframe",
       "mode": "video_outpaint",
       "modelType": "WanVACEPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "WanVideoPipeline:video_color_edit",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "video_color_edit",
+          "modelType": "WanVideoPipeline"
+        },
+        "executionProfileId": "wan-video-to-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "WanVideoToVideoPipeline",
+        "schemaVersion": 1,
+        "task": "video_color_edit"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "wan_vace_video_color_grade",
       "mode": "video_color_edit",
       "modelType": "WanVideoPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "WanVideoPipeline:video_to_video",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "video_to_video",
+          "modelType": "WanVideoPipeline"
+        },
+        "executionProfileId": "wan-video-to-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "WanVideoToVideoPipeline",
+        "schemaVersion": 1,
+        "task": "video_to_video"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "wan_vace_video_to_video",
       "mode": "video_to_video",
       "modelType": "WanVideoPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "WanVideoPipeline:text_to_video",
+      "canonicalWorkflowId": "WanVideoPipeline:text_to_video:wan_video_long_showcase",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
-      "galleryExamplePresent": false,
-      "galleryQualityReviewStatus": null,
-      "galleryVerificationStatus": null,
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "text_to_video",
+          "modelType": "WanVideoPipeline"
+        },
+        "executionProfileId": "wan-text-to-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "WanPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_video"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "wan_video_long_showcase",
       "mode": "text_to_video",
       "modelType": "WanVideoPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
-      "reviewedGalleryExample": false,
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
@@ -10320,21 +10692,21 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "416e2e5b57e56e58ec0afe3bcda054e053d292d30c8d97dc0d70be86781ab967",
+    "templateBundleSha256": "d440965dac6750440ef3d30b6c231c06e789d39b3ad61da14430224165ba9c07",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
         "delivery": "base",
         "dependencies": [
           "accelerate>=1.4.0",
-          "diffusers==0.41.0",
+          "diffusers==0.43.0",
           "huggingface-hub>=1.31.0,<2.0",
           "peft>=0.21.2",
           "torch>=2.6.0,<2.12; sys_platform == 'darwin'",
           "torch>=2.6.0; sys_platform != 'darwin'",
           "transformers>=5.18.0"
         ],
-        "digest": "sha256:cc7a00bd6942e5d4e95f6cc8a80efab42b1e26c9c4df9862568cd7b6af15f32c",
+        "digest": "sha256:111b6c7b46b8e674c8f5abf2c24b90494ab16c511064b9c3286704de5ba87d95",
         "id": "modiff.base-model-runtime"
       },
       "legacyProductionFieldScope": "historical_reference_wheel_only",
@@ -10367,20 +10739,20 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 210,
-    "canonicalWorkflowsWithPublicTemplates": 61,
-    "canonicalWorkflowsWithoutPublicTemplates": 149,
+    "canonicalWorkflowCount": 225,
+    "canonicalWorkflowsWithPublicTemplates": 71,
+    "canonicalWorkflowsWithoutPublicTemplates": 154,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
       "equivalent": 8,
-      "executable": 146,
+      "executable": 147,
       "intentionally-excluded": 59,
       "research-blocked": 116,
-      "unreviewed": 6
+      "unreviewed": 5
     },
     "publicTemplateCount": 91,
-    "reviewedGalleryTemplateCount": 80,
+    "reviewedGalleryTemplateCount": 83,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
@@ -10401,9 +10773,9 @@
       "unreviewed": 0
     },
     "workflowStatusCounts": {
-      "contract-only": 7,
+      "contract-only": 16,
       "equivalent": 0,
-      "executable": 203,
+      "executable": 209,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

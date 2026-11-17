@@ -1,6 +1,6 @@
 {
   "workflowId": "DDIMPipeline:unconditional_image",
-  "canonicalSourceSha256": "34441b9441448806f7f1354789fb91ec0f7982bb711075b0645658c13149589c",
+  "canonicalSourceSha256": "8da3b72ab10b10ab7c68b92e87d089f35134fc2133c5df0a3613c13bd255b7f8",
   "apiGraph": {
     "sid": "canonical-qualification",
     "nodes": {
@@ -21,6 +21,9 @@
           "conditioning_revision": {
             "value": ""
           },
+          "control_components": {
+            "display": "input"
+          },
           "device": {
             "value": "cuda:0"
           },
@@ -36,10 +39,16 @@
           "enable_vae_tiling": {
             "value": true
           },
+          "execution_profile_id": {
+            "value": ""
+          },
           "execution_recipe": {
             "display": "input",
             "sourceId": "node-03",
             "sourceKey": "execution_recipe"
+          },
+          "image_prompt_adapter": {
+            "display": "input"
           },
           "low_cpu_mem_usage": {
             "value": true
@@ -59,6 +68,9 @@
           },
           "pipeline_class": {
             "value": "DDIMPipeline"
+          },
+          "prequantized_transformer": {
+            "display": "input"
           },
           "quantization_mode": {
             "value": "none"

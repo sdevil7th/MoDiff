@@ -23,8 +23,8 @@ def ordinary_project(tmp_path, monkeypatch):
     return project
 
 
-@pytest.mark.parametrize("version, ready", [("0.41.0", True), ("0.41.1", False), ("0.42.0", False),
-    ("0.40.0", False), ("0.41.0.dev0", False)])
+@pytest.mark.parametrize("version, ready", [("0.43.0", True), ("0.41.0", False), ("0.43.1", False), ("0.42.0", False),
+    ("0.40.0", False), ("0.43.0.dev0", False)])
 def test_diffusers_readiness_requires_reviewed_release_without_git_receipt(ordinary_project, version, ready):
     def forbidden(_name):
         pytest.fail("Published-package readiness must not require a Git receipt or model import")
@@ -33,8 +33,8 @@ def test_diffusers_readiness_requires_reviewed_release_without_git_receipt(ordin
     assert status["packages"] == {"diffusers": version}
 
 
-def fake_distribution(tmp_path, *, version="0.41.0", direct=None, record="diffusers/__init__.py,sha256:fixture,1\n"):
-    origin = tmp_path / "diffusers-0.41.0.dist-info"
+def fake_distribution(tmp_path, *, version="0.43.0", direct=None, record="diffusers/__init__.py,sha256:fixture,1\n"):
+    origin = tmp_path / "diffusers-0.43.0.dist-info"
     origin.mkdir(exist_ok=True)
     return SimpleNamespace(version=version, _path=origin,
         read_text=lambda name: json.dumps(direct) if name == "direct_url.json" and direct is not None else
@@ -51,8 +51,8 @@ def identity_with(tmp_path, monkeypatch, distribution):
 def test_overlay_binds_published_diffusers_record_without_git_identity(ordinary_project, tmp_path, monkeypatch):
     distribution = fake_distribution(tmp_path)
     identity = identity_with(tmp_path, monkeypatch, distribution)
-    assert identity["version"] == "0.41.0"
-    assert identity["declaration"] == "diffusers==0.41.0"
+    assert identity["version"] == "0.43.0"
+    assert identity["declaration"] == "diffusers==0.43.0"
     assert identity["directUrl"] is None
     assert identity["recordDigest"] == "sha256:" + hashlib.sha256(distribution.read_text("RECORD").encode()).hexdigest()
     assert "commitId" not in identity
@@ -66,7 +66,7 @@ def test_overlay_rejects_malformed_or_editable_diffusers(ordinary_project, tmp_p
         identity_with(tmp_path, monkeypatch, fake_distribution(tmp_path, direct=direct))
 
 
-@pytest.mark.parametrize("version", ["0.40.0", "0.41.0.dev0", "0.41.1", "0.42.0"])
+@pytest.mark.parametrize("version", ["0.40.0", "0.41.0", "0.43.0.dev0", "0.43.1", "0.42.0"])
 def test_overlay_rejects_unreviewed_releases_and_prerelease(ordinary_project, tmp_path, monkeypatch, version):
     with pytest.raises(RuntimeError, match="does not satisfy"):
         identity_with(tmp_path, monkeypatch, fake_distribution(tmp_path, version=version))
@@ -102,7 +102,7 @@ def test_fresh_validator_rechecks_record_version_and_direct_source(ordinary_proj
     namespace = {"metadata": runtime_overlays.metadata, "json": json, "hashlib": hashlib,
                  "Path": Path, "importlib": importlib, "provider": None, "payload": {"binding": {"diffusers": binding}}}
     exec(section, namespace)
-    for changed in [fake_distribution(tmp_path, version="0.41.1"),
+    for changed in [fake_distribution(tmp_path, version="0.43.1"),
                     fake_distribution(tmp_path, record="modified\n"),
                     fake_distribution(tmp_path, direct={"url": "https://example.invalid/changed.whl"})]:
         monkeypatch.setattr(runtime_overlays.metadata, "distribution", lambda name, value=changed: value)
@@ -111,17 +111,17 @@ def test_fresh_validator_rechecks_record_version_and_direct_source(ordinary_proj
 
 
 @pytest.mark.parametrize("source, url, digest", [
-    ({"git": "https://example.invalid/repository"}, "https://files.pythonhosted.org/diffusers-0.41.0-py3-none-any.whl", "sha256:"+"a"*64),
-    ({"registry": "https://pypi.org/simple"}, "https://example.invalid/diffusers-0.41.0-py3-none-any.whl", "sha256:"+"a"*64),
-    ({"registry": "https://pypi.org/simple"}, "http://files.pythonhosted.org/diffusers-0.41.0-py3-none-any.whl", "sha256:"+"a"*64),
-    ({"registry": "https://pypi.org/simple"}, "https://files.pythonhosted.org/diffusers-0.41.0-py3-none-any.whl", "sha256:not-a-digest"),
+    ({"git": "https://example.invalid/repository"}, "https://files.pythonhosted.org/diffusers-0.43.0-py3-none-any.whl", "sha256:"+"a"*64),
+    ({"registry": "https://pypi.org/simple"}, "https://example.invalid/diffusers-0.43.0-py3-none-any.whl", "sha256:"+"a"*64),
+    ({"registry": "https://pypi.org/simple"}, "http://files.pythonhosted.org/diffusers-0.43.0-py3-none-any.whl", "sha256:"+"a"*64),
+    ({"registry": "https://pypi.org/simple"}, "https://files.pythonhosted.org/diffusers-0.43.0-py3-none-any.whl", "sha256:not-a-digest"),
 ])
 def test_managed_installer_rejects_wrong_locked_wheel_provenance_before_io(tmp_path, monkeypatch, source, url, digest):
     root = tmp_path / "project"; root.mkdir()
     # tomllib is patched only to supply adversarial lock fields; no installer/network call may occur.
     (root / "uv.lock").write_text("ignored fixture")
     monkeypatch.setattr(install, "ROOT", root)
-    monkeypatch.setattr(install.tomllib, "load", lambda _handle: {"package": [{"name": "diffusers", "version": "0.41.0", "source": source,
+    monkeypatch.setattr(install.tomllib, "load", lambda _handle: {"package": [{"name": "diffusers", "version": "0.43.0", "source": source,
         "wheels": [{"url": url, "hash": digest}]}]})
     monkeypatch.setattr(install, "_run", lambda *_args, **_kwargs: pytest.fail("Untrusted wheel must be rejected before installation"))
     with pytest.raises(RuntimeError):
@@ -131,12 +131,12 @@ def test_managed_installer_rejects_wrong_locked_wheel_provenance_before_io(tmp_p
 def test_tested_lock_records_official_stable_wheel():
     root = Path(__file__).resolve().parents[1]
     project = tomllib.loads((root / "pyproject.toml").read_text())
-    assert "diffusers==0.41.0" in project["project"]["dependencies"]
+    assert "diffusers==0.43.0" in project["project"]["dependencies"]
     lock = tomllib.loads((root / "uv.lock").read_text())
     package = next(item for item in lock["package"] if item["name"] == "diffusers")
-    assert package["version"] == "0.41.0"
+    assert package["version"] == "0.43.0"
     assert package["source"] == {"registry": "https://pypi.org/simple"}
-    assert package["wheels"][0]["hash"] == "sha256:ea8918b7dfd92ce793b6db689a551b8cd25d52c6c0fcd3ade0706a5fd2a25990"
+    assert package["wheels"][0]["hash"] == "sha256:8afb8ff1b09d693854de0412d8bdc94fc9e6e6e4efefb2386c616f64a4dc9ac6"
 
 
 def test_historical_catalog_source_is_separate_from_runtime_release_pin(tmp_path):
@@ -146,7 +146,7 @@ def test_historical_catalog_source_is_separate_from_runtime_release_pin(tmp_path
     (tmp_path / "data").mkdir()
     snapshot = tmp_path / "data/modular-workflow-contracts.json"
     snapshot.write_text(json.dumps({"diffusersRevision": PINNED_DIFFUSERS_REVISION}))
-    (tmp_path / "pyproject.toml").write_text('[project]\ndependencies = ["diffusers==0.41.0"]\n')
+    (tmp_path / "pyproject.toml").write_text('[project]\ndependencies = ["diffusers==0.43.0"]\n')
     assert _pinned_diffusers_revision(tmp_path) == PINNED_DIFFUSERS_REVISION
     snapshot.write_text(json.dumps({"diffusersRevision": "0" * 40}))
     with pytest.raises(UpstreamCoverageError, match="reviewed source revision"):

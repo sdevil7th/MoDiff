@@ -277,7 +277,7 @@ def _tensor_stamp(value):
     return (tuple(value.shape), value.dtype, value.device, value._version)
 
 
-def _freeze_material(value):
+def _freeze_material(value, *, max_items=_MAX_MATERIAL_ITEMS):
     import numpy as np
     import torch
     from PIL import Image
@@ -287,7 +287,7 @@ def _freeze_material(value):
     def freeze(item, depth=0):
         nonlocal count, logical, copied
         count += 1
-        if count > _MAX_MATERIAL_ITEMS or depth > 8:
+        if count > max_items or depth > 8:
             raise ValueError('Image-stage material exceeds its finite structure bound.')
         if isinstance(item, torch.Tensor):
             if id(item) in memo:

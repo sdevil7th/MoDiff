@@ -342,6 +342,7 @@ _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,383}$")
 # Public ids remain stricter, while bindings preserve exact backend/Python
 # parameter keys such as Modular Diffusers `_auto_resize`.
 _FIELD_ID_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.:/-]{0,383}$")
+_PARAM_FIELD_ID_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.:/-]*(?:>>>[A-Za-z0-9_-]+)?$")
 _REPOSITORY_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$")
 _HASH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{1,511}$")
 _IMMUTABLE_REVISION_RE = re.compile(r"^[0-9a-f]{40}$")
@@ -938,7 +939,8 @@ def _validate_graph(graph_value: Any) -> tuple[dict[str, Any], set[str]]:
             raise ValueError(f"BlockDefinitionV2.graph contains duplicate edgeId {edge_id!r}.")
         edge_ids.add(edge_id)
         for key in ("sourceNodeId", "sourcePortId", "targetNodeId", "targetPortId"):
-            _string(edge[key], f"{path}.{key}", maximum=384, pattern=_ID_RE)
+            _string(edge[key], f"{path}.{key}", maximum=384,
+                    pattern=_PARAM_FIELD_ID_RE if key.endswith('PortId') and not _ID_RE.fullmatch(str(edge[key])) else _ID_RE)
         if edge["sourceNodeId"] not in node_ids or edge["targetNodeId"] not in node_ids:
             raise ValueError(f"{path} must reference nodes declared in BlockDefinitionV2.graph.nodes.")
 
@@ -1019,7 +1021,7 @@ def _validate_port(
         binding["fieldOrPortId"],
         f"{path}.binding.fieldOrPortId",
         maximum=384,
-        pattern=_FIELD_ID_RE,
+        pattern=_PARAM_FIELD_ID_RE,
     )
     if binding["nodeId"] not in node_ids:
         raise ValueError(f"{path}.binding.nodeId must reference a declared graph node.")
@@ -1042,7 +1044,7 @@ def _validate_port(
                 mirror["fieldOrPortId"],
                 f"{mirror_path}.fieldOrPortId",
                 maximum=384,
-                pattern=_FIELD_ID_RE,
+                pattern=_PARAM_FIELD_ID_RE,
             )
             mirror_key = (mirror_node_id, mirror_field_id)
             if mirror_key in seen_bindings:
@@ -1131,6 +1133,8 @@ def _validate_boundary(
 
 
 def _block_connection_types_v2(value: Any) -> list[str]:
+    if isinstance(value, str) and re.fullmatch(r"[a-z_][a-z\d_]*(?:\|[a-z_][a-z\d_]*)+", value.strip(), re.I):
+        value = value.strip().split('|')
     values = value if isinstance(value, list) else [value]
     aliases = {
         "opaque": "any",
@@ -1227,7 +1231,7 @@ def _validate_controls(
         binding = _object(control["binding"], f"{path}.binding")
         _exact_keys(binding, f"{path}.binding", required={"nodeId", "fieldId"})
         _string(binding["nodeId"], f"{path}.binding.nodeId", maximum=384, pattern=_ID_RE)
-        _string(binding["fieldId"], f"{path}.binding.fieldId", maximum=384, pattern=_FIELD_ID_RE)
+        _string(binding["fieldId"], f"{path}.binding.fieldId", maximum=384, pattern=_PARAM_FIELD_ID_RE)
         if binding["nodeId"] not in node_ids:
             raise ValueError(f"{path}.binding.nodeId must reference a declared graph node.")
         if "mirrorBindings" in control:
@@ -1244,7 +1248,7 @@ def _validate_controls(
                     mirror["nodeId"], f"{mirror_path}.nodeId", maximum=384, pattern=_ID_RE
                 )
                 mirror_field_id = _string(
-                    mirror["fieldId"], f"{mirror_path}.fieldId", maximum=384, pattern=_FIELD_ID_RE
+                    mirror["fieldId"], f"{mirror_path}.fieldId", maximum=384, pattern=_PARAM_FIELD_ID_RE
                 )
                 mirror_key = (mirror_node_id, mirror_field_id)
                 if mirror_key in seen_bindings:
@@ -1456,7 +1460,7 @@ def _validate_previews(value: Any, *, node_ids: set[str]) -> None:
             preview["outputPortId"],
             f"{path}.outputPortId",
             maximum=384,
-            pattern=_FIELD_ID_RE,
+            pattern=_PARAM_FIELD_ID_RE,
         )
         if preview["nodeId"] not in node_ids:
             raise ValueError(f"{path}.nodeId must reference a declared graph node.")

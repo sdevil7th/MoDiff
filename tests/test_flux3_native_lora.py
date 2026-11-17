@@ -124,6 +124,8 @@ def source_graph(pair, items=None, *, task='text_to_image', chain=False):
 @pytest.fixture
 def runtime(tmp_path, monkeypatch):
     require_flux3_api()
+    from optional_provider_fixtures import require_diffusers_provider_version
+    require_diffusers_provider_version('huggingface-diffusers-flux3-7ecb1e1')
     from diffusers import AutoencoderKLFlux2, ComponentSpec, ComponentsManager
     from transformers import (Qwen2TokenizerFast, Qwen3VLConfig, Qwen3VLForConditionalGeneration,
                               Qwen3VLProcessor, Qwen2VLImageProcessor, Qwen3VLVideoProcessor)

@@ -761,8 +761,10 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
         executing = LoadPipeline("video-replacement-execution")
         executing.mm_add = MagicMock()
+        snapshot = Path("/managed/replacement-video") / replacement_revision
         with (
             patch("diffusers.LTXConditionPipeline", FakePipelineClass),
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=snapshot) as resolve_snapshot,
             patch("modules.DiffusersVideo.main.local_files_only", return_value=True),
             patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
             patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
@@ -773,7 +775,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                 revision=replacement_revision,
             )
 
-        self.assertEqual(upstream_calls, [(replacement["value"], replacement_revision)])
+        resolve_snapshot.assert_called_once_with(replacement["value"], replacement_revision)
+        self.assertEqual(upstream_calls, [(snapshot, replacement_revision)])
         self.assertEqual(result["pipeline"]._modiff_video_repo, replacement["value"])
         self.assertEqual(result["pipeline"]._modiff_video_revision, replacement_revision)
 
@@ -1612,6 +1615,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         node = LoadPipeline()
 
         with (
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=Path("installed-wan-5b")),
             patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
             patch("diffusers.WanPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch(
@@ -1735,6 +1739,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         node = LoadPipeline()
 
         with (
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=Path("installed-wan-i2v")),
             patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
             patch("diffusers.WanImageToVideoPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
@@ -1756,7 +1761,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             )
 
         self.assertIs(loaded, pipeline)
-        self.assertEqual(load_vae.call_args.args[0], adapter.default_repo)
+        self.assertEqual(load_vae.call_args.args[0], Path("installed-wan-i2v"))
         self.assertEqual(str(load_vae.call_args.kwargs["torch_dtype"]), "torch.float32")
         self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
         self.assertIs(load_pipeline.call_args.kwargs["vae"], vae)
@@ -1781,6 +1786,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         node.progress = lambda *args, **kwargs: None
         node.mm_add = lambda *args, **kwargs: None
         with (
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=Path("/managed/ltx-snapshot")),
             patch("diffusers.LTXConditionPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
             patch("modules.DiffusersVideo.main.apply_pipeline_offload"),

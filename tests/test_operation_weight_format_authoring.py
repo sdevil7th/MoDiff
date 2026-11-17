@@ -27,6 +27,9 @@ def test_fresh_loader_format_control_uses_registered_choices_without_registry_mu
     contracts, _ = build_operation_catalog(MODULE_MAP, [], catalog_resolver=lambda: {})
     selection = {'pipelineClass': pipeline, 'task': task, 'operationId': 'diffusion.load_models'}
     expected = list(declared_weight_formats(pipeline, get_model_type_metadata(pipeline)))
+    from modiff.studio_execution_specs import studio_capability_definition
+    capability = studio_capability_definition(pipeline)
+    recommended = capability.get('defaultWeightFormat', 'native')
     raw = original['modules.ModularDiffusers']['ModelsLoader']['params']['weight_format']
     with (
         patch('socket.socket.connect', side_effect=AssertionError('Network during authoring')),
@@ -37,9 +40,9 @@ def test_fresh_loader_format_control_uses_registered_choices_without_registry_mu
         assert field['options'] == expected
         assert field['hidden'] is (len(expected) == 1)
         assert field['default'] == raw['default'] == 'native'
-        assert ('value' in field) is ('value' in raw)
-        assert field.get('value', field['default']) == raw.get('value', raw['default']) == 'native'
-        assert resolved['values'].get('weight_format', 'native') == 'native'
+        assert field.get('value', field['default']) == recommended
+        assert raw.get('value', raw['default']) == 'native'
+        assert resolved['values'].get('weight_format', 'native') == recommended
         # A new draft owns its choices; editing one response cannot affect a
         # later draft, the registered raw node or an already saved definition.
         field['options'].append('unregistered')

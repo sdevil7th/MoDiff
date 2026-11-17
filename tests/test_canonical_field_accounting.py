@@ -96,6 +96,19 @@ def run_ddim(monkeypatch, graph=None):
     return receipt, calls, instances, outputs
 
 
+def test_empty_execution_profile_is_accounted_without_granting_a_stage_route(monkeypatch):
+    graph = ddim_graph()
+    graph['nodes']['node-01']['params']['execution_profile_id'] = {'value': ''}
+    receipt, _, _, _ = run_ddim(monkeypatch, graph)
+    loader = next(row for row in receipt['nodes'] if row['action'] == 'LoadPipeline')
+    accounting = loader['fieldAccounting']
+    assert accounting['complete'], accounting
+    assert accounting['fields']['execution_profile_id'] == {
+        'disposition': 'inactive', 'inputValue': '', 'value': '',
+        'source': 'literal', 'reason': 'adapter-inactive',
+    }
+
+
 def test_real_ddim_export_has_complete_native_literal_accounting(monkeypatch):
     graph = ddim_graph()
     receipt, calls, _, _ = run_ddim(monkeypatch, graph)

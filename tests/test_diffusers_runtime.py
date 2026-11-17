@@ -39,9 +39,14 @@ class FakeAttentionComponent:
         self.is_cache_enabled = False
         self.cache_configs = []
         self.compile_calls = []
+        self.processor = types.SimpleNamespace(_attention_backend=None)
+
+    def modules(self):
+        return [self]
 
     def set_attention_backend(self, backend):
         self.backends.append(backend)
+        self.processor._attention_backend = backend
 
     def reset_attention_backend(self):
         self.backend_resets += 1
@@ -248,6 +253,31 @@ class DiffusersRuntimeTests(unittest.TestCase):
         self.assertEqual(pipeline.transformer.backends, ["sage"])
         self.assertEqual(result["applied"], ["transformer"])
 
+    def test_legacy_sdpa_processors_do_not_claim_a_forced_attention_backend(self):
+        from diffusers import UNet2DConditionModel
+
+        # The official ModelMixin setter also exists on this older UNet. Its
+        # processors call Torch SDPA directly and ignore the dispatcher setting.
+        unet = UNet2DConditionModel(
+            sample_size=8,
+            in_channels=4,
+            out_channels=4,
+            block_out_channels=(32,),
+            down_block_types=("CrossAttnDownBlock2D",),
+            up_block_types=("CrossAttnUpBlock2D",),
+            cross_attention_dim=32,
+            attention_head_dim=8,
+            norm_num_groups=8,
+        )
+        self.assertTrue(unet.attn_processors)
+        self.assertTrue(all(not hasattr(p, "_attention_backend") for p in unet.attn_processors.values()))
+        for backend in ("native", "_native_math", "_native_efficient"):
+            with self.subTest(backend=backend):
+                with self.assertRaisesRegex(RuntimeError, "processors.*dispatcher.*Select auto"):
+                    apply_attention_backend(types.SimpleNamespace(unet=unet), backend)
+        result = apply_attention_backend(types.SimpleNamespace(unet=unet), "auto")
+        self.assertEqual(result["reset"], ["unet"])
+
     def test_obsolete_and_mutable_hub_aiter_backends_fail_closed(self):
         self.assertNotIn("aiter", ATTENTION_BACKENDS)
         self.assertNotIn("aiter_fa2_hub", ATTENTION_BACKENDS)
@@ -259,6 +289,36 @@ class DiffusersRuntimeTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "Unsupported attention backend"):
                     build_execution_recipe(attention_backend=backend)
                 self.assertEqual(pipeline.transformer.backends, [])
+
+    def test_official_dispatcher_processor_retains_the_explicit_backend(self):
+        from diffusers import QwenImageTransformer2DModel
+
+        transformer = QwenImageTransformer2DModel(
+            in_channels=16, out_channels=16, num_layers=1,
+            attention_head_dim=8, num_attention_heads=2,
+            joint_attention_dim=16, axes_dims_rope=(2, 2, 4),
+        )
+        result = apply_attention_backend(types.SimpleNamespace(transformer=transformer), "_native_math")
+        self.assertEqual(result["applied"], ["transformer"])
+        processors = [m.processor for m in transformer.modules() if getattr(m, "processor", None) is not None]
+        self.assertTrue(processors)
+        self.assertTrue(all(p._attention_backend.value == "_native_math" for p in processors))
+
+    def test_setter_only_and_partially_compatible_components_cannot_claim_success(self):
+        pipeline = FakePipeline()
+        pipeline.transformer.modules = lambda: []
+        with self.assertRaisesRegex(RuntimeError, "processors.*dispatcher.*Select auto"):
+            apply_attention_backend(pipeline, "_native_math")
+        pipeline.transformer.modules = lambda: [pipeline.transformer, types.SimpleNamespace(processor=object())]
+        with self.assertRaisesRegex(RuntimeError, "processors.*dispatcher.*Select auto"):
+            apply_attention_backend(pipeline, "_native_math")
+        self.assertEqual(pipeline.transformer.backends, [])
+
+    def test_a_dispatcher_setter_that_does_not_update_processors_fails_closed(self):
+        pipeline = FakePipeline()
+        pipeline.transformer.set_attention_backend = lambda _backend: None
+        with self.assertRaisesRegex(RuntimeError, "processors did not retain"):
+            apply_attention_backend(pipeline, "_native_math")
 
     def test_attention_auto_restores_model_and_process_defaults(self):
         from diffusers.models.attention_dispatch import AttentionBackendName, _AttentionBackendRegistry
@@ -288,6 +348,7 @@ class DiffusersRuntimeTests(unittest.TestCase):
 
         def set_backend_and_mutate_registry(backend):
             pipeline.transformer.backends.append(backend)
+            pipeline.transformer.processor._attention_backend = backend
             _AttentionBackendRegistry.set_active_backend(AttentionBackendName(backend))
 
         # Match pinned Diffusers ModelMixin semantics: configuring this model

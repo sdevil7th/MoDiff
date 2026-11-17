@@ -75,8 +75,13 @@ class Pipeline:
         self.transformer = torch.nn.Linear(1, 1)
         self.scheduler = Scheduler()
         self.vae = VAE()
+        self.vae_scale_factor_temporal = 4
         self._execution_device = 'cpu'
         profile = DIFFUSERS_EXECUTION_PROFILES[identity]
+        if profile.pipeline_class == 'WanImageToVideoPipeline':
+            self.transformer_2 = torch.nn.Linear(1, 1)
+            self.image_encoder = None
+            self.image_processor = None
         self._modiff_video_pipeline_class = profile.pipeline_class
         self._modiff_video_repo = profile.default_repo
         self._modiff_video_revision = require_catalog_revision(profile.default_repo)
@@ -111,7 +116,8 @@ def owner(identity='ltx-video:direct'):
 
 def encoded(pipeline, **changes):
     mode = DIFFUSERS_EXECUTION_PROFILES[pipeline.identity].modes[0]
-    media = {'reference_images': [Image.new('RGB', (32, 32))]} if mode == 'image_to_video' else {}
+    media = {'reference_images': [Image.new('RGB', (32, 32))]} if mode == 'image_to_video' else (
+        {'video': [Image.new('RGB', (32, 32)) for _ in range(9)]} if mode == 'video_to_video' else {})
     return core.encode(pipeline, {'mode': mode, 'prompt': 'A moving train', **media,
         'negative_prompt': '', 'guidance_scale': 1., 'max_sequence_length': 128, **changes})
 
@@ -242,7 +248,7 @@ def test_ltx_encoder_normalizes_the_existing_shared_sequence_default_before_real
     assert value.max_sequence_length == value.consumed['max_sequence_length'] == 128
 
 
-@pytest.mark.parametrize('identity', core.PROFILE_CLASSES)
+@pytest.mark.parametrize('identity', [key for key, cls in core.PROFILE_CLASSES.items() if cls != 'WanVACEPipeline'])
 def test_split_decode_uses_official_normalization_and_current_latent(identity):
     pipeline, _ = owner(identity)
     encoding = encoded(pipeline)
@@ -300,19 +306,21 @@ def test_decoder_dispatch_rejects_a_fabricated_binding_before_tensor_work():
             latents=torch.ones(1), latent_binding={'seed': 7})
 
 
-@pytest.mark.parametrize('identity', core.PROFILE_CLASSES)
+@pytest.mark.parametrize('identity', [key for key, cls in core.PROFILE_CLASSES.items() if cls != 'WanVACEPipeline'])
 def test_actual_split_calls_capture_video_task_prompt_and_final_format_without_form_fallback(identity):
     from modiff.execution_input_provenance import capture_generation_inputs, build_resolved_execution_inputs, apply_resolved_execution_inputs
     from modules.DiffusersVideo.main import get_video_pipeline_adapter
     pipeline, _ = owner(identity)
     mode = DIFFUSERS_EXECUTION_PROFILES[identity].modes[0]
-    media = {'reference_images': [Image.new('RGB', (32, 32))]} if mode == 'image_to_video' else {}
+    media = {'reference_images': [Image.new('RGB', (32, 32))]} if mode == 'image_to_video' else (
+        {'video': [Image.new('RGB', (32, 32)) for _ in range(9)]} if mode == 'video_to_video' else {})
     encoder, sampler, decoder = EncodeInputs('encode'), Denoise('sample'), DecodeLatents('decode')
     encoding = encoder(pipeline=pipeline, mode=mode, prompt='A moving train', **media,
                        negative_prompt='', guidance_scale=1., max_sequence_length=128)['encoded_inputs']
     def sample(pipe, adapter, mode, args):
+        controls = {'guidance_scale_2': 3.5} if adapter.pipeline_class == 'WanImageToVideoPipeline' else {}
         return sampler._invoke_pipeline(pipe, {'width': 32, 'height': 32, 'num_frames': 9,
-            'generator': torch.Generator().manual_seed(7)})
+            'generator': torch.Generator().manual_seed(7), **controls})
     with patch.object(Pipeline, '__call__', lambda self, **kw: SimpleNamespace(frames=torch.ones(1, 1, 2, 2, 2)), create=True), patch(
         'modules.DiffusersVideo.main._pipeline_adapter', return_value=get_video_pipeline_adapter(pipeline._modiff_video_pipeline_class),
     ), patch.object(sampler, '_execute_adapter', side_effect=sample):
@@ -383,10 +391,273 @@ def test_wan_stage_seals_latents_after_the_existing_adapter_restores_its_schedul
     assert node._video_sample is None
 
 
+def test_wan_13b_stages_use_the_existing_adapter_with_owned_prompt_embeddings():
+    import inspect
+    from diffusers import WanPipeline
+    from modules.DiffusersVideo.main import get_video_pipeline_adapter
+
+    pipeline, _ = owner('wan-text-to-video:direct')
+    value = encoded(pipeline, guidance_scale=4.5)
+    sampler = Denoise('wan-13b-staged-call')
+    calls = []
+
+    @torch.no_grad()
+    def sample(pipe, **kwargs):
+        assert not torch.is_grad_enabled()
+        assert set(kwargs) <= set(inspect.signature(WanPipeline.__call__).parameters)
+        calls.append(kwargs)
+        return SimpleNamespace(frames=torch.ones(1, 1, 3, 4, 4))
+
+    with patch.object(Pipeline, '__call__', sample, create=True), patch(
+        'modules.DiffusersVideo.main._pipeline_adapter', return_value=get_video_pipeline_adapter('WanPipeline'),
+    ), patch.object(sampler, '_execute_adapter', side_effect=lambda p, a, m, v: sampler._execute_wan_text_to_video(p, a, m, v)):
+        result = sampler(pipeline=pipeline, encoded_inputs=value, mode='text_to_video', guidance_scale=4.5,
+                         width=32, height=32, num_frames=9, num_inference_steps=50, seed=8201)
+    assert len(calls) == 1
+    actual = calls[0]
+    assert actual['prompt'] is None and actual['negative_prompt'] is None
+    assert actual['prompt_embeds'] is value.embeddings['prompt_embeds']
+    assert actual['negative_prompt_embeds'] is value.embeddings['negative_prompt_embeds']
+    assert actual['num_inference_steps'] == 50 and actual['guidance_scale'] == 4.5
+    assert actual['generator'].initial_seed() == 8201
+    assert actual['output_type'] == 'latent'
+    decoded = DecodeLatents('wan-13b-staged-decode')(
+        pipeline=pipeline, latents=result['latents_out'], latent_binding=result['latent_binding'])
+    assert decoded['frames_out'] == 9 and len(decoded['video_out']) == 9
+
+
+@pytest.mark.parametrize(('mode', 'strength'), [('video_to_video', .7), ('video_color_edit', .2)])
+def test_wan_source_video_stages_keep_actual_source_geometry_and_strength(mode, strength):
+    import inspect
+    from diffusers import WanVideoToVideoPipeline, FlowMatchEulerDiscreteScheduler
+    from modules.DiffusersVideo.main import get_video_pipeline_adapter
+
+    pipeline, _ = owner('wan-video-to-video:direct')
+    frames = [Image.new('RGB', (32, 32), (index, 2, 3)) for index in range(9)]
+    value = encoded(pipeline, mode=mode, video=frames, guidance_scale=5.)
+    frames[0].putpixel((0, 0), (255, 255, 255))
+    sampler, calls = Denoise('wan-video-stage-call'), []
+
+    @torch.no_grad()
+    def sample(pipe, **kwargs):
+        assert set(kwargs) <= set(inspect.signature(WanVideoToVideoPipeline.__call__).parameters)
+        calls.append(kwargs)
+        return SimpleNamespace(frames=torch.ones(1, 1, 3, 4, 4))
+
+    with patch.object(Pipeline, '__call__', sample, create=True), patch(
+        'modules.DiffusersVideo.main._pipeline_adapter',
+        return_value=get_video_pipeline_adapter('WanVideoToVideoPipeline'),
+    ), patch.object(sampler, '_execute_adapter', side_effect=lambda p, a, m, v: sampler._execute_wan_video_to_video(p, a, m, v)):
+        result = sampler(pipeline=pipeline, encoded_inputs=value, mode=mode, guidance_scale=5., width=32,
+                         height=32, num_frames=173, num_inference_steps=50, seed=8412, strength=strength)
+    assert len(calls) == 1
+    actual = calls[0]
+    assert actual['prompt'] is None and actual['prompt_embeds'] is value.embeddings['prompt_embeds']
+    assert actual['video'][0].getpixel((0, 0)) == (0, 2, 3)
+    assert len(actual['video']) == 9 and 'num_frames' not in actual
+    assert actual['num_inference_steps'] == 50 and actual['strength'] == strength
+    assert result['frames_out'] == 9, 'unused requested frame literal must not overwrite actual source-derived geometry'
+    decoded = DecodeLatents('wan-video-stage-decode')(
+        pipeline=pipeline, latents=result['latents_out'], latent_binding=result['latent_binding'])
+    assert len(decoded['video_out']) == decoded['frames_out'] == 9
+
+    scheduler = FlowMatchEulerDiscreteScheduler()
+    scheduler.set_timesteps(50)
+    effective = WanVideoToVideoPipeline.get_timesteps(SimpleNamespace(scheduler=scheduler),
+        50, scheduler.timesteps, strength, 'cpu')
+    assert effective[1] == int(50 * strength)
+
+
+def test_a14b_stage_binding_tracks_both_experts_and_optional_image_components():
+    pipeline, _ = owner('wan-22-image-to-video:direct')
+    value = encoded(pipeline)
+    original = pipeline.transformer_2
+    pipeline.transformer_2 = torch.nn.Linear(1, 1)
+    with pytest.raises(ValueError, match='ownership'):
+        core.require_encoding(pipeline, value)
+    pipeline.transformer_2 = original
+    core.require_encoding(pipeline, value)
+    pipeline.image_encoder = torch.nn.Linear(1, 1)
+    with pytest.raises(ValueError, match='ownership'):
+        core.require_encoding(pipeline, value)
+
+
+def test_stage_binding_does_not_accept_missing_required_base_components():
+    pipeline, values = owner()
+    pipeline._modiff_video_stage_owner = None
+    pipeline.text_encoder = None
+    with pytest.raises(ValueError, match='base components'):
+        core.bind_owner(pipeline, values)
+
+
+def test_a14b_staged_call_keeps_both_guidance_controls_and_frozen_keyframes():
+    import inspect
+    from diffusers import WanImageToVideoPipeline
+    from modules.DiffusersVideo.main import get_video_pipeline_adapter
+
+    pipeline, _ = owner('wan-22-image-to-video:direct')
+    opening, ending = Image.new('RGB', (32, 32), 'red'), Image.new('RGB', (32, 32), 'blue')
+    value = encoded(pipeline, guidance_scale=3.5, reference_images=[opening], last_image=ending)
+    opening.putpixel((0, 0), (0, 0, 0))
+    ending.putpixel((0, 0), (0, 0, 0))
+    sampler, calls = Denoise('a14b-stage-call'), []
+    pipeline.video_processor.postprocess_video = lambda *args, **kwargs: [[Image.new('RGB', (32, 32)) for _ in range(81)]]
+
+    @torch.no_grad()
+    def sample(pipe, **kwargs):
+        assert set(kwargs) <= set(inspect.signature(WanImageToVideoPipeline.__call__).parameters)
+        calls.append(kwargs)
+        return SimpleNamespace(frames=torch.ones(1, 1, 21, 4, 4))
+
+    with patch.object(Pipeline, '__call__', sample, create=True), patch(
+        'modules.DiffusersVideo.main._pipeline_adapter',
+        return_value=get_video_pipeline_adapter('WanImageToVideoPipeline'),
+    ), patch.object(sampler, '_execute_adapter', side_effect=lambda p, a, m, v: sampler._execute_wan_image_to_video(p, a, m, v)):
+        result = sampler(pipeline=pipeline, encoded_inputs=value, mode='image_to_video', guidance_scale=3.5,
+                         secondary_guidance_scale=2., width=32, height=32, num_frames=81,
+                         num_inference_steps=40, seed=92021)
+    assert len(calls) == 1
+    actual = calls[0]
+    assert actual['image'].getpixel((0, 0)) == (255, 0, 0)
+    assert actual['last_image'].getpixel((0, 0)) == (0, 0, 255)
+    assert actual['guidance_scale'] == 3.5 and actual['guidance_scale_2'] == 2.
+    assert actual['num_frames'] == 81 and actual['num_inference_steps'] == 40
+    assert actual['generator'].initial_seed() == 92021
+    from modiff.execution_input_provenance import bind_generation_input_origins
+    record = bind_generation_input_origins(sampler.node_id, {
+        'module': 'modules.DiffusersVideo', 'action': 'Denoise', 'params': {
+            'secondary_guidance_scale': {'sourceId': 'low-noise-control', 'sourceKey': 'value'},
+        },
+    }, sampler._execution_input_record, source_fields=sampler._execution_input_source_fields)
+    assert record['fields']['secondary_guidance_scale']['value'] == 2.
+    assert record['fields']['secondary_guidance_scale']['sourceNodeId'] == 'low-noise-control'
+    decoded = DecodeLatents('a14b-stage-decode')(
+        pipeline=pipeline, latents=result['latents_out'], latent_binding=result['latent_binding'])
+    assert len(decoded['video_out']) == decoded['frames_out'] == 81
+
+
+@pytest.mark.parametrize('mode', ['video_inpaint', 'video_outpaint', 'control_to_video'])
+def test_vace_encoded_stage_keeps_native_windows_and_actual_decoded_continuity(mode):
+    import inspect
+    from diffusers import WanVACEPipeline
+    from modules.DiffusersVideo.main import Generate
+    from modiff.execution_input_provenance import build_resolved_execution_inputs, capture_generation_inputs
+
+    pipeline, _ = owner('wan-vace:direct')
+    source = [Image.new('RGB', (32, 32), (index, 1, 2)) for index in range(161)]
+    media = {'video': source}
+    if mode != 'control_to_video':
+        media['mask'] = [Image.new('RGB', (32, 32), 'white') for _ in source]
+    encoder, render = EncodeInputs('encode'), Generate('render')
+    value = encoder(pipeline=pipeline, mode=mode, prompt='Amber glass in a moving scene',
+                    negative_prompt='', guidance_scale=5., **media)['encoded_inputs']
+    source[0].putpixel((0, 0), (255, 255, 255))
+    calls, delivered = [], []
+
+    @torch.no_grad()
+    def sample(pipe, **kwargs):
+        assert set(kwargs) <= set(inspect.signature(WanVACEPipeline.__call__).parameters)
+        calls.append(kwargs)
+        frames = [Image.new('RGB', (32, 32), (10 + len(calls), index, 3))
+                  for index in range(kwargs['num_frames'])]
+        delivered.append(frames)
+        return SimpleNamespace(frames=[frames])
+
+    with patch.object(Pipeline, '__call__', sample, create=True):
+        result = render(pipeline=pipeline, mode=mode, encoded_inputs=value, width=32, height=32,
+                        num_frames=161, num_inference_steps=30, guidance_scale=5.,
+                        conditioning_scale=1., seed=8319, output_type='pil')
+    assert pipeline.calls == 1, 'text encoding is reused across both native windows'
+    assert [call['num_frames'] for call in calls] == [81, 81]
+    assert all(call['prompt'] is None and call['prompt_embeds'] is value.embeddings['prompt_embeds'] for call in calls)
+    assert all(call['generator'].initial_seed() == 8319 and call['num_inference_steps'] == 30 for call in calls)
+    assert len(result['video_out']) == result['frames_out'] == 161
+    assert result['video_out'] == delivered[0] + delivered[1][1:]
+    if mode != 'control_to_video':
+        assert calls[0]['video'][0].getpixel((0, 0)) == (127, 127, 127)
+        assert calls[1]['video'][0] is delivered[0][-1]
+        assert calls[1]['mask'][0].getpixel((0, 0)) == (0, 0, 0)
+    else:
+        assert calls[0]['video'][0].getpixel((0, 0)) == (0, 1, 2)
+        assert all(call['mask'] is None for call in calls)
+    graph = {'nodes': {
+        'owner': {'module': 'modules.DiffusersVideo', 'action': 'LoadPipeline', 'params': {}},
+        'encode': {'module': 'modules.DiffusersVideo', 'action': 'EncodeInputs', 'params': {
+            'pipeline': {'sourceId': 'owner', 'sourceKey': 'pipeline'}}},
+        'render': {'module': 'modules.DiffusersVideo', 'action': 'Generate', 'params': {
+            'pipeline': {'sourceId': 'owner', 'sourceKey': 'pipeline'},
+            'encoded_inputs': {'sourceId': 'encode', 'sourceKey': 'encoded_inputs'}}},
+    }}
+    records = {'owner': capture_generation_inputs('owner', graph['nodes']['owner'], {'pipeline_class': 'WanVACEPipeline'}),
+               'encode': encoder._execution_input_record, 'render': render._execution_input_record}
+    receipt = build_resolved_execution_inputs(graph, records, task_id='vace-staged', attempt_index=0, node_id='render')
+    assert receipt['summary']['prompt'] == 'Amber glass in a moving scene'
+    assert receipt['summary']['numFrames'] == 161
+    assert receipt['summary']['seed'] == 8319
+    assert receipt['graphTasks'] == [{'loaderId': 'owner', 'pipelineClass': 'WanVACEPipeline', 'task': mode}]
+
+
+def test_integrated_encoded_video_rejects_foreign_or_mutated_conditioning_before_pipeline_call():
+    from modules.DiffusersVideo.main import Generate
+    pipeline, _ = owner('wan-vace:direct')
+    frames = [Image.new('RGB', (32, 32)) for _ in range(9)]
+    value = encoded(pipeline, mode='control_to_video', video=frames)
+    foreign, _ = owner('wan-vace:direct')
+    with pytest.raises(ValueError, match='ownership'):
+        Generate('foreign-vace')(pipeline=foreign, encoded_inputs=value, mode='control_to_video', guidance_scale=1.)
+    value.media['video_chunks'][0][0].putpixel((0, 0), (1, 2, 3))
+    with pytest.raises(ValueError, match='modified'):
+        Generate('mutated-vace')(pipeline=pipeline, encoded_inputs=value, mode='control_to_video', guidance_scale=1.)
+
+
+@pytest.mark.parametrize('identity', [key for key, cls in core.PROFILE_CLASSES.items() if cls != 'WanVACEPipeline'])
+def test_whole_video_operation_does_not_admit_an_undeclared_encoded_stage(identity):
+    from modules.DiffusersVideo.main import Generate
+    pipeline, _ = owner(identity)
+    value = encoded(pipeline)
+    node = Generate('undeclared-integrated-video')
+    with patch.object(node, 'execute', side_effect=AssertionError('execution must remain unreachable')):
+        with pytest.raises(ValueError, match='not declared'):
+            node(pipeline=pipeline, encoded_inputs=value, mode=value.mode, guidance_scale=1.)
+
+
+@pytest.mark.parametrize('task', DIFFUSERS_EXECUTION_PROFILES['wan-vace:direct'].modes)
+def test_unbound_vace_starter_retains_its_whole_operation_beside_explicit_encoded_stages(task):
+    from modules import MODULE_MAP
+    from modiff.operation_catalog import build_operation_catalog
+    from modiff.operation_starters import resolve_operation_starter
+    contracts, _ = build_operation_catalog(MODULE_MAP, [], catalog_resolver=lambda: {})
+    with patch('modiff.NodeBase.NodeBase.__init__', side_effect=AssertionError('constructed')):
+        result = resolve_operation_starter(MODULE_MAP, contracts, {'pipelineClass': 'WanVACEPipeline', 'task': task})
+    assert {node['action'] for node in result['nodes']} == {'LoadPipeline', 'Generate'}
+    assert len(result['nodes']) == 2
+    whole = next(node for node in result['nodes'] if node['action'] == 'Generate')
+    assert whole['operation']['operationId'] == 'diffusion.generate_video'
+    assert whole['operation']['decomposition'] == 'pipeline'
+    assert not any(edge['targetHandle'] == 'encoded_inputs' for edge in result['edges'])
+
+
+def test_video_material_accepts_declared_241_masked_frames_without_widening_image_default():
+    from modules.DiffusersImage.stage_execution import _freeze_material
+    pipeline, _ = owner('wan-vace:direct')
+    frames = [Image.new('RGB', (16, 16)) for _ in range(241)]
+    value = encoded(pipeline, mode='video_inpaint', video=frames, mask=frames)
+    assert sum(len(chunk) for chunk in value.media['mask_chunks']) == 241
+    with pytest.raises(ValueError, match='finite structure'):
+        _freeze_material({'one': [list(range(60)) for _ in range(5)]})
+
+
 @pytest.mark.parametrize('identity,task', [
     ('ltx-video:direct', 'text_to_video'), ('ltx-video:direct', 'image_to_video'),
     ('ltx-video:direct', 'reference_to_video'), ('ltx-video:direct', 'video_to_video'),
     ('wan-22-ti2v-5b:direct', 'text_to_video'),
+    ('wan-text-to-video:direct', 'text_to_video'),
+    ('wan-video-to-video:direct', 'video_to_video'),
+    ('wan-video-to-video:direct', 'video_color_edit'),
+    ('wan-22-image-to-video:direct', 'image_to_video'),
+    ('wan-vace:direct', 'video_inpaint'),
+    ('wan-vace:direct', 'video_outpaint'),
+    ('wan-vace:direct', 'control_to_video'),
 ])
 def test_selected_starter_publishes_real_stage_edges_and_no_extra_whole_consumer(identity, task):
     from modules import MODULE_MAP
@@ -400,15 +671,26 @@ def test_selected_starter_publishes_real_stage_edges_and_no_extra_whole_consumer
             'authoringRecipeId': 'generic-video-stages:v1',
         })
     actions = {node['action'] for node in result['nodes']}
-    assert actions == {'LoadPipeline', 'EncodeInputs', 'Denoise', 'DecodeLatents'}
+    rendered = identity == 'wan-vace:direct'
+    assert actions == ({'LoadPipeline', 'EncodeInputs', 'Generate'} if rendered else
+                       {'LoadPipeline', 'EncodeInputs', 'Denoise', 'DecodeLatents'})
     assert {'source': 'diffusion.encode_video', 'sourceHandle': 'encoded_inputs',
-            'target': 'diffusion.denoise', 'targetHandle': 'encoded_inputs'} in result['edges']
-    assert {'source': 'diffusion.denoise', 'sourceHandle': 'latent_binding',
-            'target': 'diffusion.decode_latents', 'targetHandle': 'latent_binding'} in result['edges']
+            'target': 'diffusion.render_video' if rendered else 'diffusion.denoise',
+            'targetHandle': 'encoded_inputs'} in result['edges']
+    if not rendered:
+        assert {'source': 'diffusion.denoise', 'sourceHandle': 'latent_binding',
+                'target': 'diffusion.decode_latents', 'targetHandle': 'latent_binding'} in result['edges']
+    else:
+        generate = next(node for node in result['nodes'] if node['action'] == 'Generate')
+        assert all(generate['params'][key]['hidden'] for key in ('prompt', 'negative_prompt', 'video', 'mask', 'reference_images'))
     assert not any(row['field'] in ('encoded_inputs', 'latent_binding', 'latents') for row in result['requiredInputs'])
     loader = next(node for node in result['nodes'] if node['action'] == 'LoadPipeline')
     assert loader['values']['revision'] == require_catalog_revision(profile.default_repo)
     assert result['authoring']['id'] == 'generic-video-stages:v1'
+    assert {'name': 'guidance_scale', 'members': [
+        {'operationId': 'diffusion.encode_video', 'field': 'guidance_scale'},
+        {'operationId': 'diffusion.render_video' if rendered else 'diffusion.denoise', 'field': 'guidance_scale'},
+    ]} in result['sharedInputs']
     assert not any(field == 'mode' for _role, field, _source in result['authoring']['bindings'])
     assert ('diffusersRecipe', 'attention_backend', 'attentionBackend') in result['authoring']['bindings']
     # The whole-operation source is historical authority, not a fresh-stage

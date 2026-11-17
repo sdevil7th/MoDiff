@@ -38,7 +38,8 @@
         "stroke": "#60A5FA"
       },
       "target": "node-05",
-      "targetHandle": "image"
+      "targetHandle": "image",
+      "type": "default"
     },
     {
       "className": "category-latents",
@@ -58,8 +59,7 @@
         "stroke": "#6366F1"
       },
       "target": "node-02",
-      "targetHandle": "latents",
-      "type": "default"
+      "targetHandle": "latents"
     },
     {
       "className": "category-diffusers_auto_model",
@@ -477,7 +477,8 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "visualStageSourceIndex": 1
       },
       "id": "node-02",
       "position": {
@@ -787,18 +788,25 @@
         "params": {
           "doc": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Doc",
             "type": "string"
           },
           "embeddings": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Text Embeddings *",
             "type": "embeddings"
           },
           "height": {
             "default": 1024,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Height",
             "min": 64,
             "step": 16,
@@ -807,27 +815,38 @@
           },
           "image_cond_latents": {
             "display": "input",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Reference Latents",
             "type": "latents"
           },
           "latents": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Latents",
             "type": "latents"
           },
           "num_images_per_prompt": {
             "default": 1,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Images Per Prompt",
             "max": 8,
             "min": 1,
             "step": 1,
-            "type": "int"
+            "type": "int",
+            "value": 1
           },
           "num_inference_steps": {
             "default": 16,
             "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Steps",
             "max": 100,
             "min": 1,
@@ -841,19 +860,18 @@
               "referenceBinding": {
                 "maxReferences": 10,
                 "schemaVersion": 1
-              }
+              },
+              "suppressInitialFieldAction": true
             },
-            "isConnected": false,
             "label": "Reference Binding",
             "type": "reference_conditioning"
           },
           "scheduler": {
             "display": "input",
-            "isConnected": true,
-            "label": "Scheduler *",
-            "signal": {
-              "direction": "output"
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
             },
+            "label": "Scheduler *",
             "signalCompatibility": {
               "role": "scheduler"
             },
@@ -862,26 +880,37 @@
           "seed": {
             "default": 0,
             "display": "random",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Seed",
             "max": 4294967295,
             "min": 0,
             "type": "int",
             "value": {
               "isRandom": false,
-              "value": 481005
+              "value": 481205
             }
           },
           "unet": {
             "display": "input",
             "fieldOptions": {
-              "suppressAutomaticSignalAction": true
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
             },
-            "isConnected": true,
             "label": "Denoise Model *",
+            "onSignal": [
+              "update_node",
+              {
+                "action": "signal",
+                "target": "guider"
+              },
+              {
+                "action": "signal",
+                "target": "controlnet_bundle"
+              }
+            ],
             "required": true,
-            "signal": {
-              "direction": "output"
-            },
             "signalCompatibility": {
               "role": "denoiser"
             },
@@ -889,6 +918,9 @@
           },
           "width": {
             "default": 1024,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Width",
             "min": 64,
             "step": 16,
@@ -905,7 +937,8 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "visualStageSourceIndex": 0
       },
       "id": "node-03",
       "position": {
@@ -1928,6 +1961,14 @@
                 "schemaVersion": 1,
                 "value": "LTX25ModularPipeline"
               },
+              "MiniMaxH3ImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MiniMax H3 Image",
+                "schemaVersion": 1,
+                "value": "MiniMaxH3ImageModularPipeline"
+              },
               "MiniMaxH3ModularPipeline": {
                 "availability": "installed",
                 "compatibility": "compatible",
@@ -1943,6 +1984,14 @@
                 "label": "MiniMax Music 3",
                 "schemaVersion": 1,
                 "value": "MiniMaxMusic3ModularPipeline"
+              },
+              "PikaH3FlexModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Pika H3 Flex",
+                "schemaVersion": 1,
+                "value": "PikaH3FlexModularPipeline"
               },
               "QwenImageEditModularPipeline": {
                 "availability": "installed",
@@ -2833,7 +2882,7 @@
             },
             "label": "Prompt *",
             "type": "string",
-            "value": "An unbranded ceramic field radio, a folded linen cloth and a single dried grass stem form a balanced three-quarter tabletop still life. Warm side lighting defines the radio silhouette and contact shadows. The radio, linen and stem remain clearly separated against an uncluttered background. No people, logos, readable text, signatures, watermarks or unrelated objects. nsc7 style"
+            "value": "One complete rotating ring habitat above Earth, seen from outside in three-quarter view. A single continuous white torus surrounds a plain central hub. Warm sunlight falls across the curved structure against deep blue space, with a small view of Earth below. Every hardware surface is blank and unmarked. One habitat fills a balanced square composition, without people, other spacecraft, plants, flowers, grass or stems. No writing, letters, numbers, labels, logos, emblems, watermarks, signatures, border or frame. nsc7 style"
           },
           "prompt_input": {
             "description": "Optional connected prompt. When connected, this replaces the inline Prompt value.",

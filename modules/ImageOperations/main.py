@@ -778,6 +778,14 @@ class ProcessImage(NodeBase):
         if operation not in IMAGE_OPERATION_MODES:
             raise ValueError(f"Unsupported built-in image operation {operation!r}.")
         self.record_generation_inputs({**kwargs, 'pipeline_class': 'BuiltinImageOperationV1', 'executed_task': operation})
+        from modiff.builtin_media_evidence import begin_media_capture
+        capture = begin_media_capture(self, kwargs, inputs={'image': kwargs.get('image'), 'mask': kwargs.get('mask')})
+        result = self._execute_operation(**kwargs)
+        capture.finish({'output': result['output']})
+        return result
+
+    def _execute_operation(self, **kwargs):
+        operation = str(kwargs.get('operation') or 'image_adjustment')
         image = kwargs.get("image")
         if operation == "image_adjustment":
             fields = (

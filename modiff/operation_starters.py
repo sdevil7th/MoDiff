@@ -239,15 +239,35 @@ def resolve_operation_starter(modules, contracts, selection):
         if image_stage_spec is None:
             # Historical/local/advisory loaders keep their whole operation.
             selected = [c for c in selected if c['decomposition'] != 'bundle']
+            whole = [c for c in selected if c['decomposition'] == 'pipeline']
+            if len(whole) > 1:
+                # Video-only and synchronized AV calls are alternatives, not
+                # two renders in one fresh graph. Keep both operation contracts
+                # for saved graphs; choose the existing exact source recipe.
+                from modiff.studio_execution_specs import studio_execution_spec_for_pair
+                identity = selection.get('executionProfileId')
+                model_type = pipeline
+                if identity is not None:
+                    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+                    model_type = DIFFUSERS_EXECUTION_PROFILES[identity].model_type
+                source = studio_execution_spec_for_pair(model_type, task, execution_profile_id=identity)
+                source_keys = {entry[1] for entry in source['roles']} if source else set()
+                chosen = [c for c in whole if c['nodeKey'] in source_keys]
+                if len(chosen) != 1:
+                    raise ValueError('Select an exact reviewed video recipe with one generation operation.')
+                selected = [c for c in selected if c['decomposition'] != 'pipeline' or c is chosen[0]]
             nodes = {c['operationId']: nodes[c['operationId']] for c in selected}
     if image_stage_spec is not None:
         # Draft the very same ordinary nodes/edges as the reviewed source spec.
         # Existing whole actions remain published for saved graphs, but are not
         # extra consumers in this new selected stage starter.
         stage_types = {'video_encoder' if video_stages else 'image_encoder', 'denoise', 'decoder'}
+        integrated_decode = video_stages and pipeline == 'WanVACEPipeline'
+        if integrated_decode:
+            stage_types.remove('decoder')
         stage_contracts = [c for c in selected if c['decomposition'] == 'bundle'
                            and c['nodeType'] in stage_types]
-        if (len(stage_contracts) != 3
+        if (len(stage_contracts) != len(stage_types)
                 or {c['nodeType'] for c in stage_contracts} != stage_types):
             raise ValueError('The selected image starter requires exactly three declared stages.')
         by_key = {c['nodeKey']: c['operationId'] for c in stage_contracts}
@@ -258,7 +278,8 @@ def resolve_operation_starter(modules, contracts, selection):
             elif node_key in by_key:
                 roles[role] = by_key[node_key]
                 ordered.append(by_key[node_key])
-        if len(roles) != 4 or len(ordered) != 4 or len(set(ordered)) != 4:
+        expected = len(stage_types) + 1
+        if len(roles) != expected or len(ordered) != expected or len(set(ordered)) != expected:
             raise ValueError('The selected image starter disagrees with its declared owner/stage roles.')
         nodes = {key: nodes[key] for key in ordered}
         if video_stages and nodes[loader]['values'].get('execution_profile_id') == 'ltx-video:direct':
@@ -274,6 +295,15 @@ def resolve_operation_starter(modules, contracts, selection):
         for source, output, target, input_ in image_stage_spec['edges']:
             if source in roles and target in roles:
                 connect(roles[source], output, roles[target], input_)
+        if integrated_decode:
+            # The actual frozen encoder owns these values. Suppress only the
+            # redundant controls in this new resolved starter; the ordinary
+            # integrated action and every saved graph retain their schema.
+            from modiff.video_stage_contract import ENCODE_FIELDS
+            render = nodes[roles['denoise']]
+            for field in ENCODE_FIELDS - {'pipeline', 'video_contract', 'mode', 'guidance_scale'}:
+                if field in render['params']:
+                    render['params'][field].update(hidden=True, required=False)
     elif nodes[loader]["operation"]["decomposition"] == "integrated":
         if len(selected) != 1:
             raise ValueError("An integrated starter must be one complete model operation.")
@@ -455,6 +485,25 @@ def resolve_operation_starter(modules, contracts, selection):
             ]
             if len(members) > 1:
                 shared_inputs.append({"name": shared_name, "members": members})
+
+    # Video encoders choose positive/negative embedding branches using CFG.
+    # The following sampler must use the same value. The immutable encoded
+    # bundle is not mutable Pipeline State, so declare this exact relationship
+    # from the genuine encoded-input edge rather than guessing a state group.
+    for edge in edges:
+        source, target = nodes[edge['source']], nodes[edge['target']]
+        if (source['operation']['nodeType'] != 'video_encoder'
+                or target['operation']['nodeType'] != 'denoise'
+                or edge['sourceHandle'] != 'encoded_inputs' or edge['targetHandle'] != 'encoded_inputs'):
+            continue
+        members = []
+        for key in (edge['source'], edge['target']):
+            ports = nodes[key]['operation']['ports']
+            if any(p['direction'] == 'input' and p['name'] == 'guidance_scale'
+                   and not p['hidden'] and p['semantics']['kind'] == 'value' for p in ports):
+                members.append({'operationId': key, 'field': 'guidance_scale'})
+        if len(members) == 2:
+            shared_inputs.append({'name': 'guidance_scale', 'members': members})
 
     # A connected Guider owns CFG. FLUX retains its separate embedded scalar.
     # Resolve visibility in the draft itself:

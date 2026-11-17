@@ -80,6 +80,15 @@ through the existing generic image workflow nodes. Reference preparation uses
 the official resize block before text and VAE encoding. The model owns its six
 sampling heads and sigma schedule. Generation exposes width, height, seed and
 minimum generation area. The default internal canvas is at least four megapixels.
+Requested output sizes use positive graph-safe integers and the official canvas
+rounding function; MoDiff imposes no separate 8,192-pixel side or 16-megapixel
+output ceiling. The minimum-generation-area setting retains the upstream
+1,024–16,777,216 bound. A fresh RAM check refuses an output or rounded canvas
+whose RGB buffer alone exceeds available system memory. Passing that necessary
+check does not establish activation-memory fit or hardware qualification.
+Reference preparation preserves a nonempty ordered image list without inventing
+an eight-image model limit. File/input budgets and physical resource admission
+still apply; argument forwarding does not establish trained output at every count.
 The nodes capture the normalized controls they consume and forward the official
 loop's step progress and interruption checks through MoDiff's existing node boundary.
 

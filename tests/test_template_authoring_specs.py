@@ -53,17 +53,17 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 156,
-                "promptDraftedCount": 130,
+                "authoringSpecCount": 165,
+                "promptDraftedCount": 139,
                 "promptNotApplicableCount": 26,
-                "canonicalDefaultsCapturedCount": 156,
-                "inputSelectionPendingCount": 96,
-                "rightsReviewPendingCount": 156,
-                "generationPendingCount": 156,
+                "canonicalDefaultsCapturedCount": 165,
+                "inputSelectionPendingCount": 100,
+                "rightsReviewPendingCount": 165,
+                "generationPendingCount": 165,
                 "assetCount": 0,
                 "authoringStateCounts": {
-                    "draft_complete_execution_pending": 60,
-                    "draft_complete_input_selection_pending": 96,
+                    "draft_complete_execution_pending": 65,
+                    "draft_complete_input_selection_pending": 100,
                 },
             },
         )
@@ -119,6 +119,15 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
                 "Flux3ModularPipeline:text_to_image",
                 "Flux3ModularPipeline:edit_image",
                 "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
+                "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_text_to_image",
+                "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_raw_coordinate_prompt",
+                "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_single_reference_edit",
+                "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_multi_reference_edit",
+                "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_text_to_image",
+                "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_raw_coordinate_prompt",
+                "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_single_reference_edit",
+                "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_multi_reference_edit",
+                "MiniMaxH3ImageModularPipeline:text_to_image:minimax_h3_image_old_town_cat",
             },
         )
         ledger = build_template_authoring_spec_ledger(ROOT)

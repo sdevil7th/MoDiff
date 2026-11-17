@@ -1,150 +1,145 @@
 {
   "edges": [
     {
+      "className": "category-float",
+      "data": {
+        "connectionType": "float"
+      },
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "#FDE047",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-01",
+      "sourceHandle": "output",
+      "style": {
+        "stroke": "#FDE047"
+      },
+      "target": "node-07",
+      "targetHandle": "pooled_prompt_embeds_scale"
+    },
+    {
+      "className": "category-float",
+      "data": {
+        "connectionType": "float"
+      },
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "#FDE047",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-01",
+      "sourceHandle": "output",
+      "style": {
+        "stroke": "#FDE047"
+      },
+      "target": "node-07",
+      "targetHandle": "prompt_embeds_scale"
+    },
+    {
       "className": "category-image",
       "data": {
         "connectionType": "image"
       },
-      "id": "edge-01",
+      "id": "edge-03",
       "markerEnd": {
         "color": "#60A5FA",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-01",
+      "source": "node-02",
       "sourceHandle": "images",
       "style": {
         "stroke": "#60A5FA"
       },
-      "target": "node-08",
-      "targetHandle": "image"
+      "target": "node-09",
+      "targetHandle": "image",
+      "type": "default"
     },
     {
       "className": "category-int",
       "data": {
         "connectionType": "int"
       },
-      "id": "edge-02",
+      "id": "edge-04",
       "markerEnd": {
         "color": "#84CC16",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-02",
+      "source": "node-03",
       "sourceHandle": "height_out",
       "style": {
         "stroke": "#84CC16"
       },
-      "target": "node-01",
-      "targetHandle": "height",
-      "type": "default"
+      "target": "node-02",
+      "targetHandle": "height"
     },
     {
       "className": "category-image_latent_binding",
       "data": {
         "connectionType": "image_latent_binding"
       },
-      "id": "edge-03",
+      "id": "edge-05",
       "markerEnd": {
         "color": "hsl(151 75% 65%)",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-02",
+      "source": "node-03",
       "sourceHandle": "latent_binding",
       "style": {
         "stroke": "hsl(151 75% 65%)"
       },
-      "target": "node-01",
-      "targetHandle": "latent_binding",
-      "type": "default"
+      "target": "node-02",
+      "targetHandle": "latent_binding"
     },
     {
       "className": "category-tensor",
       "data": {
         "connectionType": "tensor"
       },
-      "id": "edge-04",
+      "id": "edge-06",
       "markerEnd": {
         "color": "#A5B4FC",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-02",
+      "source": "node-03",
       "sourceHandle": "latents_out",
       "style": {
         "stroke": "#A5B4FC"
       },
-      "target": "node-01",
-      "targetHandle": "latents",
-      "type": "default"
+      "target": "node-02",
+      "targetHandle": "latents"
     },
     {
       "className": "category-int",
       "data": {
         "connectionType": "int"
       },
-      "id": "edge-05",
+      "id": "edge-07",
       "markerEnd": {
         "color": "#84CC16",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-02",
+      "source": "node-03",
       "sourceHandle": "width_out",
       "style": {
         "stroke": "#84CC16"
       },
-      "target": "node-01",
-      "targetHandle": "width",
-      "type": "default"
-    },
-    {
-      "className": "category-image_diffusion_pipeline",
-      "data": {
-        "connectionType": "image_diffusion_pipeline"
-      },
-      "id": "edge-06",
-      "markerEnd": {
-        "color": "#FB7185",
-        "height": 18,
-        "type": "arrowclosed",
-        "width": 18
-      },
-      "source": "node-03",
-      "sourceHandle": "pipeline",
-      "style": {
-        "stroke": "#FB7185"
-      },
-      "target": "node-01",
-      "targetHandle": "pipeline",
-      "type": "default"
-    },
-    {
-      "className": "category-image_diffusion_pipeline",
-      "data": {
-        "connectionType": "image_diffusion_pipeline"
-      },
-      "id": "edge-07",
-      "markerEnd": {
-        "color": "#FB7185",
-        "height": 18,
-        "type": "arrowclosed",
-        "width": 18
-      },
-      "source": "node-03",
-      "sourceHandle": "pipeline",
-      "style": {
-        "stroke": "#FB7185"
-      },
       "target": "node-02",
-      "targetHandle": "pipeline",
-      "type": "default"
+      "targetHandle": "width"
     },
     {
       "className": "category-image_diffusion_pipeline",
@@ -158,12 +153,54 @@
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-03",
+      "source": "node-04",
       "sourceHandle": "pipeline",
       "style": {
         "stroke": "#FB7185"
       },
-      "target": "node-06",
+      "target": "node-02",
+      "targetHandle": "pipeline",
+      "type": "default"
+    },
+    {
+      "className": "category-image_diffusion_pipeline",
+      "data": {
+        "connectionType": "image_diffusion_pipeline"
+      },
+      "id": "edge-09",
+      "markerEnd": {
+        "color": "#FB7185",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-04",
+      "sourceHandle": "pipeline",
+      "style": {
+        "stroke": "#FB7185"
+      },
+      "target": "node-03",
+      "targetHandle": "pipeline",
+      "type": "default"
+    },
+    {
+      "className": "category-image_diffusion_pipeline",
+      "data": {
+        "connectionType": "image_diffusion_pipeline"
+      },
+      "id": "edge-10",
+      "markerEnd": {
+        "color": "#FB7185",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-04",
+      "sourceHandle": "pipeline",
+      "style": {
+        "stroke": "#FB7185"
+      },
+      "target": "node-07",
       "targetHandle": "pipeline",
       "type": "default"
     },
@@ -172,19 +209,19 @@
       "data": {
         "connectionType": "quantization_config"
       },
-      "id": "edge-09",
+      "id": "edge-11",
       "markerEnd": {
         "color": "#FDE68A",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-04",
+      "source": "node-05",
       "sourceHandle": "quantization_config",
       "style": {
         "stroke": "#FDE68A"
       },
-      "target": "node-05",
+      "target": "node-06",
       "targetHandle": "quantization_config"
     },
     {
@@ -192,19 +229,19 @@
       "data": {
         "connectionType": "diffusers_execution_recipe"
       },
-      "id": "edge-10",
+      "id": "edge-12",
       "markerEnd": {
         "color": "#C4B5FD",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-05",
+      "source": "node-06",
       "sourceHandle": "execution_recipe",
       "style": {
         "stroke": "#C4B5FD"
       },
-      "target": "node-03",
+      "target": "node-04",
       "targetHandle": "execution_recipe"
     },
     {
@@ -212,19 +249,19 @@
       "data": {
         "connectionType": "image_conditioning"
       },
-      "id": "edge-11",
+      "id": "edge-13",
       "markerEnd": {
         "color": "hsl(24 77% 65%)",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-06",
+      "source": "node-07",
       "sourceHandle": "encoded_inputs",
       "style": {
         "stroke": "hsl(24 77% 65%)"
       },
-      "target": "node-02",
+      "target": "node-03",
       "targetHandle": "encoded_inputs",
       "type": "default"
     },
@@ -233,19 +270,19 @@
       "data": {
         "connectionType": "image"
       },
-      "id": "edge-12",
+      "id": "edge-14",
       "markerEnd": {
         "color": "#60A5FA",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-07",
+      "source": "node-08",
       "sourceHandle": "image",
       "style": {
         "stroke": "#60A5FA"
       },
-      "target": "node-06",
+      "target": "node-07",
       "targetHandle": "image",
       "type": "default"
     }
@@ -253,10 +290,255 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "3e2f709e5e1447c7d8496c04b70afa2e0943df5150ed6fa1ad576a464ade3b38",
+    "positionHash": "a6e267c73de7253975eb9df643df85d052e82fc3f8f72e160e593ecb2c1057d3",
     "verticalGap": 72
   },
   "nodes": [
+    {
+      "data": {
+        "action": "ProcessText",
+        "cache": false,
+        "category": "text",
+        "description": "",
+        "label": "Encoding values",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Text",
+        "params": {
+          "alternate_source": {
+            "default": "No alternate branch was selected.",
+            "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Alternate Source",
+            "type": "string",
+            "value": "No alternate branch was selected."
+          },
+          "condition": {
+            "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Select Source",
+            "type": "bool",
+            "value": true
+          },
+          "ignore_empty_lines": {
+            "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Ignore Empty Lines",
+            "type": "bool",
+            "value": false
+          },
+          "index": {
+            "default": 0,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Line Index",
+            "max": 100000,
+            "min": -100000,
+            "type": "int",
+            "value": 0
+          },
+          "item_count": {
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Item Count",
+            "type": "int"
+          },
+          "operation": {
+            "default": "text_select",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Operation",
+            "options": {
+              "data_conversion": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Convert Data",
+                "schemaVersion": 1,
+                "value": "data_conversion"
+              },
+              "graph_utility": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Select Text Branch",
+                "schemaVersion": 1,
+                "value": "graph_utility"
+              },
+              "text_select": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Select Line",
+                "schemaVersion": 1,
+                "value": "text_select"
+              }
+            },
+            "type": "string",
+            "value": "data_conversion"
+          },
+          "output": {
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Output",
+            "type": "any"
+          },
+          "pipeline_class": {
+            "default": "BuiltinDataOperationV1",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Contract",
+            "type": "string",
+            "value": "BuiltinDataOperationV1"
+          },
+          "selected_index": {
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Selected Index",
+            "type": "int"
+          },
+          "selection_mode": {
+            "default": "error",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Index Behavior",
+            "options": {
+              "clamp": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Clamp",
+                "schemaVersion": 1,
+                "value": "clamp"
+              },
+              "error": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Error",
+                "schemaVersion": 1,
+                "value": "error"
+              },
+              "wrap": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Wrap",
+                "schemaVersion": 1,
+                "value": "wrap"
+              }
+            },
+            "type": "string",
+            "value": "error"
+          },
+          "source": {
+            "default": "",
+            "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Source",
+            "type": "string",
+            "value": "[0.8,0.2]"
+          },
+          "strip_line": {
+            "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Trim Selected Line",
+            "type": "bool",
+            "value": true
+          },
+          "target_type": {
+            "default": "json",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Target Type",
+            "options": {
+              "boolean": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Boolean",
+                "schemaVersion": 1,
+                "value": "boolean"
+              },
+              "float": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Float",
+                "schemaVersion": 1,
+                "value": "float"
+              },
+              "integer": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Integer",
+                "schemaVersion": 1,
+                "value": "integer"
+              },
+              "json": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "JSON",
+                "schemaVersion": 1,
+                "value": "json"
+              },
+              "text": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Text",
+                "schemaVersion": 1,
+                "value": "text"
+              }
+            },
+            "type": "string",
+            "value": "json"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 0,
+        "y": 346
+      },
+      "type": "custom"
+    },
     {
       "data": {
         "action": "DecodeLatents",
@@ -604,12 +886,13 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "visualStageSourceIndex": 1
       },
-      "id": "node-01",
+      "id": "node-02",
       "position": {
         "x": 2200,
-        "y": 159
+        "y": 416
       },
       "type": "custom"
     },
@@ -1046,7 +1329,9 @@
         "params": {
           "encoded_inputs": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Encoded inputs",
             "required": true,
             "type": "image_conditioning"
@@ -1054,24 +1339,32 @@
           "generator": {
             "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
-            "isConnected": false,
             "label": "Generator",
             "type": "generator"
           },
           "guidance_scale": {
             "default": 0,
             "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Guidance",
             "max": 20,
             "min": 0,
             "step": 0.1,
             "type": "float",
-            "value": 2.5
+            "value": 3.5
           },
           "height": {
             "default": 1024,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Height",
             "max": 2048,
@@ -1082,7 +1375,9 @@
           },
           "height_out": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Height",
             "type": "int"
           },
@@ -1234,6 +1529,9 @@
               "pipelineClass": "FluxPipeline",
               "schemaVersion": 1
             },
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Image Contract",
             "type": "object",
@@ -1353,42 +1651,55 @@
           "joint_attention_kwargs": {
             "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
-            "isConnected": false,
             "label": "Joint Attention Kwargs",
             "type": "object"
           },
           "latent_binding": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Latent binding",
             "type": "image_latent_binding"
           },
           "latents": {
             "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
-            "isConnected": false,
             "label": "Latents",
             "type": "tensor"
           },
           "latents_out": {
             "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
-            "isConnected": true,
             "label": "Latents",
             "type": "tensor"
           },
           "masked_image_latents": {
             "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
-            "isConnected": false,
             "label": "Masked Image Latents",
             "type": "tensor"
           },
           "max_sequence_length": {
             "default": 256,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Max Sequence Length",
             "max": 512,
@@ -1399,6 +1710,9 @@
           "num_inference_steps": {
             "default": 4,
             "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Steps",
             "max": 100,
             "min": 1,
@@ -1408,14 +1722,21 @@
           "pipeline": {
             "display": "input",
             "fieldOptions": {
-              "suppressAutomaticSignalAction": true
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
             },
-            "isConnected": true,
             "label": "Pipeline",
+            "onSignal": [
+              {
+                "action": "value",
+                "target": "image_contract"
+              },
+              {
+                "action": "exec",
+                "data": "update_image_contract"
+              }
+            ],
             "required": true,
-            "signal": {
-              "direction": "output"
-            },
             "signalCompatibility": {
               "action": "$node",
               "required": true
@@ -1425,26 +1746,34 @@
           "seed": {
             "default": 0,
             "display": "random",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Seed",
             "max": 4294967295,
             "min": 0,
             "type": "int",
             "value": {
               "isRandom": false,
-              "value": 8413
+              "value": 8414
             }
           },
           "sigmas": {
             "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
-            "isConnected": false,
             "label": "Sigmas",
             "type": "float"
           },
           "strength": {
             "default": 0.8,
             "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Strength",
             "max": 1,
@@ -1454,6 +1783,9 @@
           },
           "width": {
             "default": 1024,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Width",
             "max": 2048,
@@ -1464,7 +1796,9 @@
           },
           "width_out": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Width",
             "type": "int"
           }
@@ -1478,12 +1812,13 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "visualStageSourceIndex": 0
       },
-      "id": "node-02",
+      "id": "node-03",
       "position": {
         "x": 1760,
-        "y": 19
+        "y": 276
       },
       "type": "custom"
     },
@@ -2039,7 +2374,7 @@
             },
             "label": "Auto offload",
             "type": "bool",
-            "value": true
+            "value": false
           },
           "conditioning_kind": {
             "default": "none",
@@ -2108,21 +2443,12 @@
             "label": "Device",
             "options": [
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "This device is not available in the current runtime.",
-                "installationState": "unavailable",
-                "label": "cpu:0",
-                "schemaVersion": 1,
-                "value": "cpu:0"
-              },
-              {
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
-                "label": "cuda:0",
+                "label": "cpu:0",
                 "schemaVersion": 1,
-                "value": "cuda:0"
+                "value": "cpu:0"
               },
               {
                 "availability": "installed",
@@ -2134,7 +2460,7 @@
               }
             ],
             "type": "string",
-            "value": "cuda:0"
+            "value": "cpu:0"
           },
           "device_map": {
             "default": "none",
@@ -2211,9 +2537,10 @@
                 "value": "float32"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -2402,7 +2729,7 @@
               }
             ],
             "type": "string",
-            "value": "group_cpu"
+            "value": "none"
           },
           "pipeline": {
             "display": "output",
@@ -3295,49 +3622,55 @@
                 "value": "none"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "installationState": "unavailable",
                 "label": "bnb_4bit",
                 "schemaVersion": 1,
                 "value": "bnb_4bit"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "installationState": "unavailable",
                 "label": "bnb_8bit",
                 "schemaVersion": 1,
                 "value": "bnb_8bit"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Quanto package is not installed",
+                "installationState": "unavailable",
                 "label": "quanto_float8",
                 "schemaVersion": 1,
                 "value": "quanto_float8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Quanto package is not installed",
+                "installationState": "unavailable",
                 "label": "quanto_int8",
                 "schemaVersion": 1,
                 "value": "quanto_int8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires TorchAO and a qualified NVIDIA compute capability of at least 8.9",
+                "installationState": "unavailable",
                 "label": "torchao_float8",
                 "schemaVersion": 1,
                 "value": "torchao_float8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "TorchAO package is not installed",
+                "installationState": "unavailable",
                 "label": "torchao_int8_weight_only",
                 "schemaVersion": 1,
                 "value": "torchao_int8_weight_only"
@@ -3428,10 +3761,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-03",
+      "id": "node-04",
       "position": {
         "x": 880,
-        "y": 14
+        "y": 271
       },
       "type": "custom"
     },
@@ -3465,49 +3798,55 @@
                 "value": "none"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "installationState": "unavailable",
                 "label": "bnb_4bit",
                 "schemaVersion": 1,
                 "value": "bnb_4bit"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "installationState": "unavailable",
                 "label": "bnb_8bit",
                 "schemaVersion": 1,
                 "value": "bnb_8bit"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Quanto package is not installed",
+                "installationState": "unavailable",
                 "label": "quanto_float8",
                 "schemaVersion": 1,
                 "value": "quanto_float8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Quanto package is not installed",
+                "installationState": "unavailable",
                 "label": "quanto_int8",
                 "schemaVersion": 1,
                 "value": "quanto_int8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires TorchAO and a qualified NVIDIA compute capability of at least 8.9",
+                "installationState": "unavailable",
                 "label": "torchao_float8",
                 "schemaVersion": 1,
                 "value": "torchao_float8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "TorchAO package is not installed",
+                "installationState": "unavailable",
                 "label": "torchao_int8_weight_only",
                 "schemaVersion": 1,
                 "value": "torchao_int8_weight_only"
@@ -3599,9 +3938,10 @@
                 "value": "float32"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -3657,7 +3997,7 @@
         ],
         "type": "custom"
       },
-      "id": "node-04",
+      "id": "node-05",
       "position": {
         "x": 0,
         "y": 0
@@ -3702,17 +4042,19 @@
                 "value": "native"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Native flash SDPA is unavailable in this Torch build. Select auto attention.",
+                "installationState": "unavailable",
                 "label": "_native_flash",
                 "schemaVersion": 1,
                 "value": "_native_flash"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "installationState": "unavailable",
                 "label": "_native_efficient",
                 "schemaVersion": 1,
                 "value": "_native_efficient"
@@ -3726,121 +4068,136 @@
                 "value": "_native_math"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "_native_cudnn",
                 "schemaVersion": 1,
                 "value": "_native_cudnn"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires a successful compiled FlexAttention probe on this accelerator",
+                "installationState": "unavailable",
                 "label": "flex",
                 "schemaVersion": 1,
                 "value": "flex"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "installationState": "unavailable",
                 "label": "flash",
                 "schemaVersion": 1,
                 "value": "flash"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "flash_hub",
                 "schemaVersion": 1,
                 "value": "flash_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires flash-attn",
+                "installationState": "unavailable",
                 "label": "flash_varlen",
                 "schemaVersion": 1,
                 "value": "flash_varlen"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "flash_varlen_hub",
                 "schemaVersion": 1,
                 "value": "flash_varlen_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires Hub kernels and NVIDIA compute capability 9.0 or newer",
+                "installationState": "unavailable",
                 "label": "flash_4_hub",
                 "schemaVersion": 1,
                 "value": "flash_4_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the FlashAttention 3 interface on NVIDIA Hopper",
+                "installationState": "unavailable",
                 "label": "_flash_3",
                 "schemaVersion": 1,
                 "value": "_flash_3"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the FlashAttention 3 interface on NVIDIA Hopper",
+                "installationState": "unavailable",
                 "label": "_flash_varlen_3",
                 "schemaVersion": 1,
                 "value": "_flash_varlen_3"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires Hub kernels on NVIDIA Hopper",
+                "installationState": "unavailable",
                 "label": "_flash_3_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires Hub kernels on NVIDIA Hopper",
+                "installationState": "unavailable",
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "installationState": "unavailable",
                 "label": "sage",
                 "schemaVersion": 1,
                 "value": "sage"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "sage_hub",
                 "schemaVersion": 1,
                 "value": "sage_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires SageAttention",
+                "installationState": "unavailable",
                 "label": "sage_varlen",
                 "schemaVersion": 1,
                 "value": "sage_varlen"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "MoDiff only enables xFormers on NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "xformers",
                 "schemaVersion": 1,
                 "value": "xformers"
@@ -4041,7 +4398,7 @@
             },
             "label": "Execution Device",
             "type": "string",
-            "value": "cuda:0"
+            "value": "cpu:0"
           },
           "device_map": {
             "default": "none",
@@ -4269,7 +4626,7 @@
               }
             ],
             "type": "string",
-            "value": "group_cpu"
+            "value": "none"
           },
           "quantization_config": {
             "display": "input",
@@ -4326,10 +4683,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-05",
+      "id": "node-06",
       "position": {
         "x": 440,
-        "y": 14
+        "y": 271
       },
       "type": "custom"
     },
@@ -5578,7 +5935,7 @@
             },
             "label": "Prompt",
             "type": "text",
-            "value": "Wide photoreal documentary. Preserve the first reference pose: the woman courier stands beside her single complete dark city bicycle on the shoulder of the rainy underpass road, one hand holding the saddle and the other holding the handlebar. Show her full body and the entire bicycle in clean side profile with both round wheels fully visible. Preserve the bicycle mechanics from the courier reference: two brake levers, routed brake cables, one small round white front lamp mounted at the head tube, complete crankset, two crank arms and pedals, chain, fork, saddle, mudguards and rear rack. Use the second reference for unmistakable concrete columns, long wet road, ceiling beams, lights and deep vanishing point toward the bright exit. Rust-red jacket, one woman, one bicycle, natural anatomy, plausible scale and grounded contact shadows. No riding pose, duplicates, CGI, collage or text."
+            "value": "Photoreal documentary photograph, clear full-body side view. Preserve the adult woman and the complete single dark city bicycle from reference one. She stands on the far side of the bicycle, beside its saddle, with both feet separately planted on the wet ground behind the bicycle. Both legs are straight and naturally proportioned, separate from the frame; her arms naturally reach the saddle and handlebar without crossing her torso. Show her whole head, two arms, two hands, two legs and both shoes. The bicycle is completely visible in strict side profile: exactly two circular wheels, a single front wheel and a single rear wheel, one straight fork, one coherent diamond frame, one crankset, chain, two pedals, a saddle and one handlebar. The two wheel silhouettes are cleanly separated. Keep the person and complete bicycle large in the central two thirds of the picture. Her rust-red raincoat, dark trousers and dark shoes match reference one. Use reference two for the rainy concrete underpass setting, long wet road, massive columns, ceiling beams and distant soft daylight. Natural body proportions, plausible mechanical geometry, grounded contact shadows, realistic documentary color. One woman standing beside one bicycle, stationary at the roadside."
           },
           "prompt_2": {
             "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
@@ -5655,10 +6012,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-06",
+      "id": "node-07",
       "position": {
         "x": 1320,
-        "y": 14
+        "y": 271
       },
       "type": "custom"
     },
@@ -5767,10 +6124,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-07",
+      "id": "node-08",
       "position": {
         "x": 0,
-        "y": 346
+        "y": 860
       },
       "type": "custom"
     },
@@ -5803,21 +6160,12 @@
                 "value": "cpu"
               },
               "cpu:0": {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "This device is not available in the current runtime.",
-                "installationState": "unavailable",
-                "label": "cpu:0",
-                "schemaVersion": 1,
-                "value": "cpu:0"
-              },
-              "cuda:0": {
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
-                "label": "cuda:0",
+                "label": "cpu:0",
                 "schemaVersion": 1,
-                "value": "cuda:0"
+                "value": "cpu:0"
               }
             },
             "type": "string",
@@ -5899,10 +6247,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-08",
+      "id": "node-09",
       "position": {
         "x": 2640,
-        "y": 187
+        "y": 444
       },
       "type": "custom"
     }

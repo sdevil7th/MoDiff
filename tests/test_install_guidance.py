@@ -179,7 +179,7 @@ class GuidedInstallerTests(unittest.TestCase):
         diffusers = next(item for item in project["project"]["dependencies"] if item.startswith("diffusers"))
         self.assertEqual(
             diffusers,
-            "diffusers==0.41.0",
+            "diffusers==0.43.0",
         )
         self.assertNotIn("diffusers", project["tool"]["uv"].get("sources", {}))
 

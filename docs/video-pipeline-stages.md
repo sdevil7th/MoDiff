@@ -1,11 +1,66 @@
 # Video pipeline stages
 
-Fresh selected LTX 0.9.8 distilled and Wan 2.2 5B text-to-video graphs use ordinary
-**Model Setup → Encode Inputs → Denoise → Video Output** stages. These are real
+Fresh selected video graphs use ordinary
+**Model Setup → Encode Inputs → Generate → Video Output** stages. Generate groups
+the actual sampler and decoder when their ownership and connections allow it.
+Source preparation and optional upscaling remain independently visible. These are real
 registered nodes in the existing executor. Expanding a visual group exposes its
 actual nodes and connections. Optional upscaling, separate soundtrack generation,
 audio fitting and delivery remain visible operations when a template needs them.
 Four stages is a starting shape, not a limit.
+
+Registered native-stage recipe descriptors retain their original versioned
+selection metadata when only their visual grouping changes. Selection notes
+participate in the strict template lock; editing explanatory wording must not
+retrospectively relabel an unchanged executed recipe as a different one. The
+existing LTX text, opening-image and ordered-reference declarations retain those
+identities. This does not equate historical whole-pipeline or sequence calls with
+new native-stage execution, relax proof locks, or qualify an unexecuted route.
+
+Fresh multi-shot templates author each shot as a separate editable Block with
+real Encode Inputs, Generate and Save Shot operations. Winter Delivery and
+The Last Signal upscale each shot before assembly; Before Sunrise and the
+coffee sequence upscale after assembly. One shared Model Setup owns the
+primary pipeline. Storyboard, ShotPrompt and ShotInputs are deterministic data
+nodes, not model runners or another executor. Storyboard owns ordered text and
+seed inheritance. Each real Generate stage owns its editable frame count and
+conditioning; authored durations initialize those controls instead of silently
+overriding later edits. One shared per-shot FPS value supplies generation and
+Save Shot. Internal data-helper outputs without consumers are not public stage
+sockets. Assembly hides ordering bookkeeping and any explicit frame trim.
+Run Shot includes that shot's model and storyboard dependencies and excludes
+other shots and final assembly. Saving a shot is a recovery side branch for
+in-memory assembly, avoiding an extra lossy encode/decode in its render inputs.
+The Gallery recorder accepts the resulting explicit-stage graphs and checks
+every authored shot, its model/encoding/decode ownership, soundtrack, upscale
+and final delivery. A partial Shot run cannot qualify a complete sequence.
+Valid deterministic encoding/decoding/upscale cache receipts remain usable;
+each sampler, saved shot and final assembly/export must execute freshly for
+an independent run. Historical whole-operation receipt readers remain intact.
+
+Video encoding and generation share guidance because CFG determines the
+embedding branches. Each repeated shot has its own bounded advisory membership
+for these paired controls, even when the pipeline is shared. Cross-model changes
+retain the existing semantic transfer rules; pairing must not copy guidance
+between unrelated model implementations. Common component/storyboard inputs
+use the existing mirrored Block input contract rather than duplicate sockets.
+
+Prepare Mask on fresh video-outpainting templates exposes two explicit choices.
+Prepared keeps the source canvas unchanged and aligns the selected boundary
+mask. Expand pads normalized RGB frames using the four borders and creates
+white generated borders with a black protected source region. Only the active
+mask input is read. Output geometry is wired to the real generation controls;
+memory admission and cancellation happen before/through canvas allocation.
+Saved Load Mask/Align Mask graphs keep their previous behavior.
+
+Moonflower's versioned nine-scene recipe uses ten ordered opening references
+(two for the garden-path shot), a 45-second song and an explicit 720-frame trim
+at 16 FPS. The accepted film has no burned-in lyrics. The ordinary Lyrics stage
+therefore defaults off for this recipe; enabling it requires an authored LRC
+timeline. Other existing lyric nodes retain their enabled default. The shorter
+five-scene recipe remains available as source history, and saved graphs are not
+rewritten. Reconstructing authoring does not replace the accepted output or prove
+that a newly rendered version matches it.
 
 New H3 and Pika graphs share Model Setup, prompt encoding, video/audio denoising,
 decoding and export operations. Keyframe/reference workflows add the real media
@@ -22,6 +77,10 @@ before execution under a different provider; saved values are not migrated.
 | Execution profile                | Tasks exposed by separate stages                            |
 | -------------------------------- | ----------------------------------------------------------- |
 | `ltx-video:direct`               | Text, opening image, ordered reference images, source video |
+| `wan-text-to-video:direct`       | Text-to-video |
+| `wan-video-to-video:direct`      | Source-video generation and color editing |
+| `wan-vace:direct`                | The selected profile's native VACE conditioning tasks |
+| `wan-22-image-to-video:direct`   | A14B opening image, with optional ending image |
 | `wan-22-ti2v-5b:direct`          | Text-to-video                                               |
 | `wan-22-ti2v-5b:image-direct:v1` | Opening image to video                                      |
 
@@ -43,6 +102,37 @@ Other video routes keep their
 existing whole or native Modular operations. Saved whole-pipeline graphs are not
 automatically rewritten. Stage availability is an authoring declaration; it does
 not imply hardware qualification, Auto support or successful model execution.
+
+Wan source-video generation delegates source VAE encoding and strength-adjusted
+sampling to the official pipeline. That call derives frame count from the source
+latents rather than accepting a duplicate `num_frames` argument. The staged
+decoder retains that actual temporal geometry. A14B ownership additionally binds
+both transformer experts and any optional image encoder/processor; replacing a
+component invalidates earlier encodings. Its high- and low-noise guidance controls
+remain distinct in the Generate stage and consumed-input evidence.
+
+VACE has a different genuine material boundary. Encode Inputs retains its frozen
+video, aligned masks and optional references and runs official text encoding.
+The existing generic Generate action receives that owned encoding. Its native
+overlapping windows each decode internally so the previous generated last frame
+can anchor the next masked window. There is no fabricated whole-clip latent
+tensor or separate decoder. Seeds, neutralized generated regions, overlap removal
+and the full delivered frame count retain the existing adapter's behavior. The
+ordinary integrated Generate action remains available to saved graphs without
+an encoded input. FPS belongs to delivery; VACE has no native FPS call argument.
+Its whole-operation contract keeps `diffusion.generate_video`; the separately
+selected encoded-stage contract is `diffusion.render_video`. Both use the same
+generic Generate executor. An unbound model draft retains the whole operation,
+while a curated stage selection gets Encode Inputs and the encoded consumer.
+Partial mixtures are rejected instead of replacing either contract implicitly.
+
+The encoded render contract requires `encoded_inputs`; its raw source, mask and
+reference sockets are inactive there. Those media remain required by the selected
+Encode Inputs task and by historical whole-operation calls. Readiness uses the
+current backend bundle declaration for an exact literal operation selection,
+including restored workflows, without rewriting saved schemas. A missing,
+disabled or incompatible encoder still blocks Run. Saved advisory port metadata
+cannot relax the current backend declaration.
 
 The reviewed H3/Pika schemas keep video and audio VAEs in float32 while the
 default component precision remains bfloat16. The selected large components,
@@ -88,6 +178,22 @@ does not promote a public template, Gallery clip or executable Hub Cluster.
 
 ## Execution and ownership
 
+`VideoConditioning.OutpaintCanvas` is deterministic preparation for an expanded
+video canvas. It takes uniform prepared RGB frames, places them unchanged at
+explicit left/top offsets, and creates same-sized white-generate/black-source
+boundary masks. Left/right/top/bottom controls add borders rather than stretching
+the source. Frame order and count remain unchanged; generation dimensions come
+from its canvas outputs. Model-specific spatial multiples still belong to the
+selected generation contract. Prepared source/mask inputs remain a separate
+compatible route and must not be padded again implicitly.
+
+Preparation checks observed available host RAM before allocating both output
+collections, retaining the existing CPU reserve of at least 4 GiB or ten percent
+of physical RAM. This allocation guard does not impose a guessed model-size
+limit or grant Auto/hardware qualification. Non-RGB or mixed-geometry input asks
+for normal video normalization first. The source frames are not modified, masks
+are independent per-frame objects, and cancellation uses the existing node path.
+
 The ordered-reference assembler requires only the medium selected by
 `reference_kind`. The initial ordered list is optional; video soundtrack is
 optional in Video mode. Image, Video and Audio modes respectively require an
@@ -119,6 +225,28 @@ These bindings are process-local data. They are neither executable graph
 representations nor portable execution receipts. Saving a graph persists values
 and connections; reopening after a restart recomputes unavailable runtime data.
 Release model caches through the ordinary scoped controls.
+
+The existing whole-pipeline Wan 2.1 1.3B sequence can also receive static Auto
+storage admission through `GenerateSequence → Compose →` the pinned tiled x2
+upscaler. It requires one accepted immutable model owner, its sole sequence
+consumer, two to six literal prompt/seed shots, native PIL output, one video per
+shot and one collection entering Compose. Geometry and frames per shot remain
+the accepted owner's literal controls; additional clips, conditioned inputs,
+external latents, mutable model pins and dynamic shape controls are refused.
+Composition's bounded crossfade cannot increase the sum of source frames.
+
+This route budgets every shot, both retained RGB source/composition collections,
+float32 input/output tensors, converted x2 frames and one complete tiled CPU
+assembly. This conservative known-storage allowance is not an activation or
+loading peak. It does not grant model fit or hardware qualification: the existing
+capacity floors, generating-owner release schedule and actual free-memory
+resample before upscaler allocation remain required. The native LTX stage route
+retains its separate unchanged storage contract.
+When the generating model has only a machine-capacity tier rather than a complete
+working-memory demand, Auto releases it before loading the independent image or
+video upscaler, even if the upscaler's known buffers fit available memory. An
+overlapping graph that cannot release that owner remains held. Reviewed dependent
+components such as ControlNet retain their existing placement rules.
 
 The client uses the backend's exact selected starter and
 `generic-video-stages:v1` authoring recipe. The retained creative settings and
@@ -252,3 +380,26 @@ soundtrack to the video's duration instead of letting audio sample rounding end
 the mux early. Retained-video audio muxing keeps its explicit duration choice;
 temporary audio belongs in a newly created private directory, never a predictable
 filename beside a borrowed source. Neither export path may remove user inputs.
+
+The Wan-family and both LTX Video loaders resolve Hub selections to the exact installed
+snapshot through the shared managed-cache resolver. Model discovery and execution
+therefore search the same configured and secondary cache roots. Wan loaders load their
+float32 VAE and the remaining pipeline from that same immutable directory; the
+original repository and revision remain the execution identity. Local selections
+retain their explicit path. Loading neither copies weights between caches nor
+downloads a replacement when the selected revision is absent.
+
+Workflow Auto inspects Storyboard, Shot Inputs and Shot Prompt through their
+shared deterministic scalar logic, without constructing or executing a node.
+Numeric widget strings use the ordinary declared scalar conversion. Prepared
+outpaint geometry comes from the exact Normalize source; expansion adds the
+declared borders. Runtime preparation still checks the actual supplied values.
+
+The pinned x2 Spandrel storage forecast also follows explicit native LTX shot
+collections and Wan/VACE video outputs. It requires the same accepted immutable
+model owner, matching encoder/sampler/decoder bindings, PIL output and finite
+geometry. Compositions sum every source frame conservatively, before crossfade
+deductions. This is retained-frame storage accounting, not a measured activation
+peak, arbitrary-graph permission or hardware qualification. Unknown sources,
+borrowed bindings and unresolved controls remain refused. The original closed
+single-shot LTX storage contract keeps its existing identity.

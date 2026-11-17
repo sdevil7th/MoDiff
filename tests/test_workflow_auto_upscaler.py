@@ -1,5 +1,6 @@
 """Static auxiliary-owner planning; no Spandrel, model or device execution."""
 from copy import deepcopy
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -270,6 +271,253 @@ def video_graph(mode="text_to_video"):
     owner = {"nodeId": "load", "modelType": "LTXVideoPipeline", "mode": mode,
              "repository": "Lightricks/LTX-Video-0.9.8-13B-distilled", "consumers": ["encode", "denoise", "decode"]}
     return nodes, owner
+
+
+def staged_sequence_video_graph(shots=3):
+    """Separate native shot stages, not the retained GenerateSequence route."""
+    nodes, owner = video_graph()
+    template = deepcopy(nodes)
+    nodes = {"load": nodes["load"]}
+    nodes["board"] = node("Storyboard", module="modules.VideoConditioning",
+                          shots_json=json.dumps([f"Shot {i}" for i in range(shots)]), base_seed=30)
+    consumers = []
+    items = {}
+    for index in range(shots):
+        suffix = str(index)
+        nodes["shot" + suffix] = node("ShotInputs", module="modules.VideoConditioning",
+            storyboard={"sourceId": "board", "sourceKey": "storyboard"}, index=index,
+            width=768, height=512, num_frames=81, fps=16, steps=8, guidance_scale=1)
+        for role in ["encode", "denoise", "decode"]:
+            name = role + suffix
+            nodes[name] = deepcopy(template[role])
+            consumers.append(name)
+            for parameter in nodes[name]["params"].values():
+                if parameter.get("sourceId") in {"encode", "denoise"}:
+                    parameter["sourceId"] += suffix
+        for field, port in [("width", "width_out"), ("height", "height_out"), ("num_frames", "frames")]:
+            nodes["denoise" + suffix]["params"][field] = {"sourceId": "shot" + suffix, "sourceKey": port}
+        items["item" if index == 0 else "item>>>" + suffix] = {"sourceId": "decode" + suffix, "sourceKey": "video_out"}
+    nodes["clips"] = node("ToList", module="modules.Primitive", **items)
+    nodes["join"] = node("Concatenate", module="modules.Video", clips={"sourceId": "clips", "sourceKey": "list"}, transition_seconds=0, fps=16)
+    nodes["upscale"] = deepcopy(template["upscale"])
+    nodes["upscale"]["params"]["image"] = {"sourceId": "join", "sourceKey": "output"}
+    owner["consumers"] = consumers
+    return nodes, owner
+
+
+@pytest.mark.parametrize("shots", [3, 6])
+@pytest.mark.parametrize('geometry', ['connected', 'literal'])
+def test_separate_native_shots_have_a_conservative_composition_storage_bound(setup, shots, geometry):
+    from modules.Video.main import Concatenate
+    _, hardware, calls = setup
+    nodes, owner = staged_sequence_video_graph(shots)
+    if geometry == 'literal':
+        # Real authored stages keep size/frame controls literal and connect
+        # seed/FPS from Shot Inputs. Both forms need the same storage bound.
+        for index in range(shots):
+            params = nodes['denoise' + str(index)]['params']
+            for field, value in [('width', 768), ('height', 512), ('num_frames', 81)]:
+                params[field] = {'value': value}
+            params['seed'] = {'sourceId': 'shot' + str(index), 'sourceKey': 'seed'}
+            params['frame_rate'] = {'sourceId': 'shot' + str(index), 'sourceKey': 'fps_out'}
+    port = nodes['upscale']['params']['image']['sourceKey']
+    assert Concatenate.params[port]['display'] == 'output'
+    before = deepcopy(nodes)
+    result = planner._upscaler_owner(nodes, "upscale", [owner], hardware)
+    assert nodes == before and calls == [VIDEO_PIN]
+    evidence = result["workingDemandEvidence"]
+    assert evidence["frameCount"] == shots * 81
+    assert evidence["shotCount"] == shots
+    assert evidence["inferencePeakMeasured"] is False
+    assert result["requirements"]["systemRamBytes"] >= 768 * 512 * 81 * shots * 84
+
+
+@pytest.mark.parametrize("pipeline,mode", [("WanPipeline", "text_to_video"),
+    ("WanVideoToVideoPipeline", "video_to_video"), ("WanVACEPipeline", "control_to_video")])
+def test_wan_native_decoded_or_encoded_render_frames_have_their_own_storage_bound(setup, pipeline, mode):
+    _, hardware, calls = setup
+    nodes, owner = video_graph()
+    is_vace = pipeline == "WanVACEPipeline"
+    repository = "Wan-AI/Wan2.1-VACE-1.3B-diffusers" if is_vace else "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
+    revision = "ec4d2cb062b548996b179d493fdd05340de702a1" if is_vace else "0fad780a534b6463e45facd96134c9f345acfa5b"
+    owner.update(modelType="WanVACEPipeline" if is_vace else "WanVideoPipeline", repository=repository, mode=mode)
+    nodes["load"]["params"].update(model_id={"value": {"source": "hub", "value": repository}},
+        revision={"value": revision}, pipeline_class={"value": pipeline})
+    for role in ["encode", "denoise"]:
+        nodes[role]["params"]["mode"] = {"value": mode}
+    nodes["denoise"]["params"].update(width={"value": 832}, height={"value": 480}, num_frames={"value": 81})
+    if mode != "text_to_video":
+        nodes["normalize"] = node("Normalize", module="modules.VideoConditioning", width=832, height=480, num_frames=81)
+        nodes["encode"]["params"]["video"] = {"sourceId": "normalize", "sourceKey": "output"}
+    if is_vace:
+        nodes["denoise"]["action"] = "Generate"
+        nodes["denoise"]["params"]["output_type"] = {"value": "pil"}
+        del nodes["decode"]
+        owner["consumers"].remove("decode")
+        nodes["upscale"]["params"]["image"] = {"sourceId": "denoise", "sourceKey": "video_out"}
+    result = planner._upscaler_owner(nodes, "upscale", [owner], hardware)
+    assert calls == [VIDEO_PIN]
+    assert result["workingDemandEvidence"]["frameCount"] == 81
+    assert result["workingDemandEvidence"]["inputWidth"] == 832
+
+
+@pytest.mark.parametrize("change", ["foreign_owner", "tensor_output", "wrong_latent_binding", "unknown_clip", "unknown_geometry", "batch"])
+def test_native_composition_refuses_unknown_or_mismatched_storage_before_artifact_io(setup, change):
+    _, hardware, calls = setup
+    nodes, owner = staged_sequence_video_graph()
+    if change == "foreign_owner":
+        nodes["decode0"]["params"]["pipeline"]["sourceId"] = "different"
+    elif change == "tensor_output":
+        nodes["decode0"]["params"]["output_type"] = {"value": "pt"}
+    elif change == "wrong_latent_binding":
+        nodes["decode0"]["params"]["latent_binding"]["sourceId"] = "denoise1"
+    elif change == "unknown_clip":
+        nodes["clips"]["params"]["item"] = {"value": "unbounded.mp4"}
+    elif change == "unknown_geometry":
+        nodes["shot0"]["params"]["width"] = {"sourceId": "custom", "sourceKey": "width"}
+        nodes["custom"] = node("Arbitrary", module="custom.untrusted")
+    elif change == "batch":
+        nodes["denoise0"]["params"]["num_videos_per_prompt"] = {"value": 2}
+    with pytest.raises(ValueError):
+        planner._upscaler_owner(nodes, "upscale", [owner], hardware)
+    assert not calls
+
+
+def sequence_video_graph(shots=5):
+    repo = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
+    nodes = {
+        "load": node("LoadPipeline", module="modules.DiffusersVideo",
+                     model_id={"source": "hub", "value": repo}, revision="",
+                     pipeline_class="WanPipeline", dtype="bfloat16", device="cuda:0",
+                     offload_mode="model_cpu", auto_offload=True),
+        "sequence": node("GenerateSequence", module="modules.DiffusersVideo",
+                         pipeline={"sourceId": "load", "sourceKey": "pipeline"},
+                         mode="text_to_video", prompts_json=json.dumps([f"Shot {i}" for i in range(shots)]),
+                         width=832, height=480, num_frames=81, num_inference_steps=50,
+                         num_videos_per_prompt=1, output_type="pil", seed=8511),
+        "compose": node("Compose", module="modules.Video",
+                        clip_1={"sourceId": "sequence", "sourceKey": "clips"},
+                        transition_seconds=0, fps=16),
+        "upscale": node("Upscaler", module="modules.Spandrel", model_id=deepcopy(VIDEO_PIN),
+                        downscale=1, tile_size=256, tile_overlap=32, device="cuda:0",
+                        image={"sourceId": "compose", "sourceKey": "video"}),
+    }
+    owner = {"nodeId": "load", "modelType": "WanVideoPipeline", "mode": "text_to_video",
+             "repository": repo, "settings": {"executionProfileId": "wan-text-to-video:direct"}, "consumers": ["sequence"]}
+    return nodes, owner
+
+
+@pytest.mark.parametrize("shots", [2, 5, 6])
+def test_video_sequence_composition_accounts_for_all_shots_before_the_tiled_upscaler(setup, shots):
+    _, hardware, calls = setup
+    nodes, owner = sequence_video_graph(shots)
+    before = deepcopy(nodes)
+    result = planner._upscaler_owner(nodes, "upscale", [owner], hardware)
+    assert nodes == before
+    assert result["candidateId"] == "reviewed-spandrel-x2-video-sequence-storage-v1"
+    evidence = result["workingDemandEvidence"]
+    assert (evidence["inputWidth"], evidence["inputHeight"], evidence["frameCount"]) == (832, 480, shots * 81)
+    assert evidence["shotCount"] == shots and not evidence["inferencePeakMeasured"]
+    assert result["requirements"]["systemRamBytes"] == 66812684 + 832 * 480 * 3 * (26 * shots * 81 + 4 * 4)
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("shots", [5, 6])
+def test_full_wan_sequence_plan_counts_one_real_upscaler_owner_and_preserves_creative_controls(setup, monkeypatch, tmp_path, shots):
+    _, hardware, _ = setup
+    nodes, _ = sequence_video_graph(shots)
+    profile = SimpleNamespace(id="wan-text-to-video:direct", model_type="WanVideoPipeline", modes=("text_to_video",),
+                              loader_module="modules.DiffusersVideo", loader_action="LoadPipeline",
+                              execution_path="direct-diffusers-video")
+    monkeypatch.setattr(planner, "resolve_execution_profiles_for_loader",
+                        lambda module, action, values: ((profile,), None) if action == "LoadPipeline" else ((), None))
+    candidate = {"id": "accepted-native-wan", "executionProfileId": profile.id, "modelRepo": "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+                 "modelType": profile.model_type, "mode": "text_to_video", "loaderModule": profile.loader_module,
+                 "loaderAction": profile.loader_action, "executionPath": profile.execution_path,
+                 "dtype": "bfloat16", "quantizationMode": "none", "offloadMode": "model_cpu", "autoOffload": True,
+                 "canAutoRun": True, "proof": {"status": "declared_safe"},
+                 "generation": {"width": 832, "height": 480, "steps": 50, "numFrames": 81},
+                 "requirements": {"memorySemantics": "machine_capacity", "minimum": {
+                     "systemRamBytes": 24 * GIB, "vramBytes": 10 * GIB, "diskFreeBytes": 0}}}
+    graph_value = {"nodes": nodes, "paths": [["load", "sequence", "compose", "upscale"]]}
+    before = deepcopy(graph_value)
+    result = planner.build_workflow_auto_plan(graph_value, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path),
+                                              plan_recipe=lambda *args, **kwargs: {"candidates": [deepcopy(candidate)]}, hardware=hardware)
+    assert result["canAutoRun"], result["issues"]
+    assert graph_value == before
+    assert len(result["loaders"]) == 2
+    assert result["strategy"] == "dependency_order_release_owners"
+    assert result["schedule"]["releases"], "known upscaler buffers cannot establish combined fit with an unmeasured generator"
+    auxiliary = next(owner for owner in result["loaders"] if owner.get("resourceOwnerKind") == "auxiliary_model")
+    assert auxiliary["workingDemandEvidence"]["frameCount"] == shots * 81
+    assert auxiliary["candidateId"] == "reviewed-spandrel-x2-video-sequence-storage-v1"
+
+
+def test_unmeasured_primary_image_demand_also_releases_before_a_known_upscaler(setup, monkeypatch, tmp_path):
+    _, hardware, _ = setup
+    profile = SimpleNamespace(id="test:qwen", model_type="QwenImageModularPipeline", modes=("text_to_image",),
+                              loader_module="modules.ModularDiffusers", loader_action="ModelsLoader", execution_path="modular-diffusers")
+    monkeypatch.setattr(planner, "resolve_execution_profiles_for_loader",
+                        lambda module, action, values: ((profile,), None) if action == "ModelsLoader" else ((), None))
+    candidate = {"id": "unmeasured-capacity-tier", "executionProfileId": profile.id, "modelRepo": "test/model",
+                 "modelType": profile.model_type, "mode": "text_to_image", "loaderModule": profile.loader_module,
+                 "loaderAction": profile.loader_action, "executionPath": profile.execution_path,
+                 "dtype": "bfloat16", "quantizationMode": "none", "offloadMode": "none", "autoOffload": False,
+                 "canAutoRun": True, "proof": {"status": "declared_safe"},
+                 "generation": {"width": 1024, "height": 1024, "steps": 50},
+                 "requirements": {"memorySemantics": "machine_capacity", "minimum": {
+                     "systemRamBytes": 8 * GIB, "vramBytes": 8 * GIB, "diskFreeBytes": 0}}}
+    g = graph();before = deepcopy(g)
+    result = planner.build_workflow_auto_plan(g, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path),
+                                              plan_recipe=lambda *args, **kwargs: {"candidates": [deepcopy(candidate)]}, hardware=hardware)
+    assert result["canAutoRun"], result["issues"]
+    assert result["strategy"] == "dependency_order_release_owners"
+    assert result["schedule"]["releases"]
+    assert g == before
+
+
+@pytest.mark.parametrize("change", [
+    "wrong_collection", "wrong_compositor", "extra_clip", "literal_extra_clip", "connected_fps",
+    "bad_fade", "missing_owner", "other_owner", "another_consumer", "wrong_pipeline", "mutable_revision",
+    "wrong_repo", "empty_shots", "too_many_shots", "bad_json", "empty_prompt", "seed_bool", "unknown_shot_field",
+    "connected_prompts", "connected_width", "bool_width", "zero_height", "batch", "latent_output",
+    "external_latents", "embeddings", "source_video", "different_pipeline_port",
+])
+def test_video_sequence_storage_rejects_unbounded_or_borrowed_inputs_before_artifact_io(setup, change):
+    _, hardware, calls = setup
+    nodes, owner = sequence_video_graph()
+    seq, compose, load = (nodes[k]["params"] for k in ("sequence", "compose", "load"))
+    if change == "wrong_collection": compose["clip_1"]["sourceKey"] = "video_out"
+    elif change == "wrong_compositor": nodes["compose"]["action"] = "CustomCompose"
+    elif change == "extra_clip": compose["clip_2"] = {"sourceId": "other", "sourceKey": "video"}
+    elif change == "literal_extra_clip": compose["clip_2"] = {"value": "unbounded.mp4"}
+    elif change == "connected_fps": compose["fps"] = {"sourceId": "other", "sourceKey": "fps"}
+    elif change == "bad_fade": compose["transition_seconds"] = {"value": -1}
+    elif change == "missing_owner": owner["consumers"] = []
+    elif change == "other_owner": owner["repository"] = "other/model"
+    elif change == "another_consumer": owner["consumers"].append("other_generator")
+    elif change == "wrong_pipeline": load["pipeline_class"] = {"value": "OtherPipeline"}
+    elif change == "mutable_revision": load["revision"] = {"value": "main"}
+    elif change == "wrong_repo": load["model_id"] = {"value": {"source": "hub", "value": "other/model"}}
+    elif change == "empty_shots": seq["prompts_json"] = {"value": "[]"}
+    elif change == "too_many_shots": seq["prompts_json"] = {"value": json.dumps(["shot"] * 7)}
+    elif change == "bad_json": seq["prompts_json"] = {"value": "["}
+    elif change == "empty_prompt": seq["prompts_json"] = {"value": '["shot", " "]'}
+    elif change == "seed_bool": seq["prompts_json"] = {"value": '[{"prompt":"shot","seed":true},"shot"]'}
+    elif change == "unknown_shot_field": seq["prompts_json"] = {"value": '[{"prompt":"shot","width":9999},"shot"]'}
+    elif change == "connected_prompts": seq["prompts_json"] = {"sourceId": "other", "sourceKey": "text"}
+    elif change == "connected_width": seq["width"] = {"sourceId": "other", "sourceKey": "width"}
+    elif change == "bool_width": seq["width"] = {"value": True}
+    elif change == "zero_height": seq["height"] = {"value": 0}
+    elif change == "batch": seq["num_videos_per_prompt"] = {"value": 2}
+    elif change == "latent_output": seq["output_type"] = {"value": "latent"}
+    elif change == "external_latents": seq["latents"] = {"sourceId": "other", "sourceKey": "latents"}
+    elif change == "embeddings": seq["prompt_embeds"] = {"value": [1, 2]}
+    elif change == "source_video": seq["video"] = {"value": "unbounded.mp4"}
+    elif change == "different_pipeline_port": seq["pipeline"]["sourceKey"] = "other"
+    with pytest.raises(ValueError):
+        planner._upscaler_owner(nodes, "upscale", [owner], hardware)
+    assert not calls
 
 
 @pytest.mark.parametrize("mode", ["text_to_video", "image_to_video", "reference_to_video", "video_to_video"])

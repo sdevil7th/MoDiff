@@ -46,6 +46,12 @@ AUDIO_DISPATCH_FIELDS = {
        for field in ('sha256', 'shape', 'dtype', 'device', 'bytes', 'sample_rate', 'capture')},
 }
 NODE_FIELD_NAMES = {
+    # Data selectors are not generation calls. The downstream actual Encode /
+    # Denoise records capture what they consume; selector defaults must not
+    # masquerade as model dimensions, CFG or steps in the global summary.
+    ('VideoConditioning', 'ShotInputs'): {},
+    ('VideoConditioning', 'ShotPrompt'): {},
+    ('VideoConditioning', 'Storyboard'): {},
     ('DiffusersAudio', 'Generate'): {
         **FIELD_NAMES, **AUDIO_DISPATCH_FIELDS, 'lyrics': 'lyrics', 'vocal_language': 'vocalLanguage',
         'shift': 'shift', 'bpm': 'bpm', 'keyscale': 'keyscale', 'timesignature': 'timesignature',
@@ -80,8 +86,14 @@ NODE_FIELD_NAMES = {
     ('DiffusersVideo', 'Denoise'): {
         **FIELD_NAMES, 'executed_task': 'executedTask',
         'conditioning_strength': 'conditioningStrength', 'denoise_strength': 'denoiseStrength',
+        'secondary_guidance_scale': 'guidanceScale2',
     },
     ('DiffusersVideo', 'DecodeLatents'): {**FIELD_NAMES, 'executed_task': 'executedTask'},
+    ('DiffusersVideo', 'Generate'): {**FIELD_NAMES, 'executed_task': 'executedTask',
+                                   'secondary_guidance_scale': 'guidanceScale2',
+                                   'expand_prompt': 'expandPrompt'},
+    ('DiffusersVideo', 'GenerateVideoAudio'): {**FIELD_NAMES, 'executed_task': 'executedTask',
+                                             'expand_prompt': 'expandPrompt'},
     **{('HuggingFaceTransformers', action): {**FIELD_NAMES, 'executed_task': 'executedTask'}
        for action in ('PredictDepth',)},
     ('HuggingFaceTransformers', 'GenerateImageVideoText'): {
@@ -153,7 +165,7 @@ OUTPUT_FIELDS = {"prompt", "negativePrompt", "seed", "width", "height", "steps",
 # authored control reached the library. Each supported adapter accounts for its
 # own bounded literals at the actual call/configuration boundary.
 ACCOUNTING_FIELDS = {
-    ('DiffusersImage', 'LoadPipeline'): frozenset('''model_id pipeline_class mode revision
+    ('DiffusersImage', 'LoadPipeline'): frozenset('''model_id pipeline_class mode revision execution_profile_id
         conditioning_kind conditioning_model_id conditioning_revision dtype device quantization_mode
         quantized_components device_map auto_offload offload_mode enable_vae_slicing
         enable_vae_tiling low_cpu_mem_usage'''.split()),
@@ -401,6 +413,7 @@ def bind_generation_input_origins(node_id, node, record, overrides=None, *, sour
     result = deepcopy(record)
     # Budget existing v1/accounting evidence before the newer optional section.
     applied_adapters = result.pop('appliedAdapters', None)
+    media_evidence = result.pop('mediaEvidence', None)
     result.update(nodeId=str(node_id), module=node["module"], action=node["action"])
     params = node.get("params") or {}
     for key, field in result["fields"].items():
@@ -451,6 +464,8 @@ def bind_generation_input_origins(node_id, node, record, overrides=None, *, sour
                 'omittedFields': {'accounting': 'record-size-limit'}, 'complete': False}
     if applied_adapters is not None:
         result['appliedAdapters'] = applied_adapters
+    if media_evidence is not None:
+        result['mediaEvidence'] = media_evidence
     return result
 
 
@@ -471,13 +486,14 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
     if not captured:
         return None
     incomplete = len(captured) > MAX_NODES
-    bounded, accounting_records, applied_records = [], [], []
+    bounded, accounting_records, applied_records, media_records = [], [], [], []
     remaining_bytes = MAX_RECEIPT_BYTES
     for record in captured[:MAX_NODES]:
         # Reserve the legacy ancestry first. Optional accounting must never
         # evict a previously fitting v1 record or clear its summary/task proof.
         accounting = record.pop('fieldAccounting', None)
         applied = record.pop('appliedAdapters', None)
+        media = record.pop('mediaEvidence', None)
         size = len(json.dumps(record, ensure_ascii=True).encode("ascii"))
         if size > remaining_bytes:
             incomplete = True
@@ -485,6 +501,7 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
         bounded.append(record)
         accounting_records.append(accounting)
         applied_records.append(applied)
+        media_records.append(media)
         remaining_bytes -= size
     captured = bounded
     accounting_truncated = False
@@ -515,6 +532,18 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
             continue
         record['appliedAdapters'] = applied
         remaining_bytes -= size
+    media_truncated = False
+    for record, media in zip(captured, media_records):
+        if media is None:
+            continue
+        base_size = len(json.dumps(record, ensure_ascii=True).encode('ascii'))
+        total_size = len(json.dumps({**record, 'mediaEvidence': media}, ensure_ascii=True).encode('ascii'))
+        if total_size > MAX_RECORD_BYTES or total_size - base_size > remaining_bytes:
+            media_truncated = True
+            continue
+        record['mediaEvidence'] = media
+        media_truncated = media_truncated or media.get('status') == 'truncated'
+        remaining_bytes -= total_size - base_size
     scoped_summary = any(_is_adapter_descriptor(record) for record in captured)
     candidates, unavailable = {}, set()
     for record in captured:
@@ -554,6 +583,8 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
            if any(item is not None for item in accounting_records) else {}),
         **({'appliedAdaptersStatus': {'schemaVersion': 1, 'truncated': applied_truncated}}
            if any(item is not None for item in applied_records) else {}),
+        **({'mediaEvidenceStatus': {'schemaVersion': 1, 'truncated': media_truncated}}
+           if any(item is not None for item in media_records) else {}),
         "schemaVersion": 1, "source": "backend-execution", "taskId": str(task_id),
         "attemptIndex": int(attempt_index or 0), "nodeId": str(node_id),
         "nodes": captured, "summary": summary, "ambiguousFields": ambiguous,

@@ -123,6 +123,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "PikaH3FlexModularPipeline",
             "MiniMaxH3ImageModularPipeline",
             "Wan22Pipeline",
+            "Kandinsky6TI2VAPipeline",
+            "Kandinsky6DistilledTI2VAPipeline",
             "WanAnimatePipeline",
             "WanImage2VideoModularPipeline",
             "WanModularPipeline",
@@ -499,7 +501,17 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
     def test_ace_lora_template_base_is_an_exact_reviewed_compatible_artifact(self):
         profile = DIFFUSERS_EXECUTION_PROFILES["ace-step-audio:direct"]
 
-        self.assertEqual(profile.compatible_repos, (ACE_STEP_LORA_BASE_REPO,))
+        self.assertEqual(profile.compatible_repos, (
+            ACE_STEP_LORA_BASE_REPO, "ACE-Step/acestep-v15-xl-base-diffusers",
+        ))
+        self.assertEqual(
+            catalog_revision("ACE-Step/acestep-v15-xl-base-diffusers"),
+            "8f40447d21ee59ad4dcee6c99ce248027410bfec",
+        )
+        self.assertNotIn(
+            "ACE-Step/acestep-v15-xl-base-diffusers",
+            {repo for repo, _ in profile.adapter_authoring.repository_revisions},
+        )
         self.assertEqual(
             catalog_revision(ACE_STEP_LORA_BASE_REPO),
             "be23effe449c5957947f3020fd63bee23c64abe4",

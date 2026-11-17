@@ -32,7 +32,7 @@ def test_video_source_profile_is_exact_and_does_not_replace_the_stable_base():
     assert build['outputWheel']['byteSize'] == 28324103
     assert build['buildDependencies'] == []
     assert build['sourceTrees'] == ['src/diffusers']
-    assert '"diffusers==0.41.0"' in (ROOT / 'pyproject.toml').read_text(encoding='utf-8')
+    assert '"diffusers==0.43.0"' in (ROOT / 'pyproject.toml').read_text(encoding='utf-8')
     assert selected.satisfies_profiles == (), 'New source is not qualification of older image providers.'
 
 

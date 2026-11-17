@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:1ba45f6756f8d62acb5698efdf7a544def29f21f4b2c5ef5718e6f3df06cea32",
+  "contentHash": "sha256:817653a1dad5f2c16f091ea0a12d0297a64fe89002b1c06672de57baf56ac088",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -994,7 +994,6 @@
         "modelFamily": "ACE Audio",
         "modelType": "AceStepAudioPipeline",
         "publicTemplateIds": [
-          "ace_step_lyric_music_video",
           "ace_step_text_to_audio"
         ],
         "qualificationStatus": "graph-qualified"
@@ -1075,7 +1074,6 @@
         "modelFamily": "ACE Audio",
         "modelType": "AceStepAudioPipeline",
         "publicTemplateIds": [
-          "ace_step_lyric_music_video",
           "ace_step_text_to_audio"
         ],
         "qualificationStatus": "graph-qualified"
@@ -1154,7 +1152,6 @@
         "modelFamily": "ACE Audio",
         "modelType": "AceStepAudioPipeline",
         "publicTemplateIds": [
-          "ace_step_lyric_music_video",
           "ace_step_text_to_audio"
         ],
         "qualificationStatus": "graph-qualified"
@@ -2676,8 +2673,7 @@
         "modelFamily": "Qwen Image",
         "modelType": "QwenImageEditPlusModularPipeline",
         "publicTemplateIds": [
-          "character_edit",
-          "qwen_edit_plus_single_image"
+          "character_edit"
         ],
         "qualificationStatus": "graph-qualified"
       },
@@ -8203,8 +8199,7 @@
           "qwen_low_vram_text_rendering",
           "qwen_poster_logo_text",
           "qwen_product_mockup",
-          "qwen_text_rendering",
-          "qwen_upscale_finish"
+          "qwen_text_rendering"
         ],
         "qualificationStatus": "graph-qualified"
       },
@@ -8302,8 +8297,7 @@
           "qwen_low_vram_text_rendering",
           "qwen_poster_logo_text",
           "qwen_product_mockup",
-          "qwen_text_rendering",
-          "qwen_upscale_finish"
+          "qwen_text_rendering"
         ],
         "qualificationStatus": "graph-qualified"
       },
@@ -10613,8 +10607,7 @@
           "qwen_low_vram_text_rendering",
           "qwen_poster_logo_text",
           "qwen_product_mockup",
-          "qwen_text_rendering",
-          "qwen_upscale_finish"
+          "qwen_text_rendering"
         ],
         "qualificationStatus": "graph-qualified"
       },
@@ -10869,8 +10862,7 @@
         "modelFamily": "Qwen Image",
         "modelType": "QwenImageEditPlusModularPipeline",
         "publicTemplateIds": [
-          "character_edit",
-          "qwen_edit_plus_single_image"
+          "character_edit"
         ],
         "qualificationStatus": "graph-qualified"
       },
@@ -10977,8 +10969,7 @@
         "modelFamily": "Qwen Image",
         "modelType": "QwenImageEditPlusModularPipeline",
         "publicTemplateIds": [
-          "character_edit",
-          "qwen_edit_plus_single_image"
+          "character_edit"
         ],
         "qualificationStatus": "graph-qualified"
       },
@@ -14388,8 +14379,7 @@
         "modelType": "WanVideoPipeline",
         "publicTemplateIds": [
           "wan_21_t2v_13b_seed_vault",
-          "wan_vace_cinematic_text_to_video",
-          "wan_video_long_showcase"
+          "wan_vace_cinematic_text_to_video"
         ],
         "qualificationStatus": "execution-qualified-gallery-review-pending"
       },
@@ -16625,18 +16615,18 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:1828647ace68b27d9e4fb5ebf48861a0ab98de5684aaba8cf5bbc6eca30d9ee1",
+      "contentHash": "sha256:a2ce60049288be675d9a5fec740fef38cf46e9b0352a8b50d7d8536a33ee1c83",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:6f02271d730372142d7682f0b12622af8e68b7c3de0706b2cbe72b46b7906f54"
+      "sha256": "sha256:8e6bdcc6098cb30c9d88da4f8debe919418205e62f9b272df0151fcaf9bdc809"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:e08b70d68864d6c3ea172ff0f6aad753f4024755e2b5460cb1db90751a62d33f",
+      "contentHash": "sha256:4d7481826d5737426e32487ffb158cfd05e166a8f7d98acf96bb74203e9ba7a4",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:28f71551a695459e3efd7cc45c5f6708d8e279bbbda271b869ad1305b27cb4dc"
+      "sha256": "sha256:e164f7d3cddc4e87fc52c83cc73b09a79fc14a49dc6cf59a34b2cdb18ac2b141"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:5b667b400607a47934f087e269b2ba3a8370ab2b0041b510d069df48ac98874d"
+      "sha256": "sha256:a6e1f5d823434c5d842a2efa8b207d4acd6eed7b3dcb9a6984d0d36d55f22bab"
     }
   },
   "summary": {

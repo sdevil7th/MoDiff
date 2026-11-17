@@ -56,19 +56,19 @@ class UpstreamCoverageExactClosureTests(unittest.TestCase):
         self.assertEqual(
             Counter(item["status"] for item in items),
             {
-                "executable": 146,
+                "executable": 147,
                 "equivalent": 8,
                 "intentionally-excluded": 59,
                 "research-blocked": 116,
                 "contract-only": 5,
-                "unreviewed": 6,
+                "unreviewed": 5,
             },
         )
 
         by_name = {item["name"]: item for item in items}
         self.assertEqual({name for name, row in by_name.items() if row["status"] == "unreviewed"},
                          {
-                "EchoModularPipeline", "Kandinsky6SRPipeline", "Kandinsky6TI2VAPipeline",
+                "EchoModularPipeline", "Kandinsky6SRPipeline",
                 "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline", "SanaWMPipeline",
             })
         # Executable here means an exact source adapter contract, not a

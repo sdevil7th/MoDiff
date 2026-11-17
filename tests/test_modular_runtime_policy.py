@@ -12,9 +12,11 @@ class PolicyModule(torch.nn.Linear):
         self.calls = []
         self.use_slicing = False
         self.use_tiling = True
+        self.processor = SimpleNamespace(_attention_backend=None)
 
     def set_attention_backend(self, backend):
         self.calls.append(('attention', backend))
+        self.processor._attention_backend = backend
 
     def reset_attention_backend(self):
         self.calls.append(('reset',))
@@ -141,7 +143,7 @@ def test_partial_configuration_failure_cannot_be_reused_as_untouched_legacy_poli
     assert compatible(owner.text_encoder)
 
 
-def test_existing_helpers_apply_math_attention_and_vae_flags_to_real_tiny_cpu_models():
+def test_existing_helpers_reject_ignored_attention_and_apply_auto_vae_flags_to_real_tiny_cpu_models():
     from diffusers import AutoencoderKL, UNet2DConditionModel
 
     unet = UNet2DConditionModel(sample_size=8, in_channels=4, out_channels=4, layers_per_block=1,
@@ -153,10 +155,13 @@ def test_existing_helpers_apply_math_attention_and_vae_flags_to_real_tiny_cpu_mo
     sample, conditioning = torch.randn(1, 4, 8, 8), torch.randn(1, 2, 16)
     with torch.no_grad():
         before = unet(sample, 1, conditioning).sample
-    result = loaders.apply_modular_runtime_policy(owner, loaders.modular_runtime_policy('_native_math', True, True))
+    with pytest.raises(RuntimeError, match='processors.*dispatcher.*Select auto'):
+        loaders.apply_modular_runtime_policy(owner, loaders.modular_runtime_policy('_native_math', True, True))
+    result = loaders.apply_modular_runtime_policy(owner, loaders.modular_runtime_policy('auto', True, True))
     with torch.no_grad():
         after = unet(sample, 1, conditioning).sample
-    assert result['attention']['applied'] == ['unet']
+    assert result['attention']['applied'] == []
+    assert 'unet' in result['attention']['reset']
     assert vae.use_slicing and vae.use_tiling
     assert torch.isfinite(after).all()
     torch.testing.assert_close(after, before, rtol=1e-5, atol=1e-6)

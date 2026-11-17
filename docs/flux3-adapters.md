@@ -5,6 +5,15 @@ generic LoRA descriptor chain, NodeBase dispatcher and component manager.
 It requires a reviewed runtime containing the official FLUX 3 APIs. A source
 audit does not replace the installed dependency contract or publish a template.
 
+Reviewed fixed recipes can have explicit canonical associations and retained
+execution records while the family remains experimental. The client release
+policy names each exact recipe and required optional provider; default pairs do
+not inherit that association. Current recipe locks, complete native provenance
+and existing exact-file Gallery approval are still required. These records do
+not change runtime readiness, hardware fit, Auto admission or support for other
+tasks, prompts, precisions and placements. A source declaration or graph export
+alone does not create an execution or quality record.
+
 Normal workflow authoring exposes Klein and Klein Base through the explicitly
 verified evaluation runtime and **Custom** memory. Each exact text-to-image or
 image-edit profile declares its existing append-v3 prompt-enhancement parent and

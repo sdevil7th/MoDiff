@@ -1,5 +1,5 @@
 {
-  "contentHash": "sha256:1e499995564a039a1b9011b1b9ab95812f967022775bf21fab3216a7a34602d5",
+  "contentHash": "sha256:2cc1f0bfe5381aa4a70b9b8fb75658d7d2c17b7fc9eab1cb286d1955d7e17572",
   "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
   "diffusersVersion": "0.41.0.dev0",
   "pipelines": [
@@ -1780,10 +1780,10 @@
       ]
     },
     {
-      "coverage": "unreviewed",
+      "coverage": "executable",
       "equivalentTo": [],
       "pipelineClass": "Kandinsky6TI2VAPipeline",
-      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "upstreamTasks": [
         {
           "source": "export",

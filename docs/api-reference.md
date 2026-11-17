@@ -224,6 +224,16 @@ substituting capacity used. `GET /runtime/options` returns the live node option 
 device and package compatibility filtering. Both are observations, not proof
 that a real model workload completed.
 
+Current registry fields may include `runtimeOptions: "availability"` for
+server-owned precision, attention and quantization status, or `"choices"` for
+physical device enumeration. These are presentation policies from the current
+registry, including controls exposed through a Block's declared bindings and
+mirrors. Availability refresh preserves authored enum membership; device choices
+follow the current host. Saved values, definitions and authority receipts are
+unchanged. Imported metadata cannot opt into either policy. Dynamic
+`optionsSource` providers retain their existing authority, and unsupported
+choices remain disabled; this metadata does not install or qualify anything.
+
 Concurrent resource polls share one in-flight snapshot and JSON serialization
 off the HTTP event loop. A slow probe must not occupy a separate worker for
 each waiting browser request; health and other control handlers need that

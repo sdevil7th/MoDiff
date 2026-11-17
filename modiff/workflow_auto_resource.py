@@ -1412,15 +1412,21 @@ def _build_workflow_auto_plan(
     # A machine tier and one free-memory floor do not bound the sum of distinct
     # primary model weights/activations. Never retain several such owners on the
     # assumption that their zero, unmeasured working demands establish fit.
-    # Reviewed auxiliary storage remains additive under its existing contract.
+    # Reviewed auxiliary storage remains additive, but a sequential upscaler's
+    # known buffers cannot establish combined fit with an unmeasured generator.
+    # Supporting components such as ControlNet retain their reviewed dependent
+    # placement; they are not independent postprocessing models.
     primary_ids = {owner["nodeId"] for owner in planned
                    if owner.get("resourceOwnerKind") != "auxiliary_model"}
+    independent_model_ids = primary_ids | {owner["nodeId"] for owner in planned
+                                           if owner.get("resourceOwnerKind") == "auxiliary_model"
+                                           and owner.get("mode") == "image_upscale"}
     unknown_primary_ids = {owner["nodeId"] for owner in planned
                            if owner["nodeId"] in primary_ids
                            and owner["workingMemoryPolicy"] == "runtime_headroom_policy"}
-    unknown_combined_demand = len(primary_ids) > 1 and bool(unknown_primary_ids)
+    unknown_combined_demand = len(independent_model_ids) > 1 and bool(unknown_primary_ids)
     unknown_overlap = any(
-        first["ownerId"] in unknown_primary_ids and second["ownerId"] in primary_ids
+        first["ownerId"] in unknown_primary_ids and second["ownerId"] in independent_model_ids
         and first["ownerId"] != second["ownerId"]
         and first["first"] <= second["last"] and second["first"] <= first["last"]
         for first in schedule["owners"] for second in schedule["owners"]

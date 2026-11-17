@@ -18,7 +18,8 @@
         "stroke": "#60A5FA"
       },
       "target": "node-08",
-      "targetHandle": "image"
+      "targetHandle": "image",
+      "type": "default"
     },
     {
       "className": "category-int",
@@ -38,8 +39,7 @@
         "stroke": "#84CC16"
       },
       "target": "node-01",
-      "targetHandle": "height",
-      "type": "default"
+      "targetHandle": "height"
     },
     {
       "className": "category-image_latent_binding",
@@ -59,8 +59,7 @@
         "stroke": "hsl(151 75% 65%)"
       },
       "target": "node-01",
-      "targetHandle": "latent_binding",
-      "type": "default"
+      "targetHandle": "latent_binding"
     },
     {
       "className": "category-tensor",
@@ -80,8 +79,7 @@
         "stroke": "#A5B4FC"
       },
       "target": "node-01",
-      "targetHandle": "latents",
-      "type": "default"
+      "targetHandle": "latents"
     },
     {
       "className": "category-int",
@@ -101,8 +99,7 @@
         "stroke": "#84CC16"
       },
       "target": "node-01",
-      "targetHandle": "width",
-      "type": "default"
+      "targetHandle": "width"
     },
     {
       "className": "category-image_diffusion_pipeline",
@@ -612,7 +609,8 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "visualStageSourceIndex": 1
       },
       "id": "node-01",
       "position": {
@@ -1055,7 +1053,9 @@
         "params": {
           "encoded_inputs": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Encoded inputs",
             "required": true,
             "type": "image_conditioning"
@@ -1063,14 +1063,19 @@
           "generator": {
             "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
-            "isConnected": false,
             "label": "Generator",
             "type": "generator"
           },
           "guidance_scale": {
             "default": 0,
             "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Guidance",
             "max": 30,
@@ -1081,6 +1086,9 @@
           },
           "height": {
             "default": 1024,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Height",
             "max": 2048,
@@ -1091,7 +1099,9 @@
           },
           "height_out": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Height",
             "type": "int"
           },
@@ -1243,6 +1253,9 @@
               "pipelineClass": "FluxPipeline",
               "schemaVersion": 1
             },
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Image Contract",
             "type": "object",
@@ -1380,42 +1393,55 @@
           "joint_attention_kwargs": {
             "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
-            "isConnected": false,
             "label": "Joint Attention Kwargs",
             "type": "object"
           },
           "latent_binding": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Latent binding",
             "type": "image_latent_binding"
           },
           "latents": {
             "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
-            "isConnected": false,
             "label": "Latents",
             "type": "tensor"
           },
           "latents_out": {
             "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
-            "isConnected": true,
             "label": "Latents",
             "type": "tensor"
           },
           "masked_image_latents": {
             "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
-            "isConnected": false,
             "label": "Masked Image Latents",
             "type": "tensor"
           },
           "max_sequence_length": {
             "default": 256,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Max Sequence Length",
             "max": 512,
@@ -1426,6 +1452,9 @@
           "num_inference_steps": {
             "default": 4,
             "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Steps",
             "max": 100,
             "min": 1,
@@ -1435,14 +1464,21 @@
           "pipeline": {
             "display": "input",
             "fieldOptions": {
-              "suppressAutomaticSignalAction": true
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
             },
-            "isConnected": true,
             "label": "Pipeline",
+            "onSignal": [
+              {
+                "action": "value",
+                "target": "image_contract"
+              },
+              {
+                "action": "exec",
+                "data": "update_image_contract"
+              }
+            ],
             "required": true,
-            "signal": {
-              "direction": "output"
-            },
             "signalCompatibility": {
               "action": "$node",
               "required": true
@@ -1452,6 +1488,9 @@
           "seed": {
             "default": 0,
             "display": "random",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Seed",
             "max": 4294967295,
             "min": 0,
@@ -1464,14 +1503,19 @@
           "sigmas": {
             "description": "Optional upstream input. Leave disconnected to preserve the current call defaults.",
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
-            "isConnected": false,
             "label": "Sigmas",
             "type": "float"
           },
           "strength": {
             "default": 0.8,
             "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Strength",
             "max": 1,
@@ -1482,6 +1526,9 @@
           },
           "width": {
             "default": 1024,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Width",
             "max": 2048,
@@ -1492,7 +1539,9 @@
           },
           "width_out": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Width",
             "type": "int"
           }
@@ -1506,7 +1555,8 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "visualStageSourceIndex": 0
       },
       "id": "node-02",
       "position": {
@@ -2136,21 +2186,20 @@
             "label": "Device",
             "options": [
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "This device is not available in the current runtime.",
-                "installationState": "unavailable",
-                "label": "cpu:0",
-                "schemaVersion": 1,
-                "value": "cpu:0"
-              },
-              {
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
                 "label": "cuda:0",
                 "schemaVersion": 1,
                 "value": "cuda:0"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
               },
               {
                 "availability": "installed",
@@ -3333,49 +3382,55 @@
                 "value": "none"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "bnb_4bit",
                 "schemaVersion": 1,
                 "value": "bnb_4bit"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "bnb_8bit",
                 "schemaVersion": 1,
                 "value": "bnb_8bit"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Quanto package is not installed",
+                "installationState": "unavailable",
                 "label": "quanto_float8",
                 "schemaVersion": 1,
                 "value": "quanto_float8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Quanto package is not installed",
+                "installationState": "unavailable",
                 "label": "quanto_int8",
                 "schemaVersion": 1,
                 "value": "quanto_int8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "TorchAO detected on an FP8-capable NVIDIA device",
+                "installationState": "unavailable",
                 "label": "torchao_float8",
                 "schemaVersion": 1,
                 "value": "torchao_float8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "TorchAO package is not installed",
+                "installationState": "unavailable",
                 "label": "torchao_int8_weight_only",
                 "schemaVersion": 1,
                 "value": "torchao_int8_weight_only"
@@ -3503,49 +3558,55 @@
                 "value": "none"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "bnb_4bit",
                 "schemaVersion": 1,
                 "value": "bnb_4bit"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "bnb_8bit",
                 "schemaVersion": 1,
                 "value": "bnb_8bit"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Quanto package is not installed",
+                "installationState": "unavailable",
                 "label": "quanto_float8",
                 "schemaVersion": 1,
                 "value": "quanto_float8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Quanto package is not installed",
+                "installationState": "unavailable",
                 "label": "quanto_int8",
                 "schemaVersion": 1,
                 "value": "quanto_int8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "TorchAO detected on an FP8-capable NVIDIA device",
+                "installationState": "unavailable",
                 "label": "torchao_float8",
                 "schemaVersion": 1,
                 "value": "torchao_float8"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "TorchAO package is not installed",
+                "installationState": "unavailable",
                 "label": "torchao_int8_weight_only",
                 "schemaVersion": 1,
                 "value": "torchao_int8_weight_only"
@@ -3740,9 +3801,10 @@
                 "value": "native"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Native flash SDPA is unavailable in this Torch build. Select auto attention.",
+                "installationState": "unavailable",
                 "label": "_native_flash",
                 "schemaVersion": 1,
                 "value": "_native_flash"
@@ -3772,113 +3834,127 @@
                 "value": "_native_cudnn"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires a successful compiled FlexAttention probe on this accelerator",
+                "installationState": "unavailable",
                 "label": "flex",
                 "schemaVersion": 1,
                 "value": "flex"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "flash-attn package is not installed",
+                "installationState": "unavailable",
                 "label": "flash",
                 "schemaVersion": 1,
                 "value": "flash"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "flash_hub",
                 "schemaVersion": 1,
                 "value": "flash_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires flash-attn",
+                "installationState": "unavailable",
                 "label": "flash_varlen",
                 "schemaVersion": 1,
                 "value": "flash_varlen"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "flash_varlen_hub",
                 "schemaVersion": 1,
                 "value": "flash_varlen_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires Hub kernels and NVIDIA compute capability 9.0 or newer",
+                "installationState": "unavailable",
                 "label": "flash_4_hub",
                 "schemaVersion": 1,
                 "value": "flash_4_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the FlashAttention 3 interface on NVIDIA Hopper",
+                "installationState": "unavailable",
                 "label": "_flash_3",
                 "schemaVersion": 1,
                 "value": "_flash_3"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the FlashAttention 3 interface on NVIDIA Hopper",
+                "installationState": "unavailable",
                 "label": "_flash_varlen_3",
                 "schemaVersion": 1,
                 "value": "_flash_varlen_3"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires Hub kernels on NVIDIA Hopper",
+                "installationState": "unavailable",
                 "label": "_flash_3_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires Hub kernels on NVIDIA Hopper",
+                "installationState": "unavailable",
                 "label": "_flash_3_varlen_hub",
                 "schemaVersion": 1,
                 "value": "_flash_3_varlen_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "SageAttention package is not installed",
+                "installationState": "unavailable",
                 "label": "sage",
                 "schemaVersion": 1,
                 "value": "sage"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires the kernels package on NVIDIA CUDA",
+                "installationState": "unavailable",
                 "label": "sage_hub",
                 "schemaVersion": 1,
                 "value": "sage_hub"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "Requires SageAttention",
+                "installationState": "unavailable",
                 "label": "sage_varlen",
                 "schemaVersion": 1,
                 "value": "sage_varlen"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "xFormers package is not installed",
+                "installationState": "unavailable",
                 "label": "xformers",
                 "schemaVersion": 1,
                 "value": "xformers"
@@ -6025,10 +6101,9 @@
                 "value": "cpu"
               },
               "cpu:0": {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "This device is not available in the current runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
@@ -6043,7 +6118,7 @@
               }
             },
             "type": "string",
-            "value": "cpu:0"
+            "value": "cuda:0"
           },
           "export": {
             "default": "0",
@@ -6130,8 +6205,8 @@
     }
   ],
   "viewport": {
-    "x": 0,
-    "y": 0,
-    "zoom": 1
+    "x": 62,
+    "y": 93.64863861386138,
+    "zoom": 0.38663366336633664
   }
 }

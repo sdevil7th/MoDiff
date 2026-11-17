@@ -35,6 +35,33 @@ MAX_VIDEO_UPSCALE_INPUT_PIXELS = 4_194_304
 MAX_VIDEO_UPSCALE_OUTPUT_PIXELS = 16_777_216
 
 
+def load_video_file(file_value, *, interrupted=None):
+    """Shared local decoder; the ordinary runtime path resolver owns access."""
+    import imageio
+    from PIL import Image
+
+    file_value = file_value[0] if isinstance(file_value, list) and file_value else file_value
+    if not file_value:
+        raise ValueError("Load Video needs an existing video file.")
+    file = resolve_runtime_input_path(file_value)
+    if not file.is_file():
+        raise ValueError("Load Video needs an existing video file.")
+    images = []
+    reader = imageio.get_reader(str(file), "ffmpeg")
+    try:
+        meta = reader.get_meta_data()
+        width, height = meta.get("size", (0, 0))
+        frames, fps = reader.count_frames(), meta.get("fps", 0)
+        for frame in reader:
+            if interrupted is not None and interrupted():
+                raise InterruptedError("Video loading interrupted.")
+            images.append(Image.fromarray(frame))
+    finally:
+        reader.close()
+    return {"filename": str(file), "video": images, "width": width,
+            "height": height, "frames": frames, "fps": fps}
+
+
 class Load(NodeBase):
     """
     Load a video from a file path.
@@ -70,39 +97,7 @@ class Load(NodeBase):
     }
 
     def execute(self, **kwargs):
-        import imageio
-        from PIL import Image
-
-        file_value = kwargs["file"]
-        file_value = file_value[0] if isinstance(file_value, list) and file_value else file_value
-        if not file_value:
-            raise ValueError("Load Video needs an existing video file.")
-        file = resolve_runtime_input_path(file_value)
-        logger.debug(f"Loading video from file: {file}")
-
-        if not file.is_file():
-            raise ValueError("Load Video needs an existing video file.")
-
-        images = []
-        reader = imageio.get_reader(str(file), "ffmpeg")
-        meta = reader.get_meta_data()
-        width = meta.get("size", (0, 0))[0]
-        height = meta.get("size", (0, 0))[1]
-        frames = reader.count_frames()
-        fps = meta.get("fps", 0)
-
-        for frame in reader:
-            images.append(Image.fromarray(frame))
-        reader.close()
-
-        return {
-            "filename": str(file),
-            "video": images,
-            "width": width,
-            "height": height,
-            "frames": frames,
-            "fps": fps,
-        }
+        return load_video_file(kwargs["file"], interrupted=lambda: self._interrupt)
 
 
 class Export(NodeBase):
@@ -136,6 +131,8 @@ class Export(NodeBase):
         import imageio
         import numpy as np
         from PIL import Image
+        from modiff.builtin_media_evidence import begin_media_capture
+        capture = begin_media_capture(self, kwargs, inputs={'video': kwargs.get('video')})
 
         video = kwargs["video"]
         filename = kwargs.get("filename", "{PATH:videos}/MoDiff_{HASH:6}.mp4")
@@ -258,9 +255,11 @@ class Export(NodeBase):
             for item in video:
                 file, width, height, frames = save_video(item)
                 files.append(file)
+            capture.finish({'file': files})
             return {"file": files, "width": width, "height": height, "frames": frames}
 
         file, width, height, frames = save_video(video)
+        capture.finish({'file': file})
 
         return {
             "file": file,
@@ -574,6 +573,7 @@ class LyricOverlay(NodeBase):
     resizable = True
     params = {
         "video": {"display": "input", "type": ["video", "str"]},
+        "enabled": {"label": "Burn in lyrics", "type": "bool", "default": True},
         "lrc": {"label": "Timed Lyrics (LRC)", "display": "textarea", "type": "text", "default": ""},
         "fps": {"label": "FPS", "type": "float", "default": 16, "min": 1, "max": 120, "step": 0.01},
         "font_size": {"label": "Font Size", "type": "int", "default": 42, "min": 12, "max": 160},
@@ -596,6 +596,8 @@ class LyricOverlay(NodeBase):
         from PIL import ImageDraw, ImageFont
 
         frames = _pil_frames(kwargs.get("video"))
+        if kwargs.get('enabled', True) is False:
+            return {'output': frames}
         timeline = self._timeline(kwargs.get("lrc"))
         if not frames or not timeline:
             raise ValueError("Timed Lyric Overlay needs video frames and at least one [mm:ss] lyric line.")
@@ -1470,6 +1472,14 @@ class ProcessVideo(NodeBase):
     }
 
     def execute(self, **kwargs):
+        from modiff.builtin_media_evidence import begin_media_capture, snapshot_video_inputs
+        with snapshot_video_inputs(kwargs.get('videos')) as (actual, files):
+            capture = begin_media_capture(self, kwargs, inputs={'videos': actual}, files={'videos': files or []})
+            result = self._execute_operation(**{**kwargs, 'videos': actual})
+            capture.finish({'images': result['images'], 'video': result['video']})
+            return result
+
+    def _execute_operation(self, **kwargs):
         if kwargs.get("pipeline_class", VIDEO_OPERATION_PIPELINE_CLASS) != VIDEO_OPERATION_PIPELINE_CLASS:
             raise ValueError("Process Video received an unsupported built-in contract identity.")
         operation = str(kwargs.get("operation") or "video_frame_extract")

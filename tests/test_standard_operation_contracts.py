@@ -20,6 +20,28 @@ OWNERS = (
 
 
 class StandardOperationDiscoveryTests(unittest.TestCase):
+    def test_encoded_video_render_requires_encoding_not_duplicate_raw_media(self):
+        contracts = video.get_video_operation_contracts(MODULE_MAP)
+        for contract in contracts:
+            if contract['pipelineClass'] != 'WanVACEPipeline':
+                continue
+            ports = {p['name']: p for p in contract['ports']}
+            mode = contract['task']
+            if contract['operationId'] == 'diffusion.render_video':
+                with self.subTest(mode=mode, operation='encoded render'):
+                    self.assertTrue(ports['encoded_inputs']['required'])
+                    self.assertFalse(ports['encoded_inputs']['hidden'])
+                    for field in video._VIDEO_INPUT_FIELDS:
+                        if field in ports:
+                            self.assertFalse(ports[field]['required'], field)
+                            self.assertTrue(ports[field]['hidden'], field)
+            elif contract['operationId'] in ('diffusion.generate_video', 'diffusion.encode_video'):
+                with self.subTest(mode=mode, operation=contract['operationId']):
+                    required = video.get_video_mode_field_contract(video.VIDEO_PIPELINE_ADAPTERS['WanVACEPipeline'], mode).required_fields
+                    for field in required:
+                        self.assertTrue(ports[field]['required'], field)
+                        self.assertFalse(ports[field]['hidden'], field)
+
     def test_discovery_is_offline_and_does_not_construct_nodes_or_install_packages(self):
         with (
             patch("socket.socket.connect", side_effect=AssertionError("Discovery used network")),
@@ -30,7 +52,8 @@ class StandardOperationDiscoveryTests(unittest.TestCase):
         self.assertGreater(len(contracts), 100)
         self.assertEqual(len({(c['pipelineClass'], c['operationId'], c['task']) for c in contracts}), len(contracts))
         for contract in contracts:
-            with self.subTest(pipeline=contract['pipelineClass'], task=contract['task']):
+            with self.subTest(pipeline=contract['pipelineClass'], task=contract['task'],
+                              operation=contract['operationId']):
                 self.assertIsNone(contract['blockName'])
                 self.assertEqual(contract['support'], 'declared')
                 if contract['decomposition'] == 'bundle':
@@ -39,9 +62,20 @@ class StandardOperationDiscoveryTests(unittest.TestCase):
                     media = 'video' if contract['pipelineClass'] in PROFILE_CLASSES.values() else 'image'
                     module = 'modules.DiffusersVideo' if media == 'video' else 'modules.DiffusersImage'
                     self.assertEqual(contract['nodeKey'], f'{module}.{action}')
-                    self.assertEqual(contract['nodeType'], {
-                        'EncodeInputs': media + '_encoder', 'Denoise': 'denoise', 'DecodeLatents': 'decoder',
-                    }[action])
+                    if action == 'Generate':
+                        # VACE retains native per-window sampling/decoding in
+                        # Generate; its rendered bundle is distinct from the
+                        # preserved whole-pipeline generate_video operation.
+                        self.assertEqual(media, 'video')
+                        self.assertEqual(contract['pipelineClass'], 'WanVACEPipeline')
+                        self.assertEqual(contract['operationId'], 'diffusion.render_video')
+                        self.assertEqual(contract['nodeType'], 'denoise')
+                        outputs = {p['name'] for p in contract['ports'] if p['direction'] == 'output'}
+                        self.assertEqual(outputs, {'video_out', 'width_out', 'height_out', 'frames_out'})
+                    else:
+                        self.assertEqual(contract['nodeType'], {
+                            'EncodeInputs': media + '_encoder', 'Denoise': 'denoise', 'DecodeLatents': 'decoder',
+                        }[action])
                     if media == 'image':
                         self.assertIsNotNone(image.IMAGE_PIPELINE_ADAPTERS[contract['pipelineClass']].stage_adapter)
                     handles = [port for port in contract['ports'] if port['roles'] == ['component']]
@@ -92,7 +126,11 @@ class StandardOperationDiscoveryTests(unittest.TestCase):
                         node.update_image_contract({'image_contract': signal}, None)
                 elif owner is video:
                     signal = video._adapter_signal(video.VIDEO_PIPELINE_ADAPTERS[pipeline])
-                    if action == 'DecodeLatents':
+                    if contract['operationId'] == 'diffusion.render_video':
+                        # This explicitly selected encoded bundle shares the
+                        # whole action, whose dynamic raw schema stays intact.
+                        fields = video.video_operation_field_params(video.VIDEO_PIPELINE_ADAPTERS[pipeline], mode, contract['operationId'])
+                    elif action == 'DecodeLatents':
                         self.assertFalse(hasattr(node, 'update_stage_contract'))
                     elif action in ('EncodeInputs', 'Denoise'):
                         node.update_stage_contract({'video_contract': signal, 'mode': mode}, None)
@@ -135,7 +173,7 @@ class StandardOperationDiscoveryTests(unittest.TestCase):
                     self.assertEqual(ports['prediction_map']['types'], ['prediction_map'])
         expected_av = {
             (name, mode) for name, adapter in video.VIDEO_PIPELINE_ADAPTERS.items()
-            for mode in adapter.modes if 'audio' in adapter.output_media
+            for mode in adapter.modes if 'audio' in adapter.output_media and (adapter.audio_modes is None or mode in adapter.audio_modes)
         }
         self.assertEqual(
             {(c['pipelineClass'], c['task']) for c in contracts if c['operationId'] == 'diffusion.generate_video_audio'},

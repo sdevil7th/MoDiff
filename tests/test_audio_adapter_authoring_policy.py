@@ -21,6 +21,8 @@ PAIRS = (
     ("ACE-Step/acestep-v15-xl-turbo-diffusers", "200ba991ae448051e14b0183157e35c2d27c9fb0"),
     ("Runware/acestep-v15-turbo-diffusers", "be23effe449c5957947f3020fd63bee23c64abe4"),
 )
+BASE_COVER_PAIR = ("ACE-Step/acestep-v15-xl-base-diffusers", "8f40447d21ee59ad4dcee6c99ce248027410bfec")
+PROFILE_PAIRS = (*PAIRS, BASE_COVER_PAIR)
 EXPECTED = {"schemaVersion": 1, "mediaKind": "audio", "adapterNodeKey": "modules.DiffusersAudio.LoadAdapter",
             "tasks": list(TASKS), "maxOwnedAdapters": 1,
             "repositoryRevisions": [{"repo": repo, "revision": revision} for repo, revision in PAIRS]}
@@ -107,7 +109,9 @@ class AudioAuthoringPublicationTests(unittest.TestCase):
         self.assertGreaterEqual(len(copies), 2)
         for profile in copies:
             self.assertEqual(profile.get("adapterAuthoring"), EXPECTED)
-            self.assertEqual(profile.get("repository_revisions"), EXPECTED["repositoryRevisions"])
+            self.assertEqual(profile.get("repository_revisions"), [
+                {"repo": repo, "revision": revision} for repo, revision in PROFILE_PAIRS
+            ])
             self.assertFalse(profile["live_proof"])
         capability = next(item for item in payload["capabilities"] if item["modelType"] == "AceStepAudioPipeline")
         from modiff.server import STUDIO_MODEL_CAPABILITIES
@@ -130,7 +134,9 @@ class AudioAuthoringPublicationTests(unittest.TestCase):
             for profile in rows:
                 if profile["id"] == IDENTITY:
                     self.assertEqual(profile.pop("adapterAuthoring"), EXPECTED)
-                    self.assertEqual(profile.pop("repository_revisions"), EXPECTED["repositoryRevisions"])
+                    self.assertEqual(profile.pop("repository_revisions"), [
+                        {"repo": repo, "revision": revision} for repo, revision in PROFILE_PAIRS
+                    ])
         self.assertEqual(with_policy, without_policy)
         self.assertEqual(DIFFUSERS_EXECUTION_PROFILES, original)
 
@@ -206,7 +212,7 @@ class SelectedAudioStarterTests(unittest.TestCase):
     def test_all_ace_tasks_and_reviewed_repositories_project_exact_selected_contract(self):
         adapter = AUDIO_PIPELINE_ADAPTERS["AceStepPipeline"]
         for task in TASKS:
-            for repository, revision in PAIRS:
+            for repository, revision in PROFILE_PAIRS:
                 with self.subTest(task=task, repository=repository), patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("Constructed node")):
                     result = self.starter(task, repository)
                 loader, generate = result["nodes"]

@@ -352,7 +352,13 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
             "flux3-klein:official-provider:v1:edit-image:v1",
             "flux3-klein:official-provider:v1:text-to-image:v1",
         }
-        self.assertEqual(len(specifications), 289)
+        kandinsky_ids = {
+            f'{variant}:{mode}:v1'
+            for variant in ('kandinsky6-av', 'kandinsky6-distilled-av')
+            for mode in ('text_to_video', 'image_to_video', 'text_to_video_with_audio', 'image_to_video_with_audio')
+        }
+        self.assertEqual(len(specifications), 297)
+        self.assertEqual({row['id'] for row in specifications if row['id'].startswith('kandinsky6-')}, kandinsky_ids)
         self.assertEqual(
             {specification["id"] for specification in specifications
              if specification["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
@@ -384,7 +390,7 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
              if specification['pipelineClass'] == 'MiniMaxH3ImageModularPipeline'}, h3_image_ids,
         )
         self.assertEqual(
-            sum(specification["id"] not in public_flux3_spec_ids | pika_ids | h3_image_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
+            sum(specification["id"] not in public_flux3_spec_ids | pika_ids | h3_image_ids | kandinsky_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
                 for specification in specifications),
             278,
         )

@@ -97,6 +97,11 @@ def seed_standard_operation_defaults(node, profile):
         # true-CFG owner is an explicit opt-in, separate from that control.
         defaults.update(enabled=False, guidance_scale=1.0)
         node["params"]["guidance_scale"]["min"] = 0.0
+    if profile.model_type == 'HunyuanVideo15ModularPipeline':
+        from modiff.hunyuan_video15_artifacts import stage_authoring_defaults
+        defaults = stage_authoring_defaults(
+            node['action'], node['values'].get('workflow_id'), defaults, capability,
+        )
     for key, value in defaults.items():
         field = node["params"].get(key)
         if value is None or field is None or field.get("hidden") or field.get("display") == "output":
@@ -158,14 +163,14 @@ def _standard_schema(contract, modules):
         if action == "LoadPipeline":
             values.update(image_operation_loader_defaults(adapter))
     elif module == "modules.DiffusersVideo":
-        from modules.DiffusersVideo.main import VIDEO_PIPELINE_ADAPTERS, get_video_mode_field_contract, _adapter_signal
+        from modules.DiffusersVideo.main import VIDEO_PIPELINE_ADAPTERS, video_operation_field_params, _adapter_signal
 
         adapter = VIDEO_PIPELINE_ADAPTERS[pipeline]
         signal = _adapter_signal(adapter)
         if action == "LoadPipeline":
             values = {"pipeline_class": pipeline}
         else:
-            fields = get_video_mode_field_contract(adapter, task).field_param_overlay()
+            fields = video_operation_field_params(adapter, task, contract['operationId'])
             values = {"video_contract": _adapter_signal(adapter), "mode": task}
     elif module == "modules.DiffusersAudio":
         from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS

@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:1828647ace68b27d9e4fb5ebf48861a0ab98de5684aaba8cf5bbc6eca30d9ee1",
+  "contentHash": "sha256:a2ce60049288be675d9a5fec740fef38cf46e9b0352a8b50d7d8536a33ee1c83",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:2298ce6fef09f4e4aa957fbc276657ec8e6df31cc627a3489ff171b95405fe2f",
+      "contentHash": "sha256:91e4914e70a39142c96d9021bb70db450aedf01ec1c30d4b796cc60d84b547d0",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:47780233a8a38e4dc22ffb9846da51ab71d9f470594f6dd717d26c8e4f138b57"
+      "sha256": "sha256:f1d49188fd9d7150d30842fd261d54fc3f1914375aa63a3f4c8cf159a8bc6a67"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:5b667b400607a47934f087e269b2ba3a8370ab2b0041b510d069df48ac98874d"
+      "sha256": "sha256:a6e1f5d823434c5d842a2efa8b207d4acd6eed7b3dcb9a6984d0d36d55f22bab"
     }
   },
   "specifications": [
@@ -4989,7 +4989,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/ddim-pipeline/unconditional-image.json",
-        "sha256": "01cc6213daa98b045bcc448f12ed5eb6fef2f658cc1801135671ee31eb77ae31"
+        "sha256": "d831b1695bf5dec13209ed34f51487c738eaed845ea86737129a42bbb6136646"
       },
       "canonicalWorkflowId": "DDIMPipeline:unconditional_image",
       "claims": {
@@ -5032,7 +5032,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "01cc6213daa98b045bcc448f12ed5eb6fef2f658cc1801135671ee31eb77ae31",
+        "sourceGraphSha256": "d831b1695bf5dec13209ed34f51487c738eaed845ea86737129a42bbb6136646",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -6313,6 +6313,282 @@
       },
       "assetState": "not_generated",
       "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "experimental/flux3-distilled-modular-pipeline/edit-image--flux3-klein-fp8r512-multi-reference-edit.json",
+        "sha256": "421ceaf85243cf2032e9aff24a815cfc173075208d36879767f70db2203218dc"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_multi_reference_edit",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "height",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "num_images_per_prompt",
+            "role": "denoise",
+            "value": 1
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "denoise",
+            "value": 16
+          },
+          {
+            "parameter": "seed",
+            "role": "denoise",
+            "value": {
+              "isRandom": false,
+              "value": 481003
+            }
+          },
+          {
+            "parameter": "width",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          },
+          {
+            "parameter": "max_sequence_length",
+            "role": "prompt",
+            "value": 8192
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "421ceaf85243cf2032e9aff24a815cfc173075208d36879767f70db2203218dc",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_multi_reference_edit",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelFamily": "FLUX Image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject",
+          "source_identity_structure_and_unmasked_region_preservation"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact FLUX Image edit image workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "FLUX Image — Edit Image [Flux3DistilledModularPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "black-forest-labs/flux-3-image-klein"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "experimental/flux3-distilled-modular-pipeline/edit-image--flux3-klein-fp8r512-single-reference-edit.json",
+        "sha256": "ff89d1f943168108f66e75bd70b761bdd806d0ad57e23d2aafc202371bf2a1a3"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_single_reference_edit",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "height",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "num_images_per_prompt",
+            "role": "denoise",
+            "value": 1
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "denoise",
+            "value": 16
+          },
+          {
+            "parameter": "seed",
+            "role": "denoise",
+            "value": {
+              "isRandom": false,
+              "value": 481002
+            }
+          },
+          {
+            "parameter": "width",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          },
+          {
+            "parameter": "max_sequence_length",
+            "role": "prompt",
+            "value": 8192
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "ff89d1f943168108f66e75bd70b761bdd806d0ad57e23d2aafc202371bf2a1a3",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_single_reference_edit",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelFamily": "FLUX Image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject",
+          "source_identity_structure_and_unmasked_region_preservation"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact FLUX Image edit image workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "FLUX Image — Edit Image [Flux3DistilledModularPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "black-forest-labs/flux-3-image-klein"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "experimental/flux3-distilled-modular-pipeline/text-to-image.json",
@@ -6430,7 +6706,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-lora-style.json",
-        "sha256": "27636a699bfc7ecd672e6a7cc351050b91b0f075d7786b4160c63b7d8429f5b3"
+        "sha256": "31a7a0a5ea0da7c692dcb1063eb3cb38eb405449d5fcfed716ddc564607a0af5"
       },
       "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
       "claims": {
@@ -6449,6 +6725,11 @@
             "value": 512
           },
           {
+            "parameter": "num_images_per_prompt",
+            "role": "denoise",
+            "value": 1
+          },
+          {
             "parameter": "num_inference_steps",
             "role": "denoise",
             "value": 16
@@ -6458,7 +6739,7 @@
             "role": "denoise",
             "value": {
               "isRandom": false,
-              "value": 481005
+              "value": 481205
             }
           },
           {
@@ -6473,7 +6754,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "27636a699bfc7ecd672e6a7cc351050b91b0f075d7786b4160c63b7d8429f5b3",
+        "sourceGraphSha256": "31a7a0a5ea0da7c692dcb1063eb3cb38eb405449d5fcfed716ddc564607a0af5",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -6516,6 +6797,242 @@
           "value": null
         },
         "prompt": "Campaign still: museum-catalog botanical field-study plate of six imaginary alpine flowers on warm archival paper. Delicate ink contours, subtle watercolor washes, clear specimen spacing, no labels or numbers. Overhead 85 mm copy-stand, north-window daylight, paper fibers, pigment granulation, umber-sage-cream palette, generous margins, no watermark.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact FLUX Image text to image workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "not_applicable",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "FLUX Image — Text To Image [Flux3DistilledModularPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "black-forest-labs/flux-3-image-klein"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_execution_pending",
+      "canonicalGraph": {
+        "path": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-raw-coordinate-prompt.json",
+        "sha256": "6bffcb8a964c27ce32c3aad01543ca3bfea7a46f7b6b42d48f32844d1029277c"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_raw_coordinate_prompt",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "height",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "num_images_per_prompt",
+            "role": "denoise",
+            "value": 1
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "denoise",
+            "value": 16
+          },
+          {
+            "parameter": "seed",
+            "role": "denoise",
+            "value": {
+              "isRandom": false,
+              "value": 481004
+            }
+          },
+          {
+            "parameter": "width",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "max_sequence_length",
+            "role": "prompt",
+            "value": 8192
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "6bffcb8a964c27ce32c3aad01543ca3bfea7a46f7b6b42d48f32844d1029277c",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_raw_coordinate_prompt",
+      "inputPlan": {
+        "items": [],
+        "status": "not_applicable"
+      },
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelFamily": "FLUX Image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": "Campaign still: museum-catalog botanical field-study plate of six imaginary alpine flowers on warm archival paper. Delicate ink contours, subtle watercolor washes, clear specimen spacing, no labels or numbers. Overhead 85 mm copy-stand, north-window daylight, paper fibers, pigment granulation, umber-sage-cream palette, generous margins, no watermark.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact FLUX Image text to image workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "not_applicable",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "FLUX Image — Text To Image [Flux3DistilledModularPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "black-forest-labs/flux-3-image-klein"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_execution_pending",
+      "canonicalGraph": {
+        "path": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-text-to-image.json",
+        "sha256": "099763a4e3be64def724ff84637fa6fcb7f6cee3abcffd6746fef136bcd1e0e1"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_text_to_image",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "height",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "num_images_per_prompt",
+            "role": "denoise",
+            "value": 1
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "denoise",
+            "value": 16
+          },
+          {
+            "parameter": "seed",
+            "role": "denoise",
+            "value": {
+              "isRandom": false,
+              "value": 481402
+            }
+          },
+          {
+            "parameter": "width",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "max_sequence_length",
+            "role": "prompt",
+            "value": 8192
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "099763a4e3be64def724ff84637fa6fcb7f6cee3abcffd6746fef136bcd1e0e1",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_text_to_image",
+      "inputPlan": {
+        "items": [],
+        "status": "not_applicable"
+      },
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelFamily": "FLUX Image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": "Campaign still: quiet rain-soaked tram stop at blue hour. One red umbrella, wet pavement reflections, timber shelter, a single waiting figure in a navy coat with no logos. 35 mm eye-level, straight verticals, rain beads on metal. Cool overcast sky, one warm practical, believable wet asphalt, fabric weight, atmospheric haze, fine grain, no neon or extra people.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -6612,6 +7129,292 @@
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:Flux3ModularPipeline:edit_image",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelFamily": "FLUX Image",
+      "modelType": "Flux3ModularPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject",
+          "source_identity_structure_and_unmasked_region_preservation"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "drafted",
+          "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
+        },
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact FLUX Image edit image workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "FLUX Image — Edit Image [Flux3ModularPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "black-forest-labs/flux-3-image-klein-base"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "experimental/flux3-modular-pipeline/edit-image--flux3-klein-base-fp8r512-multi-reference-edit.json",
+        "sha256": "eecbaafc7c6e6e3ef20dd63cc3bfb3e293d07a4dc76df570786eac7e6e4b58db"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_multi_reference_edit",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "height",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "num_images_per_prompt",
+            "role": "denoise",
+            "value": 1
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "denoise",
+            "value": 50
+          },
+          {
+            "parameter": "seed",
+            "role": "denoise",
+            "value": {
+              "isRandom": false,
+              "value": 481103
+            }
+          },
+          {
+            "parameter": "width",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "guidance_scale",
+            "role": "guider",
+            "value": 3.5
+          },
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          },
+          {
+            "parameter": "max_sequence_length",
+            "role": "prompt",
+            "value": 8192
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "eecbaafc7c6e6e3ef20dd63cc3bfb3e293d07a4dc76df570786eac7e6e4b58db",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_multi_reference_edit",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelFamily": "FLUX Image",
+      "modelType": "Flux3ModularPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject",
+          "source_identity_structure_and_unmasked_region_preservation"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "drafted",
+          "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
+        },
+        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact FLUX Image edit image workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "FLUX Image — Edit Image [Flux3ModularPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "black-forest-labs/flux-3-image-klein-base"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "experimental/flux3-modular-pipeline/edit-image--flux3-klein-base-fp8r512-single-reference-edit.json",
+        "sha256": "fd300c33b7dc6e6ef295022c146a95fcdbe2698aa403ca6f54d6667724fa1e4e"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_single_reference_edit",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "height",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "num_images_per_prompt",
+            "role": "denoise",
+            "value": 1
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "denoise",
+            "value": 50
+          },
+          {
+            "parameter": "seed",
+            "role": "denoise",
+            "value": {
+              "isRandom": false,
+              "value": 481102
+            }
+          },
+          {
+            "parameter": "width",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "guidance_scale",
+            "role": "guider",
+            "value": 3.5
+          },
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          },
+          {
+            "parameter": "max_sequence_length",
+            "role": "prompt",
+            "value": 8192
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "fd300c33b7dc6e6ef295022c146a95fcdbe2698aa403ca6f54d6667724fa1e4e",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_single_reference_edit",
       "inputPlan": {
         "items": [
           {
@@ -6800,7 +7603,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-lora-style.json",
-        "sha256": "cd1664d47d78625d96540266dddec9b6b2ec27a486ed73989ff601abc61d04ef"
+        "sha256": "c93ea8bf093dd6aa36c2c3f44fcaec70c78aaec2cb18c2cbc2f94c60f1ea86db"
       },
       "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
       "claims": {
@@ -6819,6 +7622,11 @@
             "value": 512
           },
           {
+            "parameter": "num_images_per_prompt",
+            "role": "denoise",
+            "value": 1
+          },
+          {
             "parameter": "num_inference_steps",
             "role": "denoise",
             "value": 50
@@ -6828,7 +7636,7 @@
             "role": "denoise",
             "value": {
               "isRandom": false,
-              "value": 481105
+              "value": 481405
             }
           },
           {
@@ -6848,7 +7656,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "cd1664d47d78625d96540266dddec9b6b2ec27a486ed73989ff601abc61d04ef",
+        "sourceGraphSha256": "c93ea8bf093dd6aa36c2c3f44fcaec70c78aaec2cb18c2cbc2f94c60f1ea86db",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -6891,6 +7699,252 @@
           "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
         },
         "prompt": "Campaign still: museum-catalog botanical field-study plate of six imaginary alpine flowers on warm archival paper. Delicate ink contours, subtle watercolor washes, clear specimen spacing, no labels or numbers. Overhead 85 mm copy-stand, north-window daylight, paper fibers, pigment granulation, umber-sage-cream palette, generous margins, no watermark.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact FLUX Image text to image workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "not_applicable",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "FLUX Image — Text To Image [Flux3ModularPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "black-forest-labs/flux-3-image-klein-base"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_execution_pending",
+      "canonicalGraph": {
+        "path": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-raw-coordinate-prompt.json",
+        "sha256": "d9097def8b0ac618a907a243c7ac1684f03f0694188bf329ba2afd667de4cf23"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_raw_coordinate_prompt",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "height",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "num_images_per_prompt",
+            "role": "denoise",
+            "value": 1
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "denoise",
+            "value": 50
+          },
+          {
+            "parameter": "seed",
+            "role": "denoise",
+            "value": {
+              "isRandom": false,
+              "value": 481104
+            }
+          },
+          {
+            "parameter": "width",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "guidance_scale",
+            "role": "guider",
+            "value": 3.5
+          },
+          {
+            "parameter": "max_sequence_length",
+            "role": "prompt",
+            "value": 8192
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "d9097def8b0ac618a907a243c7ac1684f03f0694188bf329ba2afd667de4cf23",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_raw_coordinate_prompt",
+      "inputPlan": {
+        "items": [],
+        "status": "not_applicable"
+      },
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelFamily": "FLUX Image",
+      "modelType": "Flux3ModularPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "drafted",
+          "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
+        },
+        "prompt": "Campaign still: sunlit modern reading room carved into warm sandstone with linen seating, one mature olive tree, long geometric shadows, calm human scale. 24 mm architectural three-quarter, straight verticals. Late-morning sun from camera left, sandstone pores, fabric weave, leaf translucency, accurate contact shadows, no people or signage.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact FLUX Image text to image workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "not_applicable",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "FLUX Image — Text To Image [Flux3ModularPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "black-forest-labs/flux-3-image-klein-base"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_execution_pending",
+      "canonicalGraph": {
+        "path": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-text-to-image.json",
+        "sha256": "5af1acbd2111c5a12e3ac064f3635b3dd52e7a59fdf8d94c224c1b68b0ff99c1"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_text_to_image",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "height",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "num_images_per_prompt",
+            "role": "denoise",
+            "value": 1
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "denoise",
+            "value": 50
+          },
+          {
+            "parameter": "seed",
+            "role": "denoise",
+            "value": {
+              "isRandom": false,
+              "value": 481401
+            }
+          },
+          {
+            "parameter": "width",
+            "role": "denoise",
+            "value": 512
+          },
+          {
+            "parameter": "guidance_scale",
+            "role": "guider",
+            "value": 3.5
+          },
+          {
+            "parameter": "max_sequence_length",
+            "role": "prompt",
+            "value": 8192
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "5af1acbd2111c5a12e3ac064f3635b3dd52e7a59fdf8d94c224c1b68b0ff99c1",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_text_to_image",
+      "inputPlan": {
+        "items": [],
+        "status": "not_applicable"
+      },
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelFamily": "FLUX Image",
+      "modelType": "Flux3ModularPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "drafted",
+          "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
+        },
+        "prompt": "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
         "provenance": "original_modiff_mode_draft_v1",
         "status": "drafted"
       },
@@ -12963,6 +14017,109 @@
         "status": "blocked_pending_external_evidence"
       },
       "id": "template-authoring:MiniMaxH3ImageModularPipeline:text_to_image",
+      "inputPlan": {
+        "items": [],
+        "status": "not_applicable"
+      },
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelFamily": "MiniMax Image",
+      "modelType": "MiniMaxH3ImageModularPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "image"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_and_decodable_output",
+          "prompt_or_task_alignment",
+          "coherent_geometry_lighting_and_materials",
+          "no_unrequested_text_watermark_or_duplicate_subject"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": "Campaign still: documentary portrait of an elderly bicycle mechanic in a compact workshop. Weathered hands, honest expression, faded chambray, leather apron, no logos. 85 mm waist-up, window light from camera left, natural skin texture, worn tools, oil stains, fabric tooth, no plastic retouching or readable posters.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one image result for the exact MiniMax Image text to image workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "not_applicable",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "MiniMax Image — Text To Image [MiniMaxH3ImageModularPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
+          "MiniMaxAI/MiniMax-H3-Image"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_execution_pending",
+      "canonicalGraph": {
+        "path": "experimental/mini-max-h3-image-modular-pipeline/text-to-image--minimax-h3-image-old-town-cat.json",
+        "sha256": "9fd8878406fb7788b0c11e8020efa317a53fc7da60e112a3be923efa0aa9f72f"
+      },
+      "canonicalWorkflowId": "MiniMaxH3ImageModularPipeline:text_to_image:minimax_h3_image_old_town_cat",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "height",
+            "role": "denoise",
+            "value": 2048
+          },
+          {
+            "parameter": "seed",
+            "role": "denoise",
+            "value": {
+              "isRandom": false,
+              "value": 11426
+            }
+          },
+          {
+            "parameter": "width",
+            "role": "denoise",
+            "value": 2048
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "9fd8878406fb7788b0c11e8020efa317a53fc7da60e112a3be923efa0aa9f72f",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:MiniMaxH3ImageModularPipeline:text_to_image:minimax_h3_image_old_town_cat",
       "inputPlan": {
         "items": [],
         "status": "not_applicable"
@@ -22235,16 +23392,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 156,
+    "authoringSpecCount": 165,
     "authoringStateCounts": {
-      "draft_complete_execution_pending": 60,
-      "draft_complete_input_selection_pending": 96
+      "draft_complete_execution_pending": 65,
+      "draft_complete_input_selection_pending": 100
     },
-    "canonicalDefaultsCapturedCount": 156,
-    "generationPendingCount": 156,
-    "inputSelectionPendingCount": 96,
-    "promptDraftedCount": 130,
+    "canonicalDefaultsCapturedCount": 165,
+    "generationPendingCount": 165,
+    "inputSelectionPendingCount": 100,
+    "promptDraftedCount": 139,
     "promptNotApplicableCount": 26,
-    "rightsReviewPendingCount": 156
+    "rightsReviewPendingCount": 165
   }
 }

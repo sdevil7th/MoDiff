@@ -80,6 +80,8 @@ def original_state(model):
 @pytest.fixture
 def runtime(tmp_path, monkeypatch):
     require_flux3_api()
+    from optional_provider_fixtures import require_diffusers_provider_version
+    require_diffusers_provider_version('huggingface-diffusers-flux3-7ecb1e1')
     from diffusers import AutoencoderKLFlux2, ComponentsManager, Flux3Transformer2DModel
     from diffusers.quantizers.bfl.utils import E2M1_MAX, FP8_MAX, quantize_fp8r, quantize_nvfp4
     from transformers import (Qwen2TokenizerFast, Qwen3VLConfig, Qwen3VLForConditionalGeneration,

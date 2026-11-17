@@ -162,7 +162,11 @@ def test_existing_six_key_policies_and_single_catalog_read_are_preserved(publica
         assert set(profiles[identity]['adapterAuthoring']) == {
             'schemaVersion', 'mediaKind', 'adapterNodeKey', 'tasks', 'maxOwnedAdapters', 'repositoryRevisions'}
     assert profiles[ACE]['adapterAuthoring'] == ACE_POLICY
-    assert profiles[ACE]['repository_revisions'] == ACE_POLICY['repositoryRevisions']
+    from test_audio_adapter_authoring_policy import PROFILE_PAIRS
+    assert profiles[ACE]['repository_revisions'] == [
+        {'repo': repo, 'revision': revision} for repo, revision in PROFILE_PAIRS
+    ]
+    assert len(ACE_POLICY['repositoryRevisions']) == 2
     for identity, expected in FLUX3_PUBLIC_POLICIES.items():
         assert profiles[identity]['adapterAuthoring'] == expected
         assert set(profiles[identity]['adapterAuthoring']) == {

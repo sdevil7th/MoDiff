@@ -67,7 +67,7 @@ class ImageProfileRepositoryRevisionTests(unittest.IsolatedAsyncioTestCase):
 
     def test_only_adds_image_profile_pairs_and_preserves_all_existing_metadata_and_registries(self):
         from test_image_adapter_authoring_policy import FLUX3_PUBLIC_POLICIES
-        from test_audio_adapter_authoring_policy import EXPECTED as ACE_POLICY, IDENTITY as ACE
+        from test_audio_adapter_authoring_policy import EXPECTED as ACE_POLICY, IDENTITY as ACE, PROFILE_PAIRS
         profiles_before = deepcopy(DIFFUSERS_EXECUTION_PROFILES)
         capabilities_before = deepcopy(STUDIO_MODEL_CAPABILITIES)
         experimental_before = deepcopy(EXPERIMENTAL_DIFFUSERS_PIPELINES)
@@ -129,7 +129,10 @@ class ImageProfileRepositoryRevisionTests(unittest.IsolatedAsyncioTestCase):
                 if pairs is not None:
                     self.assertIn(profile["id"], image_ids | {ACE})
                     if profile["id"] == ACE:
-                        self.assertEqual(pairs, ACE_POLICY["repositoryRevisions"])
+                        self.assertEqual(pairs, [
+                            {"repo": repo, "revision": revision} for repo, revision in PROFILE_PAIRS
+                        ])
+                        self.assertEqual(len(ACE_POLICY["repositoryRevisions"]), 2)
                     added.add(profile["id"])
                     declared = {profile.get("default_repo"), profile.get("fallback_repo"), *profile.get("compatible_repos", [])}
                     self.assertLessEqual(len(pairs), 32)

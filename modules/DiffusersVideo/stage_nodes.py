@@ -89,8 +89,10 @@ class Denoise(Generate):
     update_stage_contract = _update_stage_contract
 
     def __call__(self, **kwargs):
-        core.require_encoding(kwargs['pipeline'], kwargs.get('encoded_inputs'),
-                              kwargs.get('mode'), kwargs.get('guidance_scale'))
+        encoding = core.require_encoding(kwargs['pipeline'], kwargs.get('encoded_inputs'),
+                                         kwargs.get('mode'), kwargs.get('guidance_scale'))
+        if encoding.owner.pipeline_class == 'WanVACEPipeline':
+            raise ValueError('This video owner uses encoded Generate with internal continuity decoding, not separate latents.')
         return super().__call__(**kwargs)
 
     def _invoke_pipeline(self, pipeline, call_kwargs):
@@ -111,13 +113,25 @@ class Denoise(Generate):
             and key not in {'prompt', 'negative_prompt', 'output_type'}}
         if conditions:
             self._video_consumed['conditioning_strength'] = condition_strength
+        if encoding.owner.pipeline_class == 'WanImageToVideoPipeline':
+            self._video_consumed['secondary_guidance_scale'] = call_kwargs['guidance_scale_2']
         self._video_consumed['executed_task'] = encoding.mode
         self._video_consumed['seed'] = int(call_kwargs['generator'].initial_seed())
         # The ordinary Wan adapter restores its temporary scheduler in finally.
         # Seal against the loader's owner only after that restoration, without
         # weakening component identity checks during future stage consumption.
+        count = call_kwargs.get('num_frames')
+        if count is None:
+            # Official Wan video-to-video derives temporal length from source
+            # VAE latents; its call has no num_frames argument. Preserve that
+            # actual decoded length instead of a stale unused form literal.
+            temporal = getattr(pipeline, 'vae_scale_factor_temporal', None)
+            if (encoding.owner.pipeline_class != 'WanVideoToVideoPipeline'
+                    or type(temporal) is not int or temporal < 1):
+                raise ValueError('The video adapter omitted its actual temporal geometry.')
+            count = (result.frames.shape[2] - 1) * temporal + 1
         self._video_sample = (result.frames,
-            (call_kwargs['width'], call_kwargs['height'], call_kwargs['num_frames']), call_kwargs['generator'])
+            (call_kwargs['width'], call_kwargs['height'], count), call_kwargs['generator'])
         return result
 
     def execute(self, **kwargs):
@@ -130,6 +144,7 @@ class Denoise(Generate):
         values['video'] = [frame for chunk in chunks for frame in chunk] if chunks is not None else None
         references = encoding.media['reference_images']
         values['reference_images'] = list(references) if references is not None else None
+        values['last_image'] = encoding.media['last_image']
         self._video_encoding, self._video_sample = encoding, None
         self._video_consumed = None
         self._video_frame_rate = float(values.get('frame_rate', 25))

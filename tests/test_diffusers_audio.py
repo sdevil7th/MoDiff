@@ -68,6 +68,8 @@ class FakeSourceConditionedAceStepPipeline:
     _modiff_audio_mode = "audio_variation"
     device = "cpu"
     sample_rate = 48000
+    audio_tokenizer = object()
+    audio_token_detokenizer = object()
 
     def __init__(self):
         self.call_kwargs = None
@@ -105,6 +107,53 @@ class FakeSourceConditionedAceStepPipeline:
 
 
 class DiffusersAudioGenerateTests(unittest.TestCase):
+    def test_cover_conditions_source_content_instead_of_only_reference_timbre(self):
+        source = {"samples": np.arange(960, dtype=np.float32).reshape(2, 480) / 960, "sample_rate": 48000}
+        pipeline = FakeSourceConditionedAceStepPipeline()
+        node = Generate("native-source-cover")
+        node.progress = lambda *args, **kwargs: None
+        node.execute(pipeline=pipeline, source_audio=source, audio_duration=0.01, audio_cover_strength=0.7)
+        self.assertIsNone(pipeline.call_kwargs["reference_audio"])
+        np.testing.assert_array_equal(pipeline.call_kwargs["src_audio"].cpu().numpy(), source["samples"])
+        self.assertEqual(pipeline.call_kwargs["task_type"], "cover")
+        self.assertEqual(pipeline.call_kwargs["audio_cover_strength"], 0.7)
+
+    def test_cover_requires_both_native_codecs_before_tensor_allocation_or_inference(self):
+        source = {"samples": np.zeros((2, 480), dtype=np.float32), "sample_rate": 48000}
+        for missing in (("audio_tokenizer",), ("audio_token_detokenizer",),
+                        ("audio_tokenizer", "audio_token_detokenizer")):
+            pipeline = FakeSourceConditionedAceStepPipeline()
+            for name in missing:
+                setattr(pipeline, name, None)
+            with self.subTest(missing=missing), patch.dict(sys.modules, {"torch": None}):
+                with self.assertRaisesRegex(ValueError, "source-audio cover requires.*audio_tokenizer.*audio_token_detokenizer"):
+                    Generate().execute(pipeline=pipeline, source_audio=source, audio_duration=0.01)
+            self.assertIsNone(pipeline.call_kwargs)
+
+    def test_cover_rejects_reference_only_pipeline_signature_before_tensor_allocation(self):
+        class ReferenceOnly(FakeSourceConditionedAceStepPipeline):
+            def __call__(self, reference_audio=None, **kwargs):
+                raise AssertionError("Reference-only inference must not replace source cover")
+
+        source = {"samples": np.zeros((2, 480), dtype=np.float32), "sample_rate": 48000}
+        with patch.dict(sys.modules, {"torch": None}):
+            with self.assertRaisesRegex(ValueError, "required source-audio cover input src_audio"):
+                Generate().execute(pipeline=ReferenceOnly(), source_audio=source, audio_duration=0.01)
+
+    def test_missing_cover_codecs_do_not_block_text_generation_or_repaint(self):
+        for mode in ("text_to_audio", "audio_repaint"):
+            pipeline = FakeSourceConditionedAceStepPipeline()
+            pipeline._modiff_audio_mode = mode
+            pipeline.audio_tokenizer = pipeline.audio_token_detokenizer = None
+            values = {"pipeline": pipeline, "audio_duration": 0.01}
+            if mode == "audio_repaint":
+                values.update(source_audio={"samples": np.zeros((2, 480), dtype=np.float32), "sample_rate": 48000},
+                              repainting_start=0, repainting_end=0.01)
+            node = Generate("codec-scope-" + mode)
+            node.progress = lambda *args, **kwargs: None
+            node.execute(**values)
+            self.assertIsNotNone(pipeline.call_kwargs)
+
     def test_audio_adapters_declare_ordered_mode_task_and_input_contracts(self):
         ace = AUDIO_PIPELINE_ADAPTERS["AceStepPipeline"]
         stable = AUDIO_PIPELINE_ADAPTERS["StableAudioPipeline"]
@@ -1090,7 +1139,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
     def test_ace_source_channel_adapter_duplicates_mono_and_rejects_ambiguous_multichannel(self):
         mono = {"samples": np.zeros((1, 480), dtype=np.float32), "sample_rate": 48000}
         cases = (
-            ("audio_variation", "cover", "reference_audio", {"audio_duration": 0.01}),
+            ("audio_variation", "cover", "src_audio", {"audio_duration": 0.01}),
             ("audio_continuation", "continuation", "src_audio", {"extension_duration": 0.01}),
             (
                 "audio_repaint",
@@ -1308,7 +1357,8 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 if mode in {"audio_continuation", "audio_repaint"}:
                     self.assertIsNotNone(pipeline.call_kwargs["src_audio"])
                 if mode == "audio_variation":
-                    self.assertIsNotNone(pipeline.call_kwargs["reference_audio"])
+                    self.assertIsNotNone(pipeline.call_kwargs["src_audio"])
+                    self.assertIsNone(pipeline.call_kwargs["reference_audio"])
 
     def test_repaint_interval_is_validated_before_generation(self):
         source = {"samples": np.zeros((2, 480), dtype=np.float32), "sample_rate": 48000}
@@ -1389,7 +1439,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                   "sample_rate": 24000}
         original = source["samples"].copy()
         for mode, task, port, controls in (
-            ("audio_variation", "cover", "reference_audio", {"audio_duration": 0.02}),
+            ("audio_variation", "cover", "src_audio", {"audio_duration": 0.02}),
             ("audio_repaint", "repaint", "src_audio", {"repainting_start": 0.005, "repainting_end": 0.015}),
             ("audio_continuation", "continuation", "src_audio", {"extension_duration": 0.01}),
         ):
@@ -2420,9 +2470,9 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertEqual(pipeline.call_kwargs["bpm"], 170)
         self.assertIsInstance(pipeline.call_kwargs["bpm"], int)
 
-    def test_cover_routes_source_track_to_reference_audio_without_optional_audio_code_modules(self):
+    def test_cover_routes_source_track_to_src_audio_without_implicit_timbre_reference(self):
         pipeline = FakeSourceConditionedAceStepPipeline()
-        node = Generate("ace-cover-reference-test")
+        node = Generate("ace-cover-source-test")
         node.progress = lambda *args, **kwargs: None
         source = {"samples": np.zeros((2, 480), dtype=np.float32), "sample_rate": 48000}
 
@@ -2434,8 +2484,8 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
             audio_duration=0.01,
         )
 
-        self.assertIsNone(pipeline.call_kwargs["src_audio"])
-        self.assertIsNotNone(pipeline.call_kwargs["reference_audio"])
+        self.assertIsNotNone(pipeline.call_kwargs["src_audio"])
+        self.assertIsNone(pipeline.call_kwargs["reference_audio"])
 
     def test_repaint_routes_source_track_to_src_audio_without_implicit_timbre_reference(self):
         pipeline = FakeSourceConditionedAceStepPipeline()

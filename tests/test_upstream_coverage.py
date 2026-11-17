@@ -52,13 +52,25 @@ class UpstreamCoverageTests(unittest.TestCase):
     def setUpClass(cls):
         cls.ledger = load_upstream_coverage()
 
+    def test_nine_scene_film_has_its_own_canonical_graph_instead_of_the_audio_only_recipe(self):
+        template_id = "ace_step_lyric_music_video"
+        variant_id = "AceStepAudioPipeline:text_to_audio:ace_step_lyric_music_video"
+        workflows = {row["id"]: row for row in self.ledger["canonicalWorkflows"]}
+        template = next(row for row in self.ledger["publicTemplates"] if row["id"] == template_id)
+        self.assertEqual(template["canonicalWorkflowId"], variant_id)
+        self.assertEqual(workflows[variant_id]["publicTemplateIds"], [template_id])
+        base = workflows["AceStepAudioPipeline:text_to_audio"]
+        self.assertNotIn(template_id, base["publicTemplateIds"])
+        self.assertIn("ace_step_text_to_audio", base["publicTemplateIds"])
+        self.assertEqual(sum(template_id in row["publicTemplateIds"] for row in workflows.values()), 1)
+
     def test_h3_scene_adds_only_an_experimental_contract_without_public_output(self):
         workflow = next(row for row in self.ledger["canonicalWorkflows"]
-                        if row["id"] == "MiniMaxH3ImageModularPipeline:text_to_image")
+                        if row["id"] == "MiniMaxH3ImageModularPipeline:text_to_image:minimax_h3_image_old_town_cat")
         template = next(row for row in self.ledger["publicTemplates"]
                         if row["id"] == "minimax_h3_image_old_town_cat")
         self.assertEqual(workflow["status"], "contract-only")
-        self.assertEqual(workflow["qualificationStatus"], "graph-qualified-execution-pending")
+        self.assertEqual(workflow["qualificationStatus"], "graph-qualified-gallery-review-pending")
         self.assertEqual(workflow["publicTemplateIds"], [template["id"]])
         self.assertEqual(template["status"], "contract-only")
         self.assertFalse(template["galleryExamplePresent"])
@@ -133,7 +145,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertTrue(templates[0]["reviewedGalleryExample"])
             workflow = next(item for item in workflows if item["id"] == templates[0]["canonicalWorkflowId"])
             self.assertEqual(workflow["status"], "contract-only")
-            self.assertEqual(sum(item["status"] == "executable" for item in workflows), 203)
+            self.assertEqual(sum(item["status"] == "executable" for item in workflows), 209)
             for field, value in (("memoryPolicy", "auto"), ("executionProfileId", "private-fixture"),
                                  ("schemaVersion", True), ("task", "edit_image"),
                                  ("bindingSpec", {"modelType": template["modelType"], "mode": "edit_image"})):
@@ -153,20 +165,20 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 210,
-                "canonicalWorkflowsWithPublicTemplates": 61,
-                "canonicalWorkflowsWithoutPublicTemplates": 149,
+                "canonicalWorkflowCount": 225,
+                "canonicalWorkflowsWithPublicTemplates": 71,
+                "canonicalWorkflowsWithoutPublicTemplates": 154,
                 "diffusersPipelineSymbolCount": 340,
                 "pipelineStatusCounts": {
                     "contract-only": 5,
                     "equivalent": 8,
-                    "executable": 146,
+                    "executable": 147,
                     "intentionally-excluded": 59,
                     "research-blocked": 116,
-                    "unreviewed": 6,
+                    "unreviewed": 5,
                 },
                 "publicTemplateCount": 91,
-                "reviewedGalleryTemplateCount": 80,
+                "reviewedGalleryTemplateCount": 83,
                 "templateStatusCounts": {
                     "contract-only": 11,
                     "equivalent": 0,
@@ -187,9 +199,9 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "unreviewed": 0,
                 },
                 "workflowStatusCounts": {
-                    "contract-only": 7,
+                    "contract-only": 16,
                     "equivalent": 0,
-                    "executable": 203,
+                    "executable": 209,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -325,7 +337,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             {item["name"] for item in by_name.values() if item["status"] == "unreviewed"},
             {
-                "EchoModularPipeline", "Kandinsky6SRPipeline", "Kandinsky6TI2VAPipeline",
+                "EchoModularPipeline", "Kandinsky6SRPipeline",
                 "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline", "SanaWMPipeline",
             },
         )
@@ -463,9 +475,16 @@ class UpstreamCoverageTests(unittest.TestCase):
         templates = self.ledger["publicTemplates"]
         self.assertEqual(len({item["id"] for item in templates}), 91)
         self.assertTrue(all(item["canonicalWorkflowId"] in ledger_workflows for item in templates))
-        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 80)
-        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 80)
-        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 61)
+        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 83)
+        for template_id in (
+            "flux_lora_cinematic_octane_3d", "minimax_music3_chamber_pop", "wan_video_long_showcase",
+        ):
+            item = next(row for row in templates if row["id"] == template_id)
+            self.assertTrue(item["reviewedGalleryExample"])
+            self.assertEqual(item["galleryVerificationStatus"], "reviewed")
+            self.assertEqual(item["galleryExecutionCompatibility"], "historical_reference_requires_new_execution_evidence")
+        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 83)
+        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 71)
         contract_only = [item for item in templates if item["status"] == "contract-only"]
         self.assertEqual(len(contract_only), 11)
         self.assertEqual(sum(item["reviewedGalleryExample"] for item in contract_only), 10)
@@ -530,7 +549,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(source["mode"], "huggingface")
             self.assertRegex(source["revision"], r"^[0-9a-f]{40}$")
             self.assertRegex(source["assetSetId"], r"^sha256:canonical-json:[0-9a-f]{64}$")
-            self.assertEqual(len(ledger_gallery_ids), 80)
+            self.assertEqual(len(ledger_gallery_ids), 83)
 
     def test_remote_asset_build_requires_an_explicit_reviewed_gallery_manifest(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

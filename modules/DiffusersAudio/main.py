@@ -1866,6 +1866,21 @@ def _preflight_audio_invocation(pipeline: Any, kwargs: dict[str, Any]) -> AudioI
             "bpm": bpm,
         }
     controls["sample_rate"] = requested_sample_rate
+    if adapter.generation_kind == "ace_step" and contract.mode == "audio_variation":
+        # A timbre reference does not preserve source melody/content. Native
+        # cover conditioning needs both optional codecs in the selected model;
+        # the reviewed Turbo checkpoint lacks them. Never silently substitute
+        # a reference-only task, or allocate the source tensor before this check.
+        if (getattr(pipeline, "audio_tokenizer", None) is None
+                or getattr(pipeline, "audio_token_detokenizer", None) is None):
+            raise ValueError(
+                "ACE-Step source-audio cover requires the selected checkpoint's registered "
+                "audio_tokenizer and audio_token_detokenizer components. Select a complete "
+                "compatible checkpoint with an explicit immutable revision; a timbre reference "
+                "alone cannot perform source-audio variation."
+            )
+        if not supports_arg(pipeline, "src_audio"):
+            raise ValueError("The selected ACE-Step pipeline cannot accept required source-audio cover input src_audio.")
     return AudioInvocation(
         adapter=adapter,
         contract=contract,
@@ -2189,24 +2204,11 @@ class Generate(NodeBase):
                 target_samples = int(round(audio_duration * sample_rate))
                 if tensor.shape[-1] < target_samples:
                     tensor = torch.nn.functional.pad(tensor, (0, target_samples - tensor.shape[-1]))
-            # P0 exposes one variation input. Route that required source as the
-            # sole upstream timbre/style reference: src_audio cover conditioning
-            # needs optional tokenizer modules that the reviewed artifact does
-            # not publish. A separate reference input remains forbidden until a
-            # true two-input adapter has an explicit merge contract.
-            if task_type == "cover":
-                if not supports_arg(pipeline, "reference_audio"):
-                    raise ValueError(
-                        "The selected ACE-Step pipeline cannot accept the required variation source as "
-                        "reference_audio."
-                    )
-                call_kwargs["reference_audio"] = tensor
-            else:
-                if not supports_arg(pipeline, "src_audio"):
-                    raise ValueError(
-                        f"The selected ACE-Step pipeline cannot accept required {contract.mode} source audio."
-                    )
-                call_kwargs["src_audio"] = tensor
+            if not supports_arg(pipeline, "src_audio"):
+                raise ValueError(
+                    f"The selected ACE-Step pipeline cannot accept required {contract.mode} source audio."
+                )
+            call_kwargs["src_audio"] = tensor
 
         if task_type in ("repaint", "continuation"):
             start, end = invocation.repaint_interval or (0.0, 0.0)

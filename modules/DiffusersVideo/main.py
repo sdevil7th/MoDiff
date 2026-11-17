@@ -109,8 +109,14 @@ class VideoPipelineAdapter:
     conditioning_repo: str | None = None
     conditioning_component_class: str | None = None
     conditioning_component_parameter: str | None = None
+    audio_modes: tuple[str, ...] | None = None
 
     def __post_init__(self) -> None:
+        if self.audio_modes is not None and (
+            'audio' not in self.output_media or not self.audio_modes
+            or not set(self.audio_modes).issubset(self.modes)
+        ):
+            raise ValueError('Audio tasks must belong to an audio-capable video adapter.')
         conditioning_fields = (
             self.conditioning_repo,
             self.conditioning_component_class,
@@ -163,6 +169,7 @@ _VIDEO_DYNAMIC_FIELDS = (
     "prompt_segments_json",
     "pag_scale",
     "pag_adaptive_scale",
+    "expand_prompt",
 )
 _VIDEO_INPUT_FIELDS = frozenset(
     {
@@ -233,6 +240,22 @@ WAN_VACE_MODE_MEDIA_CONTRACTS = {
 
 
 VIDEO_PIPELINE_ADAPTERS = {
+    "Kandinsky6TI2VAPipeline": VideoPipelineAdapter(
+        id="kandinsky-6-av", pipeline_class="Kandinsky6TI2VAPipeline",
+        diffusers_class="Kandinsky6TI2VAPipeline",
+        default_repo="kandinskylab/Kandinsky-6.0-Pro-5s-Diffusers",
+        modes=("text_to_video", "image_to_video", "text_to_video_with_audio", "image_to_video_with_audio"),
+        output_media=("video", "audio"), audio_modes=("text_to_video_with_audio", "image_to_video_with_audio"),
+        max_prompt_tokens=1024,
+    ),
+    "Kandinsky6DistilledTI2VAPipeline": VideoPipelineAdapter(
+        id="kandinsky-6-distilled-av", pipeline_class="Kandinsky6DistilledTI2VAPipeline",
+        diffusers_class="Kandinsky6TI2VAPipeline",
+        default_repo="kandinskylab/Kandinsky-6.0-Pro-distill-5s-Diffusers",
+        modes=("text_to_video", "image_to_video", "text_to_video_with_audio", "image_to_video_with_audio"),
+        output_media=("video", "audio"), audio_modes=("text_to_video_with_audio", "image_to_video_with_audio"),
+        max_prompt_tokens=1024,
+    ),
     "WanVACEPipeline": VideoPipelineAdapter(
         id="wan-vace",
         pipeline_class="WanVACEPipeline",
@@ -507,6 +530,26 @@ _LTX_LONG_FIELDS = (
     "prompt_segments_json",
 )
 VIDEO_MODE_FIELD_CONTRACTS = {
+    "Kandinsky6TI2VAPipeline": {
+        "text_to_video": _video_field_contract("frame_rate", "expand_prompt"),
+        "image_to_video": _video_field_contract(
+            "reference_images", "frame_rate", "expand_prompt", required_fields=("reference_images",)
+        ),
+        "text_to_video_with_audio": _video_field_contract("frame_rate", "expand_prompt"),
+        "image_to_video_with_audio": _video_field_contract(
+            "reference_images", "frame_rate", "expand_prompt", required_fields=("reference_images",)
+        ),
+    },
+    "Kandinsky6DistilledTI2VAPipeline": {
+        "text_to_video": _video_field_contract("frame_rate", "expand_prompt"),
+        "image_to_video": _video_field_contract(
+            "reference_images", "frame_rate", "expand_prompt", required_fields=("reference_images",)
+        ),
+        "text_to_video_with_audio": _video_field_contract("frame_rate", "expand_prompt"),
+        "image_to_video_with_audio": _video_field_contract(
+            "reference_images", "frame_rate", "expand_prompt", required_fields=("reference_images",)
+        ),
+    },
     "WanVACEPipeline": {
         "text_to_video": _video_field_contract(*_VACE_GUIDANCE_FIELDS),
         "video_to_video": _video_field_contract(
@@ -543,7 +586,9 @@ VIDEO_MODE_FIELD_CONTRACTS = {
         for mode in ("video_to_video", "video_color_edit")
     },
     "WanPipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
-    "Wan22Pipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
+    "Wan22Pipeline": {
+        "text_to_video": _video_field_contract("scheduler_flow_shift", "secondary_guidance_scale")
+    },
     "WanTI2VPipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
     "WanTI2VImageToVideoPipeline": {
         "image_to_video": _video_field_contract(
@@ -678,6 +723,8 @@ def get_video_mode_field_contract(adapter: VideoPipelineAdapter, mode: str) -> V
 
 
 VIDEO_PIPELINE_LOAD_HANDLERS = {
+    "Kandinsky6TI2VAPipeline": "_load_kandinsky6",
+    "Kandinsky6DistilledTI2VAPipeline": "_load_kandinsky6",
     "WanVACEPipeline": "_load_wan_vace",
     "WanVideoToVideoPipeline": "_load_wan_video_to_video",
     "WanPipeline": "_load_wan_text_to_video",
@@ -710,6 +757,8 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
 
 
 VIDEO_PIPELINE_EXECUTE_HANDLERS = {
+    "Kandinsky6TI2VAPipeline": "_execute_kandinsky6",
+    "Kandinsky6DistilledTI2VAPipeline": "_execute_kandinsky6",
     "WanVACEPipeline": "_execute_wan_vace",
     "WanVideoToVideoPipeline": "_execute_wan_video_to_video",
     "WanPipeline": "_execute_wan_text_to_video",
@@ -1049,28 +1098,57 @@ def _pipeline_adapter(pipeline: Any) -> VideoPipelineAdapter:
     )
 
 
+def video_operation_field_params(adapter: VideoPipelineAdapter, mode: str, operation_id: str) -> dict[str, dict[str, Any]]:
+    """Keep a separately encoded consumer distinct from the raw whole call.
+
+    Raw media remains mandatory at Encode Inputs and on historical whole calls.
+    The selected render bundle instead requires its owner-bound conditioning.
+    This overlay is shared by discovery and resolved authoring schemas only;
+    dynamic whole-call fields and saved node values are not rewritten.
+    """
+    fields = get_video_mode_field_contract(adapter, mode).field_param_overlay()
+    native_encoding_only = adapter.diffusers_class == 'Kandinsky6TI2VAPipeline'
+    for field in ('encoded_inputs', 'prompt_embeds', 'negative_prompt_embeds', 'attention_kwargs_json'):
+        fields[field] = {'hidden': native_encoding_only}
+    if operation_id == 'diffusion.render_video':
+        if adapter.pipeline_class != 'WanVACEPipeline':
+            raise ValueError('The selected pipeline has no integrated encoded-video render stage.')
+        for field in _VIDEO_INPUT_FIELDS:
+            fields[field] = {**fields[field], 'required': False, 'hidden': True}
+        fields['encoded_inputs'] = {'required': True, 'hidden': False}
+    return fields
+
+
 def get_video_operation_contracts(modules) -> list[dict]:
     from modiff.operation_contracts import build_pipeline_operation_contract
 
     result = []
     for pipeline_class, adapter in sorted(VIDEO_PIPELINE_ADAPTERS.items()):
         for mode in adapter.modes:
-            fields = get_video_mode_field_contract(adapter, mode).field_param_overlay()
-            actions = [("LoadPipeline", "diffusion.load_models"), ("Generate", "diffusion.generate_video")]
-            if "audio" in adapter.output_media:
-                actions.append(("GenerateVideoAudio", "diffusion.generate_video_audio"))
+            actions = [("LoadPipeline", "diffusion.load_models", None)]
+            if adapter.audio_modes is None or mode not in adapter.audio_modes:
+                actions.append(("Generate", "diffusion.generate_video", None))
+            if "audio" in adapter.output_media and (adapter.audio_modes is None or mode in adapter.audio_modes):
+                actions.append(("GenerateVideoAudio", "diffusion.generate_video_audio", None))
             from .stage_execution import PROFILE_CLASSES
             if pipeline_class in PROFILE_CLASSES.values():
-                actions.extend((('EncodeInputs', 'diffusion.encode_video'),
-                                ('Denoise', 'diffusion.denoise'), ('DecodeLatents', 'diffusion.decode_latents')))
-            for action, operation in actions:
+                actions.append(('EncodeInputs', 'diffusion.encode_video', 'video_encoder'))
+                if pipeline_class == 'WanVACEPipeline':
+                    # The same generic executor has two distinct published
+                    # contracts. Preserve the whole operation for saved and
+                    # unbound drafts; only an exact stage selection consumes
+                    # the separately owned encoded-conditioning bundle.
+                    actions.append(('Generate', 'diffusion.render_video', 'denoise'))
+                else:
+                    actions.extend((('Denoise', 'diffusion.denoise', 'denoise'),
+                                    ('DecodeLatents', 'diffusion.decode_latents', 'decoder')))
+            for action, operation, stage_node_type in actions:
                 record = build_pipeline_operation_contract(
                     modules, pipeline_class=pipeline_class, task=mode, operation_id=operation,
                     node_key=f"modules.DiffusersVideo.{action}",
-                    field_overrides=fields if action != "LoadPipeline" else None,
+                    field_overrides=video_operation_field_params(adapter, mode, operation) if action != "LoadPipeline" else None,
                     loader=action == "LoadPipeline",
-                    stage_node_type={'EncodeInputs': 'video_encoder', 'Denoise': 'denoise',
-                                     'DecodeLatents': 'decoder'}.get(action),
+                    stage_node_type=stage_node_type,
                 )
                 if record is not None:
                     result.append(record)
@@ -1078,18 +1156,21 @@ def get_video_operation_contracts(modules) -> list[dict]:
 
 
 def _adapter_signal(adapter: VideoPipelineAdapter) -> dict[str, Any]:
+    video_modes = [mode for mode in adapter.modes if adapter.audio_modes is None or mode not in adapter.audio_modes]
     actions = {
-        "Generate": list(adapter.modes),
-        "GenerateShotJob": list(adapter.modes),
+        "Generate": video_modes,
+        "GenerateShotJob": video_modes,
     }
     if "audio" in adapter.output_media:
-        actions["GenerateVideoAudio"] = list(adapter.modes)
+        actions["GenerateVideoAudio"] = list(adapter.audio_modes or adapter.modes)
         actions["GenerateLTX2"] = list(adapter.modes)
     if "text_to_video" in adapter.modes:
         actions["GenerateSequence"] = ["text_to_video"]
     from .stage_execution import PROFILE_CLASSES
     if adapter.pipeline_class in PROFILE_CLASSES.values():
-        actions.update({action: list(adapter.modes) for action in ('EncodeInputs', 'Denoise', 'DecodeLatents')})
+        actions['EncodeInputs'] = list(adapter.modes)
+        if adapter.pipeline_class != 'WanVACEPipeline':
+            actions.update({action: list(adapter.modes) for action in ('Denoise', 'DecodeLatents')})
     return {
         "schemaVersion": 1,
         "library": "diffusers",
@@ -1750,6 +1831,29 @@ class LoadPipeline(WanVACELoadPipeline):
         result = super().execute(**kwargs)
         return result["pipeline"]
 
+    def _load_kandinsky6(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
+        from diffusers import Kandinsky6TI2VAPipeline
+        from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
+
+        selection = kwargs['model_id']
+        repository = repo_value(selection)
+        revision = _resolve_loader_revision(selection, repository, kwargs.get('revision'))
+        target = repository if selection.get('source') == 'local' else exact_cached_snapshot_path(repository, revision)
+        recipe, device, offload_mode, load_kwargs = loader_runtime_options(
+            kwargs, default_device=DEFAULT_DEVICE, default_offload_mode=OFFLOAD_MODE_MODEL_CPU,
+            direct_device_load=True,
+        )
+        self.progress(-1, phase='loading', message='Loading video and audio components')
+        pipeline = Kandinsky6TI2VAPipeline.from_pretrained(
+            target, revision=revision, torch_dtype=str_to_dtype(kwargs.get('dtype', 'bfloat16')),
+            use_safetensors=True, local_files_only=local_files_only(repository),
+            low_cpu_mem_usage=bool(kwargs.get('low_cpu_mem_usage', True)), **load_kwargs,
+        )
+        apply_execution_recipe_to_pipeline(pipeline, recipe)
+        apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
+        self.mm_add(pipeline, priority=2)
+        return pipeline
+
     def _load_ltx(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
         from diffusers import LTXConditionPipeline
         from modules.DiffusersRuntime.main import apply_execution_recipe_to_pipeline, loader_runtime_options
@@ -1757,6 +1861,10 @@ class LoadPipeline(WanVACELoadPipeline):
         model_selection = kwargs.get("model_id")
         model_id = repo_value(model_selection) or adapter.default_repo
         revision = _resolve_loader_revision(model_selection, model_id, kwargs.get("revision"))
+        load_target = (
+            model_id if isinstance(model_selection, dict) and model_selection.get("source") == "local"
+            else exact_cached_snapshot_path(model_id, revision)
+        )
         dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
         recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
             kwargs,
@@ -1771,12 +1879,9 @@ class LoadPipeline(WanVACELoadPipeline):
             "local_files_only": local_files_only(model_id),
             **recipe_load_kwargs,
         }
-        if CONFIG.hf.get("cache_dir"):
-            load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
-
         logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
         self.progress(-1, phase="loading", message=f"Loading {adapter.diffusers_class}")
-        pipeline = LTXConditionPipeline.from_pretrained(model_id, **load_kwargs)
+        pipeline = LTXConditionPipeline.from_pretrained(load_target, **load_kwargs)
         apply_execution_recipe_to_pipeline(pipeline, recipe)
         self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
         apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
@@ -1789,6 +1894,11 @@ class LoadPipeline(WanVACELoadPipeline):
 
         model_selection = kwargs.get("model_id")
         model_id = repo_value(model_selection) or adapter.default_repo
+        revision = _resolve_loader_revision(model_selection, model_id, kwargs.get("revision"))
+        load_target = (
+            model_id if isinstance(model_selection, dict) and model_selection.get("source") == "local"
+            else exact_cached_snapshot_path(model_id, revision)
+        )
         dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
         recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
             kwargs,
@@ -1799,14 +1909,12 @@ class LoadPipeline(WanVACELoadPipeline):
         load_kwargs = {
             "torch_dtype": dtype,
             "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
-            "revision": _resolve_loader_revision(model_selection, model_id, kwargs.get("revision")),
+            "revision": revision,
             "local_files_only": local_files_only(model_id),
             **recipe_load_kwargs,
         }
-        if CONFIG.hf.get("cache_dir"):
-            load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
         self.progress(-1, phase="loading", message="Loading LTX long image-to-video pipeline")
-        pipeline = LTXI2VLongMultiPromptPipeline.from_pretrained(model_id, **load_kwargs)
+        pipeline = LTXI2VLongMultiPromptPipeline.from_pretrained(load_target, **load_kwargs)
         pipeline.scheduler = LTXEulerAncestralRFScheduler.from_config(pipeline.scheduler.config)
         apply_execution_recipe_to_pipeline(pipeline, recipe)
         apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
@@ -1908,6 +2016,11 @@ class LoadPipeline(WanVACELoadPipeline):
 
         model_selection = kwargs.get("model_id")
         model_id = repo_value(model_selection) or adapter.default_repo
+        revision = _resolve_loader_revision(model_selection, model_id, kwargs.get("revision"))
+        load_target = (
+            model_id if isinstance(model_selection, dict) and model_selection.get("source") == "local"
+            else exact_cached_snapshot_path(model_id, revision)
+        )
         dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
         recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
             kwargs,
@@ -1915,16 +2028,14 @@ class LoadPipeline(WanVACELoadPipeline):
             default_offload_mode="sequential_cpu",
         )
         common = {
-            "revision": _resolve_loader_revision(model_selection, model_id, kwargs.get("revision")),
+            "revision": revision,
             "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
             "local_files_only": local_files_only(model_id),
         }
-        if CONFIG.hf.get("cache_dir"):
-            common["cache_dir"] = CONFIG.hf["cache_dir"]
         self.progress(-1, phase="loading", message="Loading Wan Animate pipeline")
-        vae = AutoencoderKLWan.from_pretrained(model_id, subfolder="vae", torch_dtype=torch.float32, **common)
+        vae = AutoencoderKLWan.from_pretrained(load_target, subfolder="vae", torch_dtype=torch.float32, **common)
         pipeline = WanAnimatePipeline.from_pretrained(
-            model_id,
+            load_target,
             vae=vae,
             torch_dtype=dtype,
             **common,
@@ -2468,6 +2579,10 @@ class LoadPipeline(WanVACELoadPipeline):
         model_id = repo_value(model_selection) or adapter.default_repo
         dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
         revision = _resolve_loader_revision(model_selection, model_id, kwargs.get("revision"))
+        load_target = (
+            model_id if isinstance(model_selection, dict) and model_selection.get("source") == "local"
+            else exact_cached_snapshot_path(model_id, revision)
+        )
         recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
             kwargs,
             default_device=DEFAULT_DEVICE,
@@ -2480,19 +2595,16 @@ class LoadPipeline(WanVACELoadPipeline):
             "local_files_only": local_files_only(model_id),
             **recipe_load_kwargs,
         }
-        if CONFIG.hf.get("cache_dir"):
-            load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
-
         logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
         self.progress(-1, phase="loading", message=f"Loading {adapter.diffusers_class}")
         vae = AutoencoderKLWan.from_pretrained(
-            model_id,
+            load_target,
             subfolder="vae",
             torch_dtype=torch.float32,
             **{key: value for key, value in load_kwargs.items() if key not in recipe_load_kwargs},
         )
         pipeline = WanVideoToVideoPipeline.from_pretrained(
-            model_id,
+            load_target,
             vae=vae,
             torch_dtype=dtype,
             **load_kwargs,
@@ -2514,6 +2626,10 @@ class LoadPipeline(WanVACELoadPipeline):
         model_id = repo_value(model_selection) or adapter.default_repo
         dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
         revision = _resolve_loader_revision(model_selection, model_id, kwargs.get("revision"))
+        load_target = (
+            model_id if isinstance(model_selection, dict) and model_selection.get("source") == "local"
+            else exact_cached_snapshot_path(model_id, revision)
+        )
         recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
             kwargs,
             default_device=DEFAULT_DEVICE,
@@ -2525,22 +2641,19 @@ class LoadPipeline(WanVACELoadPipeline):
             "revision": revision,
             "local_files_only": local_files_only(model_id),
         }
-        if CONFIG.hf.get("cache_dir"):
-            common["cache_dir"] = CONFIG.hf["cache_dir"]
-
         logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
         self.progress(-1, phase="loading", message=f"Loading {adapter.diffusers_class}")
         # Wan's VAE is numerically sensitive and the official recipe keeps it
         # in FP32. The two denoisers and text encoder retain the requested load
         # dtype or per-component quantization from the execution recipe.
         vae = AutoencoderKLWan.from_pretrained(
-            model_id,
+            load_target,
             subfolder="vae",
             torch_dtype=torch.float32,
             **common,
         )
         pipeline = WanImageToVideoPipeline.from_pretrained(
-            model_id,
+            load_target,
             vae=vae,
             torch_dtype=dtype,
             **common,
@@ -2566,6 +2679,10 @@ class LoadPipeline(WanVACELoadPipeline):
         model_id = repo_value(model_selection) or adapter.default_repo
         dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
         revision = _resolve_loader_revision(model_selection, model_id, kwargs.get("revision"))
+        load_target = (
+            model_id if isinstance(model_selection, dict) and model_selection.get("source") == "local"
+            else exact_cached_snapshot_path(model_id, revision)
+        )
         recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
             kwargs,
             default_device=DEFAULT_DEVICE,
@@ -2578,18 +2695,15 @@ class LoadPipeline(WanVACELoadPipeline):
             "local_files_only": local_files_only(model_id),
             **recipe_load_kwargs,
         }
-        if CONFIG.hf.get("cache_dir"):
-            load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
-
         logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
         self.progress(-1, phase="loading", message=f"Loading {adapter.diffusers_class}")
         vae = AutoencoderKLWan.from_pretrained(
-            model_id,
+            load_target,
             subfolder="vae",
             torch_dtype=torch.float32,
             **{key: value for key, value in load_kwargs.items() if key not in recipe_load_kwargs},
         )
-        pipeline = WanPipeline.from_pretrained(model_id, vae=vae, torch_dtype=dtype, **load_kwargs)
+        pipeline = WanPipeline.from_pretrained(load_target, vae=vae, torch_dtype=dtype, **load_kwargs)
         # Wan's upstream 1.3B quality recipe recommends shift 8-12 and guidance
         # 6. Use the conservative lower end for the base 1.3B text-to-video
         # adapter. Wan 2.2 checkpoints carry their own scheduler contracts and
@@ -2610,6 +2724,8 @@ class Generate(WanVACEGenerate):
     category = "Diffusers Video"
     params = {
         **WanVACEGenerate.params,
+        'encoded_inputs': {'label': 'Encoded inputs', 'type': 'video_conditioning', 'display': 'input',
+                           'required': False},
         "seed": {
             "label": "Seed",
             "type": "int",
@@ -2774,12 +2890,21 @@ class Generate(WanVACEGenerate):
             "max": 20,
             "step": 0.1,
         },
+        "expand_prompt": {
+            "label": "Expand Prompt", "type": "bool", "default": False,
+            "hidden": True,
+        },
     }
 
     def __call__(self, **kwargs):
         values = dict(kwargs)
         values["mode"] = _require_video_mode(values.get("mode"))
         pipeline = values.get("pipeline")
+        if values.get('encoded_inputs') is not None and self.class_name == 'Generate':
+            from .stage_execution import require_encoding
+            encoding = require_encoding(pipeline, values['encoded_inputs'], values['mode'], values.get('guidance_scale'))
+            if encoding.owner.pipeline_class != 'WanVACEPipeline':
+                raise ValueError('This integrated encoded-video stage is not declared for the selected pipeline.')
         if pipeline is not None:
             try:
                 adapter = _pipeline_adapter(pipeline)
@@ -2793,11 +2918,42 @@ class Generate(WanVACEGenerate):
         return super().__call__(**values)
 
     def execute(self, **kwargs):
-        _adapter, result = self._execute_with_adapter(**kwargs)
-        result.pop("_audio", None)
-        return result
+        encoding = None
+        if kwargs.get('encoded_inputs') is not None:
+            from .stage_execution import encoded_values
+            encoding, kwargs = encoded_values(kwargs['pipeline'], kwargs)
+        self._integrated_video_encoding = encoding
+        self._integrated_video_consumed = None
+        try:
+            _adapter, result = self._execute_with_adapter(**kwargs)
+            result.pop("_audio", None)
+            if encoding is not None:
+                from .stage_execution import require_encoding
+                require_encoding(kwargs['pipeline'], encoding)
+                consumed = self._integrated_video_consumed
+                if consumed is None:
+                    raise ValueError('The encoded video adapter did not call its official pipeline.')
+                # Chunk geometry is internal; report the full actual delivery.
+                self.record_generation_inputs({**consumed, 'num_frames': result['frames_out']})
+            else:
+                self.record_generation_inputs({**kwargs, 'executed_task': kwargs['mode']})
+            return result
+        finally:
+            self._integrated_video_encoding = None
+            self._integrated_video_consumed = None
 
     def _invoke_pipeline(self, pipeline, call_kwargs):
+        encoding = getattr(self, '_integrated_video_encoding', None)
+        if encoding is not None:
+            from .stage_execution import require_encoding
+            from modiff.execution_input_provenance import NODE_FIELD_NAMES
+            require_encoding(pipeline, encoding)
+            call_kwargs = {**call_kwargs, **encoding.embeddings, 'prompt': None, 'negative_prompt': None}
+            self._integrated_video_consumed = {key: value for key, value in call_kwargs.items()
+                if key in NODE_FIELD_NAMES[('DiffusersVideo', 'Generate')]
+                and key not in {'prompt', 'negative_prompt'}}
+            self._integrated_video_consumed.update(executed_task=encoding.mode,
+                seed=int(call_kwargs['generator'].initial_seed()))
         return pipeline(**call_kwargs)
 
     def update_adapter_modes(self, values, ref):
@@ -2812,13 +2968,14 @@ class Generate(WanVACEGenerate):
         if signal not in (expected, legacy):
             raise ValueError("The connected video pipeline published a stale or mismatched adapter contract.")
         current_mode = values.get("mode")
-        selected_mode = current_mode if current_mode in adapter.modes else adapter.modes[0]
-        field_contract = get_video_mode_field_contract(adapter, selected_mode)
+        actions = _adapter_signal(adapter)['actions']
+        modes = actions.get(self.class_name, actions['Generate'])
+        selected_mode = current_mode if current_mode in modes else modes[0]
         self.set_field_params(
             "mode",
-            {"options": list(adapter.modes), "default": adapter.modes[0], "value": selected_mode},
+            {"options": list(modes), "default": modes[0], "value": selected_mode},
         )
-        for field, params in field_contract.field_param_overlay().items():
+        for field, params in video_operation_field_params(adapter, selected_mode, 'diffusion.generate_video').items():
             self.set_field_params(field, params)
 
     def _execute_with_adapter(self, **kwargs):
@@ -2829,6 +2986,8 @@ class Generate(WanVACEGenerate):
         mode = _require_video_mode(kwargs.get("mode"))
         if mode not in adapter.modes:
             raise ValueError(f"{adapter.pipeline_class} does not support video mode {mode}.")
+        if adapter.audio_modes is not None and ((mode in adapter.audio_modes) != bool(kwargs.get('_sample_audio'))):
+            raise ValueError('Select the matching video-only or video-with-audio generation task.')
         values = dict(kwargs)
         values["mode"] = mode
         if adapter.pipeline_class == "WanVACEPipeline":
@@ -4017,6 +4176,11 @@ class Generate(WanVACEGenerate):
             "frames_out": len(frames),
         }
 
+    def _execute_kandinsky6(self, pipeline, adapter, mode, kwargs):
+        from .kandinsky6 import execute
+
+        return execute(self, pipeline, adapter, mode, kwargs)
+
     def _execute_wan_text_to_video(
         self,
         pipeline: Any,
@@ -4068,6 +4232,12 @@ class Generate(WanVACEGenerate):
             ),
             "max_sequence_length": int(kwargs.get("max_sequence_length", 512)),
         }
+        if adapter.pipeline_class == "Wan22Pipeline":
+            # The two-transformer A14B route accepts an independent low-noise
+            # CFG. None deliberately retains upstream's high-CFG fallback;
+            # zero is an explicit value and must not be replaced by a default.
+            low_guidance = kwargs.get("secondary_guidance_scale")
+            call_kwargs["guidance_scale_2"] = None if low_guidance is None else float(low_guidance)
         requested_flow_shift = float(kwargs.get("scheduler_flow_shift") or 0)
         original_scheduler = None
         if requested_flow_shift > 0:
@@ -4145,7 +4315,7 @@ class Generate(WanVACEGenerate):
         }
         self._active_pipeline = pipeline
         try:
-            result = pipeline(**call_kwargs)
+            result = self._invoke_pipeline(pipeline, call_kwargs)
         finally:
             self._active_pipeline = None
         frames = getattr(result, "frames", result)
@@ -4681,15 +4851,17 @@ class GenerateVideoAudio(NodeBase):
         worker = Generate(self.node_id)
         worker._sid = self._sid
         worker.pipe_callback = self.pipe_callback
-        executed_adapter, result = worker._execute_with_adapter(**kwargs)
+        executed_adapter, result = worker._execute_with_adapter(**{**kwargs, '_sample_audio': True})
         raw_audio = result.pop("_audio", None)
         if raw_audio is None:
             raise RuntimeError("The selected video pipeline did not return an audio stream.")
         vocoder = getattr(pipeline, "vocoder", None)
         vocoder_config = getattr(vocoder, "config", None)
         configured_rate = vocoder_config.get("output_sampling_rate") if hasattr(vocoder_config, "get") else None
-        sample_rate = int(configured_rate or executed_adapter.default_audio_sample_rate or 48000)
+        sample_rate = int(getattr(pipeline, 'audio_sample_rate', None)
+                          or configured_rate or executed_adapter.default_audio_sample_rate or 48000)
         audio = output_to_audio_object(raw_audio, sample_rate=sample_rate)
+        self.record_generation_inputs({**kwargs, 'executed_task': kwargs['mode']})
         return {
             **result,
             "audio": audio,

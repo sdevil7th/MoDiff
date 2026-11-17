@@ -125,11 +125,13 @@ class Load(NodeBase):
         heights = []
         masks = []
         source_hashes = []
+        evidence_files = []
 
         file = file if isinstance(file, list) else [file]
         for f in file:
             if f is None or f == "":
                 continue
+            original_value = str(f)
 
             try:
                 if f.startswith("http://") or f.startswith("https://"):
@@ -163,6 +165,8 @@ class Load(NodeBase):
                 heights.append(image.height)
                 masks.append(mask)
                 source_hashes.append(source_hash)
+                evidence_files.append({'sourceValue': original_value,
+                                       'sha256': source_hash, 'byteSize': len(content)})
             except Exception as e:
                 logger.error(f"Error loading image {f}: {e}")
                 continue
@@ -177,6 +181,8 @@ class Load(NodeBase):
             "source_heights": heights,
             "source_modes": [image.mode for image in images],
         })
+        from modiff.builtin_media_evidence import begin_media_capture
+        begin_media_capture(self, kwargs, inputs={}, files={'file': evidence_files}).finish({'image': images})
 
         return {
             "image": collapse_single(images),
@@ -333,6 +339,8 @@ class Preview(NodeBase):
     def execute(self, **kwargs):
         image = kwargs["image"]
         export = kwargs["export"]
+        from modiff.builtin_media_evidence import begin_media_capture
+        capture = begin_media_capture(self, kwargs, inputs={'image': image})
         filtered = None
         if image is None:
             return {"output": None, "filtered": None}
@@ -376,6 +384,7 @@ class Preview(NodeBase):
         self.record_field_accounting(kwargs,
             consumed={'export': export, **({'device': kwargs['device']} if decoded_images is None else {})},
             inactive={'device': 'already-decoded-image'} if decoded_images is not None else {})
+        capture.finish({'output': output, 'filtered': filtered})
         return {"output": output, "filtered": filtered}
 
 class Resize(NodeBase):

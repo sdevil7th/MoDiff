@@ -1,6 +1,178 @@
-from PIL import Image, ImageOps
+from PIL import Image, ImageColor, ImageDraw, ImageOps
 
 from modiff.NodeBase import NodeBase
+
+
+def _storyboard_records(text):
+    import json
+    if not isinstance(text, str) or len(text.encode('utf-8')) > 1_048_576:
+        raise ValueError('Storyboard JSON must be text of at most 1 MiB.')
+    try:
+        records = json.loads(text)
+    except (ValueError, RecursionError) as error:
+        raise ValueError('Storyboard must contain valid bounded JSON.') from error
+    if not isinstance(records, list) or not 1 <= len(records) <= 64:
+        raise ValueError('Storyboard must contain one to 64 explicit shot records.')
+    return records
+
+
+class Storyboard(NodeBase):
+    """Publish an authored shot list and one shared seed without executing it."""
+
+    label = 'Storyboard'
+    category = 'Video Conditioning'
+    resizable = True
+    params = {
+        'shots_json': {'label': 'Shots (JSON)', 'type': 'text', 'display': 'textarea', 'default': '[]'},
+        'base_seed': {'label': 'Base seed', 'type': 'int', 'display': 'random', 'default': 0, 'min': 0,
+                      'max': 9_007_199_254_740_991},
+        'storyboard': {'label': 'Storyboard', 'type': 'text', 'display': 'output'},
+        'seed': {'label': 'Base seed', 'type': 'int', 'display': 'output'},
+        'count': {'label': 'Shots', 'type': 'int', 'display': 'output'},
+    }
+
+    def execute(self, **kwargs):
+        return evaluate_storyboard(kwargs)
+
+
+class ShotInputs(NodeBase):
+    """Select one bounded storyboard record for ordinary explicit video stages.
+
+    This deterministic data operation never loads models, executes shots or
+    reads another shot's images. Model-specific validity remains downstream.
+    """
+
+    label = 'Shot Inputs'
+    category = 'Video Conditioning'
+    resizable = True
+    params = {
+        'storyboard': {'label': 'Storyboard JSON', 'type': 'text', 'display': 'input', 'required': True},
+        'index': {'label': 'Shot index (zero based)', 'type': 'int', 'default': 0, 'min': 0},
+        'prompt_override': {'label': 'Optional shot prompt override', 'type': 'text', 'display': 'textarea', 'default': ''},
+        'base_seed': {'label': 'Base seed', 'type': 'int', 'default': 0, 'min': 0},
+        'use_seed_override': {'label': 'Override shot seed', 'type': 'bool', 'default': False},
+        'seed_override': {'label': 'Shot seed override', 'type': 'int', 'display': 'random', 'default': 0, 'min': 0,
+                          'max': 9_007_199_254_740_991},
+        'negative_prompt': {'label': 'Negative prompt', 'type': 'text', 'display': 'textarea', 'default': ''},
+        'width': {'label': 'Width', 'type': 'int', 'default': 832, 'min': 1},
+        'height': {'label': 'Height', 'type': 'int', 'default': 480, 'min': 1},
+        'num_frames': {'label': 'Frames', 'type': 'int', 'default': 81, 'min': 1},
+        'fps': {'label': 'FPS', 'type': 'float', 'default': 16., 'min': .01},
+        'steps': {'label': 'Steps', 'type': 'int', 'default': 40, 'min': 1},
+        'guidance_scale': {'label': 'Guidance', 'type': 'float', 'default': 3.5, 'min': 0},
+        'secondary_guidance_scale': {'label': 'Low-noise guidance', 'type': 'float', 'default': 3.5, 'min': 0},
+        'conditioning_strength': {'label': 'Condition strength', 'type': 'float', 'default': .9, 'min': 0, 'max': 1},
+        'prompt': {'label': 'Shot prompt', 'type': 'text', 'display': 'output'},
+        'negative': {'label': 'Negative prompt', 'type': 'text', 'display': 'output'},
+        'seed': {'label': 'Shot seed', 'type': 'int', 'display': 'output'},
+        'title': {'label': 'Shot title', 'type': 'text', 'display': 'output'},
+        'width_out': {'label': 'Width', 'type': 'int', 'display': 'output'},
+        'height_out': {'label': 'Height', 'type': 'int', 'display': 'output'},
+        'frames': {'label': 'Frames', 'type': 'int', 'display': 'output'},
+        'fps_out': {'label': 'FPS', 'type': 'float', 'display': 'output'},
+        'steps_out': {'label': 'Steps', 'type': 'int', 'display': 'output'},
+        'guidance': {'label': 'Guidance', 'type': 'float', 'display': 'output'},
+        'secondary_guidance': {'label': 'Low-noise guidance', 'type': 'float', 'display': 'output'},
+        'condition_strength': {'label': 'Condition strength', 'type': 'float', 'display': 'output'},
+    }
+
+    def execute(self, **kwargs):
+        return evaluate_shot_inputs(kwargs, parameters=type(self).params)
+
+
+class ShotPrompt(NodeBase):
+    """Select one shot's text without depending on its render or other shots."""
+
+    label = 'Shot Prompt'
+    category = 'Video Conditioning'
+    resizable = True
+    params = {
+        'storyboard': {'label': 'Storyboard JSON', 'type': 'text', 'display': 'input', 'required': True},
+        'index': {'label': 'Shot index (zero based)', 'type': 'int', 'default': 0, 'min': 0},
+        'prompt_override': {'label': 'Optional shot prompt override', 'type': 'text', 'display': 'textarea', 'default': ''},
+        'prompt': {'label': 'Shot prompt', 'type': 'text', 'display': 'output'},
+    }
+
+    def execute(self, **kwargs):
+        return evaluate_shot_prompt(kwargs)
+
+
+def evaluate_storyboard(kwargs):
+    """Pure deterministic stage logic; safe for bounded resource inspection."""
+    text = kwargs.get('shots_json', '[]')
+    records = _storyboard_records(text)
+    seed = kwargs.get('base_seed', 0)
+    if type(seed) is not int or not 0 <= seed <= 9_007_199_254_740_991:
+        raise ValueError('Storyboard base seed must be an exact nonnegative integer.')
+    return {'storyboard': text, 'seed': seed, 'count': len(records)}
+
+
+def evaluate_shot_inputs(kwargs, *, parameters=None):
+    """Pure deterministic stage logic; safe for bounded resource inspection."""
+    import math
+
+    kwargs = {**{key: field['default'] for key, field in (parameters if parameters is not None else ShotInputs.params).items()
+                 if 'default' in field and field.get('display') != 'output'}, **kwargs}
+
+    records = _storyboard_records(kwargs.get('storyboard'))
+
+    def whole(value, name, minimum=0):
+        if type(value) is not int or not minimum <= value <= 9_007_199_254_740_991:
+            raise ValueError(f'{name} must be a whole number of at least {minimum}.')
+        return value
+
+    def number(value, name, minimum=0, positive=False):
+        if (type(value) not in (int, float) or not math.isfinite(value)
+                or value < minimum or positive and value == minimum):
+            raise ValueError(f'{name} must be a finite positive value.' if positive else
+                             f'{name} must be a finite value of at least {minimum}.')
+        return float(value)
+
+    index = whole(kwargs['index'], 'Shot index')
+    if index >= len(records):
+        raise ValueError('Shot index is outside this storyboard.')
+    record = records[index]
+    if isinstance(record, str):
+        record = {'prompt': record}
+    if not isinstance(record, dict) or not isinstance(record.get('prompt'), str) or not record['prompt'].strip():
+        raise ValueError('The selected shot needs a nonempty prompt.')
+    fps = number(kwargs['fps'], 'FPS', positive=True)
+    frames = whole(kwargs['num_frames'], 'Frames', 1)
+    if 'duration_seconds' in record:
+        duration = number(record['duration_seconds'], 'Shot duration', positive=True)
+        target = whole(max(1, round(number(duration * fps, 'Duration frames', positive=True))), 'Duration frames', 1)
+        frames = whole(1 + ((target - 1 + 3) // 4) * 4, 'Frames', 1)
+    seed = whole(record.get('seed', whole(kwargs['base_seed'], 'Base seed') + index), 'Shot seed')
+    if kwargs['use_seed_override']:
+        seed = whole(kwargs['seed_override'], 'Shot seed override')
+    strength = number(record.get('conditioning_strength', kwargs['conditioning_strength']), 'Condition strength')
+    if strength > 1:
+        raise ValueError('Condition strength must be at most one.')
+    return {
+        'prompt': kwargs['prompt_override'].strip() or record['prompt'].strip(),
+        'negative': kwargs['negative_prompt'], 'seed': seed,
+        'title': str(record.get('title') or f'Shot {index + 1}'),
+        'width_out': whole(kwargs['width'], 'Width', 1),
+        'height_out': whole(kwargs['height'], 'Height', 1),
+        'frames': frames, 'fps_out': fps, 'steps_out': whole(kwargs['steps'], 'Steps', 1),
+        'guidance': number(kwargs['guidance_scale'], 'Guidance'),
+        'secondary_guidance': number(kwargs['secondary_guidance_scale'], 'Low-noise guidance'),
+        'condition_strength': strength,
+    }
+
+
+def evaluate_shot_prompt(kwargs):
+    """Pure deterministic stage logic; safe for bounded resource inspection."""
+    records = _storyboard_records(kwargs.get('storyboard'))
+    index = kwargs.get('index', 0)
+    if type(index) is not int or not 0 <= index < len(records):
+        raise ValueError('Shot index is outside this storyboard.')
+    record = records[index]
+    prompt = record.get('prompt') if isinstance(record, dict) else record
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise ValueError('The selected shot needs a nonempty prompt.')
+    return {'prompt': str(kwargs.get('prompt_override') or '').strip() or prompt.strip()}
+
 
 
 def as_frames(video):
@@ -83,6 +255,101 @@ class Normalize(NodeBase):
         fit = kwargs.get("fit", "cover")
         normalized = [resize_frame(frame, width, height, fit) for frame in sample_frames(frames, num_frames)]
         return {"output": normalized, "frames_out": len(normalized)}
+
+
+class OutpaintCanvas(NodeBase):
+    """Pad prepared video frames without resizing and create matching masks."""
+
+    label = "Prepare Video Canvas"
+    category = "Video Conditioning"
+    resizable = True
+    params = {
+        "video": {"label": "Source video", "display": "input", "type": "video", "required": True},
+        "preparation": {"label": "Mask preparation", "type": "string", "default": "expand",
+                        "options": ["prepared", "expand"]},
+        "prepared_mask_file": {"label": "Prepared boundary mask", "type": "str", "display": "filebrowser",
+                               "default": "", "fieldOptions": {"fileTypes": ["video"], "multiple": False}},
+        "invert": {"label": "Invert prepared mask", "type": "bool", "default": False},
+        "threshold": {"label": "Prepared mask threshold", "type": "int", "default": 127, "min": 0, "max": 255},
+        "grow_pixels": {"label": "Grow prepared mask", "type": "int", "default": 0, "min": 0, "max": 256},
+        "left": {"label": "Left border", "type": "int", "default": 0, "min": 0},
+        "right": {"label": "Right border", "type": "int", "default": 0, "min": 0},
+        "top": {"label": "Top border", "type": "int", "default": 0, "min": 0},
+        "bottom": {"label": "Bottom border", "type": "int", "default": 0, "min": 0},
+        "fill_color": {"label": "Canvas fill", "type": "string", "default": "#7f7f7f"},
+        "canvas": {"label": "Expanded video", "display": "output", "type": "video"},
+        "mask": {"label": "Boundary mask", "display": "output", "type": "video"},
+        "width": {"label": "Canvas width", "display": "output", "type": "int"},
+        "height": {"label": "Canvas height", "display": "output", "type": "int"},
+        "frames": {"label": "Frames", "display": "output", "type": "int"},
+    }
+
+    def execute(self, **kwargs):
+        frames = as_frames(kwargs.get("video"))
+        if not frames:
+            raise ValueError("Prepare Video Canvas requires source video frames.")
+        if any(not isinstance(frame, Image.Image) or frame.mode != "RGB" for frame in frames):
+            raise ValueError("Prepare Video Canvas needs prepared RGB frames; connect Normalize Video first.")
+        source_width, source_height = frames[0].size
+        if any(frame.size != (source_width, source_height) for frame in frames):
+            raise ValueError("Prepare Video Canvas source frames must have the same dimensions.")
+        preparation = kwargs.get('preparation', 'expand')
+        if preparation not in ('prepared', 'expand'):
+            raise ValueError('Mask preparation must be prepared or expand.')
+        if preparation == 'prepared':
+            # Read only the active input. An unused empty mask picker must not
+            # block automatic expansion, and prepared inputs are never padded.
+            from modules.Video.main import load_video_file
+            loaded = load_video_file(kwargs.get('prepared_mask_file'), interrupted=lambda: self._interrupt)
+            masks = AlignMask.execute(self, video=frames, mask=loaded['video'],
+                                      invert=kwargs.get('invert', False), threshold=kwargs.get('threshold', 127),
+                                      grow_pixels=kwargs.get('grow_pixels', 0))['output']
+            return {'canvas': frames, 'mask': masks, 'width': source_width,
+                    'height': source_height, 'frames': len(frames)}
+        borders = {}
+        for field in ("left", "right", "top", "bottom"):
+            value = kwargs.get(field, 0)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f"{field} must be a nonnegative whole pixel count.")
+            borders[field] = value
+        width = source_width + borders["left"] + borders["right"]
+        height = source_height + borders["top"] + borders["bottom"]
+        try:
+            color = ImageColor.getrgb(str(kwargs.get("fill_color") or "#7f7f7f"))[:3]
+        except ValueError as error:
+            raise ValueError("Canvas fill must be a CSS color name or hex color.") from error
+
+        # RGB PIL storage uses four bytes per pixel. Budget both full output
+        # collections, the L mask template and one source frame before any
+        # allocation. The reserve follows the existing CPU cache policy; this
+        # is an observed memory boundary, not a guessed model resolution limit.
+        from modiff.hardware import system_memory_snapshot
+        memory = system_memory_snapshot()
+        available, total = memory.get("available_bytes"), memory.get("total_bytes")
+        reserve = max(4 * 1024**3, int(total * .1)) if type(total) is int and total > 0 else 4 * 1024**3
+        required = width * height * (8 * len(frames) + 1) + source_width * source_height * 4
+        if type(available) is not int or required > max(0, available - reserve):
+            raise MemoryError(
+                f"Video canvas preparation needs {required} bytes plus the system RAM reserve; "
+                "available memory is insufficient or unavailable."
+            )
+
+        mask = Image.new("L", (width, height), 255)
+        left, top = borders["left"], borders["top"]
+        ImageDraw.Draw(mask).rectangle(
+            (left, top, left + source_width - 1, top + source_height - 1), fill=0,
+        )
+        canvases, masks = [], []
+        for index, frame in enumerate(frames):
+            if self._interrupt:
+                raise InterruptedError("Video canvas preparation interrupted.")
+            canvas = Image.new("RGB", (width, height), color)
+            canvas.paste(frame, (left, top))
+            canvases.append(canvas)
+            masks.append(mask.convert("RGB"))
+            self.progress(round((index + 1) / len(frames) * 100), phase="processing",
+                          message=f"Preparing video canvas {index + 1}/{len(frames)}")
+        return {"canvas": canvases, "mask": masks, "width": width, "height": height, "frames": len(frames)}
 
 
 class AlignMask(NodeBase):

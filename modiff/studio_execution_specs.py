@@ -20,6 +20,7 @@ from modiff.modular_weight_formats import weight_format_download_selections
 from modiff.optional_runtimes import TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID
 from modiff.joint_av_studio_specs import h3_studio_specifications, pika_studio_specifications
 from modiff.h3_image_studio_specs import h3_image_studio_specifications
+from modiff.kandinsky6_artifacts import KANDINSKY6_FILES
 
 
 STUDIO_EXECUTION_SPEC_SCHEMA_VERSION = 1
@@ -1214,6 +1215,7 @@ LTX_VIDEO_DIFFUSERS_FILES = [
 ]
 LTX_VIDEO_FALLBACK_REPO = "Lightricks/LTX-Video"
 ACE_STEP_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
+ACE_STEP_COVER_BASE_REPO = "ACE-Step/acestep-v15-xl-base-diffusers"
 ACE_STEP_DIFFUSERS_FILES = [
     ".gitattributes",
     "README.md",
@@ -6845,6 +6847,50 @@ _HUNYUAN_VIDEO_15_STUDIO_EXECUTION_SPEC_DEFINITIONS = {
     },
 }
 
+# Full 720p variants retain the existing explicit stage graph and 480p defaults.
+from modiff.hunyuan_video15_artifacts import (
+    HUNYUAN_720P_T2V_REPOSITORY, HUNYUAN_720P_I2V_REPOSITORY, HUNYUAN_720P_FILES,
+)
+
+_HUNYUAN_720P_PROFILES = {}
+_HUNYUAN_720P_CAPABILITIES = {}
+for _hy_mode, _hy_repo, _hy_slug in (
+    ("text_to_video", HUNYUAN_720P_T2V_REPOSITORY, "t2v"),
+    ("image_to_video", HUNYUAN_720P_I2V_REPOSITORY, "i2v"),
+):
+    _hy_id = f"hunyuan-video15-720p-{_hy_slug}:official-modular-workflow"
+    _HUNYUAN_720P_PROFILES[_hy_id] = {
+        **_hunyuan_video_15_profile(_hy_mode, _hy_repo, 50), "id": _hy_id,
+        "supported_offload_modes": (OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU),
+    }
+    _hy_pin = require_catalog_revision(_hy_repo, model_type="HunyuanVideo15ModularPipeline")
+    _HUNYUAN_720P_CAPABILITIES[_hy_repo] = {
+        **deepcopy(_HUNYUAN_VIDEO_15_CAPABILITY),
+        "label": f"HunyuanVideo 1.5 720p Full {_hy_slug.upper()}",
+        "displayName": f"HunyuanVideo 1.5 720p Full {_hy_slug.upper()}",
+        "defaultRepo": _hy_repo, "downloadFiles": HUNYUAN_720P_FILES[_hy_repo],
+        "artifactSelections": [{"modes": [_hy_mode], "repo": _hy_repo, "revision": _hy_pin,
+            "downloadFiles": HUNYUAN_720P_FILES[_hy_repo], "label": "Exact full 720p snapshot"}],
+        "defaultSize": {"width": 1280, "height": 720, "aspectRatio": "16:9"},
+        "recommendedSteps": 50, "recommendedGuidance": 6.0,
+        "modeDefaults": {_hy_mode: {"steps": 50, "guidanceScale": 6.0}},
+        "modes": [_hy_mode], "revisionCandidates": [_hy_pin],
+        "supportsImageInput": _hy_mode == "image_to_video",
+        "modeRequirements": ({_hy_mode: {"requiredImages": ["referenceImages"],
+            "note": "One source image; geometry belongs to the VAE input stage."}}
+            if _hy_mode == "image_to_video" else {}),
+        "offloadSupport": {"default": OFFLOAD_MODE_MODEL_CPU, "lowVram": OFFLOAD_MODE_MODEL_CPU,
+            "emergency": OFFLOAD_MODE_MODEL_CPU, "modes": [OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU]},
+        "lowVram": {"dtype": "bfloat16", "autoOffload": True, "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+            "steps": 50, "width": 1280, "height": 720, "numFrames": 121},
+        "notes": [
+            "Exact 720p full checkpoint over the existing official text/VAE/SigLIP/denoise/decode stages.",
+            "Full I2V uses ordinary CFG; the 480p step-distilled CFG-1 contract remains unchanged.",
+            "Model terms, eligibility and disclosure duties apply. No implicit Hub attention kernels or remote Python.",
+            "Expert only; native output, resource/hardware, Auto and Gallery qualification remain separate.",
+        ],
+    }
+
 _MINIMAX_H3_MODULAR_PROFILE = {
     "id": "minimax-h3:official-modular-workflow",
     "model_type": "MiniMaxH3ModularPipeline",
@@ -9133,7 +9179,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "max_low_memory_side": None,
             "max_low_memory_steps": 8,
             "live_proof": False,
-            "compatible_repos": (ACE_STEP_LORA_BASE_REPO,),
+            "compatible_repos": (ACE_STEP_LORA_BASE_REPO, ACE_STEP_COVER_BASE_REPO),
         },
         "roles": _AUDIO_GRAPH_ROLES,
         "edges": _AUDIO_GRAPH_EDGES,
@@ -9163,7 +9209,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "max_low_memory_side": None,
             "max_low_memory_steps": 8,
             "live_proof": False,
-            "compatible_repos": (ACE_STEP_LORA_BASE_REPO,),
+            "compatible_repos": (ACE_STEP_LORA_BASE_REPO, ACE_STEP_COVER_BASE_REPO),
         },
         "roles": _AUDIO_VARIATION_GRAPH_ROLES,
         "edges": _AUDIO_VARIATION_GRAPH_EDGES,
@@ -9193,7 +9239,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "max_low_memory_side": None,
             "max_low_memory_steps": 8,
             "live_proof": False,
-            "compatible_repos": (ACE_STEP_LORA_BASE_REPO,),
+            "compatible_repos": (ACE_STEP_LORA_BASE_REPO, ACE_STEP_COVER_BASE_REPO),
         },
         "roles": _AUDIO_CONTINUATION_GRAPH_ROLES,
         "edges": _AUDIO_CONTINUATION_GRAPH_EDGES,
@@ -9223,7 +9269,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "max_low_memory_side": None,
             "max_low_memory_steps": 8,
             "live_proof": False,
-            "compatible_repos": (ACE_STEP_LORA_BASE_REPO,),
+            "compatible_repos": (ACE_STEP_LORA_BASE_REPO, ACE_STEP_COVER_BASE_REPO),
         },
         "roles": _AUDIO_REPAINT_GRAPH_ROLES,
         "edges": _AUDIO_REPAINT_GRAPH_EDGES,
@@ -11775,7 +11821,10 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             ),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
-            "bindings": _VIDEO_REVISION_GRAPH_BINDINGS,
+            "bindings": tuple(binding for binding in _VIDEO_REVISION_GRAPH_BINDINGS
+                              if binding[0] != 'wanGenerate' or binding[1] not in {
+                                  'guidance_scale_2', 'use_guidance_scale_2'})
+                        + (('wanGenerate', 'secondary_guidance_scale', 'guidanceScale2'),),
             "expertResourceRequirements": _WAN_22_A14B_EXPERT_RESOURCE_REQUIREMENTS,
         },
         "wan-animate:character-animate:v1": {
@@ -16914,6 +16963,77 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["ltx2-standard:text-to-video:v1"] = {
     "bindings": _LTX2_GRAPH_BINDINGS,
 }
 
+# Public, model-neutral video/audio stages; these additions do not promote any
+# live qualification or alter the retained LTX recipes.
+
+_KANDINSKY6_REPO = 'kandinskylab/Kandinsky-6.0-Pro-5s-Diffusers'
+_KANDINSKY6_DISTILLED_REPO = 'kandinskylab/Kandinsky-6.0-Pro-distill-5s-Diffusers'
+_KANDINSKY6_MODES = ('text_to_video', 'image_to_video',
+                    'text_to_video_with_audio', 'image_to_video_with_audio')
+_KANDINSKY6_PROFILE = {
+    **_planning_video_profile('kandinsky6-av:direct', 'Kandinsky6TI2VAPipeline',
+                             _KANDINSKY6_MODES, 'Kandinsky6TI2VAPipeline', _KANDINSKY6_REPO),
+    'supported_offload_modes': (OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU),
+    'retry_offload_modes': (OFFLOAD_MODE_MODEL_CPU,),
+}
+_KANDINSKY6_CAPABILITY = {
+    **_planning_video_capability(
+        'Kandinsky6TI2VAPipeline', 'Kandinsky 6 Pro · Video + Audio', 'Kandinsky 6', _KANDINSKY6_REPO,
+        _KANDINSKY6_MODES,
+        {mode: {'requiredImages': ['referenceImages'], 'maximumCounts': {'referenceImages': 1}}
+         for mode in ('image_to_video', 'image_to_video_with_audio')},
+        download_files=KANDINSKY6_FILES[_KANDINSKY6_REPO],
+    ),
+    'defaultSize': {'width': 864, 'height': 480, 'aspectRatio': 'custom'},
+    'recommendedSteps': 50, 'recommendedGuidance': 5., 'recommendedFrames': 121, 'recommendedFps': 24,
+    'recommendedMaxSequenceLength': 1024, 'outputMedia': ['video', 'audio'],
+    'supportsNegativePrompt': True, 'supportsAudioInput': False,
+    'license': 'mit', 'autoEligible': False, 'galleryEligible': False, 'liveProof': False,
+    'offloadSupport': {'default': OFFLOAD_MODE_MODEL_CPU, 'lowVram': OFFLOAD_MODE_MODEL_CPU,
+                      'emergency': OFFLOAD_MODE_MODEL_CPU, 'modes': [OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU]},
+    'notes': [
+        'Official Diffusers 0.43 joint text/image video and audio pipeline with optional local prompt expansion.',
+        'Full and Distilled are distinct pinned checkpoints: Full recommends 50 steps/CFG 5; Distilled 10 steps/CFG 1.',
+        'Only a single joint guidance control is supported; independent audio guidance is not invented.',
+        'Video-only and synchronized audio/video are separate tasks with matching output stages.',
+        'Expert-only pending pretrained cloud execution, audio listening and visual review.',
+    ],
+}
+_KANDINSKY6_BINDINGS = tuple(
+    item for item in _LTX2_GRAPH_BINDINGS
+    if item[0] != 'wanGenerate' or item[1] in {
+        'prompt', 'mode', 'negative_prompt', 'width', 'height', 'seed', 'num_frames',
+        'num_inference_steps', 'guidance_scale', 'frame_rate', 'output_type', 'max_sequence_length'}
+) + (('wanGenerate', 'expand_prompt', 'false'),)
+for _k6_mode, _k6_roles, _k6_edges, _k6_bindings in (
+    ('text_to_video', _VIDEO_GRAPH_ROLES, _VIDEO_GRAPH_EDGES, _KANDINSKY6_BINDINGS),
+    ('image_to_video', _I2V_GRAPH_ROLES, _I2V_GRAPH_EDGES,
+     _KANDINSKY6_BINDINGS + (('loadImage', 'file', 'referenceImages'), ('loadImage', 'alpha_channel', 'alphaMode'))),
+    ('text_to_video_with_audio', _LTX2_GRAPH_ROLES, _LTX2_GRAPH_EDGES, _KANDINSKY6_BINDINGS),
+    ('image_to_video_with_audio', _LTX2_I2V_GRAPH_ROLES, _LTX2_I2V_GRAPH_EDGES,
+     _KANDINSKY6_BINDINGS + (('loadImage', 'file', 'referenceImages'), ('loadImage', 'alpha_channel', 'alphaMode'))),
+):
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f'kandinsky6-av:{_k6_mode}:v1'] = {
+        'modelType': 'Kandinsky6TI2VAPipeline', 'mode': _k6_mode,
+        'profile': _KANDINSKY6_PROFILE, 'capability': _KANDINSKY6_CAPABILITY,
+        'roles': _k6_roles, 'edges': _k6_edges, 'bindings': _k6_bindings,
+    }
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f'kandinsky6-distilled-av:{_k6_mode}:v1'] = {
+        'modelType': 'Kandinsky6DistilledTI2VAPipeline', 'mode': _k6_mode,
+        'profile': {**_KANDINSKY6_PROFILE, 'id': 'kandinsky6-distilled-av:direct',
+                    'model_type': 'Kandinsky6DistilledTI2VAPipeline',
+                    'pipeline_class': 'Kandinsky6DistilledTI2VAPipeline',
+                    'default_repo': _KANDINSKY6_DISTILLED_REPO},
+        'capability': {**_KANDINSKY6_CAPABILITY, 'modelType': 'Kandinsky6DistilledTI2VAPipeline',
+                       'label': 'Kandinsky 6 Pro Distilled · Video + Audio',
+                       'displayName': 'Kandinsky 6 Pro Distilled',
+                       'defaultRepo': _KANDINSKY6_DISTILLED_REPO,
+                       'revisionCandidates': [require_catalog_revision(_KANDINSKY6_DISTILLED_REPO)],
+                       'downloadFiles': KANDINSKY6_FILES[_KANDINSKY6_DISTILLED_REPO],
+                       'recommendedSteps': 10, 'recommendedGuidance': 1.},
+        'roles': _k6_roles, 'edges': _k6_edges, 'bindings': _k6_bindings,
+    }
+
 _BUILTIN_IMAGE_OPERATION_MODES = (
     "image_adjustment",
     "image_filter",
@@ -18493,6 +18613,7 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
     }
     profiles[_COSMOS3_SUPER_T2I_MODULAR_PROFILE["id"]] = deepcopy(_COSMOS3_SUPER_T2I_MODULAR_PROFILE)
+    profiles.update(deepcopy(_HUNYUAN_720P_PROFILES))
     # A recipe identity is not a new upstream pipeline class. Keep ordinary
     # SDXL loaders and persisted standard PAG profiles unchanged; this explicit
     # selection adds the official native guider to a new operation starter.
@@ -18656,6 +18777,7 @@ _REVIEWED_REPOSITORY_DOWNLOAD_FILES = {
     **{repository: _FLUX3_DIFFUSERS_FILES
        for _profile_id, _class, _name, repository, _pin, _count, _guidance in _FLUX3_CANDIDATE_VARIANTS},
     COSMOS3_SUPER_T2I_REPO: COSMOS3_SUPER_T2I_DIFFUSERS_FILES,
+    **HUNYUAN_720P_FILES,
     "Qwen/Qwen-Image": QWEN_IMAGE_ORIGINAL_DIFFUSERS_FILES,
     "Qwen/Qwen-Image-2512": QWEN_IMAGE_2512_DIFFUSERS_FILES,
     "Qwen/Qwen-Image-Edit": QWEN_IMAGE_EDIT_DIFFUSERS_FILES,
@@ -18680,6 +18802,8 @@ def reviewed_repository_download_files(repo: str) -> list[str]:
 
 def studio_capability_definition(model_type: str, *, repository: str | None = None) -> dict[str, Any]:
     """Copy only one model's defaults, with the same precedence as the catalog."""
+    if model_type == "HunyuanVideo15ModularPipeline" and repository in _HUNYUAN_720P_CAPABILITIES:
+        return deepcopy(_HUNYUAN_720P_CAPABILITIES[repository])
     if model_type == "Cosmos3OmniModularPipeline" and repository == COSMOS3_SUPER_T2I_REPO:
         return deepcopy(_COSMOS3_SUPER_T2I_MODULAR_CAPABILITY)
     for definition in reversed(_source_default_spec_definitions().values()):

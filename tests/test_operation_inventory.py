@@ -23,9 +23,10 @@ class OperationInventoryTests(unittest.TestCase):
         ])
         self.assertEqual({name for name, row in by_name.items() if row["coverage"] == "unreviewed"},
                          {
-                "EchoModularPipeline", "Kandinsky6SRPipeline", "Kandinsky6TI2VAPipeline",
+                "EchoModularPipeline", "Kandinsky6SRPipeline",
                 "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline", "SanaWMPipeline",
             })
+        self.assertEqual(by_name["Kandinsky6TI2VAPipeline"]["coverage"], "executable")
         # Executable is the exact source-adapter taxonomy, not installed
         # provider readiness, native model output, Auto or Gallery qualification.
         for name in ("Flux3ModularPipeline", "Flux3DistilledModularPipeline"):

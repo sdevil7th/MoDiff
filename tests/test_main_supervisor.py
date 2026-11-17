@@ -168,7 +168,11 @@ class MainSupervisorTests(unittest.TestCase):
             "identity = dict(pid=os.getpid(), executable=sys.executable, prefix=sys.prefix, "
             "no_bytecode=sys.dont_write_bytecode, "
             "torch=importlib.util.find_spec('torch').origin)\n"
-            "Path(os.environ['MODIFF_PROBE_IDENTITY']).write_text(json.dumps(identity))\n"
+            # Publish only a complete JSON file. Existence alone cannot signal
+            # completion while write_text is still filling a newly created file.
+            "identity_path = Path(os.environ['MODIFF_PROBE_IDENTITY'])\n"
+            "identity_path.with_suffix('.tmp').write_text(json.dumps(identity))\n"
+            "identity_path.with_suffix('.tmp').replace(identity_path)\n"
             "sys.stdin.readline()\n",
             encoding="utf-8",
         )

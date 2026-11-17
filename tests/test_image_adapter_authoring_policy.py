@@ -521,7 +521,7 @@ class AdapterAuthoringPolicyValidationTests(unittest.TestCase):
 
     def test_contextual_installed_classes_have_their_actual_inherited_lora_targets(self):
         installed = distribution("diffusers")
-        self.assertEqual(installed.version, "0.41.0")
+        self.assertEqual(installed.version, "0.43.0")
         mixins = ast.parse(Path(installed.locate_file("diffusers/loaders/lora_pipeline.py")).read_text(encoding="utf-8"))
         for identity, family, child_name, parent_name, mixin_name in (
             ("flux-kontext:modular", "flux", "FluxKontextModularPipeline", "FluxModularPipeline", "FluxLoraLoaderMixin"),
@@ -544,7 +544,7 @@ class AdapterAuthoringPolicyValidationTests(unittest.TestCase):
 
     def test_reviewed_installed_flux_class_declares_the_official_lora_api_and_targets(self):
         installed = distribution("diffusers")
-        self.assertEqual(installed.version, "0.41.0")
+        self.assertEqual(installed.version, "0.43.0")
         pipeline_source = Path(installed.locate_file("diffusers/modular_pipelines/flux/modular_pipeline.py"))
         mixin_source = Path(installed.locate_file("diffusers/loaders/lora_pipeline.py"))
         pipeline = next(node for node in ast.parse(pipeline_source.read_text(encoding="utf-8")).body
