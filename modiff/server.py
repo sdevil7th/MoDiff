@@ -1342,6 +1342,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             except (OSError, TypeError, ValueError):
                 pass
         self.task_graphs = {}
+        self._decode_recovery_submissions = set()
         self._resolved_input_context = None
         self._resolved_input_records = {}
         self.optimization_jobs = {}
@@ -1432,6 +1433,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         self.client_max_size = client_max_size
         self.work_dir = work_dir
         self.data_dir = data_dir
+        try:
+            from modiff.material_checkpoints import prune_material_checkpoints
+            prune_material_checkpoints(self.data_dir)
+        except (OSError, ValueError):
+            logger.warning("Could not prune retained material at startup.", exc_info=True)
         if supervisor_queue_state and self.recent_tasks:
             # A vanished worker cannot finish its pending Preview transaction.
             # Reconcile only persisted terminal task IDs; delivered outputs and
@@ -1486,6 +1492,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 web.post("/service_package", self.service_package),
                 web.get("/queue", self.get_queue),
                 web.get("/runs/{task_id}", self.get_run),
+                web.post("/runs/{task_id}/retry_decode", self.retry_decode),
                 web.delete("/queue/{task_id}", self.delete_task),
                 web.post("/stop", self.stop_execution),
                 web.get("/health", self.runtime_status),
@@ -1917,6 +1924,19 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             ):
                 if error_payload.get(key) is not None:
                     entry[key] = error_payload.get(key)
+        blocker = self.current_task.get("_decode_recovery_blocker")
+        if blocker or self.current_task.get("decode_recovery") or self.current_task.get("_material_checkpoint"):
+            from modiff.material_decode_recovery import is_failed_native_decode, recordable_decode_failure
+            checkpoint = recordable_decode_failure(self.current_task, entry)
+            if checkpoint is not None:
+                entry["decodeRecoveryCheckpoint"] = checkpoint
+            elif blocker and is_failed_native_decode(entry):
+                entry["decodeRecoveryBlocker"] = blocker
+            retry = self.current_task.get("decode_recovery")
+            if retry:
+                entry["recoveredFromTaskId"] = retry["sourceTaskId"]
+                if self.current_task.get("decodeRecoverySettings"):
+                    entry["decodeRecoverySettings"] = self.current_task["decodeRecoverySettings"]
         return self._retain_terminal_task(entry)
 
     def _retain_terminal_task(self, entry):
@@ -2087,6 +2107,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         name=None,
         runtime_hints=None,
         optional_runtime_requirement=None,
+        decode_recovery=None,
     ):
         if self._runtime_mutation_gate is not None:
             raise OverlayInstallBusy(
@@ -2146,6 +2167,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "name": task_name,
             "runtimeHints": runtime_hints,
         }
+        if decode_recovery is not None:
+            self.queued_tasks[task_id]["decode_recovery"] = decode_recovery
         preview_state = None
         if graph is not None:
             self.task_graphs[task_id] = deepcopy(graph)
@@ -2283,15 +2306,59 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             workflow_id = workflow_id or task.get("workflow_tab_id")
             workflow_title = workflow_title or task.get("workflow_title")
             workflow_snapshot = workflow_snapshot or task.get("workflow_snapshot")
-        return web.json_response(
-            {
-                "task": task,
-                "workflow_id": workflow_id,
-                "workflow_title": workflow_title,
-                "workflow_snapshot": workflow_snapshot,
-                "outputs": outputs,
-            }
-        )
+        response = {
+            "task": task,
+            "workflow_id": workflow_id,
+            "workflow_title": workflow_title,
+            "workflow_snapshot": workflow_snapshot,
+            "outputs": outputs,
+        }
+        from modiff.material_decode_recovery import decode_recovery_status
+        recovery = decode_recovery_status(self, task)
+        if recovery is not None:
+            response["recovery"] = recovery
+        return web.json_response(response)
+
+    async def retry_decode(self, request):
+        from modiff.material_decode_recovery import DecodeRecoveryUnavailable, queueable_retry
+
+        source_id = request.match_info.get("task_id")
+
+        def unavailable(message):
+            return web.json_response({"error": True, "message": message,
+                                      "error_code": "decode_recovery_unavailable"}, status=409)
+
+        try:
+            body = await self._strict_runtime_control_json(
+                request, allowed={"sid", "enableVaeTiling"}, required={"sid"}
+            )
+            sid = body["sid"]
+            enable_tiling = body.get("enableVaeTiling", False)
+            if (not isinstance(sid, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", sid)
+                    or type(enable_tiling) is not bool):
+                raise ValueError("A session ID and an optional boolean VAE tiling choice are required.")
+        except ValueError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        task = next((item for item in self.recent_tasks if item.get("task_id") == source_id), None)
+        if task is None:
+            return web.json_response({"error": True, "message": "Run not found."}, status=404)
+        if (source_id in self._decode_recovery_submissions or any(
+                ((item or {}).get("decode_recovery") or {}).get("sourceTaskId") == source_id
+                for item in [self.current_task, *self.queued_tasks.values()])):
+            return unavailable("A decode retry for this run is already queued or running.")
+
+        self._decode_recovery_submissions.add(source_id)
+        try:
+            graph = await asyncio.to_thread(queueable_retry, self, task, sid, enable_tiling)
+            if not any(item is task for item in self.recent_tasks):
+                return unavailable("The originating failed decode is no longer retained.")
+            return await self._queue_graph_response(graph, decode_recovery={
+                "sourceTaskId": source_id, "enableVaeTiling": enable_tiling,
+            })
+        except (DecodeRecoveryUnavailable, OverlayInstallBusy, _RuntimeCleanupSnapshotUnavailable) as exc:
+            return unavailable(str(exc))
+        finally:
+            self._decode_recovery_submissions.discard(source_id)
 
     async def delete_task(self, request):
         """
@@ -2382,6 +2449,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                             runtime_hints.get("autoResourceCandidateId") if isinstance(runtime_hints, dict) else None
                         ),
                     }
+                    if current_task.get("decode_recovery"):
+                        self.current_task["decode_recovery"] = current_task["decode_recovery"]
                     if current_task.get("name") == "Graph execution":
                         self.current_task.update(self._initial_graph_execution_state(args))
                         self.current_task["_phase_started_at"] = time.time()
@@ -3795,6 +3864,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         )
 
     async def listdir(self, request):
+        from modiff.material_checkpoints import is_private_material_path
         from modiff.media_io import media_capabilities
 
         req_basepath = self.data_dir if request.query.get("basepath") == "data" else self.work_dir
@@ -3847,7 +3917,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "3d": ["glb", "gltf", "stl", "obj", "fbx", "dae", "ply", "3ds", "max", "blend"],
         }
 
-        if full_path is None:
+        if full_path is None or is_private_material_path(full_path, self.data_dir):
             return web.json_response({"error": f"Cannot access paths outside of {base_root}."}, status=403)
 
         contents = {
@@ -3868,6 +3938,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 contents["abs_path"] = contents["path"]
 
                 for item in full_path.iterdir():
+                    if is_private_material_path(item, self.data_dir):
+                        continue
                     suffix = item.suffix.lstrip(".").lower()
                     # if any of the requested types don't match the file type, skip it
                     if (
@@ -5203,6 +5275,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         # HTTP history posts are not evidence of backend execution. Only the
         # private dispatch/persist path may introduce this receipt.
         normalized.pop("resolvedExecutionInputs", None)
+        normalized.pop("decodeRecovery", None)
         normalized = apply_resolved_execution_inputs(normalized, resolved_inputs)
         if not isinstance(normalized.get("id"), str) or not normalized.get("id"):
             normalized["id"] = nanoid.generate(size=12)
@@ -5447,6 +5520,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         try:
             with self.studio_history_file_lock:
                 normalized = self._normalize_studio_output(output, resolved_inputs=resolved_inputs)
+                task = self.current_task or {}
+                recovery = (task.get("runtimePreparation") or {}).get("decodeRecovery")
+                if str(task.get("task_id")) == str(task_id) and recovery:
+                    normalized["decodeRecovery"] = deepcopy(recovery)
                 state = self._read_studio_output_state()
                 outputs = self._merge_studio_outputs(state["outputs"], [normalized])
                 slot_key = self._studio_preview_slot_key(
@@ -6450,7 +6527,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
     """
 
     async def graph(self, request):
-        graph = await request.json()
+        return await self._queue_graph_response(await request.json())
+
+    async def _queue_graph_response(self, graph, *, decode_recovery=None):
         sid = graph.get("sid")
         # if not sid:
         #    return web.json_response({"error": True, "message": "Missing session id"}, status=400)
@@ -6498,6 +6577,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 None,
                 sid,
                 name="Graph execution",
+                **({"decode_recovery": decode_recovery} if decode_recovery else {}),
             )
         except AncillaryExecutionError as error:
             return web.json_response({"error": True, "error_code": "ancillary_execution_mismatch",
@@ -6526,6 +6606,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 "task_id": task_id,
                 "preview_slots": preview_state["previewSlots"],
                 "preview_state_revision": preview_state["revision"],
+                **({"recoveredFromTaskId": decode_recovery["sourceTaskId"]} if decode_recovery else {}),
             }
         )
 
@@ -10746,6 +10827,24 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 self.current_task["runtimeHints"] = runtime_hints
                 self.current_task["runtimeBudget"] = runtime_budget
 
+            decode_plan = None
+            active_paths = paths
+            recovery_request = (self.current_task or {}).get("decode_recovery")
+            if recovery_request:
+                from modiff.material_decode_recovery import prepare_retry
+                decode_plan = prepare_retry(self, graph, recovery_request, runtime_fingerprint["fingerprint"])
+                active_paths = [decode_plan["path"]]
+                self.current_task["decodeRecoverySettings"] = {
+                    "originalVaeTiling": decode_plan["originalTiling"],
+                    "requestedVaeTiling": decode_plan["tiling"],
+                }
+                runtime_preparation = {**(runtime_preparation or {}), "decodeRecovery": {
+                    "sourceTaskId": recovery_request["sourceTaskId"],
+                    "reusedStage": "denoise",
+                    **self.current_task["decodeRecoverySettings"],
+                }}
+                self.current_task["runtimePreparation"] = runtime_preparation
+
             if deterministic:
                 self.queue_message(
                     {
@@ -10760,7 +10859,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
             node_weights = {
                 id: node_execution_weight(nodes[id].get("module", ""), nodes[id].get("action", ""))
-                for path in paths
+                for path in active_paths
                 for id in path
                 if id in nodes
             }
@@ -10772,7 +10871,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             execution_index = -1
 
             try:
-                for path in paths:
+                for path in active_paths:
                     for id in path:
                         execution_index += 1
                         if self.interrupt_flag:
@@ -10860,7 +10959,17 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                             self._execute_graph_loop(graph_loop, nodes, sid)
                             executed_loops.add(loop_id)
                         elif id not in prepared_data_nodes:
-                            self.execute_node(id, nodes[id], sid)
+                            node = nodes[id]
+                            if decode_plan and id == decode_plan["decodeId"]:
+                                from modiff.material_decode_recovery import restored_decoder_node
+                                node = restored_decoder_node(self, node, decode_plan)
+                            self.execute_node(id, node, sid)
+                            if decode_plan and id == decode_plan["decodeId"]:
+                                inputs = getattr(self.node_cache.get(id), "_execution_input_record", None)
+                                tiling = (inputs or {}).get("fields", {}).get("vae_tiling", {}).get("value")
+                                if type(tiling) is bool:
+                                    self.current_task["decodeRecoverySettings"]["effectiveVaeTiling"] = tiling
+                                    runtime_preparation["decodeRecovery"]["effectiveVaeTiling"] = tiling
                             record_dispatched_owner(self, id)
                             if workflow_auto_plan:
                                 for owner in workflow_auto_plan["loaders"]:

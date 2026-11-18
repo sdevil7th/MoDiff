@@ -109,12 +109,39 @@ Weight placement and decode working memory are separate requirements. Hunyuan's
 native VAE defaults to untiled decoding; full GPU residency is not proof that a
 720p clip's temporary decode allocation fits. The existing explicit VAE Tiling
 policy uses the official VAE hooks. Batch slicing alone does not reduce memory
-for a single video. Failed ordinary graph attempts currently release all runtime
-caches. Eligible HunyuanVideo 1.5 sampling automatically retains bounded latent
-tensors and provenance before decode. The app currently saves this material for
-inspection and future recovery. Retrying a failed decode does not yet restore
-the saved tensor automatically.
-Do not promise decode-only recovery after that cleanup or a worker restart.
+for a single video. Failed ordinary graph attempts release runtime caches.
+Eligible native HunyuanVideo 1.5 sampling retains latent tensors and provenance
+before decode. The app limits retained material to eight pairs, 2 GiB total,
+512 MiB of tensor payload per pair and 48 hours. Startup and subsequent captures
+prune expired files and unfinished pairs. The app keeps these files outside
+normal file browsing and workflow input resolution.
+
+An exact reviewed 720p text-to-video or image-to-video Expert workflow with
+a verified failed decode can use **Retry Decode**. The app reloads the same
+model owner and runs the saved decode and output stages from the retained
+latents. This requires the app-managed retained video output. The original
+failed run stays in history and the retry gets its own
+task ID. The original VAE tiling choice is preserved by default. For an untiled
+decode that ran out of memory, the user can explicitly enable native tiling for
+that retry. Run Details records the chosen tiling policy.
+
+Recovery requires the original task's retained history, exact executable input
+graph, immutable model revision, dtype, latent geometry, backend source and
+runtime fingerprint. Image-to-video recovery also checks the original managed
+source image's bytes. It is available after restarting the same supervised
+runtime while those records remain valid. Capture currently requires sampling
+to complete during the failed run. A denoise result reused from the
+in-memory node cache has no durable receipt for that attempt. Older
+archival-only checkpoints and changed runtimes require a fresh run. The retry
+and output receipts identify the original sampling run and the retained
+denoise stage.
+
+The loopback run detail API offers an optional `recovery` object for a failed
+decoder. It reports `kind: "decode"`, `status`, the original nullable
+`vaeTiling` choice, `canEnableVaeTiling`, and an unavailable reason when
+relevant. `POST /runs/{task_id}/retry_decode` accepts a session ID in `sid`
+and an optional boolean `enableVaeTiling`. The response carries the newly
+queued task ID. Callers cannot supply a replacement workflow, model or file.
 
 Isolated official stages retain the connected transformer's dtype and target
 size, and the connected VAE's latent geometry, through explicit component
