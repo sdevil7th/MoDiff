@@ -1,4 +1,8 @@
 import builtins
+import os
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -137,3 +141,61 @@ def test_model_loading_preserves_both_explicit_choices_and_worker_count():
     expected = environment.copy()
     configure_model_loading(environment, platform_name="win32")
     assert environment == expected
+
+
+@pytest.mark.parametrize("telemetry_override", [None, "0"])
+def test_main_configures_hub_telemetry_before_local_only_lookup(tmp_path, telemetry_override):
+    script = """
+import sys
+
+import httpx
+
+calls = []
+
+def intercept(_client, request, **kwargs):
+    calls.append(request.url.path)
+    return httpx.Response(503, request=request)
+
+httpx.Client.send = intercept
+import main
+from huggingface_hub import hf_hub_download
+from huggingface_hub.errors import LocalEntryNotFoundError
+
+try:
+    hf_hub_download("fixture/cache-only", "optional.json", revision="a" * 40,
+                    local_files_only=True, token=False)
+except LocalEntryNotFoundError:
+    pass
+else:
+    raise AssertionError("The fresh temporary cache unexpectedly resolved a file")
+if sys.argv[1] == "disabled":
+    assert not calls, calls
+from huggingface_hub import constants
+assert constants.HF_HUB_DISABLE_TELEMETRY == (sys.argv[1] == "disabled")
+"""
+    environment = os.environ.copy()
+    for name in (
+        "HF_HUB_OFFLINE", "HF_HUB_DISABLE_TELEMETRY", "DISABLE_TELEMETRY", "DO_NOT_TRACK",
+        "HF_TOKEN", "HUGGING_FACE_HUB_TOKEN",
+    ):
+        environment.pop(name, None)
+    environment.update({
+        "HF_HOME": str(tmp_path / "hf"),
+        "HF_HUB_CACHE": str(tmp_path / "hf" / "hub"),
+        "HF_TOKEN_PATH": str(tmp_path / "absent-token"),
+        "PYTHONDONTWRITEBYTECODE": "1",
+    })
+    if telemetry_override is not None:
+        environment["HF_HUB_DISABLE_TELEMETRY"] = telemetry_override
+    result = subprocess.run(
+        [
+            sys.executable, "-B", "-c", script,
+            "disabled" if telemetry_override is None else "enabled",
+        ],
+        cwd=Path(__file__).resolve().parents[1],
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stderr

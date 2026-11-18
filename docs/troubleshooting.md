@@ -234,15 +234,21 @@ For supported Intel graphics on x86-64 Linux or Windows, install or repair the p
 - Open model/cache diagnostics and confirm the selected repository and revision are complete.
 - Check `[huggingface] online_status`; `Offline` prevents missing files from being fetched.
 - For gated repositories, accept the model's terms on Hugging Face and configure a read token.
-- The token saved through the UI is plaintext in ignored `config.ini`. Do not paste it into logs or issues.
+- The Models UI saves its token in the ignored plaintext `.env` file. Keep token values out of logs and issues.
 - Set `[huggingface] cache_dir`, `HF_HOME`, or `HF_HUB_CACHE` to a writable volume with sufficient free space. A configured `cache_dir` is exported as `HF_HUB_CACHE` by the backend.
 - Avoid pointing multiple applications at partially compatible cache layouts unless you understand how snapshots and revisions are resolved.
 
 Exact snapshot lookup checks the same cache roots as Model Manager, preferring
 the configured cache before secondary locations. Audio pipeline loading uses the
-resolved immutable local snapshot. Selecting a cache for new downloads does not
-hide an existing reviewed snapshot in another discovered cache, and inference
-does not download missing files or substitute another revision.
+resolved immutable local snapshot. Built-in Modular Diffusers loaders also use
+cached components, including the tokenizer and processor. A gated repository
+can require sign-in during Install or Repair in Model Manager. Once the
+selected snapshot is complete, the loader can use it without a separate Hub
+CLI login. Selecting a cache for new downloads does not hide an existing
+reviewed snapshot in another discovered cache. Normal app startup disables Hub
+SDK telemetry by default so a cache-only file lookup can stay local on a fresh
+machine. An explicit operator setting for HF_HUB_DISABLE_TELEMETRY takes
+precedence.
 
 ACE-Step reads lyric embeddings and condition tensors outside ordinary model
 forward calls. Its group offload uses leaf hooks for the text encoder; its

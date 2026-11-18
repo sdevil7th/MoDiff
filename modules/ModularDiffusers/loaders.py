@@ -3908,9 +3908,14 @@ class ModelsLoader(NodeBase):
                 diagnostics=self._loader_diagnostics,
                 component_load_kwargs={
                     "torch_dtype": component_dtypes,
-                    **({"cache_dir": _primary_component_cache_dirs(
-                        self.loader, real_repo_id, revision, reviewed_index_filename,
-                    )} if custom_binding is None else {}),
+                    **({
+                        "cache_dir": _primary_component_cache_dirs(
+                            self.loader, real_repo_id, revision, reviewed_index_filename,
+                        ),
+                        # The exact built-in artifact is installed by Model Manager.
+                        # Optional SDK probes must not contact the Hub during Run.
+                        "local_files_only": True,
+                    } if custom_binding is None else {}),
                     **({"variant": weight_variant} if weight_variant is not None else {}),
                     "trust_remote_code": trust_remote_code,
                     "quantization_config": quant_config,

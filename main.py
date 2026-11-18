@@ -9,6 +9,9 @@ configure_allocator()
 # Diffusers captures its loader flag during import. Apply both official loader
 # defaults before configuration or worker node imports; operator choices win.
 configure_model_loading()
+# The Hub SDK can fetch its telemetry registry while building headers even for
+# a cache-only lookup. Apply its opt-out before import, honoring operator settings.
+os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
 
 # Bind source provenance before the replaceable worker imports any executable
 # backend or node module. The same cached claim is emitted with runtime and
