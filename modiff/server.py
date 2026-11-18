@@ -57,6 +57,7 @@ from modiff.path_identifiers import (
     resolve_managed_path_identifier,
 )
 from modiff.disk_activity import DiskActivitySampler
+from modiff.preflight import PACKAGE_CHECKS, validate_package_capabilities
 from modiff.supervisor_control import compact_task_history, _write_json_atomic
 from modiff.template_gallery import (
     TEMPLATE_GALLERY_SOURCE_PATH,
@@ -12185,6 +12186,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             module = sys.modules.get(module_name) if loaded_only else import_module(module_name)
             if module is None:
                 raise RuntimeError("Package availability was not observed before runtime cleanup.")
+            validate_package_capabilities(module_name, module)
             package["available"] = True
             package["version"] = getattr(module, "__version__", package.get("version"))
         except Exception as e:
@@ -12276,18 +12278,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             profile = self._observe_runtime_profile(hardware, runtime_fingerprint)
         packages = {
             name: self._package_status(name, distribution, loaded_only=True) if cleaning else self._package_status(name, distribution)
-            for name, distribution in (
-                ("aiohttp", None), ("aiohttp_cors", "aiohttp-cors"), ("torch", None),
-                ("diffusers", None), ("transformers", None), ("peft", None),
-                ("huggingface_hub", "huggingface-hub"), ("accelerate", None), ("safetensors", None),
-            )
+            for name, distribution in PACKAGE_CHECKS["required"]
         }
         packages["torch"].update(legacy_torch_status(hardware))
-        required = [
-            "aiohttp", "aiohttp_cors", "torch", "diffusers", "huggingface_hub",
-            "transformers", "peft", "accelerate", "safetensors",
-        ]
-        missing_required = [name for name in required if not packages.get(name, {}).get("available")]
+        missing_required = [name for name, package in packages.items() if not package.get("available")]
         if cleaning and missing_required:
             raise _RuntimeCleanupSnapshotUnavailable("Runtime cleanup is active without prior required package observations. Wait for cleanup to finish.")
 

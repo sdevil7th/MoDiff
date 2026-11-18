@@ -31,9 +31,10 @@ upscale/LoRA, a diffusion decoder or latent output. Declared contracts and
 no-weight tests do not establish live model or hardware qualification.
 
 Ordinary setup includes pinned PyAV for the official image-conditioning H.264
-recompression step, and preflight checks it as a required dependency. Installing
-the application repairs this dependency; browsing a workflow never installs it.
-The adapter preserves the upstream conditioning-compression defaults.
+recompression step. Preflight and runtime health check that PyAV can resolve the
+`libx264` encoder and H.264 decoder. Repair this dependency with the ordinary
+setup for your current accelerator. The adapter preserves the upstream
+conditioning-compression defaults.
 
 Registered native-stage recipe descriptors retain their original versioned
 selection metadata when only their visual grouping changes. Selection notes

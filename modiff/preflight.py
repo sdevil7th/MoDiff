@@ -140,6 +140,14 @@ def default_hf_cache():
     return str((Path.home() / ".cache" / "huggingface" / "hub").resolve())
 
 
+def validate_package_capabilities(module_name, module):
+    if module_name == "av":
+        # LTX image conditioning uses PyAV's bundled codecs even when a system
+        # FFmpeg is available. Resolve descriptors without opening media.
+        module.codec.Codec("libx264", "w")
+        module.codec.Codec("h264", "r")
+
+
 def package_status(module_name, distribution_name, import_check=True):
     status = {
         "module": module_name,
@@ -160,11 +168,7 @@ def package_status(module_name, distribution_name, import_check=True):
     try:
         started = time.perf_counter()
         module = importlib.import_module(module_name)
-        if module_name == "av":
-            # LTX image conditioning uses this PyAV encoder, even when the
-            # system ffmpeg executable is already available.
-            module.codec.Codec("libx264", "w")
-            module.codec.Codec("h264", "r")
+        validate_package_capabilities(module_name, module)
         status["available"] = True
         status["import_ms"] = round((time.perf_counter() - started) * 1000)
         status["version"] = getattr(module, "__version__", status.get("version"))

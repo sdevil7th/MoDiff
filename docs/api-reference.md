@@ -187,7 +187,10 @@ address: null}`. The browser uses this address for emergency queue polling
   carried as `runtimeFingerprint.backendSource` on execution-completion
   receipts so qualification tooling can reject a stale worker after source
   files change.
-- Python and required-package status.
+- Python and required-package status. The required package list matches
+  preflight. The `packages.av` check verifies PyAV's `libx264` encoder and
+  H.264 decoder. An unavailable package or codec appears in
+  `missing_required_packages` and makes `ready` false.
 - Registered module counts.
 - Server and relevant configuration state.
 - Queue summary.

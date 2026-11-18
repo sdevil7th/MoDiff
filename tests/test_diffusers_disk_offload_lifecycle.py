@@ -635,6 +635,9 @@ def test_shutdown_cancellation_drains_owned_cleanup_before_executor_shutdown(dis
 @pytest.mark.parametrize('route', ['runtime_resources', 'runtime_status', 'system_stats'])
 def test_shutdown_preserves_delayed_shielded_control_builders_without_accelerator_probes(graph_runtime, monkeypatch, route):
     server, _, _, _, _ = graph_runtime
+    if route == 'runtime_status':
+        # This successful cached status assumes PyAV was seen before cleanup.
+        assert server._package_status('av')['available']
     builder_started, builder_finish = threading.Event(), threading.Event()
     cleanup_started, cleanup_finish = threading.Event(), threading.Event()
     hardware = {'system': {'ram_total': 64 * 1024**3}, 'devices': []}
@@ -690,6 +693,7 @@ def test_shutdown_preserves_delayed_shielded_control_builders_without_accelerato
             if route == 'runtime_status':
                 assert payload['hardware_snapshot_state'] == 'cached_during_cleanup'
                 assert payload['queue']['current'] is None
+                assert payload['packages']['av']['available']
         finally:
             builder_finish.set()
             cleanup_finish.set()
@@ -831,7 +835,7 @@ def test_cleanup_package_observation_never_imports_unseen_packages(graph_runtime
     assert unseen['available'] is False and 'not observed' in unseen['error']
 
 
-@pytest.mark.parametrize('unseen', ['transformers', 'peft'])
+@pytest.mark.parametrize('unseen', ['transformers', 'peft', 'av'])
 def test_cleanup_status_reports_unseen_installed_package_as_busy_not_missing(graph_runtime, monkeypatch, unseen):
     import sys
     from importlib import metadata

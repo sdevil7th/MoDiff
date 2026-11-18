@@ -44,6 +44,7 @@ from modiff.studio_execution_specs import (  # noqa: E402
     studio_execution_spec_for_pair,
     studio_model_dependencies_for_pair,
 )
+from aiohttp.test_utils import TestClient, TestServer  # noqa: E402
 from aiohttp.web_fileresponse import CONTENT_TYPES as AIOHTTP_CONTENT_TYPES  # noqa: E402
 
 
@@ -2659,6 +2660,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["backend_source"], self.server.backend_source_identity)
         self.assertEqual(payload["runtime_profile"], profile)
         self.assertTrue(payload["ready"])
+        self.assertEqual(set(payload["packages"]), {name for name, _ in preflight.PACKAGE_CHECKS["required"]})
         self.assertEqual(payload["packages"]["torch"]["cuda_device_name"], "Mock CUDA")
         self.assertEqual(payload["packages"]["torch"]["cuda_memory_free_bytes"], 12 * GIB)
 
@@ -2737,6 +2739,57 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
                     self.assertFalse(payload["ready"])
                     self.assertIn(missing, payload["missing_required_packages"])
                     self.assertIn("peft", payload["packages"])
+
+    async def test_health_and_runtime_status_require_working_pyav_codecs(self):
+        snapshot = hardware_snapshot()
+        cases = (
+            ("ready", None, None, [("libx264", "w"), ("h264", "r")]),
+            ("missing", ModuleNotFoundError("No module named 'av'"), None, []),
+            ("broken import", ImportError("PyAV DLL load failed"), None, []),
+            ("missing encoder", None, "libx264", [("libx264", "w")]),
+            ("missing decoder", None, "h264", [("libx264", "w"), ("h264", "r")]),
+        )
+        async with TestClient(TestServer(self.server.app)) as client:
+            for name, import_error, missing_codec, expected_lookups in cases:
+                for path in ("/health", "/runtime/status"):
+                    with self.subTest(name=name, path=path):
+                        codec_lookups = []
+
+                        def lookup_codec(codec_name, mode):
+                            codec_lookups.append((codec_name, mode))
+                            if codec_name == missing_codec:
+                                raise LookupError(f"Unknown codec: {codec_name}")
+
+                        def import_package(module_name):
+                            if module_name != "av":
+                                return SimpleNamespace()
+                            if import_error is not None:
+                                raise import_error
+                            return SimpleNamespace(
+                                __version__="18.1.0", codec=SimpleNamespace(Codec=lookup_codec)
+                            )
+
+                        with (
+                            patch.object(self.server, "_runtime_fingerprint", return_value={"hardware": snapshot}),
+                            patch("modiff.server.get_hardware_snapshot", return_value=snapshot),
+                            patch("modiff.server.runtime_profile", return_value={"execution_ready": True}),
+                            patch("modiff.server.import_module", side_effect=import_package),
+                        ):
+                            async with client.get(path) as response:
+                                self.assertEqual(response.status, 200)
+                                payload = await response.json()
+                        expected_ready = name == "ready"
+                        self.assertEqual(payload["ready"], expected_ready)
+                        self.assertEqual(payload["missing_required_packages"], [] if expected_ready else ["av"])
+                        av = payload["packages"]["av"]
+                        self.assertEqual(av["available"], expected_ready)
+                        self.assertEqual(av["distribution"], "av")
+                        self.assertEqual(codec_lookups, expected_lookups)
+                        if expected_ready:
+                            self.assertEqual(av["version"], "18.1.0")
+                        else:
+                            expected_error = str(import_error) if import_error else f"Unknown codec: {missing_codec}"
+                            self.assertEqual(av["error"], expected_error)
 
     async def test_system_stats_uses_cached_hardware_while_a_graph_is_running(self):
         snapshot = hardware_snapshot()
