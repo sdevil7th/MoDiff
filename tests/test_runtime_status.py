@@ -927,6 +927,51 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
         persist.assert_called_once_with(force=False)
 
+    def test_one_node_progress_clears_fields_across_loading_denoising_decoding_and_completion(self):
+        self.server.current_task = {
+            "task_id": "av-task",
+            "name": "Video with audio",
+            "started_at": 1.0,
+            "current_node": "generate",
+            "node_progress": -1,
+            "phase": "loading",
+            "_phase_started_at": 1.0,
+            "completed_progress": 0,
+            "current_node_weight": 100,
+        }
+
+        def progress(phase, percent, **fields):
+            return self.server.record_node_progress({
+                "task_id": "av-task", "node": "generate", "progress": percent,
+                "phase": phase, **fields,
+            })
+
+        with patch.object(self.server, "_persist_supervisor_queue_state") as persist, patch(
+            "modiff.server.time.time", side_effect=[2.0, 3.0, 4.0, 5.0, 6.0, 9.0, 10.0],
+        ):
+            progress("loading", -1, component="transformer", shard_current=2, shard_total=7)
+            component = progress("loading", -1, component="vae")
+            self.assertIsNone(component["shard_current"])
+            self.assertIsNone(component["shard_total"])
+            sampling = progress("denoising", 0, current_step=0, total_steps=30)
+            self.assertIsNone(sampling["component"])
+            self.assertIsNone(sampling["shard_current"])
+            progress("denoising", 70, current_step=21, total_steps=30, eta_seconds=2.0)
+            progress("denoising", 100, current_step=30, eta_seconds=None)
+            self.assertEqual(self.server.current_task["total_steps"], 30)
+            self.assertIsNone(self.server.current_task["eta_seconds"])
+            decoding = progress("decoding", -1)
+            terminal = self.server._record_terminal_task("completed")
+
+        for field in ("current_step", "total_steps", "component", "shard_current", "shard_total", "eta_seconds"):
+            self.assertIn(field, decoding)
+            self.assertIsNone(decoding[field])
+            self.assertIsNone(terminal[field])
+        self.assertEqual(terminal["phase_timings"], {"loading": 3.0, "denoising": 5.0, "decoding": 1.0})
+        self.assertEqual(terminal["progress"], 100)
+        self.assertEqual([call.kwargs["force"] for call in persist.call_args_list],
+                         [False, False, True, False, False, True])
+
     def test_loader_cache_moves_across_workflow_node_ids_but_not_within_the_active_graph(self):
         reuse_preparations = []
         reusable = SimpleNamespace(

@@ -246,6 +246,12 @@ def classify_hf_download_error(error: Exception) -> tuple[int, str, str, bool]:
     return (500, "huggingface_download_failed", message, True)
 
 
+_PHASE_PROGRESS_FIELDS = (
+    "current_step", "total_steps", "elapsed_seconds", "average_step_seconds",
+    "eta_seconds", "component", "shard_current", "shard_total",
+)
+
+
 def node_execution_phase(module: str, action: str) -> str:
     name = f"{module}.{action}".lower()
     if "load" in name:
@@ -1955,12 +1961,19 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         prior_current_step = self.current_task.get("current_step")
         prior_phase = self.current_task.get("phase")
         next_phase = payload.get("phase") or prior_phase
+        phase_changed = next_phase != prior_phase
+        if phase_changed:
+            for field in _PHASE_PROGRESS_FIELDS:
+                payload.setdefault(field, None)
+        elif "component" in payload and payload["component"] != self.current_task.get("component"):
+            payload.setdefault("shard_current", None)
+            payload.setdefault("shard_total", None)
         phase_started_at = self.current_task.get("_phase_started_at")
         phase_timings = self.current_task.setdefault("phase_timings", {})
         if not isinstance(phase_timings, dict):
             phase_timings = {}
             self.current_task["phase_timings"] = phase_timings
-        if next_phase != prior_phase:
+        if phase_changed:
             if prior_phase and isinstance(phase_started_at, (int, float)):
                 phase_timings[prior_phase] = float(phase_timings.get(prior_phase, 0.0)) + max(
                     0.0, now - float(phase_started_at)
@@ -1978,22 +1991,12 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 "message": payload.get("message") or self.current_task.get("message"),
             }
         )
-        # Node lifecycle events without step metrics must not erase the latest
-        # denoising sample. Preserving the final sample gives reconnects and
-        # terminal receipts an honest duration/step record through decode/save.
-        for field in (
-            "current_step",
-            "total_steps",
-            "elapsed_seconds",
-            "average_step_seconds",
-            "eta_seconds",
-            "component",
-            "shard_current",
-            "shard_total",
-            "resource_snapshot",
-        ):
-            if payload.get(field) is not None:
-                self.current_task[field] = payload.get(field)
+        # A same-phase message can omit metrics. Explicit nulls clear them in
+        # both the live event and the queue/terminal receipt. Phase durations
+        # remain recorded independently when the phase-local counters reset.
+        for field in (*_PHASE_PROGRESS_FIELDS, "resource_snapshot"):
+            if field in payload:
+                self.current_task[field] = payload[field]
         if isinstance(node_progress, (int, float)) and node_progress >= 0:
             completed = float(self.current_task.get("completed_progress", 0.0))
             node_weight = float(self.current_task.get("current_node_weight", 0.0))
@@ -2016,7 +2019,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         ) or (
             payload.get("current_step") == 0 and prior_current_step is None and payload.get("total_steps") is not None
         )
-        self._persist_supervisor_queue_state(force=first_measurable_sample)
+        self._persist_supervisor_queue_state(force=first_measurable_sample or bool(prior_phase and phase_changed))
         return payload
 
     def _get_queue(self):
@@ -11458,6 +11461,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     **self._current_run_identity_payload(),
                     "status": "running",
                     "phase": phase,
+                    **dict.fromkeys(_PHASE_PROGRESS_FIELDS),
                     "message": node_execution_message(module, action, phase),
                     "current_node": id,
                     "progress": -1,  # -1 sets the progress to indeterminate

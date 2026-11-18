@@ -2276,6 +2276,10 @@ Completion, cancellation, and failure are distinct terminal states.
 Terminal receipts replace in-progress messages with their terminal status,
 while explicit failure/cancellation diagnostics remain available. Clients
 must give terminal status priority over progress fields in older receipts.
+Progress counters and estimates belong to the current phase. A phase change
+publishes nulls for omitted fields, and a component change clears shard counters
+unless the new component reports them. An omitted measurement in the same phase
+keeps its latest value. Phase durations remain available in `phase_timings`.
 
 `DELETE /queue/{task_id}` removes only the specified waiting task. Accepted
 work becomes `cancelled` with the reason `Cancelled before execution.`, no
