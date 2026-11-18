@@ -242,6 +242,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "Cosmos3DistilledModularPipeline",
             "Cosmos3OmniModularPipeline",
             "HunyuanVideo15ModularPipeline",
+            "LTX25FullPipeline",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)

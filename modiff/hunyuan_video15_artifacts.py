@@ -9,6 +9,9 @@ HUNYUAN_720P_I2V_REVISION = 'dcf088ef4e420dd54bc25930ee810bb6613dfcb5'
 def stage_authoring_defaults(action, workflow, defaults, capability):
     """Keep I2V geometry in its VAE stage and sampling in its exact recipe."""
     result = dict(defaults)
+    if (action == 'WorkflowHunyuanVideo15Decode' and capability.get('defaultRepo') in
+            {HUNYUAN_720P_T2V_REPOSITORY, HUNYUAN_720P_I2V_REPOSITORY}):
+        result['vae_tiling'] = True
     if action == 'WorkflowHunyuanVideo15Denoise' and workflow == 'image2video':
         result.pop('width', None)
         result.pop('height', None)

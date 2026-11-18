@@ -1,5 +1,5 @@
 {
-  "contentHash": "sha256:d0130c0c5daaedd6a83935ac10382c33984c5609d7a9fab4089ad6bbb4c1ffbc",
+  "contentHash": "sha256:239f1bf88256743176914400792c9f1773743ee0b70bdbd9c8d2a70c6c88175c",
   "coverageBoundary": {
     "backendArtifactPins": "snapshotted",
     "backendExecutionProfiles": "snapshotted",
@@ -16278,7 +16278,7 @@
   "schemaVersion": 1,
   "sources": {
     "exactVariantReviews": "sha256:a4fc259889ff19358b1be6411be27d331cf81c9bf3d55291ded695acf9bb2498",
-    "modelArtifactCatalog": "sha256:efd4d3ebbfd7e4245523ab81a5eb020c40f372537ab8350464d4ee62425b948c",
+    "modelArtifactCatalog": "sha256:74ace6190ff6c34744666426fa5a391f8d1e278afddcb08d69d4dded38b4563d",
     "modularWorkflowSnapshot": "sha256:dd06d28cde763faf3245580f6ab3ef290715764a58f2b5c9321d9c9e40c8d3c9",
     "operationInventory": "sha256:fb3d203981cbc1b2b2cb674912d1d88920af0018d4097fda3f8ec18b0e6b0654",
     "publicExecutionProfiles": "sha256:d24da994cbab023499796be3a91fd6805d6304772b9675fd726255ad2823f61d"

@@ -9003,6 +9003,221 @@
           "sha256": "1d54daf92cdecc2fb4e54bc681443dcd671eaa05cc912aa32cd28f8e7cb8d101"
         }
       ]
+    },
+    {
+      "repo": "Lightricks/LTX-2.5-Diffusers",
+      "revision": "4791a1100e0cf97f7ed5c55c12dd71dce13f9dd3",
+      "source": "https://huggingface.co/api/models/Lightricks/LTX-2.5-Diffusers/revision/4791a1100e0cf97f7ed5c55c12dd71dce13f9dd3?blobs=true",
+      "selection": "ltx25-full-av-convolutional-with-local-prompt-enhancer",
+      "gated": true,
+      "scope": "Selected immutable file metadata only; no cache, model fit, quality or hardware qualification.",
+      "files": [
+        {
+          "path": "README.md",
+          "byteSize": 29974,
+          "gitBlobId": "5314c2432d50e883d2711d22da06404f20612c3a"
+        },
+        {
+          "path": "audio_vae/config.json",
+          "byteSize": 505,
+          "gitBlobId": "6759c3aa9ed4772ccd7c9c8dba1378f7b3ac7aba"
+        },
+        {
+          "path": "audio_vae/diffusion_pytorch_model.safetensors",
+          "byteSize": 106507972,
+          "sha256": "45dcb1c3cffc8c8b7710a04dd19500e481daff31f5ea8e8529f2cf697c439d12"
+        },
+        {
+          "path": "connectors/config.json",
+          "byteSize": 817,
+          "gitBlobId": "08705b2df36d92f4cea9667706842736beb8735d"
+        },
+        {
+          "path": "connectors/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "byteSize": 4999998520,
+          "sha256": "c5bf0768831b67def0322423f3dae012ac3a4528268f6e7c12555e7e918904fa"
+        },
+        {
+          "path": "connectors/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "byteSize": 1344490576,
+          "sha256": "5971a625f1a29f09ac3bfa37fae912aaddbdc93688080528503a43d2d5ac3c3a"
+        },
+        {
+          "path": "connectors/diffusion_pytorch_model.safetensors.index.json",
+          "byteSize": 30629,
+          "gitBlobId": "777aac3f995533ed007d65935e332dbef42aea71"
+        },
+        {
+          "path": "duration_head/config.json",
+          "byteSize": 251,
+          "gitBlobId": "18e6ccbc485d448cee416cc97e970df2e3676291"
+        },
+        {
+          "path": "duration_head/diffusion_pytorch_model.safetensors",
+          "byteSize": 3808466,
+          "sha256": "282732cae8d2fdfdaa5b0818920513904eb1a443e65ac92f352b4ca0c9184c9a"
+        },
+        {
+          "path": "model_index.json",
+          "byteSize": 971,
+          "gitBlobId": "842fa93a0c00e655023608f5bd70e2b362496b3d"
+        },
+        {
+          "path": "processor/chat_template.jinja",
+          "byteSize": 18569,
+          "gitBlobId": "fbe3b59b625cd1b8850ea592d4203df6ec04684b"
+        },
+        {
+          "path": "processor/processor_config.json",
+          "byteSize": 1689,
+          "gitBlobId": "5465974d23e1eca2c46c2809b26c997946ce0d90"
+        },
+        {
+          "path": "processor/tokenizer.json",
+          "byteSize": 32169626,
+          "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+        },
+        {
+          "path": "processor/tokenizer_config.json",
+          "byteSize": 3729,
+          "gitBlobId": "bd297dce3d66737f7d6f9136691db3ad05991a2f"
+        },
+        {
+          "path": "prompt_enhancer/config.json",
+          "byteSize": 5278,
+          "gitBlobId": "437ef0853162978033442ff90cf04e70b6a59baf"
+        },
+        {
+          "path": "prompt_enhancer/generation_config.json",
+          "byteSize": 204,
+          "gitBlobId": "8895a35cb48ff933ea6ecba7e4f6cb9a89a6a044"
+        },
+        {
+          "path": "prompt_enhancer/model-00001-of-00003.safetensors",
+          "byteSize": 1422130776,
+          "sha256": "9ebcea1985a201703cd702b4bb5e3cfc4efddaa4e2b4c58fce3703baa456a11e"
+        },
+        {
+          "path": "prompt_enhancer/model-00002-of-00003.safetensors",
+          "byteSize": 4987105346,
+          "sha256": "b07560fd5ae48bc6594433bd2c366ae2df65fd42d7d1adbd2865e169ee3ec8ea"
+        },
+        {
+          "path": "prompt_enhancer/model-00003-of-00003.safetensors",
+          "byteSize": 3799615716,
+          "sha256": "c09a40c769d67235595f0d8a9909f4eab6ea9f9719f17812f7285830fa951a66"
+        },
+        {
+          "path": "prompt_enhancer/model.safetensors.index.json",
+          "byteSize": 200040,
+          "gitBlobId": "7395124136aedba4f18dcaed0b38ae15ccc83213"
+        },
+        {
+          "path": "text_encoder/config.json",
+          "byteSize": 4594,
+          "gitBlobId": "ba2bf78a30003ce2db4f66ddacf3343d99277c75"
+        },
+        {
+          "path": "text_encoder/generation_config.json",
+          "byteSize": 255,
+          "gitBlobId": "7f13545d4e30f9c4c734b6e514811fee21d83c54"
+        },
+        {
+          "path": "text_encoder/model-00001-of-00005.safetensors",
+          "byteSize": 4961189118,
+          "sha256": "8d296b3a429b9656177ea977b121fd5fdc75f0e1691d762313db15a82ab64381"
+        },
+        {
+          "path": "text_encoder/model-00002-of-00005.safetensors",
+          "byteSize": 4966688198,
+          "sha256": "8b76326b2a1d477901aba51e22b86647955a2697be8ddf5f5f0c7a5ff70f44ba"
+        },
+        {
+          "path": "text_encoder/model-00003-of-00005.safetensors",
+          "byteSize": 4884113678,
+          "sha256": "7fab265ccfac3d0b245d996346b4cf9995163417adb34f1e838f2b6df6793122"
+        },
+        {
+          "path": "text_encoder/model-00004-of-00005.safetensors",
+          "byteSize": 4986341908,
+          "sha256": "cfb34499d755cb0fdd72179a320e3097f37887c94beb1257ba469bf59734b468"
+        },
+        {
+          "path": "text_encoder/model-00005-of-00005.safetensors",
+          "byteSize": 4121215522,
+          "sha256": "cab56a1e843ecec4eb132706ad1ba9ec8cca9baa9adb34c0943b026c18b7bb59"
+        },
+        {
+          "path": "text_encoder/model.safetensors.index.json",
+          "byteSize": 66306,
+          "gitBlobId": "752efb73998ce28a90eb0a1ce0e9a1891e55ec79"
+        },
+        {
+          "path": "tokenizer/chat_template.jinja",
+          "byteSize": 18683,
+          "gitBlobId": "4741bf6e4132ba23a5537f9d6e74e9a6d613d7cd"
+        },
+        {
+          "path": "tokenizer/tokenizer.json",
+          "byteSize": 32169626,
+          "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+        },
+        {
+          "path": "tokenizer/tokenizer_config.json",
+          "byteSize": 3735,
+          "gitBlobId": "fc4e01046a064f77d52f60f0022b6716c35c7695"
+        },
+        {
+          "path": "transformer_full/config.json",
+          "byteSize": 1440,
+          "gitBlobId": "253d0bbc8f714bbcb292cf7888113dc13a162361"
+        },
+        {
+          "path": "transformer_full/diffusion_pytorch_model-00001-of-00004.safetensors",
+          "byteSize": 9932336016,
+          "sha256": "d1a688c6c9cb1cf5c778593125f1f7db3ff9d44f30e242a04363c74036caf178"
+        },
+        {
+          "path": "transformer_full/diffusion_pytorch_model-00002-of-00004.safetensors",
+          "byteSize": 9919463480,
+          "sha256": "d7764111e6405d252ba59de66f14d41ba27af4f4ae1cbe10dc0fc872be7c07fb"
+        },
+        {
+          "path": "transformer_full/diffusion_pytorch_model-00003-of-00004.safetensors",
+          "byteSize": 9986144288,
+          "sha256": "992d1bf01790dfdce2215d31567545180286a0f2364eb61a81c1bc050ed3bb64"
+        },
+        {
+          "path": "transformer_full/diffusion_pytorch_model-00004-of-00004.safetensors",
+          "byteSize": 8138277304,
+          "sha256": "a8c215f2eed11d1e304b092087d4283efa04d9f7f8a8e318ce39377b18dd0be4"
+        },
+        {
+          "path": "transformer_full/diffusion_pytorch_model.safetensors.index.json",
+          "byteSize": 446505,
+          "gitBlobId": "2333a52194b3e9c6643859589e6dac8ceba144b1"
+        },
+        {
+          "path": "vae/config.json",
+          "byteSize": 1480,
+          "gitBlobId": "fe1005547671f8ad17fc63277a9ced588bb89622"
+        },
+        {
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "byteSize": 1452233194,
+          "sha256": "425f0dfa227dee5d0ff3d9720563370810409a439c302ca74f0f944057ce55c5"
+        },
+        {
+          "path": "vocoder/config.json",
+          "byteSize": 1478,
+          "gitBlobId": "3ff9ad1403bff5fe970dcb2522239be462663203"
+        },
+        {
+          "path": "vocoder/diffusion_pytorch_model.safetensors",
+          "byteSize": 258305056,
+          "sha256": "c99dde145a982974bc4c39608b3b929f232f0126a55d8326a47ad54f486ae23c"
+        }
+      ]
     }
   ],
   "schemaVersion": 1,
@@ -10620,6 +10835,14 @@
       "baseRevision": "80d5e6c7f646c5f512b684e2da0765618d805894",
       "baseLicense": "mit",
       "gated": false,
+      "artifacts": []
+    },
+    {
+      "modelType": "LTX25FullPipeline",
+      "baseRepo": "Lightricks/LTX-2.5-Diffusers",
+      "baseRevision": "4791a1100e0cf97f7ed5c55c12dd71dce13f9dd3",
+      "baseLicense": "LTX-2.x Community License Agreement",
+      "gated": true,
       "artifacts": []
     }
   ]

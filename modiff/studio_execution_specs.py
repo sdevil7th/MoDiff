@@ -17034,6 +17034,58 @@ for _k6_mode, _k6_roles, _k6_edges, _k6_bindings in (
         'roles': _k6_roles, 'edges': _k6_edges, 'bindings': _k6_bindings,
     }
 
+
+# Full/SFT is a distinct recipe over the same generic video/audio operations.
+from modiff.ltx25_full_artifacts import LTX25_FULL_FILES
+
+_LTX25_FULL_REPO = 'Lightricks/LTX-2.5-Diffusers'
+_LTX25_FULL_MODES = ('text_to_video_with_audio', 'image_to_video_with_audio',
+                     'reference_to_video_with_audio', 'video_to_video_with_audio')
+_LTX25_FULL_PROFILE = {
+    **_planning_video_profile('ltx25-full-av:direct', 'LTX25FullPipeline', _LTX25_FULL_MODES,
+                             'LTX25FullPipeline', _LTX25_FULL_REPO),
+    'supported_offload_modes': (OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU),
+    'retry_offload_modes': (OFFLOAD_MODE_MODEL_CPU,),
+}
+_LTX25_FULL_CAPABILITY = {
+    **_planning_video_capability('LTX25FullPipeline', 'LTX-2.5 Full · Video + Audio', 'LTX Video',
+        _LTX25_FULL_REPO, _LTX25_FULL_MODES,
+        {'image_to_video_with_audio': {'requiredImages': ['referenceImages'],
+                                     'maximumCounts': {'referenceImages': 1}},
+         'reference_to_video_with_audio': {'requiredImages': ['referenceImages']},
+         'video_to_video_with_audio': {'requiredVideos': ['sourceVideo']}},
+        download_files=LTX25_FULL_FILES),
+    'displayName': 'LTX-2.5 Full', 'defaultDtype': 'bfloat16',
+    'defaultSize': {'width': 768, 'height': 512, 'aspectRatio': 'custom'},
+    'recommendedSteps': 30, 'recommendedGuidance': 3., 'recommendedFrames': 121, 'recommendedFps': 24,
+    'recommendedMaxSequenceLength': 1024, 'outputMedia': ['video', 'audio'],
+    'supportsNegativePrompt': True, 'supportsAudioInput': False,
+    'supportsMultiImage': True, 'license': 'LTX-2.x Community License Agreement',
+    'lowVram': {'dtype': 'bfloat16', 'autoOffload': True, 'offloadMode': OFFLOAD_MODE_MODEL_CPU,
+                'steps': 30, 'width': 768, 'height': 512, 'numFrames': 121},
+    'autoEligible': False, 'templateEligible': False, 'galleryEligible': False, 'liveProof': False,
+    'offloadSupport': {'default': OFFLOAD_MODE_MODEL_CPU, 'lowVram': OFFLOAD_MODE_MODEL_CPU,
+                      'emergency': OFFLOAD_MODE_MODEL_CPU, 'modes': [OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU]},
+    'notes': [
+        'Exact transformer_full weights, dynamic scheduler and native multimodal guidance; no distilled substitution.',
+        'Optional local prompt expansion uses the separately supplied Gemma 4 prompt enhancer.',
+        'Ordered image conditions use explicit output-frame positions; [0,-1] places first and last frames.',
+        'Uses the ordinary convolutional VAE decoder; diffusion decode, SR/second-stage LoRA and raw audio encoding are separate integrations.',
+        'Expert-only; no new memory, quantization, hardware or public-output qualification.',
+    ],
+}
+for _full_mode, _full_roles, _full_edges, _full_bindings in (
+    ('text_to_video_with_audio', _LTX2_GRAPH_ROLES, _LTX2_GRAPH_EDGES, _LTX2_GRAPH_BINDINGS),
+    ('image_to_video_with_audio', _LTX2_I2V_GRAPH_ROLES, _LTX2_I2V_GRAPH_EDGES, _LTX2_I2V_GRAPH_BINDINGS),
+    ('reference_to_video_with_audio', _LTX2_I2V_GRAPH_ROLES, _LTX2_I2V_GRAPH_EDGES, _LTX2_I2V_GRAPH_BINDINGS),
+    ('video_to_video_with_audio', _LTX2_V2V_GRAPH_ROLES, _LTX2_V2V_GRAPH_EDGES, _LTX2_V2V_GRAPH_BINDINGS),
+):
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f'ltx25-full-av:{_full_mode}:v1'] = {
+        'modelType': 'LTX25FullPipeline', 'mode': _full_mode, 'profile': _LTX25_FULL_PROFILE,
+        'capability': _LTX25_FULL_CAPABILITY, 'roles': _full_roles, 'edges': _full_edges,
+        'bindings': _full_bindings,
+    }
+
 _BUILTIN_IMAGE_OPERATION_MODES = (
     "image_adjustment",
     "image_filter",

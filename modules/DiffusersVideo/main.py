@@ -170,6 +170,16 @@ _VIDEO_DYNAMIC_FIELDS = (
     "pag_scale",
     "pag_adaptive_scale",
     "expand_prompt",
+    "stg_scale",
+    "modality_scale",
+    "guidance_rescale",
+    "audio_guidance_scale",
+    "audio_stg_scale",
+    "audio_modality_scale",
+    "audio_guidance_rescale",
+    "temporal_guidance_blocks_json",
+    "use_cross_timestep",
+    "condition_indices_json",
 )
 _VIDEO_INPUT_FIELDS = frozenset(
     {
@@ -240,6 +250,16 @@ WAN_VACE_MODE_MEDIA_CONTRACTS = {
 
 
 VIDEO_PIPELINE_ADAPTERS = {
+    "LTX25FullPipeline": VideoPipelineAdapter(
+        id="ltx25-full-av", pipeline_class="LTX25FullPipeline",
+        diffusers_class="LTX2ConditionPipeline", default_repo="Lightricks/LTX-2.5-Diffusers",
+        modes=("text_to_video_with_audio", "image_to_video_with_audio",
+               "reference_to_video_with_audio", "video_to_video_with_audio"),
+        output_media=("video", "audio"),
+        audio_modes=("text_to_video_with_audio", "image_to_video_with_audio",
+                     "reference_to_video_with_audio", "video_to_video_with_audio"),
+        max_prompt_tokens=1024, default_audio_sample_rate=48000,
+    ),
     "Kandinsky6TI2VAPipeline": VideoPipelineAdapter(
         id="kandinsky-6-av", pipeline_class="Kandinsky6TI2VAPipeline",
         diffusers_class="Kandinsky6TI2VAPipeline",
@@ -510,6 +530,11 @@ def _video_field_contract(
     )
 
 
+_FULL_AV_GUIDANCE_FIELDS = (
+    "frame_rate", "expand_prompt", "stg_scale", "modality_scale", "guidance_rescale",
+    "audio_guidance_scale", "audio_stg_scale", "audio_modality_scale", "audio_guidance_rescale",
+    "temporal_guidance_blocks_json", "use_cross_timestep",
+)
 _VACE_GUIDANCE_FIELDS = ("conditioning_scale", "guidance_scale_2", "use_guidance_scale_2")
 _ANIMATE_FIELDS = (
     "reference_images",
@@ -635,6 +660,16 @@ VIDEO_MODE_FIELD_CONTRACTS = {
     "LTXI2VLongMultiPromptPipeline": {
         "image_to_video": _video_field_contract(*_LTX_LONG_FIELDS, required_fields=("reference_images",))
     },
+    "LTX25FullPipeline": {
+        "text_to_video_with_audio": _video_field_contract(*_FULL_AV_GUIDANCE_FIELDS),
+        "image_to_video_with_audio": _video_field_contract(
+            *_FULL_AV_GUIDANCE_FIELDS, "reference_images", "strength", required_fields=("reference_images",)),
+        "reference_to_video_with_audio": _video_field_contract(
+            *_FULL_AV_GUIDANCE_FIELDS, "reference_images", "strength", "condition_indices_json",
+            required_fields=("reference_images",)),
+        "video_to_video_with_audio": _video_field_contract(
+            *_FULL_AV_GUIDANCE_FIELDS, "video", "strength", required_fields=("video",)),
+    },
     "LTX2ConditionPipeline": {
         "text_to_video": _video_field_contract("frame_rate"),
         "image_to_video": _video_field_contract(
@@ -723,6 +758,7 @@ def get_video_mode_field_contract(adapter: VideoPipelineAdapter, mode: str) -> V
 
 
 VIDEO_PIPELINE_LOAD_HANDLERS = {
+    "LTX25FullPipeline": "_load_ltx25_full",
     "Kandinsky6TI2VAPipeline": "_load_kandinsky6",
     "Kandinsky6DistilledTI2VAPipeline": "_load_kandinsky6",
     "WanVACEPipeline": "_load_wan_vace",
@@ -757,6 +793,7 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
 
 
 VIDEO_PIPELINE_EXECUTE_HANDLERS = {
+    "LTX25FullPipeline": "_execute_ltx25_full",
     "Kandinsky6TI2VAPipeline": "_execute_kandinsky6",
     "Kandinsky6DistilledTI2VAPipeline": "_execute_kandinsky6",
     "WanVACEPipeline": "_execute_wan_vace",
@@ -1107,9 +1144,18 @@ def video_operation_field_params(adapter: VideoPipelineAdapter, mode: str, opera
     dynamic whole-call fields and saved node values are not rewritten.
     """
     fields = get_video_mode_field_contract(adapter, mode).field_param_overlay()
-    native_encoding_only = adapter.diffusers_class == 'Kandinsky6TI2VAPipeline'
+    native_encoding_only = (adapter.diffusers_class == 'Kandinsky6TI2VAPipeline'
+                            or adapter.pipeline_class == 'LTX25FullPipeline')
     for field in ('encoded_inputs', 'prompt_embeds', 'negative_prompt_embeds', 'attention_kwargs_json'):
-        fields[field] = {'hidden': native_encoding_only}
+        fields[field] = {'hidden': native_encoding_only and not (
+            adapter.pipeline_class == 'LTX25FullPipeline' and field == 'attention_kwargs_json')}
+    if adapter.pipeline_class == 'LTX25FullPipeline':
+        fields['condition_indices_json']['required'] = mode == 'reference_to_video_with_audio'
+        for name, default, step in [('width', 768, 32), ('height', 512, 32), ('num_frames', 121, 8),
+                                    ('num_inference_steps', 30, 1)]:
+            fields[name] = {'default': default, 'min': 1, 'max': 2**53 - 1, 'step': step}
+        fields['guidance_scale'] = {'default': 3., 'min': 0}
+        fields['output_type'] = {'options': ['pil', 'np', 'pt'], 'default': 'pil'}
     if operation_id == 'diffusion.render_video':
         if adapter.pipeline_class != 'WanVACEPipeline':
             raise ValueError('The selected pipeline has no integrated encoded-video render stage.')
@@ -1920,6 +1966,10 @@ class LoadPipeline(WanVACELoadPipeline):
         apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)
         self.mm_add(pipeline, priority=2)
         return pipeline
+
+    def _load_ltx25_full(self, adapter, kwargs):
+        from .ltx25_full import load
+        return load(self, adapter, kwargs)
 
     def _load_ltx2(self, adapter: VideoPipelineAdapter, kwargs: dict[str, Any]):
         import diffusers
@@ -2894,6 +2944,16 @@ class Generate(WanVACEGenerate):
             "label": "Expand Prompt", "type": "bool", "default": False,
             "hidden": True,
         },
+        "stg_scale": {"label": "Temporal guidance", "type": "float", "default": 1., "min": 0, "hidden": True, "fieldOptions": {"controlTier": "advanced"}},
+        "modality_scale": {"label": "Video modality guidance", "type": "float", "default": 3., "min": 0, "hidden": True, "fieldOptions": {"controlTier": "advanced"}},
+        "guidance_rescale": {"label": "Video guidance rescale", "type": "float", "default": .7, "min": 0, "max": 1, "hidden": True, "fieldOptions": {"controlTier": "advanced"}},
+        "audio_guidance_scale": {"label": "Audio guidance", "type": "float", "default": 7., "min": 0, "hidden": True},
+        "audio_stg_scale": {"label": "Audio temporal guidance", "type": "float", "default": 1., "min": 0, "hidden": True, "fieldOptions": {"controlTier": "advanced"}},
+        "audio_modality_scale": {"label": "Audio modality guidance", "type": "float", "default": 3., "min": 0, "hidden": True, "fieldOptions": {"controlTier": "advanced"}},
+        "audio_guidance_rescale": {"label": "Audio guidance rescale", "type": "float", "default": .7, "min": 0, "max": 1, "hidden": True, "fieldOptions": {"controlTier": "advanced"}},
+        "temporal_guidance_blocks_json": {"label": "Temporal guidance layers", "type": "text", "default": "[28]", "hidden": True, "fieldOptions": {"controlTier": "advanced"}},
+        "use_cross_timestep": {"label": "Cross-timestep guidance", "type": "bool", "default": True, "hidden": True, "fieldOptions": {"controlTier": "advanced"}},
+        "condition_indices_json": {"label": "Keyframe positions", "type": "text", "default": "", "hidden": True},
     }
 
     def __call__(self, **kwargs):
@@ -2970,6 +3030,8 @@ class Generate(WanVACEGenerate):
         current_mode = values.get("mode")
         actions = _adapter_signal(adapter)['actions']
         modes = actions.get(self.class_name, actions['Generate'])
+        if not modes:
+            raise ValueError('Select a generation node compatible with this model and its audio/video task.')
         selected_mode = current_mode if current_mode in modes else modes[0]
         self.set_field_params(
             "mode",
@@ -4623,6 +4685,10 @@ class Generate(WanVACEGenerate):
             "frames_out": len(frames) if isinstance(frames, list) else num_frames,
         }
 
+    def _execute_ltx25_full(self, pipeline, adapter, mode, kwargs):
+        from .ltx25_full import execute
+        return execute(self, pipeline, adapter, mode, kwargs)
+
     def _execute_ltx2(self, pipeline: Any, adapter: VideoPipelineAdapter, mode: str, kwargs: dict[str, Any]):
         prompt = ensure_single_prompt(none_if_blank(kwargs.get("prompt")), "prompt")
         negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
@@ -4853,6 +4919,7 @@ class GenerateVideoAudio(NodeBase):
         worker.pipe_callback = self.pipe_callback
         executed_adapter, result = worker._execute_with_adapter(**{**kwargs, '_sample_audio': True})
         raw_audio = result.pop("_audio", None)
+        native_controls = result.pop('_native_generation_inputs', None)
         if raw_audio is None:
             raise RuntimeError("The selected video pipeline did not return an audio stream.")
         vocoder = getattr(pipeline, "vocoder", None)
@@ -4861,7 +4928,15 @@ class GenerateVideoAudio(NodeBase):
         sample_rate = int(getattr(pipeline, 'audio_sample_rate', None)
                           or configured_rate or executed_adapter.default_audio_sample_rate or 48000)
         audio = output_to_audio_object(raw_audio, sample_rate=sample_rate)
-        self.record_generation_inputs({**kwargs, 'executed_task': kwargs['mode']})
+        if native_controls is None:
+            # New model-specific controls are inactive on historical adapters;
+            # their schema defaults must not masquerade as consumed settings.
+            controls = {key: value for key, value in kwargs.items()
+                        if key not in {*_FULL_AV_GUIDANCE_FIELDS, 'condition_indices_json'}
+                        or key in {'frame_rate', 'expand_prompt'}}
+        else:
+            controls = native_controls
+        self.record_generation_inputs({**controls, 'executed_task': kwargs['mode']})
         return {
             **result,
             "audio": audio,

@@ -11620,6 +11620,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             record_mutation_output(self, id)
             from modiff.prompt_enhancement_summary import seal_dispatch_observation
             seal_dispatch_observation(self, id)
+            # Preserve eligible material separately from model/cache ownership.
+            # A failed decoder still receives ordinary complete runtime cleanup.
+            try:
+                from modiff.material_checkpoints import capture_completed_material
+                capture_completed_material(self, id)
+            except Exception:
+                logger.warning('Completed material checkpoint could not be retained.', exc_info=True)
         except Exception as e:
             self._prune_prompt_cache_observations((id,))
             if component_context is not None:

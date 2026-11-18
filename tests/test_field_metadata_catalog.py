@@ -57,7 +57,12 @@ def test_all_video_modes_use_isolated_fields(subtests):
                           if call.args[0] == "pipeline")
             for action in ("Generate", "GenerateVideoAudio", "GenerateLTX2", "GenerateSequence"):
                 for mode in adapter.modes:
-                    callback("modules.DiffusersVideo", action, "update_adapter_modes", {"video_contract": signal, "mode": mode})
+                    values = {"video_contract": signal, "mode": mode}
+                    if not signal['actions'].get(action, signal['actions']['Generate']):
+                        with pytest.raises(ValueError, match='generation node compatible'):
+                            callback("modules.DiffusersVideo", action, "update_adapter_modes", values)
+                    else:
+                        callback("modules.DiffusersVideo", action, "update_adapter_modes", values)
 
 
 def test_all_rendered_3d_models_use_isolated_fields(subtests):

@@ -27,6 +27,7 @@ PACKAGE_CHECKS = {
         ("safetensors", "safetensors"),
         ("transformers", "transformers"),
         ("peft", "peft"),
+        ("av", "av"),
     ],
     "recommended": [
         ("torchvision", "torchvision"),
@@ -43,7 +44,6 @@ PACKAGE_CHECKS = {
     "optional": [
         ("bitsandbytes", "bitsandbytes"),
         ("xformers", "xformers"),
-        ("av", "av"),
         ("spandrel", "spandrel"),
         ("nunchaku", "nunchaku"),
         ("torchao", "torchao"),

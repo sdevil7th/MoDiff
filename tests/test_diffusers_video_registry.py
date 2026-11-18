@@ -1695,6 +1695,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             patch.object(node, "progress"),
             patch.object(node, "mm_add"),
             patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=Path("fixture-installed-wan")) as snapshot,
         ):
             loaded = node._load_wan_text_to_video(
                 adapter,
@@ -1705,6 +1706,9 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                     "execution_recipe": {"offload_mode": "none", "device": "cpu"},
                 },
             )
+
+        snapshot.assert_called_once()
+        self.assertEqual(load_pipeline.call_args.args[0], Path("fixture-installed-wan"))
 
         self.assertIs(loaded.scheduler, replacement_scheduler)
         self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
@@ -2543,6 +2547,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             patch.object(node, "progress"),
             patch.object(node, "mm_add"),
             patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=Path("fixture-installed-wan")) as snapshot,
         ):
             loaded = node._load_wan_video_to_video(
                 adapter,
@@ -2553,6 +2558,9 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                     "execution_recipe": {"offload_mode": "none", "device": "cpu"},
                 },
             )
+
+        snapshot.assert_called_once()
+        self.assertEqual(load_pipeline.call_args.args[0], Path("fixture-installed-wan"))
 
         self.assertIs(loaded, pipeline)
         self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])

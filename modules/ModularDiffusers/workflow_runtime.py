@@ -16,6 +16,24 @@ from .modular_utils import modular_generator_from_seed, normalize_modular_seed
 
 
 @contextmanager
+def workflow_vae_tiling(pipeline, enabled):
+    """Apply a decode-only memory choice without changing the shared loader."""
+    if enabled is None:
+        yield
+        return
+    vae = getattr(pipeline, 'vae', None)
+    original = getattr(vae, 'use_tiling', None)
+    enable, disable = getattr(vae, 'enable_tiling', None), getattr(vae, 'disable_tiling', None)
+    if type(enabled) is not bool or type(original) is not bool or not callable(enable) or not callable(disable):
+        raise ValueError('The selected VAE does not expose the reviewed boolean tiling controls.')
+    try:
+        (enable if enabled else disable)()
+        yield
+    finally:
+        (enable if original else disable)()
+
+
+@contextmanager
 def workflow_stage_progress(node, blocks):
     """Bridge official nested loops to the existing node progress/Stop boundary."""
     from diffusers.modular_pipelines import LoopSequentialPipelineBlocks

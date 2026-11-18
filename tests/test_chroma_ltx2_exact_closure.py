@@ -357,7 +357,7 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
             for variant in ('kandinsky6-av', 'kandinsky6-distilled-av')
             for mode in ('text_to_video', 'image_to_video', 'text_to_video_with_audio', 'image_to_video_with_audio')
         }
-        self.assertEqual(len(specifications), 297)
+        self.assertEqual(len(specifications), 301)
         self.assertEqual({row['id'] for row in specifications if row['id'].startswith('kandinsky6-')}, kandinsky_ids)
         self.assertEqual(
             {specification["id"] for specification in specifications
@@ -392,7 +392,7 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
         self.assertEqual(
             sum(specification["id"] not in public_flux3_spec_ids | pika_ids | h3_image_ids | kandinsky_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
                 for specification in specifications),
-            278,
+            282,
         )
         capabilities = studio_capability_definitions()
         cases = {

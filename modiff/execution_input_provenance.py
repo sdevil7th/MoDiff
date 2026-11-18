@@ -93,7 +93,12 @@ NODE_FIELD_NAMES = {
                                    'secondary_guidance_scale': 'guidanceScale2',
                                    'expand_prompt': 'expandPrompt'},
     ('DiffusersVideo', 'GenerateVideoAudio'): {**FIELD_NAMES, 'executed_task': 'executedTask',
-                                             'expand_prompt': 'expandPrompt'},
+        'expand_prompt': 'expandPrompt', 'stg_scale': 'temporalGuidance',
+        'modality_scale': 'videoModalityGuidance', 'guidance_rescale': 'videoGuidanceRescale',
+        'audio_guidance_scale': 'audioGuidanceScale', 'audio_stg_scale': 'audioTemporalGuidance',
+        'audio_modality_scale': 'audioModalityGuidance', 'audio_guidance_rescale': 'audioGuidanceRescale',
+        'temporal_guidance_blocks_json': 'temporalGuidanceLayers', 'use_cross_timestep': 'crossTimestepGuidance',
+        'condition_indices_json': 'keyframePositions'},
     **{('HuggingFaceTransformers', action): {**FIELD_NAMES, 'executed_task': 'executedTask'}
        for action in ('PredictDepth',)},
     ('HuggingFaceTransformers', 'GenerateImageVideoText'): {

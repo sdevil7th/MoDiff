@@ -3,6 +3,24 @@
 The existing graph executor and process supervisor remain the only execution
 owners. Recovery does not resume a partially completed denoising step.
 
+Completed native HunyuanVideo 1.5 sampling now automatically retains its latent
+tensor before the next node decodes it. Ordinary dispatch writes Safetensors and
+bounded JSON under `data/runtime/material-checkpoints/` (relative to the configured
+data directory). The capture accepts only the exact built-in sampler, its issued
+completed state, an immutable Hub revision, and a finite plain floating-point
+tensor. It never serializes models, process-local state tokens or Python objects.
+Failed-attempt cache cleanup leaves these files intact. A capture failure is
+logged without replacing the original generation result.
+
+This is material preservation, not automatic resume. The metadata explicitly
+withholds restoration authority; Run does not yet skip sampling after a failure
+or restart. A future recovery path must validate the original task, graph, inputs,
+model, runtime and tensor hash before issuing a new bound state through the same
+executor. Other samplers and whole-pipeline calls do not yet have this capture.
+Like generated media, these local files are unencrypted, may contain private
+content and have no automatic retention policy. Include them in private backups;
+they can be removed when their retained task no longer needs recovery.
+
 - Reserve all managed components in a dispatch before loading any of them.
   Proactive accelerator eviction and CPU-pressure eviction must skip these
   leases, including nested dispatches.

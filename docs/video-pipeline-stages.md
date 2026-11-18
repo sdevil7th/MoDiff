@@ -9,6 +9,31 @@ actual nodes and connections. Optional upscaling, separate soundtrack generation
 audio fitting and delivery remain visible operations when a template needs them.
 Four stages is a starting shape, not a limit.
 
+HunyuanVideo 1.5 Generate groups its actual sampling and decode nodes only when
+their declared task, pipeline, state edge and component ownership agree. Image
+Input remains separate. The decoder's optional VAE Tiling control temporarily
+selects the official VAE's tiled decode and restores its preceding setting on
+success or error. New 720p starters enable it; saved graphs with no selection
+inherit their existing VAE setting. Offloading moves model weights and does not
+remove the full-frame activation demand of an untiled decoder.
+
+The separately declared `LTX25FullPipeline` facade uses the pinned LTX-2.5
+repository's `transformer_full` with the official `LTX2ConditionPipeline` and its
+Full scheduler recipe. The earlier distilled route is unchanged. The ordinary
+Load/Generate Video interfaces expose text, opening-image, ordered-keyframe and
+source-video conditioning with native audio output. Full controls include video
+and audio guidance, STG, modality guidance, rescaling, selected guidance layers,
+cross-timestep guidance and local prompt expansion. The shared execution recipe
+owns VAE tiling; full residency and model CPU offload are the reviewed placement
+choices. The facade does not declare source-audio conditioning, second-pass
+upscale/LoRA, a diffusion decoder or latent output. Declared contracts and
+no-weight tests do not establish live model or hardware qualification.
+
+Ordinary setup includes pinned PyAV for the official image-conditioning H.264
+recompression step, and preflight checks it as a required dependency. Installing
+the application repairs this dependency; browsing a workflow never installs it.
+The adapter preserves the upstream conditioning-compression defaults.
+
 Registered native-stage recipe descriptors retain their original versioned
 selection metadata when only their visual grouping changes. Selection notes
 participate in the strict template lock; editing explanatory wording must not

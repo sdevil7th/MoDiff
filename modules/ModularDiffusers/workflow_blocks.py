@@ -2112,12 +2112,22 @@ class WorkflowHunyuanVideo15Decode(_OfficialWorkflowBlockMixin, NodeBase):
         "pipeline_class": {"type": "string", "default": "HunyuanVideo15ModularPipeline", "hidden": True},
         "workflow_id": {"type": "string", "default": "text2video", "hidden": True},
         "block_path": {"type": "string", "default": "decode", "hidden": True},
+        "vae_tiling": {
+            "label": "VAE Tiling", "type": "boolean", "default": None,
+            "description": "Decode in native spatial tiles to reduce working memory. Unset preserves the loader policy; only this decode call is changed.",
+        },
         "video": {"label": "Video", "display": "output", "type": "video"},
     }
 
     def execute(self, **kwargs):
+        tiling = kwargs.get('vae_tiling')
+        if tiling is not None and type(tiling) is not bool:
+            raise ValueError('VAE tiling must be a boolean or an unset inherited policy.')
         _pipeline_class, _workflow_id, _token, pipeline, state = _hunyuan_video_15_state(self, kwargs)
-        state = pipeline(state=state, output_type="pil")
+        from .workflow_runtime import workflow_vae_tiling
+        with workflow_vae_tiling(pipeline, tiling):
+            self.record_generation_inputs({'vae_tiling': getattr(getattr(pipeline, 'vae', None), 'use_tiling', None)})
+            state = pipeline(state=state, output_type="pil")
         videos = state.get("videos")
         if (
             not isinstance(videos, list)

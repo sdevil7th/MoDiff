@@ -2646,7 +2646,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:26a6c14c8453d0683094160f2a317e8fe33d86a0dd82b21c44c6cf27b936b5f9",
+  "contentHash": "sha256:76c1139e2c206ec01ba1412787ab10010c588eeb11bd9bcf8877b71bf7c61b30",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -10692,7 +10692,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "899278fd37ac0d31bd73d18642ef432ddab4e9d022b53291f47a7f806407c308",
+    "templateBundleSha256": "e537e8c5a6caca7104f82b676ef394a9b2ada180aeb97c8985b81772d561b87c",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
