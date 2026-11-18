@@ -373,6 +373,14 @@ def _amd_instinct_qualification(host: dict[str, Any], spec: dict[str, Any]) -> t
     return "preview", issues
 
 
+def _resume_command(accelerator: str, *, windows: bool, experimental: bool, backend_only: bool) -> str:
+    if windows:
+        command = rf".\install.ps1 -Accelerator {accelerator} -Resume"
+        return command + (" -AllowExperimental" if experimental else "") + (" -BackendOnly" if backend_only else "")
+    command = f"./install.sh --accelerator {accelerator} --resume"
+    return command + (" --allow-experimental" if experimental else "") + (" --backend-only" if backend_only else "")
+
+
 def build_plan(args: argparse.Namespace) -> dict[str, Any]:
     host = detect_host()
     profile = resolve_profile(args.accelerator, host, allow_experimental=args.allow_experimental, non_interactive=args.non_interactive)
@@ -403,17 +411,13 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
     uv_config = ROOT / spec["uv_config"] if spec.get("uv_config") else None
     if uv_config is not None and not uv_config.is_file():
         issues.append(_issue("profile-lock-missing", f"Profile package-index configuration is missing: {uv_config}"))
-    if host["os"] == "windows":
-        cpu_fallback_command = r".\install.ps1 -Accelerator cpu"
-        resume_command = r".\install.ps1 -Accelerator auto -Resume"
-        if tier == "experimental":
-            resume_command += " -AllowExperimental"
-    else:
-        cpu_fallback_command = "./install.sh --accelerator cpu"
-        resume_accelerator = "amd-instinct" if profile == "amd-instinct-rocm-linux" else "auto"
-        resume_command = f"./install.sh --accelerator {resume_accelerator} --resume"
-        if tier == "experimental":
-            resume_command += " --allow-experimental"
+    windows = host["os"] == "windows"
+    cpu_fallback_command = r".\install.ps1 -Accelerator cpu" if windows else "./install.sh --accelerator cpu"
+    resume_command = _resume_command(
+        "amd-instinct" if profile == "amd-instinct-rocm-linux" else args.accelerator,
+        windows=windows, experimental=tier == "experimental" or args.allow_experimental,
+        backend_only=args.backend_only,
+    )
     steps = [
         {"id": "detect", "title": "Detect hardware and operating system", "phase": "detect", "status": "complete", "automatic": True},
         {"id": "resolve-profile", "title": f"Select {profile}", "phase": "plan", "status": "complete", "automatic": True},
@@ -878,7 +882,7 @@ def _install_client(*, backend_only: bool, python: Path | None = None) -> dict[s
     environment["PATH"] = str(Path(toolchains["node"]).parent) + os.pathsep + environment.get("PATH", "")
     print("Installing locked client dependencies...", file=sys.stderr)
     _run_client_step(
-        _npm_command(toolchains, "ci"),
+        _npm_command(toolchains, "ci", "--include=dev"),
         client=client,
         environment=environment,
         log_name="npm-ci.log",
@@ -953,6 +957,22 @@ print(json.dumps({{'required_present': sorted(required), 'prohibited_absent': so
 """
 
 
+def _verify_required_packages(python: Path, *, environment: dict[str, str]) -> None:
+    # Use the staged interpreter and the same import/codec probes as preflight.
+    # pip check alone cannot detect a broken native package or missing codec.
+    script = r"""
+from modiff.preflight import required_package_statuses
+failures = [f"{package['distribution']}: {package['error']}"
+            for package in required_package_statuses() if not package['available']]
+if failures:
+    raise SystemExit('\n'.join(failures))
+"""
+    result = _command([str(python), "-c", script], timeout=120, env=environment)
+    if result["returncode"] != 0:
+        detail = result["stderr"].strip() or result["stdout"].strip()
+        raise RuntimeError(f"Required package validation failed: {detail}")
+
+
 def install(args: argparse.Namespace) -> dict[str, Any]:
     prior_journal = _read_journal()
     if prior_journal.get("consent", {}).get("experimental-platform") is True:
@@ -997,7 +1017,7 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
         plan = build_plan(args)
     if reboot_required:
         _write_journal(status="reboot-required", current_phase="system-preparation", reboot_required=True,
-                       next_action="./install.sh --resume" + (" --allow-experimental" if args.allow_experimental else ""))
+                       next_action=plan["resume_command"])
         print("\nA reboot or complete sign-out is required before GPU access can be verified.")
         print(f"Resume afterward with: {_read_journal()['next_action']}")
         if not args.non_interactive and _confirm("Reboot now?"):
@@ -1041,7 +1061,13 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
         _write_journal(status="failed", current_phase="validation", failure=detail,
                        rollback={"performed": False, "reason": "staged environment was never promoted"}, next_action=plan["resume_command"])
         raise RuntimeError(f"Profile package policy failed: {detail}")
-    _run([uv, "pip", "check", "--python", str(python)])
+    try:
+        _run([uv, "pip", "check", "--python", str(python)])
+        _verify_required_packages(python, environment=smoke_environment)
+    except (RuntimeError, subprocess.CalledProcessError) as error:
+        _write_journal(status="failed", current_phase="validation", failure=str(error),
+                       rollback={"performed": False, "reason": "staged environment was never promoted"}, next_action=plan["resume_command"])
+        raise
     requirement = Path(plan["requirements"])
     runtime_contract = runtime_contract_paths(requirement)
     smoke_result = json.loads(smoke["stdout"].strip().splitlines()[-1])
@@ -1108,7 +1134,8 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    resume_command = r".\install.ps1 -Accelerator auto -Resume" if os.name == "nt" else "./install.sh --accelerator auto --resume"
+    resume_command = _resume_command(args.accelerator, windows=os.name == "nt",
+                                     experimental=args.allow_experimental, backend_only=args.backend_only)
     if args.json:
         args.non_interactive = True
     if _read_journal().get("consent", {}).get("experimental-platform") is True:

@@ -117,7 +117,7 @@ def test_valid_legacy_receipt_cannot_hide_missing_required_base_packages(tmp_pat
     monkeypatch.setattr(runtime_profile, "_device_tensor_probe", lambda *args: {"ready": True})
     observed = runtime_profile.runtime_profile({"torch": {"available": True}}, venv=tmp_path)
     assert not observed["execution_ready"] and observed["repair_required"]
-    assert observed["repair_command"] == "uv sync --extra cpu"
+    assert observed["repair_command"] == "uv sync --locked --extra cpu"
 
 
 @pytest.mark.parametrize("os_name,architecture,execution_ready", [

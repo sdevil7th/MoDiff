@@ -803,6 +803,21 @@ successful run, and retain immutable definitions and unrelated preview owners.
   minified files or mistake regenerated inventory hashes for new qualification.
   Stop expanding the campaign when the requested scope has sufficient evidence.
 
+## Admitting a new model route
+
+- Exercise each advertised task's actual pinned-library preparation path with
+  small inputs before acquiring weights. A text call can pass while an image
+  or video branch needs an additional codec. Put required Python packages in
+  the ordinary project contract and exercise the same capability probe during
+  guided setup and preflight.
+- Check the connected stage's real component reads, including dependencies on
+  components owned by other stages. Test decode working memory separately
+  from weight residency, and check phase transitions clear obsolete progress.
+- Verify that a fresh template, a saved workflow and a compatible model switch
+  all display the same generic stage cards. Compare the ordered executable
+  graph before and after presentation changes and keep the saved input and
+  output evidence tied to its recorded run.
+
 Keep acceptance criteria in [workbench acceptance](workbench-acceptance.md),
 implementation contracts in technical references, and dated plans/run ledgers in
 Git history or local evidence. Retiring a tracker must preserve unresolved

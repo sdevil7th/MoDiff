@@ -332,7 +332,7 @@ class RuntimeProfileTests(unittest.TestCase):
         self.assertEqual(profile["status"], "ready")
         self.assertFalse(profile["repair_required"])
         self.assertEqual(profile["runtime_contract"]["status"], "verified")
-        self.assertEqual(profile["repair_command"], "uv sync --extra cpu")
+        self.assertEqual(profile["repair_command"], "uv sync --locked --extra cpu")
 
     def test_legacy_contract_record_is_non_blocking_when_runtime_checks_pass(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -395,7 +395,7 @@ class RuntimeProfileTests(unittest.TestCase):
 
         self.assertEqual(
             profile["repair_command"],
-            "uv sync --extra cpu",
+            "uv sync --locked --extra cpu",
         )
 
     def test_native_runtime_needs_no_installer_digest(self):

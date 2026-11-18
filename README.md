@@ -23,22 +23,9 @@ Install Git, [uv](https://docs.astral.sh/uv/getting-started/installation/),
 Node.js `24.12.0`, and npm `11.6.2`. uv can provision Python 3.12.
 Use two terminals for the backend and the editable frontend.
 
-The interim Windows candidate is on `fix-ui-ux-issues` in both
-repositories. These updates are not released on `main`. The reviewed Windows
-application source pair is:
-
-| Repository    | Application source before final packaging  |
-| ------------- | ------------------------------------------ |
-| MoDiff        | `1239d1cecd12a7318eb263ca17c34d4fc0445d14` |
-| MoDiff-client | `c561a01395044fd71c1918e95fb9e9709d8e7601` |
-
-These application source revisions were reviewed on 1 November 2026. Final
-documentation, CI pairing and bundled-client packaging commits can be later
-descendants; they do not expand model or hardware qualification. Record
-`git rev-parse HEAD` in each checkout and use the final paired handoff when the
-branch advances. To reproduce the application source before packaging, check out
-the two commits above in separate checkouts. This candidate is not an all-platform
-release.
+Use the current `fix-ui-ux-issues` branch in both repositories for the interim
+Windows candidate. These updates are not released on `main`. If you already
+cloned the branch, update both checkouts before using these commands.
 
 **Terminal 1 — backend:** clone both repositories into the same parent directory,
 then start the backend. These commands work in Linux shells and Windows PowerShell.
@@ -47,16 +34,16 @@ then start the backend. These commands work in Linux shells and Windows PowerShe
 git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
 git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
-uv sync --extra cpu
-uv run --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
-uv run --extra cpu python main.py
+uv sync --locked --extra cpu
+uv run --locked --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
+uv run --locked --extra cpu python main.py
 ```
 
 The CPU profile is for API/UI development. For NVIDIA inference, use `--extra cuda`
 in each command; for Intel, use `--extra xpu`. On Apple Silicon, omit the extra.
-Transformers and PEFT are installed with the base application; ordinary image and
-LoRA workflows need no optional-runtime installation or activation. Setup installs
-Python packages without downloading model weights. `uv sync` reconciles `.venv`
+The base application includes Transformers, PEFT and PyAV. PyAV provides the
+H.264 codec used for LTX image conditioning. Setup installs Python packages
+without downloading model weights. `uv sync --locked` reconciles `.venv`
 with the selected profile: use a separate checkout when testing a different
 accelerator. See the [full setup guide](docs/developer-setup.md) for specialized AMD profiles,
 explicit `uv pip` commands, repair, and upgrades.
@@ -65,7 +52,7 @@ explicit `uv pip` commands, repair, and upgrades.
 
 ```text
 cd MoDiff-client
-npm ci
+npm ci --include=dev
 npm run dev
 ```
 
@@ -73,6 +60,16 @@ Keep the backend running at <http://127.0.0.1:8088> and open the URL printed by
 Vite for the editable frontend. Press `Ctrl+C` in each terminal to stop it.
 See the [full developer setup guide](docs/developer-setup.md) for accelerator prerequisites,
 optional runtimes, repair, and bundled-app setup.
+
+## Historical Windows test baseline
+
+The application source reviewed on 1 November 2026 predates the current setup
+commands. The following revisions identify that test baseline.
+
+| Repository    | Application source before final packaging  |
+| ------------- | ------------------------------------------ |
+| MoDiff        | `1239d1cecd12a7318eb263ca17c34d4fc0445d14` |
+| MoDiff-client | `c561a01395044fd71c1918e95fb9e9709d8e7601` |
 
 ## Before you install
 
@@ -457,7 +454,7 @@ Use the accelerator you deliberately selected instead of `auto` when retaining
 an explicit profile. The installer detects changes across profile
 requirements, `pyproject.toml`, and the accelerator manifest, then rebuilds the
 sibling client bundle during a normal paired installation. For native installs,
-run `uv sync` with the same accelerator extra after pulling; intentional dependency
+run `uv sync --locked` with the same accelerator extra after pulling; intentional dependency
 upgrades use `uv lock --upgrade-package <package>` followed by validation. A `--backend-only`/`-BackendOnly` repair
 does not update the installed client.
 
@@ -471,7 +468,7 @@ individual review and backups.
 Do not edit `web/assets/index.js` or `web/assets/index.css` by hand. They are generated artifacts.
 
 1. Finish and validate changes in the MoDiff-client repository.
-2. Run `npm ci` and `npm run check` there. The check command produces `dist/` after frontend tests and validation.
+2. Run `npm ci --include=dev` and `npm run check` there. The check command produces `dist/` after frontend tests and validation.
 3. Mirror the **contents** of `dist/` into this backend's `web/` directory, deleting stale generated bundle files while preserving backend-owned `web/user/` custom fields. Do not create `web/dist/`.
 4. Confirm that `web/index.html`, `web/assets/`, and `web/favicon.ico` came from the same build, and that any existing `web/user/` directory survived the sync. A source-release build intentionally has no `web/template-gallery/` directory; the normal installer adds the verified local payload.
 5. Start the backend and verify `/`, `/assets/index.js`, and `/template-gallery/manifest.json`. Lightweight source-release builds without an installer pass retain immutable Hub URL resolution.

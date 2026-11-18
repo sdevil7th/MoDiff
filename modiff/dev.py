@@ -21,7 +21,7 @@ def runtime_command(command: str, arguments: list[str]) -> tuple[list[str], dict
     venv = ROOT / ".venv"
     python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     if not python.is_file():
-        raise ValueError("No environment exists. Run uv sync --extra cpu, or choose your accelerator extra.")
+        raise ValueError("No environment exists. Run uv sync --locked --extra cpu, or choose your accelerator extra.")
     state = read_state(venv) or {}
     environment = os.environ.copy()
     if state.get("profile") == "amd-rocm-linux":

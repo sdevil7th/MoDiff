@@ -7,11 +7,11 @@ and PEFT. Model weights and gated-model access remain separate; optional runtime
 installation and worker activation retain separate, explicit actions and verified
 progress. See the [checklist and recovery guide](developer-setup.md#workflow-setup-checklist).
 
-Developers can install with native `uv sync --extra cpu`, `--extra cuda`, or `--extra xpu`; Apple Silicon uses `uv sync` without an extra. Use the same extra on `uv run python main.py`. Users who prefer guided setup can use the installation scripts below. Both paths install Transformers and PEFT as mandatory base dependencies. See [developer setup](developer-setup.md) for direct commands, repair, and upgrades. The browser never installs drivers or mutates Python during discovery or planning.
+Developers can install with native `uv sync --locked --extra cpu`, `--extra cuda`, or `--extra xpu`. Apple Silicon uses `uv sync --locked` without an extra. Use the same extra with `uv run --locked`. Both native and guided setup install Transformers, PEFT and PyAV as base dependencies. See [developer setup](developer-setup.md) for direct commands, repair, and upgrades. The browser never installs drivers or mutates Python during discovery or planning.
 
-Run `./install.sh` on Linux/macOS or `.\install.ps1` on Windows. The guided installer explains every action before it runs, uses the operator's uv and provisions Python 3.12, stages the backend, validates a real device tensor, and preserves the previous environment for rollback. When a sibling client is present and the build is not skipped, it downloads the verified Node 24 toolchain, downloads and SHA-256 verifies the complete pinned Template Gallery, and bundles those assets into the local client build. Hybrid NVIDIA/AMD machines must explicitly choose a profile.
+Run `./install.sh` on Linux/macOS or `.\install.ps1` on Windows. The guided installer uses the operator's uv to provision Python 3.12 and stage the backend. It verifies package consistency, required imports, the PyAV H.264 codec and a real device tensor before promoting that environment. It preserves the previous environment for rollback. When building a sibling client, it provisions the verified Node 24 toolchain, runs `npm ci --include=dev`, downloads and verifies the pinned Template Gallery, and bundles those assets into the local client build. Hybrid NVIDIA/AMD machines must explicitly choose a profile.
 
-Ordinary setup pins `diffusers==0.41.0`; the committed `uv.lock` records the
+Ordinary setup pins `diffusers==0.43.0`. The committed `uv.lock` records the
 reviewed stable release and its official PyPI wheel hash. The staged installer
 reinstalls only Diffusers from that verified locked wheel, without resolving its
 dependencies again. Other packages, including Torch, retain their ordinary
@@ -65,7 +65,7 @@ currently admits only the locally built `diffusers==0.41.0.dev0` wheel from the
 official Hugging Face Diffusers commit
 `7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941` (source tree
 `f0974e02139382cb0c8a72dd29b15b53041e5d56`). This is a private evaluation
-artifact, not a published stable release. Keep the ordinary `0.41.0` installation
+artifact, not a published stable release. Keep the ordinary installation
 and lock unchanged; stage evaluation in its own reviewed environment with its
 complete dependency lock. A development version string alone is insufficient.
 
@@ -185,8 +185,9 @@ a Linux `.venv/bin/python` cannot satisfy Windows' `.venv/Scripts/python.exe`.
 Setup selects uv from the operator's PATH, or a usable legacy app-local copy.
 There is no exact uv version requirement; use `uv self update` for standalone uv
 or your package manager's upgrade command. Platform-specific Node/npm archives
-retain their reviewed hashes. Failed guided setup reports the current platform's
-resume command even if a copied journal contains an old launch command.
+retain their reviewed hashes. Failed guided setup reports a resume command for
+the current platform that preserves an explicitly selected accelerator and
+backend-only setup.
 
 Install uv using its [official installation instructions](https://docs.astral.sh/uv/getting-started/installation/)
 and make it available on PATH before starting a fresh guided setup. The scripts

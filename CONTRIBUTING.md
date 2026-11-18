@@ -15,9 +15,9 @@ For script-free `uv`/`npm` setup, use [Developer setup](docs/developer-setup.md)
 Use Python 3.12 and the native CPU profile used by baseline CI:
 
 ```text
-uv sync --extra cpu
+uv sync --locked --extra cpu
 uv pip install --python .venv/bin/python -r requirements/test.txt
-uv run --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
+uv run --locked --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
 ```
 
 On Windows, use `.venv/Scripts/python.exe` in explicit `uv pip --python` commands.
@@ -173,7 +173,7 @@ The editable frontend source is not in this repository. It lives in the separate
 When a change affects the client/backend contract:
 
 1. Update and validate the client source.
-2. Run `npm ci` and `npm run check` in MoDiff-client.
+2. Run `npm ci --include=dev` and `npm run check` in MoDiff-client.
 3. Mirror the contents of its generated `dist/` directory into this repository's `web/` directory, deleting stale generated bundle files while preserving backend-owned `web/user/` custom fields.
 4. After the final mirror, verify the source coverage ledger with `scripts/generate_upstream_coverage.py --check` and the exact reviewed upstream fixtures and Gallery manifest. If regeneration is needed, use that generator and compare the semantic inventory: a bundle fingerprint refresh must not change workflow statuses, model pins or qualification claims. Verify dependent inventories in the order documented in [Cluster engineering lessons](docs/cluster-engineering-lessons.md), then run `python -m pytest -q tests/test_upstream_coverage.py` before the complete backend gate.
 5. Verify that `/` and `/assets/index.js` are served by a fresh backend. Verify `/template-gallery/manifest.json` only for an explicit offline/local Gallery build; a remote-asset build intentionally omits that directory and route.

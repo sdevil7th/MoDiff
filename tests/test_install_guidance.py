@@ -124,7 +124,7 @@ class GuidedInstallerTests(unittest.TestCase):
     def test_readme_documents_native_uv_setup_and_matching_launch_extras(self):
         root = Path(__file__).parents[1]
         readme = (root / "README.md").read_text(encoding="utf-8")
-        for command in ("--extra cuda", "uv sync --extra cpu", "uv run --extra cpu python main.py"):
+        for command in ("--extra cuda", "uv sync --locked --extra cpu", "uv run --locked --extra cpu python main.py"):
             with self.subTest(command=command):
                 self.assertIn(command, readme)
         # Reviewed source pairs advance independently of this test. Require exact
@@ -243,11 +243,10 @@ class GuidedInstallerTests(unittest.TestCase):
             )
         elif os.name != "nt":
             self.fail("A usable bash executable is required to validate the POSIX launchers.")
-        self.assertIn("$preflightCode =", windows_launcher)
-        self.assertIn("['execution_ready']", windows_launcher)
+        self.assertIn("-m modiff.preflight --fail-on-error", windows_launcher)
         self.assertNotIn("uv run", linux_launcher)
         self.assertNotRegex(linux_launcher, r"exec python(?:3)? main\.py")
-        self.assertIn("uv sync --extra cpu", linux_launcher)
+        self.assertIn("uv sync --locked --extra cpu", linux_launcher)
 
     @unittest.skipIf(os.name == "nt", "POSIX executable bits are not available on Windows")
     def test_documented_posix_entrypoints_are_executable(self):
@@ -354,6 +353,12 @@ class GuidedInstallerTests(unittest.TestCase):
     def test_group_detection_is_safe_without_posix_grp(self):
         with patch.object(install, "grp", None):
             self.assertEqual(install._groups(), [])
+
+    def test_linux_plan_resume_retains_an_explicit_backend_only_cpu_selection(self):
+        args = install.parser().parse_args(["--accelerator", "cpu", "--backend-only"])
+        with patch.object(install, "detect_host", return_value={"os": "linux", "architecture": "x86_64"}):
+            plan = install.build_plan(args)
+        self.assertEqual(plan["resume_command"], "./install.sh --accelerator cpu --resume --backend-only")
 
     def test_malformed_journal_recovers_to_a_new_valid_state(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -464,7 +469,7 @@ class GuidedInstallerTests(unittest.TestCase):
             self.assertEqual(
                 [call.args[0] for call in run.call_args_list],
                 [
-                    [npm, "ci"],
+                    [npm, "ci", "--include=dev"],
                     [str(python), str(asset_script), "verify"],
                     [npm, "run", "build"],
                 ],

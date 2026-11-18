@@ -63,12 +63,10 @@ def test_run_redirected_native_stderr_preserves_failure_boundary(tmp_path, exit_
     module = tmp_path / "modiff"
     module.mkdir()
     (module / "__init__.py").touch()
-    (module / "hardware.py").write_text(
-        "import sys\nprint('device progress', file=sys.stderr)\n"
-        "def get_hardware_snapshot(**kwargs): return {}\n", encoding="utf-8",
-    )
-    (module / "runtime_profile.py").write_text(
-        f"def runtime_profile(snapshot): return {{'execution_ready': {preflight_code == 0}}}\n",
+    (module / "preflight.py").write_text(
+        "import sys\nassert sys.argv[1:] == ['--fail-on-error']\n"
+        "print('preflight progress', file=sys.stderr)\n"
+        f"sys.exit({preflight_code})\n",
         encoding="utf-8",
     )
     (tmp_path / "main.py").write_text(
@@ -81,6 +79,7 @@ def test_run_redirected_native_stderr_preserves_failure_boundary(tmp_path, exit_
         cwd=tmp_path, capture_output=True, text=True, timeout=30,
     )
     log = (tmp_path / "result.log").read_text(encoding="utf-16")
+    assert "preflight progress" in log
     if preflight_code:
         assert result.returncode != 0
         assert "worker finished" not in log

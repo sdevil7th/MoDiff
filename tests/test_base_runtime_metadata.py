@@ -116,5 +116,5 @@ def test_damaged_native_metadata_keeps_existing_repair_guidance(temporary_base, 
     monkeypatch.setattr(runtime_profile, "_device_tensor_probe", lambda *args: {"ready": True})
     result = runtime_profile.runtime_profile({"torch": {"available": True}}, venv=tmp_path)
     assert not result["execution_ready"] and result["repair_required"]
-    assert result["repair_command"] == "uv sync --extra cpu"
+    assert result["repair_command"] == "uv sync --locked --extra cpu"
     assert not result["runtime_contract"]["verified"]

@@ -99,7 +99,10 @@ native VAE defaults to untiled decoding; full GPU residency is not proof that a
 720p clip's temporary decode allocation fits. The existing explicit VAE Tiling
 policy uses the official VAE hooks. Batch slicing alone does not reduce memory
 for a single video. Failed ordinary graph attempts currently release all runtime
-caches; successful upstream latents are not durable recovery checkpoints.
+caches. Eligible HunyuanVideo 1.5 sampling automatically retains bounded latent
+tensors and provenance before decode. The app currently saves this material for
+inspection and future recovery. Retrying a failed decode does not yet restore
+the saved tensor automatically.
 Do not promise decode-only recovery after that cleanup or a worker restart.
 
 Isolated official stages retain the connected transformer's dtype and target

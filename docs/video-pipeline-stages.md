@@ -3,9 +3,10 @@
 Fresh selected video graphs use ordinary
 **Model Setup → Encode Inputs → Generate → Video Output** stages. Generate groups
 the actual sampler and decoder when their ownership and connections allow it.
-Source preparation and optional upscaling remain independently visible. These are real
-registered nodes in the existing executor. Expanding a visual group exposes its
-actual nodes and connections. Optional upscaling, separate soundtrack generation,
+Source preparation and optional upscaling remain independently visible. The stage
+cards expose the settings and connections of their underlying executor nodes.
+Use **Inspect implementation** to see those nodes, or **Edit stages** to separate
+them on the canvas. Optional upscaling, separate soundtrack generation,
 audio fitting and delivery remain visible operations when a template needs them.
 Four stages is a starting shape, not a limit.
 
@@ -42,8 +43,9 @@ existing LTX text, opening-image and ordered-reference declarations retain those
 identities. This does not equate historical whole-pipeline or sequence calls with
 new native-stage execution, relax proof locks, or qualify an unexecuted route.
 
-Fresh multi-shot templates author each shot as a separate editable Block with
-real Encode Inputs, Generate and Save Shot operations. Winter Delivery and
+Fresh multi-shot templates author each shot as a separate editable group. Inside
+each shot, Image Input (when used), Encode Inputs, Generate and Save Shot are
+ordinary cards. Winter Delivery and
 The Last Signal upscale each shot before assembly; Before Sunrise and the
 coffee sequence upscale after assembly. One shared Model Setup owns the
 primary pipeline. Storyboard, ShotPrompt and ShotInputs are deterministic data
@@ -52,7 +54,9 @@ seed inheritance. Each real Generate stage owns its editable frame count and
 conditioning; authored durations initialize those controls instead of silently
 overriding later edits. One shared per-shot FPS value supplies generation and
 Save Shot. Internal data-helper outputs without consumers are not public stage
-sockets. Assembly hides ordering bookkeeping and any explicit frame trim.
+sockets. Assemble or Assemble & Export exposes the ordered shot inputs and
+timing or delivery controls in a single card. Ordering and explicit frame trim
+remain internal operations.
 Run Shot includes that shot's model and storyboard dependencies and excludes
 other shots and final assembly. Saving a shot is a recovery side branch for
 in-memory assembly, avoiding an extra lossy encode/decode in its render inputs.

@@ -453,9 +453,9 @@ def runtime_profile(
             repair_command += " --allow-experimental"
     native_extra = {"nvidia-cuda": "cuda", "intel-xpu": "xpu", "cpu": "cpu"}.get(selected)
     if native_extra:
-        repair_command = f"uv sync --extra {native_extra}"
+        repair_command = f"uv sync --locked --extra {native_extra}"
     elif selected == "apple-mps":
-        repair_command = "uv sync"
+        repair_command = "uv sync --locked"
     elif selected == "amd-instinct-rocm-linux" and saved_profile != selected:
         repair_command = (
             f"uv pip install --python .venv/bin/python --config-file {spec['uv_config']} "

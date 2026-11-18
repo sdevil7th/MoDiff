@@ -11,7 +11,9 @@ serves its bundled client and does not require a separate Vite development serve
 
 ## Native setup and launch
 
-For a fresh checkout, select the interim Windows candidate in both repositories:
+Use the current `fix-ui-ux-issues` branch in both repositories for the interim
+Windows candidate. Update both checkouts if you already have them. For a fresh
+checkout:
 
 ```text
 git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
@@ -19,40 +21,33 @@ git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.g
 cd MoDiff
 ```
 
-These updates have not yet been released on `main`. The reviewed Windows
-application source pair before final packaging is backend
-`1239d1cecd12a7318eb263ca17c34d4fc0445d14` and client
-`c561a01395044fd71c1918e95fb9e9709d8e7601`, reviewed on 1 November 2026. Final
-documentation, CI pairing and bundled-client packaging commits can be later
-descendants; they do not expand model or hardware qualification. This candidate
-is not an all-platform release. Record `git rev-parse HEAD` in both checkouts. A
-matching branch name alone does not establish compatibility after further
-updates: use the final paired handoff, or check out these exact commits in
-separate checkouts to reproduce the application source before packaging.
+These updates have not yet been released on `main`. Record `git rev-parse HEAD`
+in both checkouts when reporting a setup or runtime issue.
 
 From the backend checkout, these commands work in Linux shells and Windows
 PowerShell without invoking repository installer scripts:
 
 ```text
-uv sync --extra cpu
-uv run --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
-uv run --extra cpu python main.py
+uv sync --locked --extra cpu
+uv run --locked --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
+uv run --locked --extra cpu python main.py
 ```
 
 For NVIDIA, use `--extra cuda` in every command. For Intel, use `--extra xpu`.
-On Apple Silicon, omit the extra: `uv sync` and `uv run python main.py` use the
+On Apple Silicon, omit the extra. `uv sync --locked` and `uv run --locked python main.py` use the
 PyPI wheel with MPS support. CPU is useful for API/UI development; it does not
 make large models practical on machines with insufficient memory.
 
 Diffusers is an ordinary published dependency pinned to the reviewed stable
-release `diffusers==0.41.0`; the committed `uv.lock` records its artifact hashes. Native
+release `diffusers==0.43.0`. The committed `uv.lock` records its artifact hashes. Native
 setup consumes that lock, and the specialized installer installs its
 hash-verified official Diffusers wheel. Changing a runtime version also changes
 optional-overlay bindings and requires explicit validation before activation.
 Upstream catalog revisions remain separate, immutable source-review evidence.
-Transformers and
-PEFT are mandatory base libraries, so ordinary text-to-image and LoRA workflows
-need no optional install or Activate step. Accelerator extras route Torch and
+Transformers and PEFT are mandatory base libraries, so ordinary text-to-image
+and LoRA workflows need no optional install or Activate step. Base setup also
+installs the pinned PyAV wheel for LTX image conditioning. Preflight checks
+that PyAV can load the H.264 encoder and decoder. Accelerator extras route Torch and
 its companion wheels to their matching official index. Basic CUDA setup does
 not require xFormers, bitsandbytes, or a Triton compiler on Windows.
 
@@ -118,12 +113,13 @@ and [cloud validation](amd-cloud-qualification.md) for host and evidence checks.
 From the sibling `MoDiff-client` checkout:
 
 ```text
-npm ci
+npm ci --include=dev
 npm run dev
 ```
 
 Keep the backend running and open the URL printed by Vite. `npm ci` consumes the
-committed npm lock. `npm run check` runs the quality gate and builds `dist/`;
+committed npm lock. `--include=dev` ensures Vite and TypeScript are available
+when the shell sets `NODE_ENV=production`. `npm run check` runs the quality gate and builds `dist/`;
 `npm run check:ui` runs browser regressions. Backend launch does not rebuild the
 client. Before either validation gate, run `npx playwright install chromium`:
 request/proxy unit tests also launch a browser. A fresh Linux host may additionally
@@ -162,7 +158,7 @@ Standalone uv installations support `uv self update`; package-manager installs
 must use their package manager. See [Astral's upgrade instructions](https://docs.astral.sh/uv/getting-started/installation/#upgrading-uv).
 MoDiff accepts the operator's uv; there is no application-specific version pin.
 
-For native accelerator profiles, after pulling application changes run `uv sync`
+For native accelerator profiles, after pulling application changes run `uv sync --locked`
 with the same accelerator extra, then preflight and restart the backend.
 Keep specialized Ryzen ROCm environments on their reviewed direct-wheel profile;
 a generic sync can replace their Torch stack. Review dependency changes against
@@ -230,7 +226,7 @@ value. For example, to opt into both parallel loaders in PowerShell before launc
 ```powershell
 $env:HF_ENABLE_PARALLEL_LOADING = 'YES'
 $env:HF_DEACTIVATE_ASYNC_LOAD = '0'
-uv run --extra cuda python main.py
+uv run --locked --extra cuda python main.py
 ```
 
 Changing these flags requires a fresh backend process: Diffusers captures its
@@ -255,3 +251,8 @@ Linux, Windows, and macOS. An unexecuted CI definition is not proof of a Windows
 GPU run. Real model qualification must record the OS, accelerator, driver,
 packages, model, and repeated successful outputs. See
 [service prototyping](service-prototyping.md) for the model-free example.
+
+The historical Windows application source pair before final packaging is backend
+`1239d1cecd12a7318eb263ca17c34d4fc0445d14` and client
+`c561a01395044fd71c1918e95fb9e9709d8e7601`. That 1 November 2026 review predates
+the current setup commands.
