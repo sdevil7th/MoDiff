@@ -2281,6 +2281,16 @@ publishes nulls for omitted fields, and a component change clears shard counters
 unless the new component reports them. An omitted measurement in the same phase
 keeps its latest value. Phase durations remain available in `phase_timings`.
 
+For an eligible failed Hunyuan decode, `GET /runs/{task_id}` includes a
+`recovery` record with `kind: "decode"`, current availability, the original
+`vaeTiling` setting, and whether an explicit tiled retry is available.
+`POST /runs/{task_id}/retry_decode` accepts the current session `sid` and
+optional boolean `enableVaeTiling`. A successful response gives the new
+`task_id` and its `recoveredFromTaskId`. A stale, unsupported, or already
+queued retry returns `409`. The ordinary queue runs the reviewed loader,
+decoder and retained video export for the new task. The original failed run
+and its input identity remain in history. [Recovery scope](large-media-models.md#hunyuanvideo-15-720p)
+
 `DELETE /queue/{task_id}` removes only the specified waiting task. Accepted
 work becomes `cancelled` with the reason `Cancelled before execution.`, no
 start time or output, and its original workflow/run identity retained in the
