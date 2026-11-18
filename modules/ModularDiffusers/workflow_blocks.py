@@ -25,7 +25,9 @@ from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_acti
 from modiff.NodeBase import NodeBase
 
 from . import components
-from .modular_utils import modular_generator_from_seed, normalize_modular_runtime_params, pipeline_class_from_model_type
+from .modular_utils import (
+    modular_generator_from_seed, normalize_modular_runtime_params, normalize_modular_seed, pipeline_class_from_model_type,
+)
 from .route_state import require_component_binding
 from .utils import collect_model_ids
 from .workflow_runtime import continuation_generator_from_seed
@@ -1758,9 +1760,13 @@ def _require_hunyuan_video_15_pipeline(pipeline_class, workflow_id):
 
 
 def _hunyuan_video_15_dimensions(width, height):
+    dimensions = []
     for label, value in (("width", width), ("height", height)):
-        if isinstance(value, bool) or not isinstance(value, int) or not 256 <= value <= 2048 or value % 16:
+        value = _bounded_integer(value, label=f"HunyuanVideo 1.5 {label}", minimum=256, maximum=2048)
+        if value % 16:
             raise ValueError(f"HunyuanVideo 1.5 {label} must be a multiple of 16 from 256 through 2048.")
+        dimensions.append(value)
+    return tuple(dimensions)
 
 
 def _hunyuan_video_15_state(node, kwargs):
@@ -1916,9 +1922,10 @@ class WorkflowHunyuanVideo15VaeEncode(_OfficialWorkflowBlockMixin, NodeBase):
             )
         call_kwargs = {"state": state, "image": image}
         if width is not None:
-            _hunyuan_video_15_dimensions(width, height)
+            width, height = _hunyuan_video_15_dimensions(width, height)
             call_kwargs.update(width=width, height=height)
         state = pipeline(**call_kwargs)
+        self.record_generation_inputs(dict(kwargs, width=state.get("width"), height=state.get("height")))
         return _hunyuan_video_15_state_result(
             workflow_id=workflow_id,
             token=token,
@@ -2034,7 +2041,7 @@ class WorkflowHunyuanVideo15Denoise(_OfficialWorkflowBlockMixin, NodeBase):
         if workflow_id == "text2video":
             width = 848 if width is None else width
             height = 480 if height is None else height
-            _hunyuan_video_15_dimensions(width, height)
+            width, height = _hunyuan_video_15_dimensions(width, height)
         elif width is not None or height is not None:
             raise ValueError(
                 "HunyuanVideo 1.5 image-to-video geometry is owned by its VAE encoder and cannot be set on denoise."
@@ -2060,7 +2067,10 @@ class WorkflowHunyuanVideo15Denoise(_OfficialWorkflowBlockMixin, NodeBase):
             maximum=100,
         )
         default_guidance = 1.0 if step_distilled else 6.0
-        guidance_scale = float(kwargs.get("guidance_scale", default_guidance))
+        raw_guidance = kwargs.get("guidance_scale", default_guidance)
+        if isinstance(raw_guidance, bool):
+            raise ValueError("HunyuanVideo 1.5 guidance scale must be finite and from 1 through 20.")
+        guidance_scale = float(raw_guidance)
         if not math.isfinite(guidance_scale) or not 1.0 <= guidance_scale <= 20.0:
             raise ValueError("HunyuanVideo 1.5 guidance scale must be finite and from 1 through 20.")
         if step_distilled and guidance_scale != 1.0:
@@ -2070,14 +2080,19 @@ class WorkflowHunyuanVideo15Denoise(_OfficialWorkflowBlockMixin, NodeBase):
         if getattr(pipeline, "guider", None) is None or not callable(getattr(pipeline.guider, "new", None)):
             raise ValueError("The official HunyuanVideo 1.5 denoise block is missing its reviewed guider component.")
         pipeline.update_components(guider=pipeline.guider.new(guidance_scale=guidance_scale))
+        seed = normalize_modular_seed(kwargs.get("seed", 0))
         call_kwargs = dict(
             state=state,
             num_frames=num_frames,
             num_inference_steps=steps,
-            generator=modular_generator_from_seed(kwargs.get("seed", 0), pipeline),
+            generator=modular_generator_from_seed(seed, pipeline),
         )
+        consumed = dict(pipeline_class=_pipeline_class, num_frames=num_frames, num_inference_steps=steps,
+                        guidance_scale=guidance_scale, seed=seed)
         if workflow_id == "text2video":
             call_kwargs.update(width=width, height=height)
+            consumed.update(width=width, height=height)
+        self.record_generation_inputs(consumed)
         state = self._run_pipeline(pipeline, **call_kwargs)
         return _hunyuan_video_15_state_result(
             workflow_id=workflow_id,

@@ -57,6 +57,17 @@ and output handling. They are not pretrained output review, hardware
 qualification, audio listening or template publication approval. New selections
 remain Expert-only until those separate checks pass.
 
+## LTX-2.5 Full conditioning
+
+The shared Generate Video and Audio operation admits text, one opening image,
+ordered keyframes and a source video. Keyframe positions address the native
+VAE latent timeline. Position zero is the beginning and `-1` is the last
+position. Non-negative positions must fit `(num_frames - 1) / temporal_compression`.
+The ordinary install supplies PyAV for Gemma 4's native H.264 conditioning
+preprocessing. The offline adapter tests execute that codec for still-image
+conditions and exercise the source-video branch on the actual Diffusers grid.
+They cover media preparation and leave pretrained inference to separate runs.
+
 ## Oversized Hub files
 
 Model Manager keeps normal Hub downloads on bounded HTTP. Hugging Face's HTTP
@@ -108,7 +119,12 @@ Do not promise decode-only recovery after that cleanup or a worker restart.
 Isolated official stages retain the connected transformer's dtype and target
 size, and the connected VAE's latent geometry, through explicit component
 dependencies. Splitting the visual stages must not substitute fallback geometry
-or drop a component read by the official stage implementation.
+or drop a component read by the official stage implementation. The ordinary
+dispatcher accepts canonical integer widget strings and records the dimensions
+the native encoder actually used. A CPU regression uses the pinned I2V index
+and tiny local components to check this binding. A separate CPU test executes
+real VAE tiles and checks policy restoration when a tile raises an allocation
+error.
 
 The exact file selections are safetensors-only. Base PyTorch attention is
 available; browsing or running does not fetch optional Hub attention kernels.
@@ -119,10 +135,10 @@ its AUP, territory, MAU, redistribution and generated-content disclosure terms.
 
 ## Remaining suite
 
-Hunyuan 720p native acceptance, LTX-2.5 Full, PAN 2, SANA-WM and the MiniMax/Pika/P-H3
-feature audit remain integration work. An SDK class, a Hub repository or sufficient VRAM alone is not an
-executable integration. Required safety packages, packed-weight formats,
-publisher terms and GPU kernels must each have a compatible reviewed path.
+Additional PAN 2, SANA-WM, Kandinsky super-resolution and P-H3 Image workflows
+still need an executable admission. MiniMax/Pika features outside the declared
+routes need separate review. Check weight formats, required packages, publisher
+terms and device kernels before qualifying these routes.
 
 Sources: [official Diffusers release](https://github.com/huggingface/diffusers/releases/tag/v0.43.0),
 [Kandinsky 6 API](https://huggingface.co/docs/diffusers/main/en/api/pipelines/kandinsky6),

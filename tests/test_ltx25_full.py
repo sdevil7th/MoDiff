@@ -118,6 +118,79 @@ def test_generic_facade_preserves_each_real_conditioning_route(mode):
     assert result['frames_out'] == 1 and result['audio']['channels'] == 1
 
 
+@pytest.mark.parametrize('mode,expected_positions', [
+    ('text_to_video_with_audio', []),
+    ('image_to_video_with_audio', [0]),
+    ('reference_to_video_with_audio', [0, 1, 2]),
+    ('video_to_video_with_audio', [0]),
+])
+def test_admitted_full_route_preprocesses_with_the_pinned_official_pipeline(monkeypatch, mode, expected_positions):
+    import torch
+    from diffusers.pipelines.ltx2 import pipeline_ltx2_condition as official
+
+    codec = Mock(wraps=official.apply_image_conditioning_crf)
+    monkeypatch.setattr(official, 'apply_image_conditioning_crf', codec)
+    height, width, num_frames = 64, 96, 17
+    y, x = np.indices((80, 72))
+    image = Image.fromarray(np.stack((x * 3, y * 2, x + y), axis=-1).astype(np.uint8))
+    last = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+
+    class PreparingPipeline(Pipeline):
+        preprocess_conditions = official.LTX2ConditionPipeline.preprocess_conditions
+        trim_conditioning_sequence = official.LTX2ConditionPipeline.trim_conditioning_sequence
+
+        def __init__(self):
+            super().__init__()
+            self.text_encoder.config = SimpleNamespace(model_type='gemma4')
+            self.vae.dtype = torch.float32
+
+        def __call__(self, **arguments):
+            self.prepared = self.preprocess_conditions(
+                arguments['conditions'], arguments['height'], arguments['width'],
+                arguments['num_frames'], device='cpu',
+            )
+            return super().__call__(**arguments)
+
+    values = {'mode': mode, 'height': height, 'width': width, 'num_frames': num_frames, 'strength': .75}
+    if mode == 'image_to_video_with_audio':
+        values['reference_images'] = [image]
+    elif mode == 'reference_to_video_with_audio':
+        values.update(reference_images=[image, image, last], condition_indices_json='[0, 1, -1]')
+    elif mode == 'video_to_video_with_audio':
+        # The native 8n+1 grid trims a 14-frame source to 9 usable frames.
+        values['video'] = [image, last] * 7
+    pipeline = PreparingPipeline()
+    full.bind(pipeline)
+    invoke(pipeline, **values)
+    pixels, strengths, positions, counts = pipeline.prepared
+    assert positions == expected_positions
+    expected_counts = [9] if mode == 'video_to_video_with_audio' else [1] * len(expected_positions)
+    assert counts == expected_counts and strengths == [.75] * len(expected_positions)
+    assert len(pixels) == len(expected_counts)
+    for stack, count in zip(pixels, expected_counts, strict=True):
+        assert stack.shape == (1, 3, count, height, width) and stack.dtype is torch.float32
+        assert stack.min() >= -1.0 and stack.max() <= 1.0 and stack.std() > .1
+    if mode == 'reference_to_video_with_audio':
+        assert torch.equal(pixels[0], pixels[1])
+        assert not torch.equal(pixels[0], pixels[2])
+    if mode == 'video_to_video_with_audio':
+        assert torch.equal(pixels[0][:, :, 0], pixels[0][:, :, 2])
+        assert not torch.equal(pixels[0][:, :, 0], pixels[0][:, :, 1])
+    expected_codec_calls = sum(count == 1 for count in expected_counts)
+    assert [call.args[1] for call in codec.call_args_list] == [18] * expected_codec_calls
+
+
+def test_keyframe_outside_native_latent_grid_fails_before_inference():
+    pipeline = bound()
+    image = Image.new('RGB', (32, 32))
+    # A 17-pixel-frame output has three native positions (0, 1, 2). The
+    # official preparation would silently skip a condition at position 3.
+    with pytest.raises(ValueError, match='latent'):
+        invoke(pipeline, mode='reference_to_video_with_audio', num_frames=17,
+               reference_images=[image, image], condition_indices_json='[0, 3]')
+    assert pipeline.received == []
+
+
 @pytest.mark.parametrize('name,value', [
     ('width', 33), ('height', -1), ('num_frames', 8), ('seed', True),
     ('num_inference_steps', 0), ('frame_rate', float('nan')), ('guidance_scale', -1),

@@ -73,24 +73,48 @@ def test_joint_video_adapter_preserves_image_expansion_audio_and_native_sample_r
 ):
     import inspect
     import numpy as np
+    import torch
     from diffusers import Kandinsky6TI2VAPipeline
+    from diffusers.video_processor import VideoProcessor
     from modules.DiffusersVideo.main import GenerateVideoAudio
     from PIL import Image
 
     class Pipeline:
         _modiff_video_pipeline_class = pipeline_class
         _execution_device = "cpu"
+        vae_scale_factor_spatial = 8
         vae_scale_factor_temporal = 4
+        transformer_patch_size = (1, 2, 2)
+        transformer = SimpleNamespace(config=SimpleNamespace(visual_cond=True, visual_token_type_num_embeddings=2))
+        _callback_tensor_inputs = Kandinsky6TI2VAPipeline._callback_tensor_inputs
         audio_sample_rate = 44100
+
+        def __init__(self):
+            self.audio_vae = self.vocoder = object()
+            self.video_processor = VideoProcessor(vae_scale_factor=self.vae_scale_factor_spatial)
+            self.vae = SimpleNamespace(dtype=torch.float32, config=SimpleNamespace(scaling_factor=0.5),
+                                       encode=self.encode_test_pixels)
+            self.conditioning_pixels = self.conditioning_latents = None
+
+        def encode_test_pixels(self, pixels):
+            self.conditioning_pixels = pixels
+            return SimpleNamespace(latents=pixels.new_ones((1, 16, 1, 4, 4)))
 
         def __call__(self, **kwargs):
             self.received = kwargs
+            inputs = inspect.signature(Kandinsky6TI2VAPipeline.check_inputs).parameters
+            Kandinsky6TI2VAPipeline.check_inputs(self, **{key: kwargs[key] for key in inputs if key in kwargs})
+            if kwargs["image"] is not None:
+                self.conditioning_latents = Kandinsky6TI2VAPipeline.encode_image(
+                    self, kwargs["image"], kwargs["height"], kwargs["width"], torch.device("cpu"),
+                    torch.float32, generator=kwargs["generator"],
+                )
             return SimpleNamespace(
                 frames=[[Image.new("RGB", (32, 32))]],
                 audio=np.zeros((1, 4410), dtype=np.float32) if kwargs["sample_audio"] else None,
             )
 
-    pipeline, image = Pipeline(), Image.new("RGB", (32, 32))
+    pipeline, image = Pipeline(), Image.new("RGB", (64, 40), (190, 70, 110))
     node = GenerateVideoAudio() if audio else Generate()
     result = node.execute(
         pipeline=pipeline,
@@ -111,6 +135,12 @@ def test_joint_video_adapter_preserves_image_expansion_audio_and_native_sample_r
     assert pipeline.received["expand_prompts"] is expand
     assert pipeline.received["sample_audio"] is audio
     assert pipeline.received["generator"].initial_seed() == 42
+    if mode == "image_to_video":
+        assert pipeline.conditioning_pixels.shape == (1, 3, 1, 32, 32)
+        assert pipeline.conditioning_latents.shape == (1, 4, 4, 16)
+        assert torch.all(pipeline.conditioning_latents == 0.5)
+    else:
+        assert pipeline.conditioning_pixels is None and pipeline.conditioning_latents is None
     assert result["frames_out"] == 1
     assert ("audio" in result) is audio
     if audio:

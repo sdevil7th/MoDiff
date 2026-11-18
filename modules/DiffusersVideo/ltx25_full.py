@@ -159,8 +159,10 @@ def execute(node, pipeline, adapter, mode, values):
         if values.get(field) is not None and type(values[field]) is not bool:
             raise ValueError(f'{field} must be a boolean.')
     condition_strength = _number(values, 'strength', 1., maximum=1.)
-    indices = _json_integers(values.get('condition_indices_json'), label='Keyframe positions',
-                            minimum=-1, maximum=frames - 1, default=None)
+    # The official conditioner indexes the compressed temporal grid. A
+    # pixel-frame index outside that grid would silently omit the keyframe.
+    indices = _json_integers(values.get('condition_indices_json'), label='Keyframe latent positions',
+                            minimum=-1, maximum=(frames - 1) // temporal, default=None)
     if indices is not None and mode != 'reference_to_video_with_audio':
         raise ValueError('Keyframe positions apply only to ordered-reference generation.')
     conditions = None

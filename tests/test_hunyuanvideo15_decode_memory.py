@@ -72,6 +72,53 @@ def test_missing_vae_memory_contract_is_not_silently_accepted():
             node.execute(vae_tiling=True)
 
 
+def test_official_decode_uses_real_tiles_and_restores_policy_after_native_tile_fault(monkeypatch):
+    import torch
+    from diffusers import AutoencoderKLHunyuanVideo15, HunyuanVideo15ModularPipeline
+    from diffusers.modular_pipelines import PipelineState
+
+    definition = HunyuanVideo15ModularPipeline()
+    block = blocks._official_stage_block(definition.blocks.get_workflow('text2video'), 'decode')
+    pipeline = block.init_pipeline()
+    vae = AutoencoderKLHunyuanVideo15(block_out_channels=(32,) * 5, layers_per_block=1).eval()
+    vae.enable_tiling(tile_sample_min_height=32, tile_sample_min_width=32,
+                      tile_latent_min_height=2, tile_latent_min_width=2, tile_overlap_factor=.5)
+    vae.disable_tiling()
+    pipeline.update_components(vae=vae)
+    node = blocks.WorkflowHunyuanVideo15Decode()
+    latents = torch.zeros((1, 32, 2, 2, 3))
+    tile_calls = []
+    native_decode = vae.decoder.forward
+
+    def run():
+        state = PipelineState()
+        state.set('latents', latents)
+        return ('HunyuanVideo15ModularPipeline', 'text2video', object(), pipeline, state)
+
+    def observe_tile(tile):
+        tile_calls.append(tuple(tile.shape))
+        assert vae.use_tiling
+        return native_decode(tile)
+
+    # Only the already separately tested loader/state envelope is supplied
+    # here. Both the selected Diffusers decoder stage and its VAE are real.
+    monkeypatch.setattr(blocks, '_hunyuan_video_15_state', lambda *args: run())
+    monkeypatch.setattr(vae.decoder, 'forward', observe_tile)
+    frames = node.execute(vae_tiling=True)['video']
+    assert len(frames) == 5 and all(frame.size == (48, 32) for frame in frames)
+    assert len(tile_calls) > 1 and all(shape[-1] <= 2 for shape in tile_calls)
+    assert vae.use_tiling is False
+
+    def fail_in_native_tile(tile):
+        assert vae.use_tiling and tile.shape[-1] <= 2
+        raise torch.OutOfMemoryError('controlled failure during a native decode tile')
+
+    monkeypatch.setattr(vae.decoder, 'forward', fail_in_native_tile)
+    with pytest.raises(torch.OutOfMemoryError, match='native decode tile'):
+        node.execute(vae_tiling=True)
+    assert vae.use_tiling is False
+
+
 @pytest.mark.parametrize('profile,expected', [
     ('hunyuan-video15-720p-t2v:official-modular-workflow', True),
     ('hunyuan-video15-720p-i2v:official-modular-workflow', True),
