@@ -173,8 +173,10 @@ def _content_hash(value: Mapping[str, Any]) -> str:
     return "sha256:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
-def _file_hash(path: Path) -> str:
-    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+def _tracked_text_hash(path: Path) -> str:
+    # Match Git's LF form for tracked text even in a checkout with CRLF bytes.
+    source = path.read_bytes().replace(b"\r\n", b"\n")
+    return "sha256:" + hashlib.sha256(source).hexdigest()
 
 
 def _canonical_task(task: str) -> str:
@@ -550,11 +552,11 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
             "customFirstPartyExamples": "requires_paired_custom_e2e",
         },
         "sources": {
-            "operationInventory": _file_hash(OPERATION_INVENTORY_PATH),
-            "modularWorkflowSnapshot": _file_hash(modular_snapshot_path),
-            "modelArtifactCatalog": _file_hash(root / "data" / "model-artifact-catalog.json"),
+            "operationInventory": _tracked_text_hash(OPERATION_INVENTORY_PATH),
+            "modularWorkflowSnapshot": _tracked_text_hash(modular_snapshot_path),
+            "modelArtifactCatalog": _tracked_text_hash(root / "data" / "model-artifact-catalog.json"),
             "publicExecutionProfiles": _content_hash({"profiles": image_profiles}),
-            "exactVariantReviews": _file_hash(root / "modiff" / "image_native_variant_reviews.py"),
+            "exactVariantReviews": _tracked_text_hash(root / "modiff" / "image_native_variant_reviews.py"),
         },
         "imageTasks": sorted(_IMAGE_TASKS),
         "routes": routes,

@@ -45,6 +45,33 @@ def test_image_readiness_ledger_reproduces_without_registry_or_network(monkeypat
     assert generated["coverageBoundary"]["clientTemplatesAndTaskChoosers"] == "requires_paired_client_gate"
 
 
+def test_image_readiness_source_hash_ignores_checkout_newlines_and_detects_content_changes(tmp_path):
+    from modiff.image_prototyping_readiness import build_image_prototyping_readiness
+
+    for relative in (
+        "data/modular-workflow-contracts.json",
+        "data/model-artifact-catalog.json",
+        "modiff/image_native_variant_reviews.py",
+    ):
+        fixture = tmp_path / relative
+        fixture.parent.mkdir(exist_ok=True)
+        fixture.write_bytes((ROOT / relative).read_bytes().replace(b"\r\n", b"\n"))
+
+    catalog = tmp_path / "data" / "model-artifact-catalog.json"
+    lf = catalog.read_bytes()
+    canonical = build_image_prototyping_readiness(tmp_path)
+
+    catalog.write_bytes(lf.replace(b"\n", b"\r\n"))
+    assert build_image_prototyping_readiness(tmp_path) == canonical
+
+    changed = lf.replace(b'"apache-2.0"', b'"mit"', 1)
+    assert changed != lf
+    catalog.write_bytes(changed)
+    updated = build_image_prototyping_readiness(tmp_path)
+    assert updated["sources"]["modelArtifactCatalog"] != canonical["sources"]["modelArtifactCatalog"]
+    assert updated["contentHash"] != canonical["contentHash"]
+
+
 @pytest.mark.parametrize("host", [("linux", "x86_64"), ("windows", "x86_64"), ("macos", "arm64")])
 def test_image_readiness_ledger_is_independent_of_host_runtime_target(monkeypatch, host):
     from modiff import diffusers_profiles
