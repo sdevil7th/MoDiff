@@ -64,7 +64,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertIn("ace_step_text_to_audio", base["publicTemplateIds"])
         self.assertEqual(sum(template_id in row["publicTemplateIds"] for row in workflows.values()), 1)
 
-    def test_h3_scene_adds_only_an_experimental_contract_without_public_output(self):
+    def test_h3_scene_has_a_reviewed_example_and_keeps_its_experimental_contract(self):
         workflow = next(row for row in self.ledger["canonicalWorkflows"]
                         if row["id"] == "MiniMaxH3ImageModularPipeline:text_to_image:minimax_h3_image_old_town_cat")
         template = next(row for row in self.ledger["publicTemplates"]
@@ -73,8 +73,9 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(workflow["qualificationStatus"], "graph-qualified-gallery-review-pending")
         self.assertEqual(workflow["publicTemplateIds"], [template["id"]])
         self.assertEqual(template["status"], "contract-only")
-        self.assertFalse(template["galleryExamplePresent"])
-        self.assertFalse(template["reviewedGalleryExample"])
+        self.assertTrue(template["galleryExamplePresent"])
+        self.assertTrue(template["reviewedGalleryExample"])
+        self.assertEqual(template["galleryVerificationStatus"], "reviewed")
         self.assertEqual(template["verificationStatus"], "unverified")
         self.assertEqual(template["executionSelection"]["memoryPolicy"], "custom_experimental")
 
@@ -195,7 +196,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "unreviewed": 5,
                 },
                 "publicTemplateCount": 94,
-                "reviewedGalleryTemplateCount": 86,
+                "reviewedGalleryTemplateCount": 87,
                 "templateStatusCounts": {
                     "contract-only": 11,
                     "equivalent": 0,
@@ -492,7 +493,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         templates = self.ledger["publicTemplates"]
         self.assertEqual(len({item["id"] for item in templates}), 94)
         self.assertTrue(all(item["canonicalWorkflowId"] in ledger_workflows for item in templates))
-        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 86)
+        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 87)
         for template_id in (
             "flux_lora_cinematic_octane_3d", "minimax_music3_chamber_pop", "wan_video_long_showcase",
         ):
@@ -500,11 +501,11 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertTrue(item["reviewedGalleryExample"])
             self.assertEqual(item["galleryVerificationStatus"], "reviewed")
             self.assertEqual(item["galleryExecutionCompatibility"], "historical_reference_requires_new_execution_evidence")
-        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 86)
+        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 87)
         self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 74)
         contract_only = [item for item in templates if item["status"] == "contract-only"]
         self.assertEqual(len(contract_only), 11)
-        self.assertEqual(sum(item["reviewedGalleryExample"] for item in contract_only), 10)
+        self.assertEqual(sum(item["reviewedGalleryExample"] for item in contract_only), 11)
         for item in contract_only:
             self.assertIn(item["canonicalWorkflowId"], experimental)
             self.assertEqual(item["verificationStatus"], "unverified")
@@ -583,7 +584,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(source["mode"], "huggingface")
             self.assertRegex(source["revision"], r"^[0-9a-f]{40}$")
             self.assertRegex(source["assetSetId"], r"^sha256:canonical-json:[0-9a-f]{64}$")
-            self.assertEqual(len(ledger_gallery_ids), 86)
+            self.assertEqual(len(ledger_gallery_ids), 87)
 
     def test_remote_asset_build_requires_an_explicit_reviewed_gallery_manifest(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

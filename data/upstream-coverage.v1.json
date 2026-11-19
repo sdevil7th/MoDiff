@@ -2652,7 +2652,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:6c93417f596bc061370f25817b2733b9a39852bcf6eebd4140eaed55bf7b86fa",
+  "contentHash": "sha256:99a97034bf38a7df21cf7e926809cec30968d55d8646ff04ce67558116e46c7b",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -9501,16 +9501,16 @@
         "schemaVersion": 1,
         "task": "text_to_image"
       },
-      "galleryExamplePresent": false,
+      "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": null,
-      "galleryVerificationStatus": null,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "minimax_h3_image_old_town_cat",
       "mode": "text_to_image",
       "modelType": "MiniMaxH3ImageModularPipeline",
       "readinessPolicy": "runnable",
       "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
-      "reviewedGalleryExample": false,
+      "reviewedGalleryExample": true,
       "status": "contract-only",
       "verificationStatus": "unverified"
     },
@@ -10743,7 +10743,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "67b4999ef3156cf21dd9dd469a5e04afcdd38e20970e388c16916c627d17a53f",
+    "templateBundleSha256": "771297222a4894c6a7fbc554c38705920bea15743968e0085e925fafad8b4a7d",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -10803,7 +10803,7 @@
       "unreviewed": 5
     },
     "publicTemplateCount": 94,
-    "reviewedGalleryTemplateCount": 86,
+    "reviewedGalleryTemplateCount": 87,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
