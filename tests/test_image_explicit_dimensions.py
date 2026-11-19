@@ -2,17 +2,51 @@
 
 import importlib.util
 import inspect
+import json
+import os
+from copy import deepcopy
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from modules.DiffusersImage.main import (
+    _compatible_image_contract,
     _tag_image_pipeline,
     catalog_revision,
     get_image_pipeline_adapter,
     image_pipeline_contract,
     preflight_image_action,
 )
+
+
+def test_saved_ernie_fixed_size_presentation_keeps_the_current_contract_boundary():
+    adapter = get_image_pipeline_adapter('ErnieImagePipeline')
+    current = image_pipeline_contract(adapter, 'text_to_image')
+    saved = deepcopy(current)
+    for field in ('width', 'height'):
+        saved['fieldParams'][field].update(min=1024, max=1024)
+    assert _compatible_image_contract(saved, current)
+    saved['fieldParams']['width']['step'] = 16
+    assert not _compatible_image_contract(saved, current)
+
+
+@pytest.mark.skipif(not os.getenv('MODIFF_SAVED_ERNIE_GRAPH'), reason='requires the retained original Ernie run')
+def test_retained_ernie_workflow_applies_current_size_controls_without_mutating_saved_metadata(monkeypatch):
+    from modules.DiffusersImage.main import Generate
+
+    original = Path(os.environ['MODIFF_SAVED_ERNIE_GRAPH']).read_bytes()
+    graph = json.loads(original)
+    signal = next(node['params']['image_contract']['value'] for node in graph['nodes'].values()
+                  if node['module'] == 'modules.DiffusersImage' and node['action'] == 'Generate')
+    old = deepcopy(signal)
+    observed = {}
+    monkeypatch.setattr(Generate, 'set_field_params', lambda self, key, params: observed.update({key: params}))
+    Generate('saved-ernie').update_image_contract({'image_contract': signal}, None)
+    assert signal == old
+    assert signal['fieldParams']['width']['min'] == signal['fieldParams']['width']['max'] == 1024
+    assert (observed['width']['min'], observed['width']['max'], observed['width']['step']) == (512, 2048, 32)
+    assert Path(os.environ['MODIFF_SAVED_ERNIE_GRAPH']).read_bytes() == original
 
 
 @pytest.mark.parametrize(

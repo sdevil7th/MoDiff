@@ -375,15 +375,53 @@ class DiffusersThreeDTests(unittest.TestCase):
                 self.assertEqual(saved["value"], declared)
                 self.assertIs(_validate_connected_pipeline(pipeline, saved["value"]), SHAP_E_ADAPTER)
 
-        # Previously published text presets predate these task and input declarations.
-        stale = deepcopy(DEFAULT_THREE_D_CONTRACT)
-        del stale["actions"]
-        del stale["inputContract"]
-        del stale["fieldParams"]["prompt"]
-        del stale["fieldParams"]["reference_images"]
-        with self.assertRaisesRegex(ValueError, "stale or mismatched task contract"):
-            _validate_connected_pipeline(pipeline, stale)
-        self.assertIsNone(pipeline.call_kwargs)
+    def test_saved_shap_e_text_contracts_preserve_execution_inputs(self):
+        before_actions = deepcopy(DEFAULT_THREE_D_CONTRACT)
+        del before_actions["actions"]
+        before_conditioning_fields = deepcopy(before_actions)
+        del before_conditioning_fields["inputContract"]
+        del before_conditioning_fields["fieldParams"]["prompt"]
+        del before_conditioning_fields["fieldParams"]["reference_images"]
+        for contract in (before_actions, before_conditioning_fields):
+            with self.subTest(fields=sorted(contract["fieldParams"])):
+                original = deepcopy(contract)
+                node = GenerateRenderedArtifact()
+                node.set_field_params = Mock()
+                node.update_three_d_contract({"three_d_contract": contract}, None)
+                for field, metadata in DEFAULT_THREE_D_CONTRACT["fieldParams"].items():
+                    node.set_field_params.assert_any_call(field, metadata)
+
+                pipeline = FakeShapEPipeline(frames=[Image.new("RGB", (128, 128))])
+                result = node(
+                    pipeline=pipeline, three_d_contract=contract, prompt="a small red sailboat",
+                    seed=17, num_inference_steps=19, guidance_scale=3.5, frame_size=128,
+                )
+                self.assertEqual((result["width_out"], result["height_out"]), (128, 128))
+                self.assertEqual(pipeline.call_kwargs["prompt"], "a small red sailboat")
+                self.assertEqual(pipeline.call_kwargs["generator"].initial_seed(), 17)
+                self.assertEqual(pipeline.call_kwargs["num_inference_steps"], 19)
+                self.assertEqual(pipeline.call_kwargs["guidance_scale"], 3.5)
+                self.assertEqual(pipeline.call_kwargs["frame_size"], 128)
+                self.assertEqual(contract, original)
+
+    def test_saved_shap_e_compatibility_rejects_partial_and_unreviewed_contracts(self):
+        partial = deepcopy(DEFAULT_THREE_D_CONTRACT)
+        del partial["actions"]
+        del partial["inputContract"]
+        changed_field = deepcopy(DEFAULT_THREE_D_CONTRACT)
+        del changed_field["actions"]
+        changed_field["fieldParams"]["frame_size"]["max"] = 512
+        wrong_repository = {**DEFAULT_THREE_D_CONTRACT, "repository": "other/shap-e"}
+        image = SHAP_E_IMG2IMG_ADAPTER.signal_value()
+        del image["actions"]
+        for pipeline, contract in (
+            (FakeShapEPipeline(), partial),
+            (FakeShapEPipeline(), changed_field),
+            (FakeShapEPipeline(), wrong_repository),
+            (FakeShapEImg2ImgPipeline(), image),
+        ):
+            with self.subTest(contract=contract), self.assertRaisesRegex(ValueError, "stale or mismatched task contract"):
+                _validate_connected_pipeline(pipeline, contract)
 
     def test_generation_rejects_stale_identity_and_unbounded_output(self):
         stale = FakeShapEPipeline()

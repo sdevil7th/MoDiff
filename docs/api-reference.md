@@ -1424,6 +1424,11 @@ video, synchronized video/audio, prediction maps, layer decomposition and
 rendered 3D. Rendered 3D produces an orbit video, not a mesh. Reference assembly
 uses the existing decoded-media helper, not a new file/URL loading path.
 
+Saved Shap-E text-to-3D workflows can run with the two earlier published task
+metadata formats. The backend uses the current field definitions for editing
+and checks the connected pipeline's exact model and revision at execution.
+Opening or running the workflow preserves the saved file and input settings.
+
 `binding.pipelineClass` identifies the actual implementation. It may differ
 from the selected `pipelineClass` for an existing reviewed standard fallback.
 `binding.values` contains only the exact lightweight selectors needed by the
@@ -1660,6 +1665,11 @@ recipe. A managed submission includes a bounded
 map. Graph admission checks that those exact nodes are executable and that all
 declared edges and bindings remain present. The receipt and checksum are
 consistency identifiers, not authorization tokens or live-model evidence.
+
+New managed DDPM and Consistency image workflows use the ordinary attention
+control. The backend recognizes the exact saved specification receipts for
+these two routes and validates them against their original node roles and
+wires. The saved attention selection remains explicit in the graph.
 
 An execution profile may also publish `expert_cuda_policy` with
 `schema_version: 1`. This bounded policy declares the CUDA dtypes that Studio

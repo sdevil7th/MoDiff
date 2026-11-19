@@ -1799,6 +1799,62 @@ class StudioExecutionSpecTests(unittest.TestCase):
             "Cosmos3OmniModularPipeline", "text_to_video", content_hash=historical["contentHash"],
         ))
 
+    def test_saved_ddpm_and_consistency_receipts_preserve_their_exact_managed_graphs(self):
+        root = Path(module_registry.__file__).resolve().parents[1]
+        payload = json.loads((root / "data/unconditional-studio-spec-compatibility.v1.json").read_text(encoding="utf-8"))
+        historical = {row["specification"]["modelType"]: row["specification"] for row in payload["specifications"]}
+        hashes = {
+            "DDPMPipeline": ("studio-spec-v1-6a3b6073", "studio-spec-v1-02c5414e"),
+            "ConsistencyModelPipeline": ("studio-spec-v1-95990ceb", "studio-spec-v1-f3633720"),
+        }
+        mode = "unconditional_image"
+        server = object.__new__(WebServer)
+        for model, (saved_hash, current_hash) in hashes.items():
+            with self.subTest(model=model):
+                saved = historical[model]
+                profile = saved["executionProfileId"]
+                self.assertEqual(saved["contentHash"], saved_hash)
+                resolved = studio_execution_spec_for_pair(
+                    model, mode, content_hash=saved_hash, execution_profile_id=profile,
+                )
+                self.assertEqual(json.loads(json.dumps(resolved)), saved)
+                self.assertIn(["diffusersRecipe", "attention_backend", "nativeMath"], saved["bindings"])
+                current = studio_execution_spec_for_pair(model, mode)
+                self.assertEqual(current["contentHash"], current_hash)
+                self.assertEqual(current["executionProfileId"], profile)
+                self.assertIn(("diffusersRecipe", "attention_backend", "attentionBackend"), current["bindings"])
+
+                graph, hints = executable_graph_for_spec(saved)
+                recipe_id = hints["studioExecutionSpec"]["nodes"]["diffusersRecipe"]
+                graph["nodes"][recipe_id]["params"]["attention_backend"]["value"] = "_native_math"
+                before = deepcopy((graph, hints))
+                assert_studio_execution_graph(graph, hints)
+                self.assertEqual(server._coerce_runtime_hints(hints)["studioExecutionSpec"], hints["studioExecutionSpec"])
+                self.assertEqual((graph, hints), before)
+
+                self.assertIsNone(studio_execution_spec_for_pair("DDIMPipeline", mode, content_hash=saved_hash))
+                self.assertIsNone(studio_execution_spec_for_pair(model, "text_to_image", content_hash=saved_hash))
+                self.assertIsNone(studio_execution_spec_for_pair(
+                    model, mode, content_hash=saved_hash, execution_profile_id="ddim-cifar10:direct",
+                ))
+                for changes in (
+                    {"modelType": "DDIMPipeline"},
+                    {"mode": "text_to_image"},
+                    {"autoResourcePlan": {"executionProfileId": "ddim-cifar10:direct"}},
+                ):
+                    with self.assertRaisesRegex(RuntimeError, "does not match"):
+                        assert_studio_execution_graph(graph, {**hints, **changes})
+
+                current_graph, current_hints = executable_graph_for_spec(current)
+                assert_studio_execution_graph(current_graph, current_hints)
+                del current_graph["nodes"][recipe_id]["params"]["attention_backend"]
+                with self.assertRaisesRegex(RuntimeError, "binding is missing"):
+                    assert_studio_execution_graph(current_graph, current_hints)
+
+        ddim = studio_execution_spec_for_pair("DDIMPipeline", mode)
+        self.assertEqual(ddim["contentHash"], "studio-spec-v1-238fc1df")
+        self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), ddim["bindings"])
+
     def test_cosmos3_nano_specs_use_exact_official_nodes_and_remain_unqualified(self):
         expected = {
             "text_to_image": (

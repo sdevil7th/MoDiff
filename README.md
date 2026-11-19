@@ -14,6 +14,10 @@ The [modularity walkthrough](docs/modularity-demo.md) covers editable generation
 stages, a custom image-and-mask node, connected refinement, model switching and
 saved-workflow restoration.
 
+Previously published Shap-E text-to-3D workflows can run with their original
+settings. The [API reference](docs/api-reference.md) describes the supported
+task metadata formats.
+
 > [!CAUTION]
 > MoDiff is early-stage software. It is not a production service, a multi-user platform, or a security sandbox. The server has no authentication and can execute model workflows, import custom Python modules, and access files inside its configured working directory. Keep it bound to `127.0.0.1`, install only code you trust, and read [SECURITY.md](SECURITY.md) before changing its network exposure.
 

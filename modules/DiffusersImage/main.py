@@ -2694,7 +2694,7 @@ def get_image_operation_contracts(modules) -> list[dict]:
 
 
 def _compatible_image_contract(signal: Any, expected: dict[str, Any]) -> bool:
-    """Accept only the exact pre-secondary-guidance form, never arbitrary drift.
+    """Accept reviewed historical presentations without relaxing runtime constraints.
 
     These five existing pipelines keep their original guidance argument mapping.
     Missing opt-in controls are presentation-only and cannot enable an override.
@@ -2702,6 +2702,16 @@ def _compatible_image_contract(signal: Any, expected: dict[str, Any]) -> bool:
     """
     if signal == expected:
         return True
+    if (expected['pipelineClass'], expected['mode']) == ('ErnieImagePipeline', 'text_to_image'):
+        # The published text preset used its 1024 default as both widget bounds.
+        # Keep identity and every other field exact. Field callbacks still apply
+        # the live bounds, and executable size checks still use the live adapter.
+        fields = expected['fieldParams']
+        previous = {**expected, 'fieldParams': {**fields, **{
+            key: {**fields[key], 'min': 1024, 'max': 1024} for key in ('width', 'height')
+        }}}
+        if signal == previous:
+            return True
     if 'EncodeInputs' in expected['actions']:
         # Preserve only the exact pre-stage signal. The original whole action,
         # raw-decode eligibility, task, identity and fields remain unchanged.

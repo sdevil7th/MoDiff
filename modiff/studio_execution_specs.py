@@ -12272,6 +12272,7 @@ _P3_UNCONDITIONAL_DEFINITIONS = (
         DDPM_CIFAR10_DIFFUSERS_FILES,
         32,
         1000,
+        "attentionBackend",
     ),
     (
         "ddim-cifar10:unconditional-image:v1",
@@ -12283,6 +12284,7 @@ _P3_UNCONDITIONAL_DEFINITIONS = (
         DDPM_CIFAR10_DIFFUSERS_FILES,
         32,
         50,
+        "nativeMath",
     ),
     (
         "consistency-imagenet64:unconditional-image:v1",
@@ -12294,6 +12296,7 @@ _P3_UNCONDITIONAL_DEFINITIONS = (
         CONSISTENCY_IMAGENET64_DIFFUSERS_FILES,
         64,
         1,
+        "attentionBackend",
     ),
 )
 STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
@@ -12313,9 +12316,13 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             ),
             "roles": _UNCONDITIONAL_GRAPH_ROLES,
             "edges": _UNCONDITIONAL_GRAPH_EDGES,
-            "bindings": _UNCONDITIONAL_GRAPH_BINDINGS,
+            "bindings": tuple(
+                (role, field, attention_source if (role, field) == ("diffusersRecipe", "attention_backend") else source)
+                for role, field, source in _UNCONDITIONAL_GRAPH_BINDINGS
+            ),
         }
-        for spec_id, profile_id, pipeline_class, label, family, repo, download_files, side, steps in _P3_UNCONDITIONAL_DEFINITIONS
+        for (spec_id, profile_id, pipeline_class, label, family, repo,
+             download_files, side, steps, attention_source) in _P3_UNCONDITIONAL_DEFINITIONS
     }
 )
 
@@ -18881,6 +18888,40 @@ def studio_capability_definitions() -> dict[str, dict[str, Any]]:
 def _historical_studio_execution_spec(spec_id: str, content_hash: str) -> dict[str, Any] | None:
     # Exact source-bound whole-pipeline receipts remain executable; this does
     # not migrate saved nodes or grant any new stage/placement permission.
+    unconditional_records = {
+        ("ddpm-cifar10:unconditional-image:v1", "studio-spec-v1-6a3b6073"):
+            ("DDPMPipeline", "unconditional_image", "ddpm-cifar10:direct"),
+        ("consistency-imagenet64:unconditional-image:v1", "studio-spec-v1-95990ceb"):
+            ("ConsistencyModelPipeline", "unconditional_image", "consistency-imagenet64:direct"),
+    }
+    unconditional_identity = unconditional_records.get((spec_id, content_hash))
+    if unconditional_identity is not None:
+        path = Path(__file__).resolve().parents[1] / "data/unconditional-studio-spec-compatibility.v1.json"
+        with path.open("rb") as handle:
+            raw = handle.read(11889)
+        if len(raw) != 11888 or hashlib.sha256(raw).hexdigest() != (
+            "a93888057c128548750063b16456f32fb3f25983465e81fd52d18d7b9e4defd7"
+        ):
+            raise RuntimeError("The historical unconditional-image specification bytes changed.")
+        value = json.loads(raw)
+        records = value.get("specifications") if value.get("schemaVersion") == 1 else None
+        if len(records or ()) != len(unconditional_records) or value.get("sourceCommit") != (
+            "a3132c4477bb86de9b64ef0b258a7584408a33d6"
+        ):
+            raise RuntimeError("The historical unconditional-image specification contract is invalid.")
+        matches = [row["specification"] for row in records if (
+            row["specification"]["id"], row["specification"]["contentHash"],
+        ) == (spec_id, content_hash)]
+        if len(matches) != 1:
+            raise RuntimeError("The historical unconditional-image specification identity changed.")
+        spec = matches[0]
+        if (spec["modelType"], spec["mode"], spec["executionProfileId"]) != unconditional_identity or (
+            "studio-spec-v1-" + _hash_string(_stable_json(
+                {key: item for key, item in spec.items() if key != "contentHash"}
+            )) != content_hash
+        ):
+            raise RuntimeError("The historical unconditional-image specification contract changed.")
+        return spec
     image_stage_records = {('flux-redux:edit-image:v1', 'studio-spec-v1-36b6aa16'): ('FluxReduxPipeline', 'edit_image'), ('flux-redux:multi-image-reference-edit:v1', 'studio-spec-v1-9fc6eba6'): ('FluxReduxPipeline', 'multi_image_reference_edit'), ('flux-fill:inpaint:v1', 'studio-spec-v1-ba8c8dd1'): ('FluxFillPipeline', 'inpaint'), ('flux-fill:outpaint:v1', 'studio-spec-v1-5c0d7413'): ('FluxFillPipeline', 'outpaint'), ('flux-canny:control-image:v1', 'studio-spec-v1-82045f56'): ('FluxCannyPipeline', 'control_image'), ('flux-depth:control-image:v1', 'studio-spec-v1-2d8b881e'): ('FluxDepthPipeline', 'control_image')}
     identity = image_stage_records.get((spec_id, content_hash))
     if identity is not None:
