@@ -192,7 +192,7 @@ def apply_call_inputs(options: dict[str, Any], target: dict[str, Any]) -> None:
             target.pop(f'{prefix}prompt_2', None)
 
 
-def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=None):
+def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=None, *, requested_inputs=None):
     """Capture effective bounded controls without claiming opaque RNG state.
 
     The adapter may consume text while preparing embeddings before dispatch.
@@ -253,3 +253,36 @@ def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=
         expected = image_pipeline_contract(adapter, effective['executed_task'])
         node.record_field_accounting(values, consumed=consumed, inactive=inactive,
                                      metadata={'image_contract': expected})
+    elif (node.class_name == 'Generate' and effective['executed_task'] == 'text_to_image'
+          and not encoded_inputs and requested_inputs is not None):
+        _record_plain_text_to_image_accounting(node, requested_inputs, values, call_kwargs, adapter)
+
+
+def _record_plain_text_to_image_accounting(node, requested, values, call_kwargs, adapter):
+    """Observe supported scalar controls at the actual plain image call."""
+    from modiff.execution_input_provenance import CONDITIONAL_IMAGE_ACCOUNTING_FIELDS
+    from .main import image_pipeline_contract
+
+    # Optional schedules, supplied state and other runtime inputs need their
+    # own provenance. This boundary uses a node-created generator and PIL output.
+    if (call_kwargs['output_type'] != 'pil' or values['use_guidance_scale_2']
+            or any(values.get(key) is not None for key in CALL_INPUT_PARAMS)):
+        return
+    disabled_guidance = {'use_guidance_scale_2', 'guidance_scale_2'}
+    aliases = {key: key for key in CONDITIONAL_IMAGE_ACCOUNTING_FIELDS
+               - {'image_contract', 'seed'} - disabled_guidance}
+    aliases.update(guidance_scale=adapter.guidance_parameter,
+                   image_guidance_scale=adapter.image_guidance_parameter,
+                   max_sequence_length=adapter.max_sequence_length_parameter)
+    internal = {'generator', 'return_dict', 'callback_on_step_end', 'callback_on_step_end_tensor_inputs'}
+    if call_kwargs.keys() - internal - set(aliases.values()):
+        return
+    consumed = {key: call_kwargs[argument] for key, argument in aliases.items()
+                if key in requested and argument in call_kwargs}
+    if 'seed' in requested:
+        consumed['seed'] = call_kwargs['generator'].initial_seed()
+    inactive_fields = (requested.keys() & CONDITIONAL_IMAGE_ACCOUNTING_FIELDS) - consumed.keys() - {'image_contract'}
+    inactive = {key: 'feature-disabled' if key in disabled_guidance else 'adapter-inactive'
+                for key in inactive_fields}
+    node.record_field_accounting(requested, consumed=consumed, inactive=inactive,
+                                 metadata={'image_contract': image_pipeline_contract(adapter, 'text_to_image')})

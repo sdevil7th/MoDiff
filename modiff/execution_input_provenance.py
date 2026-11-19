@@ -169,6 +169,10 @@ OUTPUT_FIELDS = {"prompt", "negativePrompt", "seed", "width", "height", "steps",
 # Additional evidence only. Do not widen the v1 summary or imply that every
 # authored control reached the library. Each supported adapter accounts for its
 # own bounded literals at the actual call/configuration boundary.
+CONDITIONAL_IMAGE_ACCOUNTING_FIELDS = frozenset('''image_contract prompt negative_prompt width height seed
+    num_inference_steps guidance_scale image_guidance_scale use_guidance_scale_2 guidance_scale_2 pag_scale
+    pag_adaptive_scale control_guidance_start control_guidance_end layers resolution cfg_normalize
+    use_en_prompt strength padding_mask_crop max_sequence_length output_type'''.split())
 ACCOUNTING_FIELDS = {
     ('DiffusersImage', 'LoadPipeline'): frozenset('''model_id pipeline_class mode revision execution_profile_id
         conditioning_kind conditioning_model_id conditioning_revision dtype device quantization_mode
@@ -184,6 +188,7 @@ ACCOUNTING_FIELDS = {
         denoiser_cache cache_threshold cache_options'''.split()),
     ('DiffusersImage', 'UnconditionalGenerate'): frozenset(
         'image_contract batch_size seed num_inference_steps eta class_label output_type'.split()),
+    ('DiffusersImage', 'Generate'): CONDITIONAL_IMAGE_ACCOUNTING_FIELDS,
     ('Image', 'Preview'): frozenset({'device', 'export'}),
 }
 ACCOUNTING_PORTS = {
@@ -192,6 +197,7 @@ ACCOUNTING_PORTS = {
     ('DiffusersRuntime', 'DiffusersExecutionRecipe'): (
         {'quantization_config': 'disabled-quantization-v1'}, {'execution_recipe': 'execution-recipe-v1'}),
     ('DiffusersImage', 'UnconditionalGenerate'): ({}, {}),
+    ('DiffusersImage', 'Generate'): ({}, {}),
     ('Image', 'Preview'): ({}, {}),
 }
 ACCOUNTING_OBJECT_INPUTS = {
@@ -199,6 +205,7 @@ ACCOUNTING_OBJECT_INPUTS = {
     ('DiffusersRuntime', 'PipelineQuantizationConfigV2'): frozenset(),
     ('DiffusersRuntime', 'DiffusersExecutionRecipe'): frozenset({'quantization_config'}),
     ('DiffusersImage', 'UnconditionalGenerate'): frozenset({'pipeline'}),
+    ('DiffusersImage', 'Generate'): frozenset({'pipeline'}),
     ('Image', 'Preview'): frozenset({'image', 'vae'}),
 }
 ACCOUNTING_REASONS = frozenset({'adapter-inactive', 'feature-disabled', 'connected-recipe',
@@ -276,7 +283,7 @@ def capture_field_accounting(node, inputs, *, consumed=None, inactive=None, supe
     """Account explicitly for known inputs without altering v1 consumed fields.
 
     ``value`` is the argument actually consumed, or the inactive input;
-    ``inputValue`` retains its normalized authored value for a supersession.
+    ``inputValue`` retains the bounded value at the adapter's input boundary.
     Metadata accepts only an exact adapter-owned expected contract and stores
     its digest, never arbitrary nested input. Unknowns cannot become evidence.
     """

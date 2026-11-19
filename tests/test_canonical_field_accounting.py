@@ -8,6 +8,7 @@ are not runtime, hardware, output quality or release qualification.
 import hashlib
 import json
 from copy import deepcopy
+from functools import wraps
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -299,6 +300,83 @@ def test_unconditional_accounting_uses_actual_supported_call_arguments(pipeline_
     for field, actual in expected.items():
         assert accounting["fields"][field]["disposition"] == "consumed"
         assert accounting["fields"][field]["value"] == actual
+
+
+def run_conditional_image(monkeypatch, pipeline_class, **changes):
+    """Execute the built-in node with the installed upstream call signature."""
+    from inspect import signature
+
+    from modules.DiffusersImage import main as image
+
+    calls = {}
+    adapter = image.IMAGE_PIPELINE_ADAPTERS[pipeline_class]
+    upstream = image.pipeline_class_from_name(adapter.load_pipeline_class).__call__
+
+    @wraps(upstream)
+    def generate(self, **kwargs):
+        signature(upstream).bind(self, **kwargs)
+        calls.update(kwargs)
+        return SimpleNamespace(images=[Image.new('RGB', (kwargs['width'], kwargs['height']))])
+
+    kernel = type(pipeline_class, (), {'__call__': generate, '_execution_device': 'cpu'})()
+    node = image.Generate('generate')
+    node.progress = lambda *a, **kw: None
+    requested = dict(image_contract=image.image_pipeline_contract(adapter, 'text_to_image'),
+                     prompt='Two silver cups', negative_prompt='', width='512', height=512,
+                     seed=42, num_inference_steps=4, guidance_scale=5, max_sequence_length=224,
+                     layers=4, resolution=640, cfg_normalize=False, use_en_prompt=False,
+                     pag_scale=2.5, pag_adaptive_scale=0.5, strength=0.8, padding_mask_crop=0,
+                     output_type='pil')
+    requested.update(changes)
+    output = node(pipeline=kernel, **requested)
+    assert output['images'][0].size == (512, 512)
+    definition = {'module': 'modules.DiffusersImage', 'action': 'Generate', 'params': {
+        key: {'value': value} for key, value in requested.items()
+    }}
+    record = bind_generation_input_origins(node.node_id, definition, node._execution_input_record)
+    receipt = build_resolved_execution_inputs({'nodes': {node.node_id: definition}}, {node.node_id: record},
+        task_id='protocol-only-conditional', attempt_index=0, node_id=node.node_id)
+    return receipt, calls, requested
+
+
+@pytest.mark.parametrize('pipeline_class,pag,sequence_parameter', [
+    ('StableDiffusionPipeline', False, None),
+    ('StableDiffusionPAGPipeline', True, None),
+    ('PRXPipeline', False, 'tokenizer_max_length'),
+])
+def test_conditional_image_accounting_matches_actual_call(monkeypatch, pipeline_class, pag, sequence_parameter):
+    receipt, calls, requested = run_conditional_image(monkeypatch, pipeline_class)
+    record = receipt['nodes'][0]
+    accounting = record['fieldAccounting']
+    assert accounting['complete'], accounting
+    fields = accounting['fields']
+    assert fields.keys() == requested.keys()
+    assert fields['image_contract']['disposition'] == 'metadata'
+    for name in ('prompt', 'negative_prompt', 'width', 'height', 'num_inference_steps', 'guidance_scale', 'output_type'):
+        assert fields[name] == {'source': 'literal', 'disposition': 'consumed',
+                                'inputValue': requested[name], 'value': calls[name]}
+    assert fields['seed']['value'] == calls['generator'].initial_seed() == 42
+    for name in ('pag_scale', 'pag_adaptive_scale'):
+        assert (name in calls) == pag
+        assert fields[name]['disposition'] == ('consumed' if pag else 'inactive')
+        assert fields[name]['value'] == (calls[name] if pag else requested[name])
+        assert name not in record['fields']  # No legacy receipt/summary expansion.
+    sequence = fields['max_sequence_length']
+    assert sequence['disposition'] == ('consumed' if sequence_parameter else 'inactive')
+    if sequence_parameter:
+        assert sequence['value'] == calls[sequence_parameter] == 224
+    assert fields['layers']['disposition'] == 'inactive'
+    assert fields['layers']['inputValue'] == fields['layers']['value'] == requested['layers'] == 4
+
+
+def test_conditional_accounting_holds_stale_metadata_and_unreviewed_literals(monkeypatch):
+    receipt, _, _ = run_conditional_image(monkeypatch, 'StableDiffusionPipeline',
+        image_contract={'pipelineClass': 'ObsoletePipeline'}, unreviewed_control='untrusted-value')
+    accounting = receipt['nodes'][0]['fieldAccounting']
+    assert not accounting['complete']
+    assert accounting['omittedFields'] == {'image_contract': 'metadata-contract-mismatch'}
+    assert 'unreviewed_control' in accounting['unaccountedFields']
+    assert 'untrusted-value' not in json.dumps(receipt)
 
 
 def test_accounting_origins_keep_connected_and_override_evidence_distinct(monkeypatch):

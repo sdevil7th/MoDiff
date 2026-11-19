@@ -55,6 +55,8 @@ def test_dispatch_receipt_matches_effective_image_call(monkeypatch, action_name,
     assert fields['prompt']['value'] == (None if external else 'authored prompt')
     assert fields['seed']['value'] == (None if external else 7)
     assert fields['num_inference_steps']['value'] == (None if external else 5)
+    if external or action_name != 'Generate' or output_type == 'latent':
+        assert 'fieldAccounting' not in node._execution_input_record
     assert fields[adapter.guidance_parameter]['value'] == calls[0][adapter.guidance_parameter]
     if adapter.secondary_guidance_parameter:
         assert fields[adapter.secondary_guidance_parameter]['value'] == calls[0][adapter.secondary_guidance_parameter]

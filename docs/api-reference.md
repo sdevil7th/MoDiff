@@ -2435,12 +2435,12 @@ exact-template claims are cleared when a resolved receipt is attached.
 
 An upstream node record may additionally contain `fieldAccounting` with its own
 `schemaVersion: 1`. This additive evidence does not widen or replace the existing
-v1 `fields`, `summary`, or display semantics. The initial scopes are the ordinary
+v1 `fields`, `summary`, or display semantics. The scopes include the ordinary
 image loader, quantization and execution-recipe builders, unconditional image
-generation, and image Preview. Other nodes do not acquire an implicit grant.
+generation, plain text-to-image generation, and image Preview.
 
 `fields` accounts for explicitly allowlisted inputs as `consumed`, `inactive`,
-`superseded`, or `metadata`. Scalar entries retain the normalized `inputValue`;
+`superseded`, or `metadata`. Scalar entries retain the bounded `inputValue`;
 `value` is the actual call/configuration argument, or the inactive input. Thus a
 resident loader can record authored device placement `none` and effective `cuda`,
 and a connected recipe can supersede its authored VAE switches. Inactive settings
@@ -2449,6 +2449,14 @@ exact adapter-owned image contract, without serializing arbitrary nested inputs.
 Its mismatch holds evidence, without changing ordinary execution. Each bound
 entry retains its current literal/connected/override origin, independently of
 its disposition. Cache reuse retains the actual successful call evidence.
+
+Plain text-to-image generation captures the requested controls before adapter
+normalization and records the effective controls dispatched to Diffusers. PAG
+scales count as consumed when passed to the upstream call. An adapter's native
+prompt-length parameter is mapped back to the corresponding generic control.
+Controls that the call skips retain their authored values as inactive. External
+generators, pre-encoded prompts, custom schedules, latent outputs, and other
+unreviewed call variants retain their legacy receipt scope.
 
 `inputProjections` and `outputProjections` contain fixed plain configuration
 projections with `kind`, `values`, and `sha256`. Their digest is SHA-256 of the kind,

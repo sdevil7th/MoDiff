@@ -5251,7 +5251,17 @@ class Generate(NodeBase):
         self.default_params = {**self.default_params, 'output_type': {
             **self.default_params['output_type'], 'options': _image_output_options(adapter, action),
         }}
-        return super().__call__(**values)
+        if action != 'Generate':
+            return super().__call__(**values)
+        from modiff.execution_input_provenance import CONDITIONAL_IMAGE_ACCOUNTING_FIELDS
+
+        # Preflight can replace inactive controls or normalize active values.
+        # Preserve their authored values only for the current dispatch.
+        self._requested_generation_inputs = {key: kwargs[key] for key in CONDITIONAL_IMAGE_ACCOUNTING_FIELDS & kwargs.keys()}
+        try:
+            return super().__call__(**values)
+        finally:
+            del self._requested_generation_inputs
 
     def update_image_contract(self, values, ref):
         """Apply the loader's backend-owned contract to this generic image form."""
@@ -5299,7 +5309,8 @@ class Generate(NodeBase):
         encoded_inputs = adapter.prepare_prompt_embeddings(pipeline, values, call_kwargs)
         apply_call_inputs(normalize_call_inputs(adapter.load_pipeline_class, values), call_kwargs)
         add_progress_callback(self, pipeline, call_kwargs, len(values["sigmas"]) if values.get("sigmas") is not None else steps)
-        record_image_call_inputs(self, values, call_kwargs, adapter, encoded_inputs)
+        record_image_call_inputs(self, values, call_kwargs, adapter, encoded_inputs,
+                                 requested_inputs=getattr(self, '_requested_generation_inputs', kwargs))
         self._active_pipeline = pipeline
         try:
             with adapter.prompt_encoding_context(pipeline):
