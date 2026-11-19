@@ -24,6 +24,8 @@ LOCAL_RECEIPT_LEDGERS = (
 )
 CURRENT_STATUS = "current"
 LEGACY_CURRENT_STATUS = "legacy_node_contract_match"
+RETAINED_RECEIPT_SCOPE = "current_reviewed_retained_recipe"
+RETAINED_PROOF_KIND = "reviewed_retained_template_execution"
 STALE_STATUS = "stale"
 BUCKET_CURRENT = "current_keep"
 BUCKET_STALE = "stale_canary_required"
@@ -84,6 +86,8 @@ def classify_public_template(template: dict) -> dict:
         raise PublicTemplateReconciliationError("Public template is missing an id.")
     historical = template.get("historicalEvidence")
     last_run = template.get("lastSuccessfulRealRun")
+    retained_proof = isinstance(last_run, dict) and last_run.get("proofKind") == RETAINED_PROOF_KIND
+    retained_scope = template.get("qualificationReceiptScope") == RETAINED_RECEIPT_SCOPE
     missing = list(template.get("missingReleaseEvidence") or [])
     reasons = list((historical or {}).get("reasons") or []) if isinstance(historical, dict) else []
     missing_nodes = list((historical or {}).get("missingBackendNodes") or []) if isinstance(historical, dict) else []
@@ -114,6 +118,28 @@ def classify_public_template(template: dict) -> dict:
         )
     elif not isinstance(workflow_id, str) or not workflow_id:
         raise PublicTemplateReconciliationError(f"Public template {template_id} is missing canonicalWorkflowId.")
+    elif retained_proof or retained_scope:
+        graph_hash = template.get("graphHash")
+        if (
+            not retained_proof
+            or not retained_scope
+            or last_run.get("templateId") != template_id
+            or last_run.get("evidenceMatch") != RETAINED_RECEIPT_SCOPE
+            or not isinstance(graph_hash, str)
+            or not graph_hash
+            or last_run.get("canonicalWorkflowHash") != graph_hash
+            or last_run.get("qualityReviewStatus") != "approved_reviewed"
+            or template.get("reviewedExampleReleaseApproved") is not True
+            or template.get("releaseEligible") is not True
+            or (historical is not None and not isinstance(historical, dict))
+            or missing
+        ):
+            raise PublicTemplateReconciliationError(
+                f"Public template {template_id} has inconsistent reviewed retained Gallery evidence."
+            )
+        bucket = BUCKET_CURRENT
+        action = "keep_reviewed_retained_example"
+        note = "The approved Gallery example matches the current recipe through its verified saved run. Keep the bytes."
     elif historical is None:
         bucket = BUCKET_NEVER
         action = "plan_first_example_canary_on_qualification_host"

@@ -135,6 +135,46 @@ class PublicTemplateReconciliationTests(unittest.TestCase):
         )
         self.assertEqual(current["bucket"], BUCKET_CURRENT)
 
+    def test_reviewed_retained_proof_keeps_the_registered_example(self):
+        scope = "current_reviewed_retained_recipe"
+        graph = "sha256:workflow-graph-v1:" + "a" * 64
+        template = {
+            **_template("retained_example", eligible=True),
+            "graphHash": graph,
+            "qualificationReceiptScope": scope,
+            "reviewedExampleReleaseApproved": True,
+            "lastSuccessfulRealRun": {
+                "proofKind": "reviewed_retained_template_execution",
+                "templateId": "retained_example",
+                "evidenceMatch": scope,
+                "canonicalWorkflowHash": graph,
+                "qualityReviewStatus": "approved_reviewed",
+            },
+        }
+        with TemporaryDirectory() as directory:
+            ledger = build_public_template_reconciliation(
+                Path(directory),
+                release_contract={
+                    "templates": [template],
+                    "coverage": {"currentHistoricalEvidenceCount": 1, "historicalEvidenceCount": 0},
+                },
+            )
+        self.assertEqual(ledger["items"][0]["action"], "keep_reviewed_retained_example")
+        self.assertEqual(ledger["summary"]["currentKeepCount"], 1)
+        self.assertEqual(ledger["summary"]["neverHadExampleCount"], 0)
+        for changes in (
+            {"qualificationReceiptScope": None},
+            {"lastSuccessfulRealRun": None},
+            {"graphHash": "different"},
+            {"reviewedExampleReleaseApproved": False},
+            {"releaseEligible": False},
+            {"missingReleaseEvidence": ["approved_gallery_example"]},
+        ):
+            with self.subTest(changes=changes), self.assertRaisesRegex(
+                PublicTemplateReconciliationError, "inconsistent reviewed retained Gallery evidence",
+            ):
+                classify_public_template({**template, **changes})
+
     def test_ledger_counts_and_refuses_to_rerun(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
@@ -235,6 +275,11 @@ class PublicTemplateReconciliationLiveLedgerTests(unittest.TestCase):
                 self.assertFalse(template["releaseEligible"])
                 self.assertIn("graph_hash", template["missingReleaseEvidence"])
                 expected[BUCKET_UNMAPPED].add(template["id"])
+            elif template.get("qualificationReceiptScope") == "current_reviewed_retained_recipe":
+                self.assertTrue(template["releaseEligible"])
+                self.assertTrue(template["reviewedExampleReleaseApproved"])
+                self.assertEqual(template["lastSuccessfulRealRun"]["proofKind"], "reviewed_retained_template_execution")
+                expected[BUCKET_CURRENT].add(template["id"])
             elif evidence is None:
                 expected[BUCKET_NEVER].add(template["id"])
             elif evidence["status"] == "stale":
