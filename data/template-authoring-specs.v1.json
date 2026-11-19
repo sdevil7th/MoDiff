@@ -14,14 +14,14 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:efc31a48644a140cd2708ce6404d5dc1ea668acbfa1a7a8c92e8803d6c759d08",
+  "contentHash": "sha256:46c4d436ef21d50a878a8c5615efc17a1cfb8c1911dfca1d48fda31cfffbbde2",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:385da72d97f69fbd024983e781cf2bd586dd12f02a51f86539dd75dad7614c28",
+      "contentHash": "sha256:d010e61764eca67377d0e578a0f8e47ae77d700794fbfe10e7e10e7532e2505e",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:307f2c3effdc97f2b90d7009bdf430494592511b3da98461091fd2ca1e49cd61"
+      "sha256": "sha256:ede123ec2a833593c1a2f5865bf2bc772d6e4a65314c3928682e86cf9141949b"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -10175,90 +10175,6 @@
     {
       "artifactPlan": {
         "cacheState": "must_be_rechecked_through_app_before_generation",
-        "componentRequirements": [],
-        "requiredArtifacts": [
-          "HuggingFaceTB/SmolLM2-135M-Instruct"
-        ]
-      },
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": "draft_complete_execution_pending",
-      "canonicalGraph": {
-        "path": "studio/hugging-face-text-generation-model/text-generation.json",
-        "sha256": "37308672398e110f79c43c6dade31ccab5e4901491a844c8767e5c9ed286bc96"
-      },
-      "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
-      "claims": {
-        "assetGenerated": false,
-        "inputSelected": false,
-        "publicTemplate": false,
-        "qualityApproved": false,
-        "rightsApproved": false,
-        "workflowExecuted": false
-      },
-      "defaultsPlan": {
-        "fields": [],
-        "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "37308672398e110f79c43c6dade31ccab5e4901491a844c8767e5c9ed286bc96",
-        "status": "canonical_defaults_captured_review_pending"
-      },
-      "generationPlan": {
-        "blockers": [
-          "exact_model_cache_state_must_be_rechecked",
-          "exact_runtime_execution_receipt_required",
-          "resource_recipe_receipt_required",
-          "model_and_output_rights_review_required",
-          "generated_asset_and_human_quality_review_required"
-        ],
-        "requiresQualifiedAccelerator": false,
-        "status": "blocked_pending_external_evidence"
-      },
-      "id": "template-authoring:HuggingFaceTextGenerationModel:text_generation",
-      "inputPlan": {
-        "items": [],
-        "status": "not_applicable"
-      },
-      "mediaKind": "json",
-      "mode": "text_generation",
-      "modelFamily": "SmolLM",
-      "modelType": "HuggingFaceTextGenerationModel",
-      "outputPlan": {
-        "mediaKinds": [
-          "json"
-        ],
-        "minimumAssetCount": 1,
-        "reviewCriteria": [
-          "bounded_decodable_result",
-          "instruction_or_source_alignment",
-          "no_unsupported_claims_or_hidden_detail_invention",
-          "receipt_matches_exact_input_and_runtime"
-        ]
-      },
-      "promptPlan": {
-        "editableBeforeQualification": true,
-        "mustBeLockedInGenerationReceipt": true,
-        "negativePrompt": {
-          "status": "not_supported_by_canonical_graph",
-          "value": null
-        },
-        "prompt": "Write a concise production brief for a 20-second documentary shot about a community repairing a storm-damaged footbridge. Include setting, subject action, camera plan, sound cues, and a clear ending in five short bullet points.",
-        "provenance": "original_modiff_mode_draft_v1",
-        "status": "drafted"
-      },
-      "publicationState": "hidden_candidate",
-      "purpose": "Author and review one json result for the exact SmolLM text generation workflow without changing its canonical graph contract.",
-      "rightsPlan": {
-        "inputMediaRights": "not_applicable",
-        "modelArtifactRights": "review_or_existing_catalog_decision_required",
-        "outputPublicationRights": "required",
-        "status": "review_required",
-        "thirdPartyBrandAndPersonalDataReview": "required"
-      },
-      "title": "SmolLM — Text Generation [HuggingFaceTextGenerationModel]"
-    },
-    {
-      "artifactPlan": {
-        "cacheState": "must_be_rechecked_through_app_before_generation",
         "componentRequirements": [
           {
             "id": "hunyuan-dit-v1-2-controlnet-canny",
@@ -13822,139 +13738,6 @@
         "thirdPartyBrandAndPersonalDataReview": "required"
       },
       "title": "Lumina — Text To Image [LuminaPipeline]"
-    },
-    {
-      "artifactPlan": {
-        "cacheState": "must_be_rechecked_through_app_before_generation",
-        "componentRequirements": [],
-        "requiredArtifacts": [
-          "prs-eth/marigold-depth-lcm-v1-0"
-        ]
-      },
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": "draft_complete_input_selection_pending",
-      "canonicalGraph": {
-        "path": "studio/marigold-depth-pipeline/depth-estimation.json",
-        "sha256": "e6cb9d127b49c86713ff98d74415fb86de845b545b511353dc4d42303b17ea44"
-      },
-      "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
-      "claims": {
-        "assetGenerated": false,
-        "inputSelected": false,
-        "publicTemplate": false,
-        "qualityApproved": false,
-        "rightsApproved": false,
-        "workflowExecuted": false
-      },
-      "defaultsPlan": {
-        "fields": [
-          {
-            "parameter": "match_input_resolution",
-            "role": "diffusersPredictMap",
-            "value": true
-          },
-          {
-            "parameter": "num_inference_steps",
-            "role": "diffusersPredictMap",
-            "value": 1
-          },
-          {
-            "parameter": "prediction_kind",
-            "role": "diffusersPredictMap",
-            "value": "depth"
-          },
-          {
-            "parameter": "processing_resolution",
-            "role": "diffusersPredictMap",
-            "value": 768
-          },
-          {
-            "parameter": "seed",
-            "role": "diffusersPredictMap",
-            "value": {
-              "isRandom": true,
-              "value": 42
-            }
-          },
-          {
-            "parameter": "alpha_channel",
-            "role": "loadImage",
-            "value": "ignore"
-          }
-        ],
-        "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "e6cb9d127b49c86713ff98d74415fb86de845b545b511353dc4d42303b17ea44",
-        "status": "canonical_defaults_captured_review_pending"
-      },
-      "generationPlan": {
-        "blockers": [
-          "reviewed_input_selection_and_rights_required",
-          "exact_model_cache_state_must_be_rechecked",
-          "exact_runtime_execution_receipt_required",
-          "resource_recipe_receipt_required",
-          "model_and_output_rights_review_required",
-          "generated_asset_and_human_quality_review_required"
-        ],
-        "requiresQualifiedAccelerator": true,
-        "status": "blocked_pending_external_evidence"
-      },
-      "id": "template-authoring:MarigoldDepthPipeline:depth_estimation",
-      "inputPlan": {
-        "items": [
-          {
-            "field": "referenceImages",
-            "mediaKind": "image",
-            "minimumCount": 1,
-            "rightsState": "review_required",
-            "selectionState": "pending_original_or_licensed_asset",
-            "technicalRequirements": [
-              "decodable_image",
-              "matches_exact_workflow_input_contract",
-              "contains_no_unreviewed_brand_or_personal_data"
-            ]
-          }
-        ],
-        "status": "selection_required"
-      },
-      "mediaKind": "image",
-      "mode": "depth_estimation",
-      "modelFamily": "Marigold",
-      "modelType": "MarigoldDepthPipeline",
-      "outputPlan": {
-        "mediaKinds": [
-          "image"
-        ],
-        "minimumAssetCount": 1,
-        "reviewCriteria": [
-          "expected_dimensions_and_decodable_output",
-          "prompt_or_task_alignment",
-          "coherent_geometry_lighting_and_materials",
-          "no_unrequested_text_watermark_or_duplicate_subject",
-          "relative_depth_order_and_edge_alignment"
-        ]
-      },
-      "promptPlan": {
-        "editableBeforeQualification": true,
-        "mustBeLockedInGenerationReceipt": false,
-        "negativePrompt": {
-          "status": "not_supported_by_canonical_graph",
-          "value": null
-        },
-        "prompt": null,
-        "provenance": "original_modiff_mode_draft_v1",
-        "status": "not_applicable"
-      },
-      "publicationState": "hidden_candidate",
-      "purpose": "Author and review one image result for the exact Marigold depth estimation workflow without changing its canonical graph contract.",
-      "rightsPlan": {
-        "inputMediaRights": "required",
-        "modelArtifactRights": "review_or_existing_catalog_decision_required",
-        "outputPublicationRights": "required",
-        "status": "review_required",
-        "thirdPartyBrandAndPersonalDataReview": "required"
-      },
-      "title": "Marigold — Depth Estimation [MarigoldDepthPipeline]"
     },
     {
       "artifactPlan": {
@@ -23392,16 +23175,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 165,
+    "authoringSpecCount": 163,
     "authoringStateCounts": {
-      "draft_complete_execution_pending": 65,
-      "draft_complete_input_selection_pending": 100
+      "draft_complete_execution_pending": 64,
+      "draft_complete_input_selection_pending": 99
     },
-    "canonicalDefaultsCapturedCount": 165,
-    "generationPendingCount": 165,
-    "inputSelectionPendingCount": 100,
-    "promptDraftedCount": 139,
-    "promptNotApplicableCount": 26,
-    "rightsReviewPendingCount": 165
+    "canonicalDefaultsCapturedCount": 163,
+    "generationPendingCount": 163,
+    "inputSelectionPendingCount": 99,
+    "promptDraftedCount": 138,
+    "promptNotApplicableCount": 25,
+    "rightsReviewPendingCount": 163
   }
 }

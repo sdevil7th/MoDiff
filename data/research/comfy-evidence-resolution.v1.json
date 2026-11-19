@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:ec5ad9f464660a7e625e5252cbe999435df14128009e7c3a3a64ab4fc12b2e56",
+  "contentHash": "sha256:c368c6bd6029c6161078d6dbb062c73689549df99ac60cdb1b7f75285a4eea8b",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -1524,11 +1524,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -1576,11 +1578,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -1628,11 +1632,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -2410,11 +2416,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -6745,11 +6753,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -6918,11 +6928,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7524,14 +7536,14 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:efc31a48644a140cd2708ce6404d5dc1ea668acbfa1a7a8c92e8803d6c759d08",
+      "contentHash": "sha256:46c4d436ef21d50a878a8c5615efc17a1cfb8c1911dfca1d48fda31cfffbbde2",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:a2214bdc7f46f97b145f6dc91ea2f6708e30f76b0f5f166791c123901fa42f19"
+      "sha256": "sha256:36efac597d7ac8115fc08307519f10d0b9c13f4f6b12a4b65914f4c8d8c7321e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:42d2ac9e7eff0bfd92f406c12a33fb1eea150de0ddea8e8cbf5c711ccf5f81c0",
+      "contentHash": "sha256:cdd32098116190e316360896504c57497368d38290eeb82f00b1dd81ab7b155d",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:95fca525bbddcd9b2bfee591786233d777fa4d0cad74867c9daf04c0158336fe"
+      "sha256": "sha256:7eff7b4e7830811ee87965695aa67b2863bafecd937d27c012c93e06c85ac63b"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -7587,9 +7599,9 @@
     },
     "newWorkflowClaims": 0,
     "recordsStillUndetermined": 1,
-    "recordsWithHiddenAuthoringSpecOption": 63,
+    "recordsWithHiddenAuthoringSpecOption": 57,
     "recordsWithInferredTask": 115,
-    "recordsWithPublicTemplateOption": 26,
+    "recordsWithPublicTemplateOption": 32,
     "recordsWithRecommendedWorkflow": 89,
     "resolutionCount": 116,
     "resolutionStateCounts": {

@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:cd8ba5b10b4a5d7d3cf46d3f837486c7cea1c8b452d28cc67dc9cb89038512ac",
+  "contentHash": "sha256:215230e47a8bf07a238e3241397ded96a924ca684a1e67bbf9327d35574e5670",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -6556,11 +6556,13 @@
         "Stable Diffusion 1.x"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -9578,11 +9580,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HuggingFaceTextGenerationModel:text_generation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
         "modelFamily": "SmolLM",
         "modelType": "HuggingFaceTextGenerationModel",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "smollm2_rain_gauge"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -16615,14 +16619,14 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:efc31a48644a140cd2708ce6404d5dc1ea668acbfa1a7a8c92e8803d6c759d08",
+      "contentHash": "sha256:46c4d436ef21d50a878a8c5615efc17a1cfb8c1911dfca1d48fda31cfffbbde2",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:a2214bdc7f46f97b145f6dc91ea2f6708e30f76b0f5f166791c123901fa42f19"
+      "sha256": "sha256:36efac597d7ac8115fc08307519f10d0b9c13f4f6b12a4b65914f4c8d8c7321e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:42d2ac9e7eff0bfd92f406c12a33fb1eea150de0ddea8e8cbf5c711ccf5f81c0",
+      "contentHash": "sha256:cdd32098116190e316360896504c57497368d38290eeb82f00b1dd81ab7b155d",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:95fca525bbddcd9b2bfee591786233d777fa4d0cad74867c9daf04c0158336fe"
+      "sha256": "sha256:7eff7b4e7830811ee87965695aa67b2863bafecd937d27c012c93e06c85ac63b"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -16681,8 +16685,8 @@
       "same_upstream_generation_different_partition_and_auxiliary": 8,
       "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 80,
-    "recordsWithPublicTemplateOption": 30,
+    "recordsWithHiddenAuthoringSpecOption": 78,
+    "recordsWithPublicTemplateOption": 32,
     "recordsWithRecommendedWorkflow": 110,
     "resolutionCount": 138,
     "resolutionStateCounts": {

@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:385da72d97f69fbd024983e781cf2bd586dd12f02a51f86539dd75dad7614c28",
+  "contentHash": "sha256:d010e61764eca67377d0e578a0f8e47ae77d700794fbfe10e7e10e7532e2505e",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -3320,43 +3320,6 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
-        "inputExamples": "not_applicable",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
-      "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "37308672398e110f79c43c6dade31ccab5e4901491a844c8767e5c9ed286bc96",
-      "graphPath": "studio/hugging-face-text-generation-model/text-generation.json",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "mediaKind": "json",
-      "mode": "text_generation",
-      "modelType": "HuggingFaceTextGenerationModel",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "AutoModelForCausalLM"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "HuggingFaceTB/SmolLM2-135M-Instruct"
-      ],
-      "requiredInputs": [],
-      "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
         "inputExamples": "required",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -4412,48 +4375,6 @@
         "Alpha-VLLM/Lumina-Next-SFT-diffusers"
       ],
       "requiredInputs": [],
-      "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
-        "inputExamples": "required",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
-      "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "e6cb9d127b49c86713ff98d74415fb86de845b545b511353dc4d42303b17ea44",
-      "graphPath": "studio/marigold-depth-pipeline/depth-estimation.json",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "mediaKind": "image",
-      "mode": "depth_estimation",
-      "modelType": "MarigoldDepthPipeline",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "MarigoldDepthPipeline"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "prs-eth/marigold-depth-lcm-v1-0"
-      ],
-      "requiredInputs": {
-        "note": "Requires exactly one source image; output is a normalized relative-depth map.",
-        "requiredImages": [
-          "referenceImages"
-        ]
-      },
       "runtimeQualificationStatus": "unqualified"
     },
     {
@@ -7352,9 +7273,9 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:42d2ac9e7eff0bfd92f406c12a33fb1eea150de0ddea8e8cbf5c711ccf5f81c0",
+      "contentHash": "sha256:cdd32098116190e316360896504c57497368d38290eeb82f00b1dd81ab7b155d",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:95fca525bbddcd9b2bfee591786233d777fa4d0cad74867c9daf04c0158336fe"
+      "sha256": "sha256:7eff7b4e7830811ee87965695aa67b2863bafecd937d27c012c93e06c85ac63b"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -7362,22 +7283,22 @@
     }
   },
   "summary": {
-    "candidateContractCount": 165,
+    "candidateContractCount": 163,
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithExecutablePublicTemplates": 60,
-    "canonicalWorkflowsWithPublicTemplates": 71,
+    "canonicalWorkflowsWithExecutablePublicTemplates": 62,
+    "canonicalWorkflowsWithPublicTemplates": 73,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 100,
+    "contractsRequiringInputExamples": 99,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 6,
-      "image": 116,
-      "json": 10,
+      "image": 115,
+      "json": 9,
       "video": 33
     },
-    "publicTemplateCount": 91
+    "publicTemplateCount": 93
   }
 }

@@ -510,6 +510,7 @@ globalThis.fetch = () => { throw new Error('Template inventory must not perform 
 globalThis.WebSocket = class { constructor() { throw new Error('Template inventory must not connect a runtime.'); } };
 const modulePath = resolve(process.argv[1]);
 const loaded = await import(pathToFileURL(modulePath).href);
+const exampleStatus = (item) => item.verificationStatus ?? item.example?.status;
 const candidates = Object.values(loaded).filter((value) =>
   Array.isArray(value) &&
   value.length > 0 &&
@@ -519,7 +520,7 @@ const candidates = Object.values(loaded).filter((value) =>
     typeof item.id === 'string' &&
     typeof item.modelType === 'string' &&
     typeof item.mode === 'string' &&
-    typeof item.verificationStatus === 'string'
+    typeof exampleStatus(item) === 'string'
   )
 ).sort((left, right) => right.length - left.length);
 if (candidates.length === 0 || (candidates[1]?.length ?? -1) === candidates[0].length) {
@@ -532,7 +533,7 @@ const templates = candidates[0].map((item) => ({
   id: item.id,
   modelType: item.modelType,
   mode: item.mode,
-  verificationStatus: item.verificationStatus,
+  verificationStatus: exampleStatus(item),
   readinessPolicy: item.readinessPolicy ?? null,
   evidencePolicy: item.evidencePolicy ?? 'generated',
   executionSelection: item.executionSelection ?? null,
