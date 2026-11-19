@@ -13,6 +13,12 @@ application integration and an unavailable upstream task are different reasons;
 record the actual reason and revisit it when the reviewed implementation changes.
 See [workbench acceptance](workbench-acceptance.md) for the broader release gate.
 
+Older saved GLM-Image, HunyuanDiT, Kandinsky 3, and Joy Image workflows can
+present their original control bounds when reopened. The generic image actions
+recognize the reviewed historical descriptors by exact model, task, and fields
+and publish the current bounds. Saved values stay in the workflow. Runtime
+preflight uses the active adapter's size, sequence, and pixel limits.
+
 ## Keep the validation claims separate
 
 Migration, output comparison and platform qualification answer different

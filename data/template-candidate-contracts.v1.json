@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:d010e61764eca67377d0e578a0f8e47ae77d700794fbfe10e7e10e7532e2505e",
+  "contentHash": "sha256:c0775dd087b9b4cdfaf96922dbab8126725a664a51437c32c41a9e2f838dbd54",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -3007,7 +3007,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "c7504887fd3d6b93dd8f44054285a0f4d8e077586e6efdf67f0ffdfef0fc3a00",
+      "graphHash": "cc97f884c9308253035cd9c05596c89d3826daa9bcf54cdca080c9ef2470381a",
       "graphPath": "studio/glm-image-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3332,7 +3332,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "5b57f7e9647531955e0e38047ae3bbb6dc4d28935f79acb2ea0b806fa59945cf",
+      "graphHash": "99ec6228e60ed6b41719fc5b779b46a146372f1f8eb325f5b97a8c000fc53ca7",
       "graphPath": "studio/hunyuan-di-t-control-net-pipeline/control-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3394,7 +3394,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "604fa5a3e2cb7e9649fbbefb66988929b58001a3e70cd8f1c77e14d4b7ba6c95",
+      "graphHash": "1579d55b3ab55bf93ee00db6ace2c7998b5b4d6a909e8685a8884e20b90453cc",
       "graphPath": "studio/hunyuan-di-tpag-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3431,7 +3431,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "8add16fe42e1586bfc36a62fdfea275bde66360ae0083d7cb83c3ce7f40061f7",
+      "graphHash": "c3c9669273117f629dcf348d711b740713329791b17c86a3bed3fb641ba326e8",
       "graphPath": "studio/hunyuan-di-t-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3572,7 +3572,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "000ba470f00cb4f8805243773dc497b7a7078a4bd86238de0ce017cd1de35ecd",
+      "graphHash": "96776d96db4ffcfbf9b766308aaaeeccd9991374c112627c06d548b703cb609d",
       "graphPath": "studio/joy-image-edit-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3614,7 +3614,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "0dc24e5c95b035ac23ea5279b3810f1750b6d0e6e3885ad2fbf008503a8e8bc3",
+      "graphHash": "ecd35257479b2eec2cbaad908fe9208ae8c22da8277107d019ca56f6322988d3",
       "graphPath": "studio/joy-image-edit-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3651,7 +3651,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "40e71f30b95057e199b771567d1dcb65f3e0f805f1e6c05b982256b2206d8f03",
+      "graphHash": "cf04b0f208a27a3b7b09cd9eb5d0f9201d8fe8fb202af73079af346e2e7244f3",
       "graphPath": "studio/joy-image-edit-plus-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3693,7 +3693,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "cc3c646913a21599fed82f412a3c00eaf8538e933f53d68625cbe0f30ef42423",
+      "graphHash": "06055f91953074293a9f2c54ae653a876deb2423f646c2b32235b3431c55d7e4",
       "graphPath": "studio/joy-image-edit-plus-pipeline/multi-image-reference-edit.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3735,7 +3735,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "96240a351d2a8933d09166917cefc987eda47d532f2824d21fd630d0465250d0",
+      "graphHash": "973a169726c69f4209babb3c9aeb53abf36b84db92f9ceaebf7d24f1902e3b76",
       "graphPath": "studio/kandinsky3-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3777,7 +3777,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "0e7b481bc0912757839a955bde03caa456c74f67d38444ed73bc820dbb153270",
+      "graphHash": "7d1ebe8cd3eae5ef4a38760b034d27d00a97af150435f213efedfeb2fa5ec44f",
       "graphPath": "studio/kandinsky3-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -7273,13 +7273,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:cdd32098116190e316360896504c57497368d38290eeb82f00b1dd81ab7b155d",
+      "contentHash": "sha256:8d517e391da0659edd6252f980939554d6e44f7b00cb305da1f9476641931f25",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:7eff7b4e7830811ee87965695aa67b2863bafecd937d27c012c93e06c85ac63b"
+      "sha256": "sha256:dcd6060be0cf43961c43e1052aadec563b20010b70d66a793bd4ce9b7a8f5e73"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:b2c5eb2ff442c52e880662fb05effc6dc3450ed39d13e834b10819f14dd5454a"
+      "sha256": "sha256:1f2241bf2582bfacc4e4e8c3760f8dbc94b085e7aef02de2cdb3ef339f1cb646"
     }
   },
   "summary": {

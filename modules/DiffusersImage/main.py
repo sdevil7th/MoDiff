@@ -2693,6 +2693,23 @@ def get_image_operation_contracts(modules) -> list[dict]:
     return result
 
 
+_LEGACY_FIXED_IMAGE_SIZE_CONTRACTS = frozenset({
+    ('ErnieImagePipeline', 'text_to_image'),
+    ('GlmImagePipeline', 'text_to_image'),
+    ('HunyuanDiTControlNetPipeline', 'control_image'),
+    ('HunyuanDiTPAGPipeline', 'text_to_image'),
+    ('HunyuanDiTPipeline', 'text_to_image'),
+    ('Kandinsky3Img2ImgPipeline', 'edit_image'),
+    ('Kandinsky3Pipeline', 'text_to_image'),
+})
+_LEGACY_IMAGE_SEQUENCE_LENGTH_CONTRACTS = frozenset({
+    ('JoyImageEditPipeline', 'edit_image'),
+    ('JoyImageEditPipeline', 'text_to_image'),
+    ('JoyImageEditPlusPipeline', 'edit_image'),
+    ('JoyImageEditPlusPipeline', 'multi_image_reference_edit'),
+})
+
+
 def _compatible_image_contract(signal: Any, expected: dict[str, Any]) -> bool:
     """Accept reviewed historical presentations without relaxing runtime constraints.
 
@@ -2702,13 +2719,18 @@ def _compatible_image_contract(signal: Any, expected: dict[str, Any]) -> bool:
     """
     if signal == expected:
         return True
-    if (expected['pipelineClass'], expected['mode']) == ('ErnieImagePipeline', 'text_to_image'):
-        # The published text preset used its 1024 default as both widget bounds.
-        # Keep identity and every other field exact. Field callbacks still apply
-        # the live bounds, and executable size checks still use the live adapter.
+    pair = (expected['pipelineClass'], expected['mode'])
+    previous_bounds = {}
+    if pair in _LEGACY_FIXED_IMAGE_SIZE_CONTRACTS:
+        previous_bounds = {field: {'min': 1024, 'max': 1024} for field in ('width', 'height')}
+    elif pair in _LEGACY_IMAGE_SEQUENCE_LENGTH_CONTRACTS:
+        previous_bounds = {'max_sequence_length': {'max': 2048}}
+    if previous_bounds:
+        # Keep all other signal fields exact. The callback publishes the live
+        # bounds and runtime preflight still validates against the live adapter.
         fields = expected['fieldParams']
         previous = {**expected, 'fieldParams': {**fields, **{
-            key: {**fields[key], 'min': 1024, 'max': 1024} for key in ('width', 'height')
+            field: {**fields[field], **bounds} for field, bounds in previous_bounds.items()
         }}}
         if signal == previous:
             return True
