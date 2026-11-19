@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:b9c645734b0cbcbdc51f407b4b0ddbf7900cd6fbdfb448bbcb4ddb3c55d78fcc",
+  "contentHash": "sha256:fcbab9092a0e3fa6ab46aaddf4da699cdfb3ba5be26eb3fbeda1d2dd387a241e",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:f8aaf95de17cc7e679c42c3cc0215cdb58d45decf51d51507f9b69dbc9c9647e",
+      "contentHash": "sha256:364b7e8482d8be591eb6da830ddef43f19af136af42481a302894c6b0d9ebae8",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:b0a3d66c3e0a0cc4ba0fb696b97d6e29365093cb154ceaf9e1862354bbf3ba41"
+      "sha256": "sha256:9d9da5081218f399425bb3fc8ff90f49480ece17c8e2f89cbe4d43ac2eaa8a0a"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:a6e1f5d823434c5d842a2efa8b207d4acd6eed7b3dcb9a6984d0d36d55f22bab"
+      "sha256": "sha256:62770b925d376647139904e6b1d2d04efc4e58a89d71cb2a0707dcefdb272c73"
     }
   },
   "specifications": [
@@ -4876,7 +4876,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/consistency-model-pipeline/unconditional-image.json",
-        "sha256": "d3a63e94386c6e833fedd2b2ac2c96911bccac7c415ff44b747375bf969d6280"
+        "sha256": "2933517a3c00bafa2dee276ae0f7fe3491c5645795415127519258fb52ada236"
       },
       "canonicalWorkflowId": "ConsistencyModelPipeline:unconditional_image",
       "claims": {
@@ -4919,7 +4919,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "d3a63e94386c6e833fedd2b2ac2c96911bccac7c415ff44b747375bf969d6280",
+        "sourceGraphSha256": "2933517a3c00bafa2dee276ae0f7fe3491c5645795415127519258fb52ada236",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -5102,7 +5102,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/ddpm-pipeline/unconditional-image.json",
-        "sha256": "9e7f94fc98bfefe14c82d08f263c40820c40c832cd6960ff97543b4509a7d1b8"
+        "sha256": "8ff65a7f881bf80c55e141a4946e9d324882efbb05d9d26f26e83fd615c377f9"
       },
       "canonicalWorkflowId": "DDPMPipeline:unconditional_image",
       "claims": {
@@ -5145,7 +5145,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "9e7f94fc98bfefe14c82d08f263c40820c40c832cd6960ff97543b4509a7d1b8",
+        "sourceGraphSha256": "8ff65a7f881bf80c55e141a4946e9d324882efbb05d9d26f26e83fd615c377f9",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -5712,7 +5712,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/ernie-image-pipeline/text-to-image.json",
-        "sha256": "e7f7d3d7a1c5182405477202e9755373c2ae8615b0bd1227a5708c700f041686"
+        "sha256": "a016aaa6322b6d3ce3f1c53e7313009249a9c2a65c7f2a84f97b9931708d4378"
       },
       "canonicalWorkflowId": "ErnieImagePipeline:text_to_image",
       "claims": {
@@ -5765,7 +5765,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "e7f7d3d7a1c5182405477202e9755373c2ae8615b0bd1227a5708c700f041686",
+        "sourceGraphSha256": "a016aaa6322b6d3ce3f1c53e7313009249a9c2a65c7f2a84f97b9931708d4378",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {

@@ -8,6 +8,29 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.mark.parametrize("directory", ["consistency-model-pipeline", "ddpm-pipeline"])
+def test_published_legacy_unet_preset_uses_automatic_attention(directory):
+    path = ROOT / "data/graphs/studio" / directory / "unconditional-image.json"
+    graph = json.loads(path.read_text(encoding="utf-8"))
+    recipe = next(node["data"] for node in graph["nodes"] if node["data"]["action"] == "DiffusersExecutionRecipe")
+    assert recipe["params"]["attention_backend"]["value"] == "auto"
+
+
+def test_published_ernie_size_bounds_match_the_native_generation_contract():
+    from modules.DiffusersImage.main import get_image_pipeline_adapter, image_pipeline_contract
+
+    path = ROOT / "data/graphs/studio/ernie-image-pipeline/text-to-image.json"
+    graph = json.loads(path.read_text(encoding="utf-8"))
+    generate = next(node["data"] for node in graph["nodes"] if node["data"]["action"] == "Generate")
+    params = generate["params"]
+    native = image_pipeline_contract(get_image_pipeline_adapter("ErnieImagePipeline"), "text_to_image")
+    for field in ("width", "height"):
+        archived_bounds = params["image_contract"]["value"]["fieldParams"][field]
+        assert archived_bounds == native["fieldParams"][field]
+        for bound in ("min", "max", "step"):
+            assert params[field][bound] == archived_bounds[bound]
+
+
 def test_image_readiness_ledger_reproduces_without_registry_or_network(monkeypatch):
     from modiff.image_prototyping_readiness import (
         build_image_prototyping_readiness,

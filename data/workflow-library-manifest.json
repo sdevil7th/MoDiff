@@ -1499,7 +1499,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/consistency-model-pipeline/unconditional-image.json",
-      "graphHash": "d3a63e94386c6e833fedd2b2ac2c96911bccac7c415ff44b747375bf969d6280"
+      "graphHash": "2933517a3c00bafa2dee276ae0f7fe3491c5645795415127519258fb52ada236"
     },
     {
       "id": "Cosmos3OmniModularPipeline:text_to_image",
@@ -1696,7 +1696,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ddpm-pipeline/unconditional-image.json",
-      "graphHash": "9e7f94fc98bfefe14c82d08f263c40820c40c832cd6960ff97543b4509a7d1b8"
+      "graphHash": "8ff65a7f881bf80c55e141a4946e9d324882efbb05d9d26f26e83fd615c377f9"
     },
     {
       "id": "DreamLiteMobilePipeline:edit_image",
@@ -1836,7 +1836,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ernie-image-pipeline/text-to-image.json",
-      "graphHash": "e7f7d3d7a1c5182405477202e9755373c2ae8615b0bd1227a5708c700f041686"
+      "graphHash": "a016aaa6322b6d3ce3f1c53e7313009249a9c2a65c7f2a84f97b9931708d4378"
     },
     {
       "id": "Flux2KleinInpaintPipeline:inpaint",

@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:f8aaf95de17cc7e679c42c3cc0215cdb58d45decf51d51507f9b69dbc9c9647e",
+  "contentHash": "sha256:364b7e8482d8be591eb6da830ddef43f19af136af42481a302894c6b0d9ebae8",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -1705,7 +1705,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "d3a63e94386c6e833fedd2b2ac2c96911bccac7c415ff44b747375bf969d6280",
+      "graphHash": "2933517a3c00bafa2dee276ae0f7fe3491c5645795415127519258fb52ada236",
       "graphPath": "studio/consistency-model-pipeline/unconditional-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1779,7 +1779,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "9e7f94fc98bfefe14c82d08f263c40820c40c832cd6960ff97543b4509a7d1b8",
+      "graphHash": "8ff65a7f881bf80c55e141a4946e9d324882efbb05d9d26f26e83fd615c377f9",
       "graphPath": "studio/ddpm-pipeline/unconditional-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1985,7 +1985,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "e7f7d3d7a1c5182405477202e9755373c2ae8615b0bd1227a5708c700f041686",
+      "graphHash": "a016aaa6322b6d3ce3f1c53e7313009249a9c2a65c7f2a84f97b9931708d4378",
       "graphPath": "studio/ernie-image-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -7352,13 +7352,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:f2f41d1ff0f2e5093d513e9dbfbffef750bdb25262bd6507f49bebb1f7696ccb",
+      "contentHash": "sha256:53387e4395280ce62de8218480131f28eb0967c336b6be507107b39c96211eda",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:dd672ab201b4b88161ac30511ae2eca4475e2828a92e43cfbc4af46aeed2aaad"
+      "sha256": "sha256:2028513da78e7bb80e81043d0c5e5ef158b0459f905c0812edaf65223230eb9e"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:a6e1f5d823434c5d842a2efa8b207d4acd6eed7b3dcb9a6984d0d36d55f22bab"
+      "sha256": "sha256:62770b925d376647139904e6b1d2d04efc4e58a89d71cb2a0707dcefdb272c73"
     }
   },
   "summary": {
