@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:c0775dd087b9b4cdfaf96922dbab8126725a664a51437c32c41a9e2f838dbd54",
+  "contentHash": "sha256:88ac0f544e5ba5935fd8319b0a8dab17a4ae6df49a25fb090cd98d3548c43bc2",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -5405,48 +5405,6 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
-      "canonicalWorkflowId": "SpandrelImageUpscale:image_upscale",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "f9506bdace33e875f26ed3af32119ef3d8c29a37dc5fb3e67f35fbc9e4a26b88",
-      "graphPath": "studio/spandrel-image-upscale/image-upscale.json",
-      "graphQualificationStatus": "execution-qualified-gallery-review-pending",
-      "mediaKind": "image",
-      "mode": "image_upscale",
-      "modelType": "SpandrelImageUpscale",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "SpandrelImageUpscaleV1"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "execution-qualified-gallery-review-pending",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "nateraw/real-esrgan"
-      ],
-      "requiredInputs": {
-        "note": "Requires one local source image and applies the exact cached Real-ESRGAN x2 model with bounded tiled inference.",
-        "requiredImages": [
-          "referenceImages"
-        ]
-      },
-      "runtimeQualificationStatus": "observed-on-recorded-platform"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
-        "inputExamples": "required",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
       "canonicalWorkflowId": "SpandrelVideoUpscale:video_upscale",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -7273,9 +7231,9 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:8d517e391da0659edd6252f980939554d6e44f7b00cb305da1f9476641931f25",
+      "contentHash": "sha256:6c93417f596bc061370f25817b2733b9a39852bcf6eebd4140eaed55bf7b86fa",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:dcd6060be0cf43961c43e1052aadec563b20010b70d66a793bd4ce9b7a8f5e73"
+      "sha256": "sha256:21b6bd58dbc19c2124ffcdd780631cca4eb2a86fdff185bee0eccd74a2ea744c"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -7283,22 +7241,22 @@
     }
   },
   "summary": {
-    "candidateContractCount": 163,
+    "candidateContractCount": 162,
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithExecutablePublicTemplates": 62,
-    "canonicalWorkflowsWithPublicTemplates": 73,
+    "canonicalWorkflowsWithExecutablePublicTemplates": 63,
+    "canonicalWorkflowsWithPublicTemplates": 74,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 99,
+    "contractsRequiringInputExamples": 98,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 6,
-      "image": 115,
+      "image": 114,
       "json": 9,
       "video": 33
     },
-    "publicTemplateCount": 93
+    "publicTemplateCount": 94
   }
 }

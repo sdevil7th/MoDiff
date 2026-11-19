@@ -14,14 +14,14 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:626403bc8e445ca2042cab0ce83c93b037e3c4b411d1d413a4dba4bff2ea4595",
+  "contentHash": "sha256:6d2b56146cdded858749ee891da0bf42aecd1ad49aac9a0a77e0dc94b31583be",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:c0775dd087b9b4cdfaf96922dbab8126725a664a51437c32c41a9e2f838dbd54",
+      "contentHash": "sha256:88ac0f544e5ba5935fd8319b0a8dab17a4ae6df49a25fb090cd98d3548c43bc2",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:898839669ed689d41af73693100f41d586d4cdd276db2058d2895ff6d6cddbf2"
+      "sha256": "sha256:fa2a11003adcb4736b07c3093be6b6073bd965a2562ef09ac1e0358b63d9bd7c"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -17131,110 +17131,6 @@
       "assets": [],
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
-        "path": "studio/spandrel-image-upscale/image-upscale.json",
-        "sha256": "f9506bdace33e875f26ed3af32119ef3d8c29a37dc5fb3e67f35fbc9e4a26b88"
-      },
-      "canonicalWorkflowId": "SpandrelImageUpscale:image_upscale",
-      "claims": {
-        "assetGenerated": false,
-        "inputSelected": false,
-        "publicTemplate": false,
-        "qualityApproved": false,
-        "rightsApproved": false,
-        "workflowExecuted": false
-      },
-      "defaultsPlan": {
-        "fields": [
-          {
-            "parameter": "alpha_channel",
-            "role": "loadImage",
-            "value": "ignore"
-          }
-        ],
-        "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "f9506bdace33e875f26ed3af32119ef3d8c29a37dc5fb3e67f35fbc9e4a26b88",
-        "status": "canonical_defaults_captured_review_pending"
-      },
-      "generationPlan": {
-        "blockers": [
-          "reviewed_input_selection_and_rights_required",
-          "exact_model_cache_state_must_be_rechecked",
-          "exact_runtime_execution_receipt_required",
-          "resource_recipe_receipt_required",
-          "model_and_output_rights_review_required",
-          "generated_asset_and_human_quality_review_required"
-        ],
-        "requiresQualifiedAccelerator": true,
-        "status": "blocked_pending_external_evidence"
-      },
-      "id": "template-authoring:SpandrelImageUpscale:image_upscale",
-      "inputPlan": {
-        "items": [
-          {
-            "field": "referenceImages",
-            "mediaKind": "image",
-            "minimumCount": 1,
-            "rightsState": "review_required",
-            "selectionState": "pending_original_or_licensed_asset",
-            "technicalRequirements": [
-              "decodable_image",
-              "matches_exact_workflow_input_contract",
-              "contains_no_unreviewed_brand_or_personal_data"
-            ]
-          }
-        ],
-        "status": "selection_required"
-      },
-      "mediaKind": "image",
-      "mode": "image_upscale",
-      "modelFamily": "Real-ESRGAN",
-      "modelType": "SpandrelImageUpscale",
-      "outputPlan": {
-        "mediaKinds": [
-          "image"
-        ],
-        "minimumAssetCount": 1,
-        "reviewCriteria": [
-          "expected_dimensions_and_decodable_output",
-          "prompt_or_task_alignment",
-          "coherent_geometry_lighting_and_materials",
-          "no_unrequested_text_watermark_or_duplicate_subject"
-        ]
-      },
-      "promptPlan": {
-        "editableBeforeQualification": true,
-        "mustBeLockedInGenerationReceipt": false,
-        "negativePrompt": {
-          "status": "not_supported_by_canonical_graph",
-          "value": null
-        },
-        "prompt": null,
-        "provenance": "original_modiff_mode_draft_v1",
-        "status": "not_applicable"
-      },
-      "publicationState": "hidden_candidate",
-      "purpose": "Author and review one image result for the exact Real-ESRGAN image upscale workflow without changing its canonical graph contract.",
-      "rightsPlan": {
-        "inputMediaRights": "required",
-        "modelArtifactRights": "review_or_existing_catalog_decision_required",
-        "outputPublicationRights": "required",
-        "status": "review_required",
-        "thirdPartyBrandAndPersonalDataReview": "required"
-      },
-      "title": "Real-ESRGAN — Image Upscale [SpandrelImageUpscale]"
-    },
-    {
-      "artifactPlan": {
-        "cacheState": "must_be_rechecked_through_app_before_generation",
-        "componentRequirements": [],
-        "requiredArtifacts": [
-          "nateraw/real-esrgan"
-        ]
-      },
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": "draft_complete_input_selection_pending",
-      "canonicalGraph": {
         "path": "studio/spandrel-video-upscale/video-upscale.json",
         "sha256": "455230c2c0e6dfb16967f5168dd32080f77788a88ceebbfeb0c2b12f8d2ba167"
       },
@@ -23175,16 +23071,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 163,
+    "authoringSpecCount": 162,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 64,
-      "draft_complete_input_selection_pending": 99
+      "draft_complete_input_selection_pending": 98
     },
-    "canonicalDefaultsCapturedCount": 163,
-    "generationPendingCount": 163,
-    "inputSelectionPendingCount": 99,
+    "canonicalDefaultsCapturedCount": 162,
+    "generationPendingCount": 162,
+    "inputSelectionPendingCount": 98,
     "promptDraftedCount": 138,
-    "promptNotApplicableCount": 25,
-    "rightsReviewPendingCount": 163
+    "promptNotApplicableCount": 24,
+    "rightsReviewPendingCount": 162
   }
 }

@@ -2087,7 +2087,9 @@
       "id": "SpandrelImageUpscale:image_upscale",
       "mode": "image_upscale",
       "modelType": "SpandrelImageUpscale",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "spandrel_x2_synthetic_gradient"
+      ],
       "qualificationStatus": "execution-qualified-gallery-review-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2650,7 +2652,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:8d517e391da0659edd6252f980939554d6e44f7b00cb305da1f9476641931f25",
+  "contentHash": "sha256:6c93417f596bc061370f25817b2733b9a39852bcf6eebd4140eaed55bf7b86fa",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -10252,6 +10254,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "SpandrelImageUpscale:image_upscale",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "spandrel_x2_synthetic_gradient",
+      "mode": "image_upscale",
+      "modelType": "SpandrelImageUpscale",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "WanVideoPipeline:text_to_video",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -10726,7 +10743,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "f7c2d8df2e7f4e55c25bac492d54985993f17834ec0dca6999d7ae1d57f73f9a",
+    "templateBundleSha256": "67b4999ef3156cf21dd9dd469a5e04afcdd38e20970e388c16916c627d17a53f",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -10774,8 +10791,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithPublicTemplates": 73,
-    "canonicalWorkflowsWithoutPublicTemplates": 152,
+    "canonicalWorkflowsWithPublicTemplates": 74,
+    "canonicalWorkflowsWithoutPublicTemplates": 151,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -10785,12 +10802,12 @@
       "research-blocked": 116,
       "unreviewed": 5
     },
-    "publicTemplateCount": 93,
-    "reviewedGalleryTemplateCount": 85,
+    "publicTemplateCount": 94,
+    "reviewedGalleryTemplateCount": 86,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
-      "executable": 82,
+      "executable": 83,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

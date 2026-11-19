@@ -73,12 +73,12 @@ class TemplateCandidateContractTests(unittest.TestCase):
             self.ledger["summary"],
             {
                 "canonicalWorkflowCount": 225,
-                "publicTemplateCount": 93,
-                "canonicalWorkflowsWithPublicTemplates": 73,
-                "canonicalWorkflowsWithExecutablePublicTemplates": 62,
-                "candidateContractCount": 163,
-                "mediaKindCounts": {"audio": 6, "image": 115, "json": 9, "video": 33},
-                "contractsRequiringInputExamples": 99,
+                "publicTemplateCount": 94,
+                "canonicalWorkflowsWithPublicTemplates": 74,
+                "canonicalWorkflowsWithExecutablePublicTemplates": 63,
+                "candidateContractCount": 162,
+                "mediaKindCounts": {"audio": 6, "image": 114, "json": 9, "video": 33},
+                "contractsRequiringInputExamples": 98,
                 "contractsWithComfyResearchRecords": 11,
                 "comfyResearchRecordCount": 14,
                 "comfyMappingStatusCounts": {"existing_contract_candidate": 14},
@@ -136,17 +136,17 @@ class TemplateCandidateContractTests(unittest.TestCase):
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 
-        self.assertEqual(len(public_templates), 93)
+        self.assertEqual(len(public_templates), 94)
         experimental_public_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "contract-only"}
         self.assertEqual(len(experimental_public_ids), 11)
         self.assertTrue(experimental_public_ids <= set(contracts_by_id))
-        self.assertEqual(len(public_workflow_ids), 62)
+        self.assertEqual(len(public_workflow_ids), 63)
         self.assertIn("AceStepAudioPipeline:text_to_audio:ace_step_lyric_music_video", public_workflow_ids)
         self.assertEqual(public_workflow_ids, coverage_public_workflow_ids)
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)
         self.assertFalse(set(contracts_by_id) & public_workflow_ids)
-        self.assertEqual(len(contracts_by_id), 163)
+        self.assertEqual(len(contracts_by_id), 162)
         experimental_public_pairs = {
             "flux2_dev_text_to_image": "Flux2ModularPipeline:text_to_image",
             "cosmos3_super_text_to_image": "Cosmos3OmniModularPipeline:text_to_image",
