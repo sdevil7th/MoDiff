@@ -997,6 +997,11 @@
           },
           "three_d_contract": {
             "default": {
+              "actions": {
+                "GenerateRenderedArtifact": [
+                  "text_to_3d"
+                ]
+              },
               "fieldParams": {
                 "frame_size": {
                   "default": 256,
@@ -1014,7 +1019,18 @@
                   "default": 64,
                   "max": 128,
                   "min": 1
+                },
+                "prompt": {
+                  "hidden": false,
+                  "required": true
+                },
+                "reference_images": {
+                  "hidden": true,
+                  "required": false
                 }
+              },
+              "inputContract": {
+                "requiredImages": []
               },
               "library": "diffusers",
               "mediaKind": "three_d",
@@ -1028,6 +1044,11 @@
             "label": "3D Contract",
             "type": "object",
             "value": {
+              "actions": {
+                "GenerateRenderedArtifact": [
+                  "text_to_3d"
+                ]
+              },
               "fieldParams": {
                 "frame_size": {
                   "default": 256,
@@ -1045,7 +1066,18 @@
                   "default": 64,
                   "max": 128,
                   "min": 1
+                },
+                "prompt": {
+                  "hidden": false,
+                  "required": true
+                },
+                "reference_images": {
+                  "hidden": true,
+                  "required": false
                 }
+              },
+              "inputContract": {
+                "requiredImages": []
               },
               "library": "diffusers",
               "mediaKind": "three_d",
@@ -1321,6 +1353,11 @@
           },
           "three_d_contract": {
             "default": {
+              "actions": {
+                "GenerateRenderedArtifact": [
+                  "text_to_3d"
+                ]
+              },
               "fieldParams": {
                 "frame_size": {
                   "default": 256,
@@ -1338,7 +1375,18 @@
                   "default": 64,
                   "max": 128,
                   "min": 1
+                },
+                "prompt": {
+                  "hidden": false,
+                  "required": true
+                },
+                "reference_images": {
+                  "hidden": true,
+                  "required": false
                 }
+              },
+              "inputContract": {
+                "requiredImages": []
               },
               "library": "diffusers",
               "mediaKind": "three_d",
@@ -1352,6 +1400,11 @@
             "label": "3D Contract",
             "type": "object",
             "value": {
+              "actions": {
+                "GenerateRenderedArtifact": [
+                  "text_to_3d"
+                ]
+              },
               "fieldParams": {
                 "frame_size": {
                   "default": 256,
@@ -1369,7 +1422,18 @@
                   "default": 64,
                   "max": 128,
                   "min": 1
+                },
+                "prompt": {
+                  "hidden": false,
+                  "required": true
+                },
+                "reference_images": {
+                  "hidden": true,
+                  "required": false
                 }
+              },
+              "inputContract": {
+                "requiredImages": []
               },
               "library": "diffusers",
               "mediaKind": "three_d",

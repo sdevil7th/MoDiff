@@ -1,6 +1,8 @@
 import ast
 import importlib.util
 import inspect
+import json
+from copy import deepcopy
 from pathlib import Path
 import unittest
 from contextlib import nullcontext
@@ -10,8 +12,10 @@ from unittest.mock import Mock, patch
 from PIL import Image
 from source_contract_helpers import source_sha256
 
+from modules import MODULE_MAP
 from modules.DiffusersThreeD.main import (
     DEFAULT_THREE_D_CONTRACT,
+    SHAP_E_ADAPTER,
     SHAP_E_MODE,
     SHAP_E_PIPELINE_CLASS,
     SHAP_E_IMG2IMG_ADAPTER,
@@ -26,6 +30,7 @@ from modules.DiffusersThreeD.main import (
     LoadPipeline,
     _load_safe_shap_e_components,
     _require_exact_selection,
+    _validate_connected_pipeline,
 )
 
 
@@ -349,6 +354,36 @@ class DiffusersThreeDTests(unittest.TestCase):
                     three_d_contract=SHAP_E_IMG2IMG_ADAPTER.signal_value(),
                     reference_images=invalid,
                 )
+
+    def test_published_shap_e_text_graph_uses_the_current_task_contract(self):
+        root = Path(__file__).resolve().parents[1]
+        graph_path = root / "data" / "graphs" / "studio" / "shap-e-pipeline" / "text-to-3d.json"
+        graph = json.loads(graph_path.read_text(encoding="utf-8"))
+        actions = {"LoadPipeline", "GenerateRenderedArtifact"}
+        owners = [
+            node["data"] for node in graph["nodes"]
+            if node["data"]["module"] == "modules.DiffusersThreeD" and node["data"]["action"] in actions
+        ]
+        self.assertEqual(len(owners), len(actions))
+        self.assertEqual({owner["action"] for owner in owners}, actions)
+        pipeline = FakeShapEPipeline()
+        for owner in owners:
+            with self.subTest(action=owner["action"]):
+                declared = MODULE_MAP[owner["module"]][owner["action"]]["params"]["three_d_contract"]["default"]
+                saved = owner["params"]["three_d_contract"]
+                self.assertEqual(saved["default"], declared)
+                self.assertEqual(saved["value"], declared)
+                self.assertIs(_validate_connected_pipeline(pipeline, saved["value"]), SHAP_E_ADAPTER)
+
+        # Previously published text presets predate these task and input declarations.
+        stale = deepcopy(DEFAULT_THREE_D_CONTRACT)
+        del stale["actions"]
+        del stale["inputContract"]
+        del stale["fieldParams"]["prompt"]
+        del stale["fieldParams"]["reference_images"]
+        with self.assertRaisesRegex(ValueError, "stale or mismatched task contract"):
+            _validate_connected_pipeline(pipeline, stale)
+        self.assertIsNone(pipeline.call_kwargs)
 
     def test_generation_rejects_stale_identity_and_unbounded_output(self):
         stale = FakeShapEPipeline()

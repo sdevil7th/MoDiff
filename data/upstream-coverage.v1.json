@@ -2067,7 +2067,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "9e7414d85a616a30f1a91e7b69b8a8a6e56ea6c27783f4419eaa499ae5e33db1",
+      "graphHash": "202eee9cfc1c2f18465c7e6eb1155ed56c3042bc14deadc339cb305cb4d70aba",
       "graphPath": "studio/shap-e-pipeline/text-to-3d.json",
       "id": "ShapEPipeline:text_to_3d",
       "mode": "text_to_3d",
@@ -2646,7 +2646,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:53387e4395280ce62de8218480131f28eb0967c336b6be507107b39c96211eda",
+  "contentHash": "sha256:b7383737f395d5193e5c365f7a8ec3e2e2b00c13a519dea85ec86dc28ce7ed10",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
