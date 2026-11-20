@@ -175,6 +175,7 @@ def test_h3_records_consumed_numeric_values_after_native_field_normalization(mon
     from types import SimpleNamespace
     from unittest.mock import Mock
     from diffusers.modular_pipelines import SequentialPipelineBlocks, LoopSequentialPipelineBlocks
+    from modiff import hardware
     from modules.ModularDiffusers import workflow_blocks
     from modules.ModularDiffusers.h3_image_adapter import execute_image_stage
     from modules.ModularDiffusers import h3_image_adapter
@@ -198,6 +199,7 @@ def test_h3_records_consumed_numeric_values_after_native_field_normalization(mon
     # This argument-binding fixture does not supply the optional H3 provider;
     # actual upstream geometry is exercised separately below in that runtime.
     monkeypatch.setattr(h3_image_adapter, '_canvas_size', lambda _pipeline, args: (args['height'], args['width']))
+    monkeypatch.setattr(hardware, 'system_memory_snapshot', lambda: {'available_bytes': 1024**3})
     node = SimpleNamespace(stage='denoise', action_key='workflow_image_denoise', _interrupt=False,
         _prepare_pipeline=lambda **kw: (object(), pipeline), record_generation_inputs=Mock(), progress=Mock())
     monkeypatch.setattr(workflow_blocks, '_reviewed_preceding_stage', lambda *a: None)
@@ -229,12 +231,13 @@ def test_h3_invalid_geometry_is_rejected_before_pipeline_preparation(field, valu
     node._prepare_pipeline.assert_not_called()
 
 
-def test_h3_impossible_output_allocation_reports_machine_capacity_before_loading(monkeypatch):
+@pytest.mark.parametrize('available', [None, 4096], ids=['unavailable', 'insufficient'])
+def test_h3_impossible_output_allocation_reports_machine_capacity_before_loading(monkeypatch, available):
     from types import SimpleNamespace
     from unittest.mock import Mock
     from modiff import hardware
     from modules.ModularDiffusers.h3_image_adapter import execute_image_stage
-    monkeypatch.setattr(hardware, 'system_memory_snapshot', lambda: {'available_bytes': 4096})
+    monkeypatch.setattr(hardware, 'system_memory_snapshot', lambda: {'available_bytes': available})
     node = SimpleNamespace(stage='denoise', _interrupt=False,
                            _prepare_pipeline=Mock(side_effect=AssertionError('Must not prepare')))
     with pytest.raises(ValueError, match='available system memory'):

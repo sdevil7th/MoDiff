@@ -2,7 +2,16 @@
 from PIL import Image
 import pytest
 
+from modiff import hardware
 from modules.VideoConditioning import main as conditioning
+
+
+@pytest.fixture(autouse=True)
+def available_host_memory(monkeypatch):
+    # Exercise the tiny canvas operations separately from host memory discovery.
+    monkeypatch.setattr(hardware, 'system_memory_snapshot', lambda: {
+        'available_bytes': 16 * 1024**3, 'total_bytes': 32 * 1024**3,
+    })
 
 
 def canvas_node():
@@ -81,11 +90,11 @@ def test_registry_publishes_the_actual_canvas_and_mask_outputs():
         assert fields[name]['display'] == 'output'
 
 
-def test_memory_pressure_rejects_before_allocating_a_canvas(monkeypatch):
-    from modiff import hardware
+@pytest.mark.parametrize('available', [None, 4 * 1024**3], ids=['unavailable', 'insufficient'])
+def test_memory_pressure_rejects_before_allocating_a_canvas(monkeypatch, available):
     frame = Image.new('RGB', (4, 3))
     monkeypatch.setattr(hardware, 'system_memory_snapshot', lambda: {
-        'available_bytes': 4 * 1024**3, 'total_bytes': 32 * 1024**3,
+        'available_bytes': available, 'total_bytes': 32 * 1024**3,
     })
     monkeypatch.setattr(Image, 'new', lambda *args, **kwargs: pytest.fail('allocated before memory admission'))
     with pytest.raises(RuntimeError, match='RAM reserve') as caught:

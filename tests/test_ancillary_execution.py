@@ -559,6 +559,7 @@ def test_parent_guider_roles_match_existing_closed_vocabulary(modules):
 @pytest.mark.parametrize('index', range(4))
 def test_selected_t2i_nf4_recipe_is_visible_and_keeps_registered_generation_default(modules, index):
     from modules.HuggingFaceTransformers import main as nodes
+    from utils.torch_utils import DEFAULT_DEVICE
     parent = parent_for(modules, index)
     declaration = parent['ancillaryOperations'][0]
     values = {(role, field): value for role, field, value in declaration['initialValues']}
@@ -576,7 +577,8 @@ def test_selected_t2i_nf4_recipe_is_visible_and_keeps_registered_generation_defa
     assert nodes.GenerateImageVideoText.params[request['maxNewTokensField']]['default'] == 3584
     assert nodes.GenerateImageVideoText.params[request['maxNewTokensField']]['max'] == 3584
     assert nodes.LoadImageTextToTextModel.params['dtype']['default'] == 'float32'
-    assert nodes.LoadImageTextToTextModel.params['device']['default'].startswith('cpu')
+    device = nodes.LoadImageTextToTextModel.params['device']
+    assert device['default'] == DEFAULT_DEVICE and DEFAULT_DEVICE in device['options']
     assert nodes.LoadImageTextToTextModel.params['quantization_mode']['default'] == 'none'
 
 
