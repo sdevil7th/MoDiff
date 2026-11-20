@@ -189,6 +189,10 @@ ACCOUNTING_FIELDS = {
     ('DiffusersImage', 'UnconditionalGenerate'): frozenset(
         'image_contract batch_size seed num_inference_steps eta class_label output_type'.split()),
     ('DiffusersImage', 'Generate'): CONDITIONAL_IMAGE_ACCOUNTING_FIELDS,
+    ('HuggingFaceSpeech', 'TranscribeAudio'): frozenset(
+        'task language timestamps chunk_length_seconds stride_length_seconds'.split()),
+    ('HuggingFaceSpeech', 'TranscribeCTCAudio'): frozenset(
+        'timestamps chunk_length_seconds stride_length_seconds'.split()),
     ('Image', 'Preview'): frozenset({'device', 'export'}),
 }
 ACCOUNTING_PORTS = {
@@ -198,6 +202,8 @@ ACCOUNTING_PORTS = {
         {'quantization_config': 'disabled-quantization-v1'}, {'execution_recipe': 'execution-recipe-v1'}),
     ('DiffusersImage', 'UnconditionalGenerate'): ({}, {}),
     ('DiffusersImage', 'Generate'): ({}, {}),
+    ('HuggingFaceSpeech', 'TranscribeAudio'): ({}, {}),
+    ('HuggingFaceSpeech', 'TranscribeCTCAudio'): ({}, {}),
     ('Image', 'Preview'): ({}, {}),
 }
 ACCOUNTING_OBJECT_INPUTS = {
@@ -206,6 +212,8 @@ ACCOUNTING_OBJECT_INPUTS = {
     ('DiffusersRuntime', 'DiffusersExecutionRecipe'): frozenset({'quantization_config'}),
     ('DiffusersImage', 'UnconditionalGenerate'): frozenset({'pipeline'}),
     ('DiffusersImage', 'Generate'): frozenset({'pipeline'}),
+    ('HuggingFaceSpeech', 'TranscribeAudio'): frozenset({'model', 'audio'}),
+    ('HuggingFaceSpeech', 'TranscribeCTCAudio'): frozenset({'model', 'audio'}),
     ('Image', 'Preview'): frozenset({'image', 'vae'}),
 }
 ACCOUNTING_REASONS = frozenset({'adapter-inactive', 'feature-disabled', 'connected-recipe',

@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 
 from modiff.NodeBase import NodeBase
+from modiff.builtin_media_evidence import begin_media_capture
 from modiff.model_artifact_catalog import IMMUTABLE_HUB_REVISION, catalog_revision
 from utils.huggingface import local_files_only, validate_hf_repo_id
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
@@ -115,6 +116,35 @@ def _normalized_audio(value: Any) -> tuple[np.ndarray, int, float]:
         raise ValueError("Speech audio duration must be positive and at most one hour.")
     mono = np.mean(samples, axis=1, dtype=np.float32)
     return np.ascontiguousarray(np.clip(mono, -1.0, 1.0)), int(sample_rate), duration
+
+
+def _run_recognizer(node, model, inputs, call_kwargs):
+    consumed = {"timestamps": call_kwargs["return_timestamps"]}
+    inactive = {}
+    generate_kwargs = call_kwargs.get("generate_kwargs")
+    if generate_kwargs is not None:
+        consumed["task"] = generate_kwargs["task"]
+        if "language" in generate_kwargs:
+            consumed["language"] = generate_kwargs["language"]
+        else:
+            inactive["language"] = "feature-disabled"
+    if "chunk_length_s" in call_kwargs:
+        consumed["chunk_length_seconds"] = call_kwargs["chunk_length_s"]
+        consumed["stride_length_seconds"] = call_kwargs["stride_length_s"]
+    else:
+        inactive["chunk_length_seconds"] = "feature-disabled"
+        inactive["stride_length_seconds"] = "feature-disabled"
+    node.record_field_accounting(inputs, consumed=consumed, inactive=inactive)
+
+    audio = inputs.get("audio")
+    # Bind the typed input to its producer before speech normalization. A
+    # direct file or untyped input stays on the normal validated execution
+    # path and cannot become a file observation at the speech boundary.
+    capture = begin_media_capture(node, {}, inputs={"audio": audio if type(audio) is dict else {}})
+    samples, sample_rate, duration = _normalized_audio(audio)
+    result = model["pipeline"]({"raw": samples, "sampling_rate": sample_rate}, **call_kwargs)
+    capture.finish({})
+    return result, duration
 
 
 def _normalize_transcript_result(result: Any, *, task: str, timestamp_mode: str, duration: float) -> dict[str, Any]:
@@ -410,7 +440,6 @@ class TranscribeAudio(NodeBase):
             raise ValueError("Speech chunk length must be 5-30 seconds with total stride smaller than the chunk.")
         if not chunk_length and stride_length:
             raise ValueError("Speech chunk stride must be zero when chunking is disabled.")
-        samples, sample_rate, duration = _normalized_audio(kwargs.get("audio"))
         generate_kwargs = {"task": task}
         if language:
             generate_kwargs["language"] = language
@@ -421,7 +450,7 @@ class TranscribeAudio(NodeBase):
         if chunk_length:
             call_kwargs["chunk_length_s"] = chunk_length
             call_kwargs["stride_length_s"] = stride_length
-        result = model["pipeline"]({"raw": samples, "sampling_rate": sample_rate}, **call_kwargs)
+        result, duration = _run_recognizer(self, model, kwargs, call_kwargs)
         transcript = _normalize_transcript_result(
             result,
             task=task,
@@ -506,14 +535,13 @@ class TranscribeCTCAudio(NodeBase):
             raise ValueError("Speech chunk length must be 5-30 seconds with total stride smaller than the chunk.")
         if not chunk_length and stride_length:
             raise ValueError("Speech chunk stride must be zero when chunking is disabled.")
-        samples, sample_rate, duration = _normalized_audio(kwargs.get("audio"))
         call_kwargs: dict[str, Any] = {
             "return_timestamps": "word" if timestamp_mode == "word" else False,
         }
         if chunk_length:
             call_kwargs["chunk_length_s"] = chunk_length
             call_kwargs["stride_length_s"] = stride_length
-        result = model["pipeline"]({"raw": samples, "sampling_rate": sample_rate}, **call_kwargs)
+        result, duration = _run_recognizer(self, model, kwargs, call_kwargs)
         transcript = _normalize_transcript_result(
             result,
             task="transcribe",

@@ -2489,6 +2489,15 @@ uses remaining space for optional accounting. `fieldAccountingStatus` (schema
 version 1) reports `truncated: true` if any accounting section could not fit;
 this never sets legacy `truncated`, evicts a legacy ancestor, or clears the v1
 summary/task proof. Consumers requiring accounting must reject that status.
+
+The two Hugging Face speech consumers account for the timestamp argument and
+whether chunk length and stride reached Transformers. The sequence-to-sequence
+consumer also accounts for its task and optional language hint. With
+`MODIFF_CAPTURE_BUILTIN_MEDIA=1`, the consumers record the bounded frame-first
+audio identity at their input before downmixing and clipping. This can be
+matched to the connected audio loader output. Direct file arguments do not
+produce consumer-side file evidence. The receipt contains no samples,
+internal Transformers state, or transcript.
 Existing ancestry and task/attempt identity limits still apply. Completeness is
 field accounting only: it grants no canonical execution, Auto, hardware, quality,
 rights, publication or release qualification. A paired client/recorder must

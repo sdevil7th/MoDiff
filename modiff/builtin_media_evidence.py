@@ -1,4 +1,4 @@
-"""Opt-in, bounded call-boundary evidence for ordinary deterministic media.
+"""Opt-in, bounded call-boundary evidence for reviewed media handling.
 
 No model objects or arbitrary suppliers are inspected. Snapshot limits constrain
 evidence capture only; they never change an ordinary workflow's runtime limits.
@@ -28,6 +28,8 @@ CONTROL_FIELDS = {
     ('Audio', 'Load'): [],
     ('Audio', 'ProcessAudio'): AUDIO_CONTROLS,
     ('Audio', 'Export'): ['filename', 'sample_rate'],
+    ('HuggingFaceSpeech', 'TranscribeAudio'): [],
+    ('HuggingFaceSpeech', 'TranscribeCTCAudio'): [],
     ('Video', 'ProcessVideo'): VIDEO_CONTROLS,
     ('Video', 'Export'): ['filename', 'quality', 'fps'],
 }
