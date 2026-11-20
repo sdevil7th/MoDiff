@@ -25,13 +25,15 @@ def _update_stage_contract(node, values, ref):
     adapter = get_video_pipeline_adapter(signal.get('pipelineClass'))
     if signal != _adapter_signal(adapter) or adapter.pipeline_class not in core.PROFILE_CLASSES.values():
         raise ValueError('The selected video pipeline has no separate-stage adapter.')
-    mode = values.get('mode')
-    if mode not in adapter.modes:
-        raise ValueError('Select an explicit supported video task.')
+    current_mode = values.get('mode')
+    default_mode = adapter.modes[0]
+    # A newly connected stage can still have its generic text-to-video default.
+    # Keep an authored mode when the connected loader supports it.
+    mode = current_mode if current_mode in adapter.modes else default_mode
     for name, field in get_video_mode_field_contract(adapter, mode).field_param_overlay().items():
         if name in node.params:
             node.set_field_params(name, field)
-    node.set_field_params('mode', {'options': list(adapter.modes)})
+    node.set_field_params('mode', {'options': list(adapter.modes), 'default': default_mode, 'value': mode})
 
 
 class EncodeInputs(NodeBase):

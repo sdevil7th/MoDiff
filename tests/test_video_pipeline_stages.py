@@ -39,6 +39,45 @@ def test_video_stage_authoring_callbacks_do_not_construct_executable_nodes(actio
     assert any(call.args[1] == 'mode' for call in update.call_args_list)
 
 
+@pytest.mark.parametrize('action', ('EncodeInputs', 'Denoise'))
+@pytest.mark.parametrize(('pipeline', 'current_mode', 'active_mode', 'media'), (
+    ('WanImageToVideoPipeline', 'text_to_video', 'image_to_video', {'reference_images', 'last_image'}),
+    ('WanTI2VImageToVideoPipeline', 'text_to_video', 'image_to_video', {'reference_images'}),
+    ('WanVideoToVideoPipeline', 'text_to_video', 'video_to_video', {'video'}),
+    ('LTXConditionPipeline', 'video_to_video', 'video_to_video', {'video'}),
+))
+def test_video_stage_authoring_refreshes_ports_to_match_the_connected_loader(action, pipeline, current_mode, active_mode, media):
+    from modiff.field_metadata import metadata_field_callback
+    from modiff.field_metadata_context import FieldMessageContext
+    from modules.DiffusersVideo.main import get_video_pipeline_adapter, _adapter_signal
+
+    adapter = get_video_pipeline_adapter(pipeline)
+    callback = metadata_field_callback(action, 'update_stage_contract', node_id='draft', sid='s', module='modules.DiffusersVideo')
+    fields = {}
+    with patch.object(FieldMessageContext, 'set_field_params', new=lambda _, name, field: fields.__setitem__(name, field)):
+        callback({'video_contract': _adapter_signal(adapter), 'mode': current_mode}, None)
+
+    assert fields['mode'] == {'options': list(adapter.modes), 'default': adapter.modes[0], 'value': active_mode}
+    if action == 'EncodeInputs':
+        assert {key for key in ('reference_images', 'last_image', 'video', 'mask') if not fields[key]['hidden']} == media
+        assert {key for key in media if fields[key]['required']} == media - {'last_image'}
+
+
+@pytest.mark.parametrize('action', ('EncodeInputs', 'Denoise'))
+def test_video_stage_authoring_keeps_rejecting_inexact_loader_signals(action):
+    from modiff.field_metadata import metadata_field_callback
+    from modiff.field_metadata_context import FieldMessageContext
+    from modules.DiffusersVideo.main import get_video_pipeline_adapter, _adapter_signal
+
+    signal = _adapter_signal(get_video_pipeline_adapter('WanImageToVideoPipeline'))
+    signal['modes'].append('text_to_video')
+    callback = metadata_field_callback(action, 'update_stage_contract', node_id='draft', sid='s', module='modules.DiffusersVideo')
+    with patch.object(FieldMessageContext, 'set_field_params', autospec=True) as update:
+        with pytest.raises(ValueError, match='no separate-stage adapter'):
+            callback({'video_contract': signal, 'mode': 'image_to_video'}, None)
+    update.assert_not_called()
+
+
 class Tokenizer:
     def __call__(self, *args, **kwargs):
         return {'input_ids': [1, 2]}
