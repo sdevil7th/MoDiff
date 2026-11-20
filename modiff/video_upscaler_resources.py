@@ -150,7 +150,7 @@ def video_upscaler_owner(nodes, node_id, planned, hardware, *, literal, number, 
         return _storage_owner(node_id, controls, width, height, frames, host,
             candidate_id='reviewed-spandrel-x2-native-video-storage-v1',
             extra_evidence={'shotCount': staged['shotCount'], 'frameCountUpperBound': True,
-                            'compositionSource': 'explicit-native-video-stages'})
+                            'compositionSource': staged.get('sourceKind', 'explicit-native-video-stages')})
     if ((decode.get("module"), decode.get("action"), image.get("sourceKey"))
             == ("modules.Video", "Compose", "video")):
         return _sequence_video_upscaler_owner(nodes, node_id, decode_id, planned, controls,

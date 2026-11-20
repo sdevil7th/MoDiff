@@ -1855,6 +1855,61 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(ddim["contentHash"], "studio-spec-v1-238fc1df")
         self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), ddim["bindings"])
 
+    def test_video_attention_defaults_preserve_exact_saved_receipts_and_other_routes(self):
+        root = Path(module_registry.__file__).resolve().parents[1] / "data"
+        archive = json.loads((root / "video-attention-studio-spec-compatibility.v1.json").read_text(encoding="utf-8"))
+        manifest = json.loads((root / "workflow-library-manifest.json").read_text(encoding="utf-8"))
+        paths = {row["id"]: row["graphPath"] for row in manifest["workflows"]}
+        role_field = ["diffusersRecipe", "attention_backend"]
+        for entry in archive["specifications"]:
+            saved = entry["specification"]
+            model, mode = saved["modelType"], saved["mode"]
+            with self.subTest(model=model):
+                profile = saved["executionProfileId"]
+                old_hash = saved["contentHash"]
+                resolved = studio_execution_spec_for_pair(
+                    model, mode, content_hash=old_hash, execution_profile_id=profile,
+                )
+                self.assertEqual(resolved, saved)
+                self.assertIsNone(studio_execution_spec_for_pair(model, mode, content_hash="studio-spec-v1-ffffffff"))
+                self.assertIsNone(studio_execution_spec_for_pair(
+                    model, mode, content_hash=old_hash, execution_profile_id="unreviewed:direct",
+                ))
+                current = json.loads(json.dumps(studio_execution_spec_for_pair(model, mode)))
+                self.assertNotEqual(current["contentHash"], old_hash)
+                expected = deepcopy(saved)
+                expected["contentHash"] = current["contentHash"]
+                for binding in expected["bindings"]:
+                    if binding[:2] == role_field:
+                        self.assertEqual(binding[2], "nativeMath")
+                        binding[2] = "attentionBackend"
+                self.assertEqual(current, expected)
+
+                for spec, attention in ((saved, "_native_math"), (current, "auto"), (current, "_native_math")):
+                    graph, hints = executable_graph_for_spec(spec)
+                    recipe_id = hints["studioExecutionSpec"]["nodes"]["diffusersRecipe"]
+                    graph["nodes"][recipe_id]["params"]["attention_backend"]["value"] = attention
+                    graph_before = deepcopy(graph)
+                    assert_studio_execution_graph(graph, hints)
+                    self.assertEqual(graph, graph_before)
+
+                published = json.loads((root / "graphs" / paths[f"{model}:{mode}"]).read_text(encoding="utf-8"))
+                recipes = [node["data"]["params"] for node in published["nodes"]
+                           if node["data"].get("action") == "DiffusersExecutionRecipe"]
+                self.assertEqual([recipe["attention_backend"]["value"] for recipe in recipes], ["auto"])
+
+        for model, mode in (
+            ("AnimateDiffVideoToVideoPipeline", "video_to_video"),
+            ("CogVideoXVideoToVideoPipeline", "video_to_video"),
+            ("SanaImageToVideoPipeline", "image_to_video"),
+            ("AllegroPipeline", "text_to_video"),
+            ("LattePipeline", "text_to_video"),
+            ("MochiPipeline", "text_to_video"),
+        ):
+            with self.subTest(untouched=model):
+                spec = studio_execution_spec_for_pair(model, mode)
+                self.assertIn(tuple(role_field + ["nativeMath"]), spec["bindings"])
+
     def test_cosmos3_nano_specs_use_exact_official_nodes_and_remain_unqualified(self):
         expected = {
             "text_to_image": (

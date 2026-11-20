@@ -352,7 +352,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-diff-pag-pipeline/text-to-video.json",
-      "graphHash": "3dedf345bd395ec117fc62509dfcb495e7511caf4a7548eeee5fd54164d4d71b"
+      "graphHash": "a290b2c3102a454787f0ccd1c299cc7e3bc7946f1d49565634ef0d4d2f99920a"
     },
     {
       "id": "AnimateDiffPipeline:text_to_video",
@@ -400,7 +400,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-diff-pipeline/text-to-video.json",
-      "graphHash": "edb7d98df3e6d04d7322b0ca6a472e7c25f0483cf4596e54459f513b8b1118df"
+      "graphHash": "6a3fab2ac62dd396f35eefdad1226670edcca73a44dc4a7d0f29ad1f64a3a794"
     },
     {
       "id": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
@@ -570,7 +570,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-lcm-pipeline/text-to-video.json",
-      "graphHash": "586e3e3b69a8c04316d5ec271b984884f7300bc3490bf00118caedda6d55ce80"
+      "graphHash": "0d4bebb4f41099ef2606de2ebad03124d30370c5ffb52198e8d24d0e105bb911"
     },
     {
       "id": "AudioLDM2Pipeline:text_to_audio",
@@ -1390,7 +1390,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/cog-video-x-pipeline/text-to-video.json",
-      "graphHash": "06d741c8e687d2a305222d32e04e42307021a4e6dedbea2323f43e851f9f2677"
+      "graphHash": "550c3e2dc74d9f20d868a07775c83dba61c7126baef0c240b85a61f01647bcd3"
     },
     {
       "id": "CogVideoXVideoToVideoPipeline:video_to_video",
@@ -5117,7 +5117,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/sana-video-pipeline/text-to-video.json",
-      "graphHash": "776a41955b7d3a12298f3edb9e2a198a596fa0cd36ab91c53f020c0d09ab0bf8"
+      "graphHash": "3376e7f17ab915ff845dcfe36498fb80d07dcfca423732bb768f4976ca5c5496"
     },
     {
       "id": "ShapEPipeline:text_to_3d",

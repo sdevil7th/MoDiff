@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:fb1471cc299e8233abec672d719a5cfdc9b138cbfe0515ff570fc9455b428f2a",
+  "contentHash": "sha256:1cf0637fc0b3ba50465a88ddcdeace6a8d0218bfc49419ec2d5c19a223fe0dc7",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -151,7 +151,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "3dedf345bd395ec117fc62509dfcb495e7511caf4a7548eeee5fd54164d4d71b",
+      "graphHash": "a290b2c3102a454787f0ccd1c299cc7e3bc7946f1d49565634ef0d4d2f99920a",
       "graphPath": "studio/animate-diff-pag-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -210,7 +210,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "edb7d98df3e6d04d7322b0ca6a472e7c25f0483cf4596e54459f513b8b1118df",
+      "graphHash": "6a3fab2ac62dd396f35eefdad1226670edcca73a44dc4a7d0f29ad1f64a3a794",
       "graphPath": "studio/animate-diff-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -412,7 +412,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "586e3e3b69a8c04316d5ec271b984884f7300bc3490bf00118caedda6d55ce80",
+      "graphHash": "0d4bebb4f41099ef2606de2ebad03124d30370c5ffb52198e8d24d0e105bb911",
       "graphPath": "studio/animate-lcm-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -1550,7 +1550,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "06d741c8e687d2a305222d32e04e42307021a4e6dedbea2323f43e851f9f2677",
+      "graphHash": "550c3e2dc74d9f20d868a07775c83dba61c7126baef0c240b85a61f01647bcd3",
       "graphPath": "studio/cog-video-x-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -5209,7 +5209,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "776a41955b7d3a12298f3edb9e2a198a596fa0cd36ab91c53f020c0d09ab0bf8",
+      "graphHash": "3376e7f17ab915ff845dcfe36498fb80d07dcfca423732bb768f4976ca5c5496",
       "graphPath": "studio/sana-video-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -7103,13 +7103,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:6429daa5984125adb5803591d6d8cd1e5a1711037e7515dacfc62fe4c96018f8",
+      "contentHash": "sha256:573d708a8919370f2dc504b5612b3f8bdabb36f732981f55ff5745dcb3082fd6",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:fe5c118de710295f4f8b21541d3b62b789565e2f0136ede1cd52165cc8938ba4"
+      "sha256": "sha256:6ccbbae9cee3974f313f7ad2048335df3f0b33c25fe4a3c5bc87067fea19f79a"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:ef73b96f6881229df09298b703541aae1d67dd5d9b71dc91a3c22ef3ae016b43"
+      "sha256": "sha256:fd5e51a2c1493e09a87fa7f2cccfc20da1e2c5f63827a049ffbbe653ab1dd788"
     }
   },
   "summary": {

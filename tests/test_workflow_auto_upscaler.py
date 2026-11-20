@@ -361,6 +361,73 @@ def test_wan_native_decoded_or_encoded_render_frames_have_their_own_storage_boun
     assert result["workingDemandEvidence"]["inputWidth"] == 832
 
 
+def legacy_wan_vace_text_graph():
+    repository = "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
+    nodes = {
+        "load": node("LoadPipeline", module="modules.DiffusersVideo", pipeline_class="WanVACEPipeline",
+                     model_id={"source": "hub", "value": repository},
+                     revision="ec4d2cb062b548996b179d493fdd05340de702a1"),
+        "render": node("Generate", module="modules.DiffusersVideo",
+                       pipeline={"sourceId": "load", "sourceKey": "pipeline"},
+                       mode="text_to_video", prompt="One tracking shot at a printing press.",
+                       negative_prompt="Static camera", width=832, height=480, num_frames=81,
+                       num_inference_steps=30, guidance_scale=5, output_type="pil"),
+        "upscale": node("Upscaler", module="modules.Spandrel", model_id=deepcopy(VIDEO_PIN),
+                        downscale=1, tile_size=256, tile_overlap=32, device="cuda:0",
+                        image={"sourceId": "render", "sourceKey": "video_out"}),
+    }
+    owner = {"nodeId": "load", "modelType": "WanVACEPipeline", "mode": "text_to_video",
+             "repository": repository, "consumers": ["render"]}
+    return nodes, owner
+
+
+def test_legacy_wan_vace_text_render_inspects_internal_encoding_and_pil_geometry(setup):
+    _, hardware, calls = setup
+    nodes, owner = legacy_wan_vace_text_graph()
+    before = deepcopy(nodes)
+    result = planner._upscaler_owner(nodes, "upscale", [owner], hardware)
+    assert nodes == before
+    assert calls == [VIDEO_PIN]
+    evidence = result["workingDemandEvidence"]
+    assert (evidence["inputWidth"], evidence["inputHeight"], evidence["frameCount"]) == (832, 480, 81)
+    assert evidence["shotCount"] == 1
+    assert evidence["compositionSource"] == "direct-wan-vace-text-to-video"
+    assert evidence["inferencePeakMeasured"] is False
+
+
+@pytest.mark.parametrize("field,parameter", [
+    ("encoded_inputs", {"sourceId": "unsupported", "sourceKey": "encoded_inputs"}),
+    ("video", {"sourceId": "unsupported", "sourceKey": "video"}),
+    ("mask", {"value": ["mask"]}),
+    ("reference_images", {"value": ["reference"]}),
+    ("prompt_embeds", {"sourceId": "unsupported", "sourceKey": "embeds"}),
+    ("negative_prompt_embeds", {"value": ["embeds"]}),
+    ("latents", {"sourceId": "unsupported", "sourceKey": "latents"}),
+    ("prompt", {"value": ["First prompt", "Second prompt"]}),
+    ("num_videos_per_prompt", {"value": 2}),
+    ("num_frames", {"value": 82}),
+    ("width", {"value": 830}),
+    ("mode", {"value": "control_to_video"}),
+    ("output_type", {"value": "pt"}),
+])
+def test_legacy_wan_vace_upscaler_refuses_unreviewed_direct_generation(setup, field, parameter):
+    _, hardware, calls = setup
+    nodes, owner = legacy_wan_vace_text_graph()
+    nodes["render"]["params"][field] = parameter
+    with pytest.raises(ValueError):
+        planner._upscaler_owner(nodes, "upscale", [owner], hardware)
+    assert not calls
+
+
+def test_legacy_wan_vace_upscaler_does_not_borrow_another_checkpoint(setup):
+    _, hardware, calls = setup
+    nodes, owner = legacy_wan_vace_text_graph()
+    nodes["load"]["params"]["revision"]["value"] = "0" * 40
+    with pytest.raises(ValueError, match="reviewed immutable generating profile"):
+        planner._upscaler_owner(nodes, "upscale", [owner], hardware)
+    assert not calls
+
+
 @pytest.mark.parametrize("change", ["foreign_owner", "tensor_output", "wrong_latent_binding", "unknown_clip", "unknown_geometry", "batch"])
 def test_native_composition_refuses_unknown_or_mismatched_storage_before_artifact_io(setup, change):
     _, hardware, calls = setup

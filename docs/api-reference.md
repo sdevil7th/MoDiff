@@ -1671,6 +1671,14 @@ control. The backend recognizes the exact saved specification receipts for
 these two routes and validates them against their original node roles and
 wires. The saved attention selection remains explicit in the graph.
 
+New AnimateDiff, AnimateDiff PAG, AnimateLCM, CogVideoX-2B and SanaVideo
+text-to-video graphs default to automatic attention, which allows Diffusers
+to use its compatible processors. An explicitly selected attention backend
+remains part of the recipe. Saved managed receipts and their attention
+settings are preserved, including the previous forced policy. In an older
+saved video graph, choose Auto if the selected processor rejects forced
+attention.
+
 An execution profile may also publish `expert_cuda_policy` with
 `schema_version: 1`. This bounded policy declares the CUDA dtypes that Studio
 must block, the recommended replacement dtype, the projected offloaded and

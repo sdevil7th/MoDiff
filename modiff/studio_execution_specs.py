@@ -4313,6 +4313,15 @@ _COGVIDEOX_GRAPH_BINDINGS = tuple(
     for role, param, source in _VIDEO_REVISION_GRAPH_BINDINGS
     if not (role == "wanGenerate" and param == "scheduler_flow_shift")
 )
+
+
+def _with_authored_video_attention(bindings):
+    return tuple(
+        (role, param, "attentionBackend" if (role, param) == ("diffusersRecipe", "attention_backend") else source)
+        for role, param, source in bindings
+    )
+
+
 _COGVIDEOX_V2V_GRAPH_BINDINGS = _COGVIDEOX_GRAPH_BINDINGS + (
     ("loadVideo", "file", "sourceVideo"),
     ("normalizeVideo", "width", "width"),
@@ -12013,7 +12022,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "capability": _animatediff_capability("AnimateDiffPipeline", lcm=False),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
-            "bindings": _ANIMATEDIFF_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_ANIMATEDIFF_GRAPH_BINDINGS),
         },
         "animatediff-pag:text-to-video:v1": {
             "modelType": "AnimateDiffPAGPipeline",
@@ -12026,7 +12035,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             ),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
-            "bindings": _ANIMATEDIFF_PAG_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_ANIMATEDIFF_PAG_GRAPH_BINDINGS),
         },
         "animatediff-video-to-video:video-to-video:v1": {
             "modelType": "AnimateDiffVideoToVideoPipeline",
@@ -12076,7 +12085,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "capability": _animatediff_capability("AnimateLCMPipeline", lcm=True),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
-            "bindings": _ANIMATEDIFF_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_ANIMATEDIFF_GRAPH_BINDINGS),
         },
         "cogvideox-2b:text-to-video:v1": {
             "modelType": "CogVideoXPipeline",
@@ -12085,7 +12094,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "capability": _cogvideox_capability(),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
-            "bindings": _COGVIDEOX_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_COGVIDEOX_GRAPH_BINDINGS),
         },
         "cogvideox-2b-video-to-video:video-to-video:v1": {
             "modelType": "CogVideoXVideoToVideoPipeline",
@@ -12130,7 +12139,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "capability": _sana_video_capability(image_conditioned=False),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
-            "bindings": _COGVIDEOX_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_COGVIDEOX_GRAPH_BINDINGS),
         },
         "sana-video-480p:image-to-video:v1": {
             "modelType": "SanaImageToVideoPipeline",
@@ -18921,6 +18930,48 @@ def _historical_studio_execution_spec(spec_id: str, content_hash: str) -> dict[s
             )) != content_hash
         ):
             raise RuntimeError("The historical unconditional-image specification contract changed.")
+        return spec
+    video_attention_records = {
+        ("animatediff:text-to-video:v1", "studio-spec-v1-ccb16ca8"):
+            ("AnimateDiffPipeline", "animatediff-sd15-v2:direct"),
+        ("animatediff-pag:text-to-video:v1", "studio-spec-v1-e980c1b1"):
+            ("AnimateDiffPAGPipeline", "animatediff-sd15-v2-pag:direct"),
+        ("animatelcm:text-to-video:v1", "studio-spec-v1-aba7ebb7"):
+            ("AnimateLCMPipeline", "animatelcm-sd15:direct"),
+        ("cogvideox-2b:text-to-video:v1", "studio-spec-v1-0993e43c"):
+            ("CogVideoXPipeline", "cogvideox-2b:direct"),
+        ("sana-video-480p:text-to-video:v1", "studio-spec-v1-b2fedfda"):
+            ("SanaVideoPipeline", "sana-video-480p:direct"),
+    }
+    video_identity = video_attention_records.get((spec_id, content_hash))
+    if video_identity is not None:
+        path = Path(__file__).resolve().parents[1] / "data/video-attention-studio-spec-compatibility.v1.json"
+        with path.open("rb") as handle:
+            raw = handle.read(34009)
+        if len(raw) != 34008 or hashlib.sha256(raw).hexdigest() != (
+            "73654399712f3553f21757249d4e3b2f2aeb798271ffdb4f1913ea464f2d36ad"
+        ):
+            raise RuntimeError("The historical video attention specification bytes changed.")
+        value = json.loads(raw)
+        records = value.get("specifications") if value.get("schemaVersion") == 1 else None
+        if len(records or ()) != len(video_attention_records) or value.get("sourceCommit") != (
+            "0d80138d13bee585957f77403ec1144bc3e2a1f9"
+        ):
+            raise RuntimeError("The historical video attention specification contract is invalid.")
+        matches = [row["specification"] for row in records if (
+            row["specification"]["id"], row["specification"]["contentHash"],
+        ) == (spec_id, content_hash)]
+        if len(matches) != 1:
+            raise RuntimeError("The historical video attention specification identity changed.")
+        spec = matches[0]
+        if (
+            (spec["modelType"], spec["executionProfileId"]) != video_identity
+            or spec["mode"] != "text_to_video"
+            or "studio-spec-v1-" + _hash_string(_stable_json(
+                {key: item for key, item in spec.items() if key != "contentHash"}
+            )) != content_hash
+        ):
+            raise RuntimeError("The historical video attention specification contract changed.")
         return spec
     image_stage_records = {('flux-redux:edit-image:v1', 'studio-spec-v1-36b6aa16'): ('FluxReduxPipeline', 'edit_image'), ('flux-redux:multi-image-reference-edit:v1', 'studio-spec-v1-9fc6eba6'): ('FluxReduxPipeline', 'multi_image_reference_edit'), ('flux-fill:inpaint:v1', 'studio-spec-v1-ba8c8dd1'): ('FluxFillPipeline', 'inpaint'), ('flux-fill:outpaint:v1', 'studio-spec-v1-5c0d7413'): ('FluxFillPipeline', 'outpaint'), ('flux-canny:control-image:v1', 'studio-spec-v1-82045f56'): ('FluxCannyPipeline', 'control_image'), ('flux-depth:control-image:v1', 'studio-spec-v1-2d8b881e'): ('FluxDepthPipeline', 'control_image')}
     identity = image_stage_records.get((spec_id, content_hash))

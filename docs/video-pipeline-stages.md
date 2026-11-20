@@ -278,6 +278,13 @@ video upscaler, even if the upscaler's known buffers fit available memory. An
 overlapping graph that cannot release that owner remains held. Reviewed dependent
 components such as ControlNet retain their existing placement rules.
 
+Saved whole-pipeline Wan VACE text-to-video graphs can receive the same static
+upscaler storage forecast when the exact reviewed checkpoint owns a single
+text-only PIL render. The forecast inspects literal, aligned dimensions and
+frame count and refuses external conditioning, embeddings or latents. The
+pipeline encodes its prompt internally. Saved attention settings still pass
+through the separate Auto execution-recipe checks.
+
 The client uses the backend's exact selected starter and
 `generic-video-stages:v1` authoring recipe. The retained creative settings and
 ancillary branches remain intact. A decoder and file-backed exporter are grouped

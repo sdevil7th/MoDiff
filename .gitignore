@@ -71,6 +71,7 @@ data/*
 !data/studio-execution-spec-compatibility.v1.json
 !data/image-stage-spec-compatibility.v1.json
 !data/unconditional-studio-spec-compatibility.v1.json
+!data/video-attention-studio-spec-compatibility.v1.json
 !data/image-prototyping-readiness.v1.json
 !data/huggingface-cluster-promotion-receipts.v1.json
 !data/huggingface-cluster-promotion-receipts.v2.json

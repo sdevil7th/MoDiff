@@ -53,6 +53,33 @@ def native_video_storage_geometry(nodes, source_id, source_port, planned, *, lit
             return tuple(result[field] for field in ('width', 'height', 'frames'))
         raise ValueError('Native video upscale needs an exact prepared Normalize/Canvas source geometry.')
 
+    def supplied(param):
+        return bool(param.get('sourceId') or param.get('sourceKey')) or param.get('value') is not None
+
+    def direct_vace_text_geometry(params, node_id):
+        # Saved whole-pipeline Wan VACE text graphs encode their prompts inside
+        # Diffusers. External embeddings, conditioning or latents can change
+        # the geometry or effective batch and have no direct storage proof.
+        external = ('video', 'mask', 'reference_images', 'prompt_embeds', 'negative_prompt_embeds',
+                    'latents', 'latents_in', 'latent_binding')
+        if any(supplied(params.get(field, {})) for field in external):
+            raise ValueError('Direct Wan VACE storage requires text-only inputs and generated latents.')
+        prompt = params.get('prompt', {})
+        negative = params.get('negative_prompt', {})
+        if (any(param.get('sourceId') or param.get('sourceKey') for param in (prompt, negative))
+                or not isinstance(prompt.get('value'), str) or not prompt['value'].strip()
+                or negative.get('value') is not None and not isinstance(negative['value'], str)):
+            raise ValueError('Direct Wan VACE storage requires a single literal prompt and optional negative prompt.')
+        if any(params.get(field, {}).get('sourceId') or params.get(field, {}).get('sourceKey')
+               for field in ('width', 'height', 'num_frames')):
+            raise ValueError('Direct Wan VACE storage requires literal video geometry.')
+        width, height, frames = (positive(node_id, field) for field in ('width', 'height', 'num_frames'))
+        # The pinned VAE scales spatially by 8 and temporally by 4, with a
+        # 2x2 transformer patch. Reject shapes the pipeline would round.
+        if max(width, height) > 2048 or width % 16 or height % 16 or frames > 241 or (frames - 1) % 4:
+            raise ValueError('Direct Wan VACE storage requires aligned native dimensions and frame count.')
+        return width, height, frames
+
     seen = set()
 
     def inspect(node_id, port):
@@ -109,16 +136,21 @@ def native_video_storage_geometry(nodes, source_id, source_port, planned, *, lit
         pipeline = dp.get('pipeline', {})
         loader_id = pipeline.get('sourceId')
         loader = nodes.get(loader_id, {})
+        pipeline_class = literal(nodes, loader_id, 'pipeline_class') if loader else None
         encode = dp.get('encoded_inputs', {})
         encode_id = encode.get('sourceId')
-        if ((nodes.get(encode_id, {}).get('module'), nodes.get(encode_id, {}).get('action'), encode.get('sourceKey'))
+        direct_vace_text = (rendered and pipeline_class == 'WanVACEPipeline'
+                            and literal(nodes, denoise_id, 'mode') == 'text_to_video' and not supplied(encode))
+        if not direct_vace_text and (
+                (nodes.get(encode_id, {}).get('module'), nodes.get(encode_id, {}).get('action'), encode.get('sourceKey'))
                 != ('modules.DiffusersVideo', 'EncodeInputs', 'encoded_inputs')):
             raise ValueError('Native video upscale requires the matching real input encoder.')
-        owners = [o for o in planned if o['nodeId'] == loader_id and {encode_id, denoise_id, node_id} <= set(o['consumers'])]
+        stages = {node_id, denoise_id} if direct_vace_text else {node_id, denoise_id, encode_id}
+        owners = [o for o in planned if o['nodeId'] == loader_id and stages <= set(o['consumers'])]
         if len(owners) != 1:
             raise ValueError('Native video upscale has no single accepted generating owner.')
         owner = owners[0]
-        for stage_id in {node_id, denoise_id, encode_id}:
+        for stage_id in stages:
             binding = nodes[stage_id]['params'].get('pipeline', {})
             if (binding.get('sourceId'), binding.get('sourceKey')) != (loader_id, 'pipeline'):
                 raise ValueError('Native video stages must share their exact pipeline owner.')
@@ -128,7 +160,6 @@ def native_video_storage_geometry(nodes, source_id, source_port, planned, *, lit
             'WanVideoToVideoPipeline': ('WanVideoPipeline', 'Wan-AI/Wan2.1-T2V-1.3B-Diffusers', '0fad780a534b6463e45facd96134c9f345acfa5b'),
             'WanVACEPipeline': ('WanVACEPipeline', 'Wan-AI/Wan2.1-VACE-1.3B-diffusers', 'ec4d2cb062b548996b179d493fdd05340de702a1'),
         }
-        pipeline_class = literal(nodes, loader_id, 'pipeline_class')
         target = reviewed.get(pipeline_class)
         if ((loader.get('module'), loader.get('action'), pipeline.get('sourceKey')) != ('modules.DiffusersVideo', 'LoadPipeline', 'pipeline')
                 or target is None or (owner['modelType'], owner['repository']) != target[:2]
@@ -136,21 +167,25 @@ def native_video_storage_geometry(nodes, source_id, source_port, planned, *, lit
                 or literal(nodes, loader_id, 'revision') != target[2]
                 or rendered != (pipeline_class == 'WanVACEPipeline')):
             raise ValueError('Native video storage differs from its reviewed immutable generating profile.')
-        for stage_id in [encode_id, denoise_id]:
+        for stage_id in [denoise_id] if direct_vace_text else [encode_id, denoise_id]:
             if literal(nodes, stage_id, 'mode') != owner['mode']:
                 raise ValueError('Native video stages have different selected tasks.')
         for field in ['num_videos_per_prompt', 'num_images_per_prompt', 'batch_size']:
             value = literal(nodes, denoise_id, field)
             if value is not None and (type(value) is not int or value != 1):
                 raise ValueError('Native video upscale has no multi-video batch storage contract.')
-        for field in ['latents', 'latents_in', 'latent_binding']:
-            value = dp.get(field, {})
-            if value.get('sourceId') or value.get('value') is not None:
+        if direct_vace_text:
+            width, height, frames = direct_vace_text_geometry(dp, denoise_id)
+        else:
+            if any(supplied(dp.get(field, {})) for field in ('latents', 'latents_in', 'latent_binding')):
                 raise ValueError('Externally supplied latents have no native video upscale geometry authority.')
-        width, height, frames = [positive(denoise_id, field) for field in ['width', 'height', 'num_frames']]
+            width, height, frames = (positive(denoise_id, field) for field in ('width', 'height', 'num_frames'))
         if owner['mode'] in {'video_to_video', 'video_color_edit', 'control_to_video', 'video_outpaint'}:
             if prepared_geometry(encode_id) != (width, height, frames):
                 raise ValueError('Native video source geometry differs from the forecast sampler geometry.')
-        return {'width': width, 'height': height, 'frames': frames, 'shotCount': 1}
+        geometry = {'width': width, 'height': height, 'frames': frames, 'shotCount': 1}
+        if direct_vace_text:
+            geometry['sourceKind'] = 'direct-wan-vace-text-to-video'
+        return geometry
 
     return inspect(source_id, source_port)
