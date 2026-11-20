@@ -1262,7 +1262,9 @@
       "id": "HuggingFaceSpeechRecognitionModel:speech_to_text",
       "mode": "speech_to_text",
       "modelType": "HuggingFaceSpeechRecognitionModel",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "whisper_tiny_blue_cup_transcription"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1551,7 +1553,9 @@
       "id": "LatentConsistencyModelPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "LatentConsistencyModelPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "lcm_dawn_alpine_lake"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2652,7 +2656,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:61d4bb71786bcc009b36fababb91948ed702b64bf47ec63846d7142fe17b5a8a",
+  "contentHash": "sha256:319a6fb2b8c729ee931b192253f379bf8fb63dd181047c87eb8fb6b1dbaddc1e",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -9253,6 +9257,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "LatentConsistencyModelPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "lcm_dawn_alpine_lake",
+      "mode": "edit_image",
+      "modelType": "LatentConsistencyModelPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "ZImageModularPipeline:text_to_image",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -10579,6 +10598,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_to_text",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "whisper_tiny_blue_cup_transcription",
+      "mode": "speech_to_text",
+      "modelType": "HuggingFaceSpeechRecognitionModel",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "ZImageModularPipeline:text_to_image",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -10743,7 +10777,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "0d7bc68de3698941ab290617e16ef9073c3fc7b2f44995baa87546edf891e2da",
+    "templateBundleSha256": "4a7a6e6cc381437053c490d33555fb15221675062f1713184396b6af68aaf0f7",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -10791,8 +10825,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithPublicTemplates": 74,
-    "canonicalWorkflowsWithoutPublicTemplates": 151,
+    "canonicalWorkflowsWithPublicTemplates": 76,
+    "canonicalWorkflowsWithoutPublicTemplates": 149,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -10802,12 +10836,12 @@
       "research-blocked": 116,
       "unreviewed": 5
     },
-    "publicTemplateCount": 94,
-    "reviewedGalleryTemplateCount": 87,
+    "publicTemplateCount": 96,
+    "reviewedGalleryTemplateCount": 89,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
-      "executable": 83,
+      "executable": 85,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

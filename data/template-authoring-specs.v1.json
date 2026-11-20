@@ -14,14 +14,14 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:b685aa2e7fe17af5cc735b11bdc949f51244c207fdb344a9ead085fc5dcf65c2",
+  "contentHash": "sha256:4bd04f63d1cec2f8835d8611dc2b4eee309a96c716cc11cae8c4f503c17e21ff",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:4d2e59c1af232b27a19b3817104d4330861433042c002b97fcc2ba32d07fbf53",
+      "contentHash": "sha256:96aa444ef097cbea4da95298729b5c4f5f6cafc4399c374b71fbec892b5d447f",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:4edcf2ac8a37082cbe8b63af594549c1a5d352445dea6b70ef6571f9e18181ae"
+      "sha256": "sha256:1fb43228bb323197b3f0d82bf8b8b5e7266337d79f5e2559589112c617d8ea36"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -9936,130 +9936,6 @@
       "assets": [],
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
-        "path": "studio/hugging-face-speech-recognition-model/speech-to-text.json",
-        "sha256": "ffad2aedbc329a71d4455d90f40078501f13f56645e1dc077bbc9e7d28dbafaf"
-      },
-      "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_to_text",
-      "claims": {
-        "assetGenerated": false,
-        "inputSelected": false,
-        "publicTemplate": false,
-        "qualityApproved": false,
-        "rightsApproved": false,
-        "workflowExecuted": false
-      },
-      "defaultsPlan": {
-        "fields": [
-          {
-            "parameter": "chunk_length_seconds",
-            "role": "transcribeAudio",
-            "value": 30
-          },
-          {
-            "parameter": "language",
-            "role": "transcribeAudio",
-            "value": ""
-          },
-          {
-            "parameter": "stride_length_seconds",
-            "role": "transcribeAudio",
-            "value": 5
-          },
-          {
-            "parameter": "task",
-            "role": "transcribeAudio",
-            "value": "transcribe"
-          },
-          {
-            "parameter": "timestamps",
-            "role": "transcribeAudio",
-            "value": "segment"
-          }
-        ],
-        "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "ffad2aedbc329a71d4455d90f40078501f13f56645e1dc077bbc9e7d28dbafaf",
-        "status": "canonical_defaults_captured_review_pending"
-      },
-      "generationPlan": {
-        "blockers": [
-          "reviewed_input_selection_and_rights_required",
-          "exact_model_cache_state_must_be_rechecked",
-          "exact_runtime_execution_receipt_required",
-          "resource_recipe_receipt_required",
-          "model_and_output_rights_review_required",
-          "generated_asset_and_human_quality_review_required"
-        ],
-        "requiresQualifiedAccelerator": false,
-        "status": "blocked_pending_external_evidence"
-      },
-      "id": "template-authoring:HuggingFaceSpeechRecognitionModel:speech_to_text",
-      "inputPlan": {
-        "items": [
-          {
-            "field": "sourceAudio",
-            "mediaKind": "audio",
-            "minimumCount": 1,
-            "rightsState": "review_required",
-            "selectionState": "pending_original_or_licensed_asset",
-            "technicalRequirements": [
-              "decodable_audio",
-              "matches_exact_workflow_input_contract",
-              "contains_no_unreviewed_brand_or_personal_data"
-            ]
-          }
-        ],
-        "status": "selection_required"
-      },
-      "mediaKind": "json",
-      "mode": "speech_to_text",
-      "modelFamily": "Whisper",
-      "modelType": "HuggingFaceSpeechRecognitionModel",
-      "outputPlan": {
-        "mediaKinds": [
-          "json"
-        ],
-        "minimumAssetCount": 1,
-        "reviewCriteria": [
-          "bounded_decodable_result",
-          "instruction_or_source_alignment",
-          "no_unsupported_claims_or_hidden_detail_invention",
-          "receipt_matches_exact_input_and_runtime"
-        ]
-      },
-      "promptPlan": {
-        "editableBeforeQualification": true,
-        "mustBeLockedInGenerationReceipt": false,
-        "negativePrompt": {
-          "status": "not_supported_by_canonical_graph",
-          "value": null
-        },
-        "prompt": null,
-        "provenance": "original_modiff_mode_draft_v1",
-        "status": "not_applicable"
-      },
-      "publicationState": "hidden_candidate",
-      "purpose": "Author and review one json result for the exact Whisper speech to text workflow without changing its canonical graph contract.",
-      "rightsPlan": {
-        "inputMediaRights": "required",
-        "modelArtifactRights": "review_or_existing_catalog_decision_required",
-        "outputPublicationRights": "required",
-        "status": "review_required",
-        "thirdPartyBrandAndPersonalDataReview": "required"
-      },
-      "title": "Whisper — Speech To Text [HuggingFaceSpeechRecognitionModel]"
-    },
-    {
-      "artifactPlan": {
-        "cacheState": "must_be_rechecked_through_app_before_generation",
-        "componentRequirements": [],
-        "requiredArtifacts": [
-          "openai/whisper-tiny"
-        ]
-      },
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": "draft_complete_input_selection_pending",
-      "canonicalGraph": {
         "path": "studio/hugging-face-speech-recognition-model/speech-translation.json",
         "sha256": "ceeda76f1c6b3e964676293ca3754adfade221b8cd5b832e1215c94b944d37a9"
       },
@@ -12689,134 +12565,6 @@
         "thirdPartyBrandAndPersonalDataReview": "required"
       },
       "title": "LTX Video — Image To Video [LTXI2VLongMultiPromptPipeline]"
-    },
-    {
-      "artifactPlan": {
-        "cacheState": "must_be_rechecked_through_app_before_generation",
-        "componentRequirements": [],
-        "requiredArtifacts": [
-          "SimianLuo/LCM_Dreamshaper_v7"
-        ]
-      },
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": "draft_complete_input_selection_pending",
-      "canonicalGraph": {
-        "path": "studio/latent-consistency-model-pipeline/edit-image.json",
-        "sha256": "68e60aa18f9117ecf934edaba51b9e822471bca6ef316d65d6bf438e5486d556"
-      },
-      "canonicalWorkflowId": "LatentConsistencyModelPipeline:edit_image",
-      "claims": {
-        "assetGenerated": false,
-        "inputSelected": false,
-        "publicTemplate": false,
-        "qualityApproved": false,
-        "rightsApproved": false,
-        "workflowExecuted": false
-      },
-      "defaultsPlan": {
-        "fields": [
-          {
-            "parameter": "guidance_scale",
-            "role": "diffusersImageEdit",
-            "value": 8.5
-          },
-          {
-            "parameter": "num_inference_steps",
-            "role": "diffusersImageEdit",
-            "value": 4
-          },
-          {
-            "parameter": "seed",
-            "role": "diffusersImageEdit",
-            "value": {
-              "isRandom": true,
-              "value": 42
-            }
-          },
-          {
-            "parameter": "strength",
-            "role": "diffusersImageEdit",
-            "value": 0.8
-          },
-          {
-            "parameter": "alpha_channel",
-            "role": "loadImage",
-            "value": "ignore"
-          }
-        ],
-        "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "68e60aa18f9117ecf934edaba51b9e822471bca6ef316d65d6bf438e5486d556",
-        "status": "canonical_defaults_captured_review_pending"
-      },
-      "generationPlan": {
-        "blockers": [
-          "reviewed_input_selection_and_rights_required",
-          "exact_model_cache_state_must_be_rechecked",
-          "exact_runtime_execution_receipt_required",
-          "resource_recipe_receipt_required",
-          "model_and_output_rights_review_required",
-          "generated_asset_and_human_quality_review_required"
-        ],
-        "requiresQualifiedAccelerator": true,
-        "status": "blocked_pending_external_evidence"
-      },
-      "id": "template-authoring:LatentConsistencyModelPipeline:edit_image",
-      "inputPlan": {
-        "items": [
-          {
-            "field": "referenceImages",
-            "mediaKind": "image",
-            "minimumCount": 1,
-            "rightsState": "review_required",
-            "selectionState": "pending_original_or_licensed_asset",
-            "technicalRequirements": [
-              "decodable_image",
-              "matches_exact_workflow_input_contract",
-              "contains_no_unreviewed_brand_or_personal_data"
-            ]
-          }
-        ],
-        "status": "selection_required"
-      },
-      "mediaKind": "image",
-      "mode": "edit_image",
-      "modelFamily": "Latent Consistency Models",
-      "modelType": "LatentConsistencyModelPipeline",
-      "outputPlan": {
-        "mediaKinds": [
-          "image"
-        ],
-        "minimumAssetCount": 1,
-        "reviewCriteria": [
-          "expected_dimensions_and_decodable_output",
-          "prompt_or_task_alignment",
-          "coherent_geometry_lighting_and_materials",
-          "no_unrequested_text_watermark_or_duplicate_subject",
-          "source_identity_structure_and_unmasked_region_preservation"
-        ]
-      },
-      "promptPlan": {
-        "editableBeforeQualification": true,
-        "mustBeLockedInGenerationReceipt": true,
-        "negativePrompt": {
-          "status": "drafted",
-          "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
-        },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
-        "provenance": "original_modiff_mode_draft_v1",
-        "status": "drafted"
-      },
-      "publicationState": "hidden_candidate",
-      "purpose": "Author and review one image result for the exact Latent Consistency Models edit image workflow without changing its canonical graph contract.",
-      "rightsPlan": {
-        "inputMediaRights": "required",
-        "modelArtifactRights": "review_or_existing_catalog_decision_required",
-        "outputPublicationRights": "required",
-        "status": "review_required",
-        "thirdPartyBrandAndPersonalDataReview": "required"
-      },
-      "title": "Latent Consistency Models — Edit Image [LatentConsistencyModelPipeline]"
     },
     {
       "artifactPlan": {
@@ -23071,16 +22819,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 162,
+    "authoringSpecCount": 160,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 64,
-      "draft_complete_input_selection_pending": 98
+      "draft_complete_input_selection_pending": 96
     },
-    "canonicalDefaultsCapturedCount": 162,
-    "generationPendingCount": 162,
-    "inputSelectionPendingCount": 98,
-    "promptDraftedCount": 138,
-    "promptNotApplicableCount": 24,
-    "rightsReviewPendingCount": 162
+    "canonicalDefaultsCapturedCount": 160,
+    "generationPendingCount": 160,
+    "inputSelectionPendingCount": 96,
+    "promptDraftedCount": 137,
+    "promptNotApplicableCount": 23,
+    "rightsReviewPendingCount": 160
   }
 }

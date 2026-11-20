@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:4d2e59c1af232b27a19b3817104d4330861433042c002b97fcc2ba32d07fbf53",
+  "contentHash": "sha256:96aa444ef097cbea4da95298729b5c4f5f6cafc4399c374b71fbec892b5d447f",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -3240,48 +3240,6 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
-      "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_to_text",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "ffad2aedbc329a71d4455d90f40078501f13f56645e1dc077bbc9e7d28dbafaf",
-      "graphPath": "studio/hugging-face-speech-recognition-model/speech-to-text.json",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "mediaKind": "json",
-      "mode": "speech_to_text",
-      "modelType": "HuggingFaceSpeechRecognitionModel",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "AutoModelForSpeechSeq2Seq"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "openai/whisper-tiny"
-      ],
-      "requiredInputs": {
-        "note": "Requires one bounded local audio source and returns a normalized transcript.",
-        "requiredAudio": [
-          "sourceAudio"
-        ]
-      },
-      "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
-        "inputExamples": "required",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
       "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_translation",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -4044,49 +4002,6 @@
         "Lightricks/LTX-Video-0.9.8-13B-distilled"
       ],
       "requiredInputs": {
-        "requiredImages": [
-          "referenceImages"
-        ]
-      },
-      "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
-        "inputExamples": "required",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
-      "canonicalWorkflowId": "LatentConsistencyModelPipeline:edit_image",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "68e60aa18f9117ecf934edaba51b9e822471bca6ef316d65d6bf438e5486d556",
-      "graphPath": "studio/latent-consistency-model-pipeline/edit-image.json",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "mediaKind": "image",
-      "mode": "edit_image",
-      "modelType": "LatentConsistencyModelPipeline",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "LatentConsistencyModelImg2ImgPipeline",
-        "LatentConsistencyModelPipeline"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "SimianLuo/LCM_Dreamshaper_v7"
-      ],
-      "requiredInputs": {
-        "note": "Requires one source image for latent-consistency image-to-image transformation.",
         "requiredImages": [
           "referenceImages"
         ]
@@ -7231,9 +7146,9 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:61d4bb71786bcc009b36fababb91948ed702b64bf47ec63846d7142fe17b5a8a",
+      "contentHash": "sha256:319a6fb2b8c729ee931b192253f379bf8fb63dd181047c87eb8fb6b1dbaddc1e",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:f01741f9a7bcafb556f9fc7a1f702471c6adb0d7308013bde1e0a82076ca2b53"
+      "sha256": "sha256:e1cc64fbbf9af6b93267412066ee380d95c43adcbd4a4fa078c07ca7b37907b4"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -7241,22 +7156,22 @@
     }
   },
   "summary": {
-    "candidateContractCount": 162,
+    "candidateContractCount": 160,
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithExecutablePublicTemplates": 63,
-    "canonicalWorkflowsWithPublicTemplates": 74,
+    "canonicalWorkflowsWithExecutablePublicTemplates": 65,
+    "canonicalWorkflowsWithPublicTemplates": 76,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 98,
+    "contractsRequiringInputExamples": 96,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 6,
-      "image": 114,
-      "json": 9,
+      "image": 113,
+      "json": 8,
       "video": 33
     },
-    "publicTemplateCount": 94
+    "publicTemplateCount": 96
   }
 }
