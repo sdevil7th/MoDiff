@@ -192,6 +192,18 @@ def apply_call_inputs(options: dict[str, Any], target: dict[str, Any]) -> None:
             target.pop(f'{prefix}prompt_2', None)
 
 
+def is_reviewed_direct_image_edit(adapter, pipeline):
+    from modiff.model_artifact_catalog import catalog_revision
+
+    if (adapter.pipeline_class != 'StableDiffusionImg2ImgPipeline'
+            or getattr(pipeline, '_modiff_image_mode', None) != 'edit_image'
+            or getattr(pipeline, '_modiff_image_source', None) != 'hub'
+            or getattr(pipeline, '_modiff_image_repo', None) != adapter.default_repo):
+        return False
+    revision = catalog_revision(adapter.default_repo)
+    return revision is not None and getattr(pipeline, '_modiff_image_revision', None) == revision
+
+
 def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=None, *, requested_inputs=None):
     """Capture effective bounded controls without claiming opaque RNG state.
 
@@ -253,14 +265,18 @@ def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=
         expected = image_pipeline_contract(adapter, effective['executed_task'])
         node.record_field_accounting(values, consumed=consumed, inactive=inactive,
                                      metadata={'image_contract': expected})
-    elif (node.class_name == 'Generate' and effective['executed_task'] == 'text_to_image'
-          and not encoded_inputs and requested_inputs is not None):
-        _record_plain_text_to_image_accounting(node, requested_inputs, values, call_kwargs, adapter)
+    elif not encoded_inputs and requested_inputs is not None:
+        task = effective['executed_task']
+        if ((node.class_name == 'Generate' and task == 'text_to_image')
+                or (node.class_name == 'Edit' and is_reviewed_direct_image_edit(adapter, values['pipeline']))):
+            _record_direct_image_accounting(node, requested_inputs, values, call_kwargs, adapter, task=task)
 
 
-def _record_plain_text_to_image_accounting(node, requested, values, call_kwargs, adapter):
-    """Observe supported scalar controls at the actual plain image call."""
-    from modiff.execution_input_provenance import CONDITIONAL_IMAGE_ACCOUNTING_FIELDS
+def _record_direct_image_accounting(node, requested, values, call_kwargs, adapter, *, task):
+    # Observe only reviewed scalar controls and the actual single source argument.
+    from modiff.execution_input_provenance import (
+        CONDITIONAL_IMAGE_ACCOUNTING_FIELDS, DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS, decoded_image_projection,
+    )
     from .main import image_pipeline_contract
 
     # Optional schedules, supplied state and other runtime inputs need their
@@ -268,21 +284,32 @@ def _record_plain_text_to_image_accounting(node, requested, values, call_kwargs,
     if (call_kwargs['output_type'] != 'pil' or values['use_guidance_scale_2']
             or any(values.get(key) is not None for key in CALL_INPUT_PARAMS)):
         return
+    edit = task == 'edit_image'
+    allowed = DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS if edit else CONDITIONAL_IMAGE_ACCOUNTING_FIELDS
     disabled_guidance = {'use_guidance_scale_2', 'guidance_scale_2'}
-    aliases = {key: key for key in CONDITIONAL_IMAGE_ACCOUNTING_FIELDS
+    aliases = {key: key for key in allowed
                - {'image_contract', 'seed'} - disabled_guidance}
     aliases.update(guidance_scale=adapter.guidance_parameter,
                    image_guidance_scale=adapter.image_guidance_parameter,
                    max_sequence_length=adapter.max_sequence_length_parameter)
     internal = {'generator', 'return_dict', 'callback_on_step_end', 'callback_on_step_end_tensor_inputs'}
+    if edit:
+        internal.add('image')
     if call_kwargs.keys() - internal - set(aliases.values()):
         return
+    input_projections = {}
+    if edit:
+        source = decoded_image_projection(call_kwargs.get('image'))
+        if source is None:
+            return
+        input_projections['image'] = source
     consumed = {key: call_kwargs[argument] for key, argument in aliases.items()
                 if key in requested and argument in call_kwargs}
     if 'seed' in requested:
         consumed['seed'] = call_kwargs['generator'].initial_seed()
-    inactive_fields = (requested.keys() & CONDITIONAL_IMAGE_ACCOUNTING_FIELDS) - consumed.keys() - {'image_contract'}
+    inactive_fields = (requested.keys() & allowed) - consumed.keys() - {'image_contract'}
     inactive = {key: 'feature-disabled' if key in disabled_guidance else 'adapter-inactive'
                 for key in inactive_fields}
     node.record_field_accounting(requested, consumed=consumed, inactive=inactive,
-                                 metadata={'image_contract': image_pipeline_contract(adapter, 'text_to_image')})
+                                 metadata={'image_contract': image_pipeline_contract(adapter, task)},
+                                 input_projections=input_projections)

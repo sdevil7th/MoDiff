@@ -369,6 +369,78 @@ def test_conditional_image_accounting_matches_actual_call(monkeypatch, pipeline_
     assert fields['layers']['inputValue'] == fields['layers']['value'] == requested['layers'] == 4
 
 
+@pytest.mark.parametrize('reviewed', [True, False])
+def test_sd15_single_image_edit_accounts_for_the_real_normalized_argument(monkeypatch, reviewed):
+    from inspect import signature
+
+    from modiff.model_artifact_catalog import require_catalog_revision
+    from modules.DiffusersImage import main as image
+
+    pipeline_name = 'StableDiffusionImg2ImgPipeline'
+    adapter = image.get_image_pipeline_adapter(pipeline_name)
+    upstream = image.pipeline_class_from_name(pipeline_name).__call__
+    source = Image.new('RGB', (64, 48), (4, 90, 160))
+    normalized = source.resize((48, 32))
+    monkeypatch.setattr(image, 'prepare_reference_images', lambda _value, _adapter: normalized)
+    calls = {}
+
+    @wraps(upstream)
+    def edit(self, **kwargs):
+        signature(upstream).bind(self, **kwargs)
+        calls.update(kwargs)
+        return SimpleNamespace(images=[kwargs['image']])
+
+    pipeline = type(pipeline_name, (), {'__call__': edit, '_execution_device': 'cpu'})()
+    revision = require_catalog_revision(adapter.default_repo) if reviewed else None
+    image._tag_image_pipeline(pipeline, adapter, 'edit_image', adapter.default_repo if reviewed else 'local-model',
+                              'hub' if reviewed else 'local', revision)
+    node = image.Edit('edit')
+    node.progress = lambda *a, **kw: None
+    requested = dict(image_contract=image.image_pipeline_contract(adapter, 'edit_image'),
+                     prompt='Flat travel poster', negative_prompt='', width='512', height=512, seed=42,
+                     num_inference_steps=30, guidance_scale=7.5, strength=0.8, reference_strength=1.0,
+                     max_sequence_length=512, output_type='pil')
+    output = node(pipeline=pipeline, image=source, **requested)
+    assert output['images'] == [normalized]
+    assert calls['image'] is normalized
+    assert 'width' not in calls and 'height' not in calls
+    definition = {'module': 'modules.DiffusersImage', 'action': 'Edit', 'params': {
+        **{key: {'value': value} for key, value in requested.items()},
+        'image': {'sourceId': 'source-image', 'sourceKey': 'image'},
+        'pipeline': {'sourceId': 'model', 'sourceKey': 'pipeline'},
+    }}
+    original = node._execution_input_record
+    bound = bind_generation_input_origins(node.node_id, definition, original)
+    assert bound['fields']['executed_task']['value'] == 'edit_image'
+    if not reviewed:
+        assert 'fieldAccounting' not in bound
+        return
+
+    accounting = bound['fieldAccounting']
+    assert accounting['complete'], accounting
+    assert accounting['fields'].keys() == requested.keys()
+    assert accounting['fields']['image_contract']['disposition'] == 'metadata'
+    for key in ('prompt', 'negative_prompt', 'num_inference_steps', 'guidance_scale', 'strength', 'output_type'):
+        assert accounting['fields'][key] == {
+            'source': 'literal', 'disposition': 'consumed', 'inputValue': requested[key], 'value': calls[key],
+        }
+    assert accounting['fields']['seed']['value'] == calls['generator'].initial_seed() == 42
+    for key in ('width', 'height', 'max_sequence_length', 'reference_strength'):
+        assert accounting['fields'][key]['disposition'] == 'inactive'
+    assert accounting['fields']['width']['inputValue'] == '512'
+    projection = accounting['inputProjections']['image']
+    assert projection['kind'] == 'decoded-image-v1'
+    assert projection['values'] == {'mode': 'RGB', 'width': 48, 'height': 32, 'byteSize': 48 * 32 * 3,
+                                    'sha256': hashlib.sha256(normalized.tobytes()).hexdigest()}
+    assert projection['values']['sha256'] != hashlib.sha256(source.tobytes()).hexdigest()
+    assert (projection['source'], projection['sourceNodeId'], projection['sourcePortId']) == (
+        'connected', 'source-image', 'image',
+    )
+    overridden = bind_generation_input_origins(node.node_id, definition, original, {'image': source})
+    assert not overridden['fieldAccounting']['complete']
+    assert overridden['fieldAccounting']['inputProjections']['image']['source'] == 'override'
+
+
 def test_conditional_accounting_holds_stale_metadata_and_unreviewed_literals(monkeypatch):
     receipt, _, _ = run_conditional_image(monkeypatch, 'StableDiffusionPipeline',
         image_contract={'pipelineClass': 'ObsoletePipeline'}, unreviewed_control='untrusted-value')

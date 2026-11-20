@@ -173,6 +173,7 @@ CONDITIONAL_IMAGE_ACCOUNTING_FIELDS = frozenset('''image_contract prompt negativ
     num_inference_steps guidance_scale image_guidance_scale use_guidance_scale_2 guidance_scale_2 pag_scale
     pag_adaptive_scale control_guidance_start control_guidance_end layers resolution cfg_normalize
     use_en_prompt strength padding_mask_crop max_sequence_length output_type'''.split())
+DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS = CONDITIONAL_IMAGE_ACCOUNTING_FIELDS | {'reference_strength'}
 ACCOUNTING_FIELDS = {
     ('DiffusersImage', 'LoadPipeline'): frozenset('''model_id pipeline_class mode revision execution_profile_id
         conditioning_kind conditioning_model_id conditioning_revision dtype device quantization_mode
@@ -189,6 +190,7 @@ ACCOUNTING_FIELDS = {
     ('DiffusersImage', 'UnconditionalGenerate'): frozenset(
         'image_contract batch_size seed num_inference_steps eta class_label output_type'.split()),
     ('DiffusersImage', 'Generate'): CONDITIONAL_IMAGE_ACCOUNTING_FIELDS,
+    ('DiffusersImage', 'Edit'): DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS,
     ('HuggingFaceSpeech', 'TranscribeAudio'): frozenset(
         'task language timestamps chunk_length_seconds stride_length_seconds'.split()),
     ('HuggingFaceSpeech', 'TranscribeCTCAudio'): frozenset(
@@ -202,6 +204,7 @@ ACCOUNTING_PORTS = {
         {'quantization_config': 'disabled-quantization-v1'}, {'execution_recipe': 'execution-recipe-v1'}),
     ('DiffusersImage', 'UnconditionalGenerate'): ({}, {}),
     ('DiffusersImage', 'Generate'): ({}, {}),
+    ('DiffusersImage', 'Edit'): ({'image': 'decoded-image-v1'}, {}),
     ('HuggingFaceSpeech', 'TranscribeAudio'): ({}, {}),
     ('HuggingFaceSpeech', 'TranscribeCTCAudio'): ({}, {}),
     ('Image', 'Preview'): ({}, {}),
@@ -212,6 +215,7 @@ ACCOUNTING_OBJECT_INPUTS = {
     ('DiffusersRuntime', 'DiffusersExecutionRecipe'): frozenset({'quantization_config'}),
     ('DiffusersImage', 'UnconditionalGenerate'): frozenset({'pipeline'}),
     ('DiffusersImage', 'Generate'): frozenset({'pipeline'}),
+    ('DiffusersImage', 'Edit'): frozenset({'pipeline', 'image'}),
     ('HuggingFaceSpeech', 'TranscribeAudio'): frozenset({'model', 'audio'}),
     ('HuggingFaceSpeech', 'TranscribeCTCAudio'): frozenset({'model', 'audio'}),
     ('Image', 'Preview'): frozenset({'image', 'vae'}),
@@ -243,9 +247,39 @@ def _valid_projection(projection, kind):
             return False
         if any(_bounded_value(value)[1] for value in values.values()):
             return False
+    elif kind == 'decoded-image-v1':
+        from modiff.builtin_media_evidence import MAX_PIXEL_BYTES
+
+        if type(values) is not dict or set(values) != {'mode', 'width', 'height', 'byteSize', 'sha256'}:
+            return False
+        if values['mode'] != 'RGB' or any(type(values[key]) is not int or values[key] <= 0
+                                          for key in ('width', 'height', 'byteSize')):
+            return False
+        if values['width'] * values['height'] * 3 != values['byteSize'] or values['byteSize'] > MAX_PIXEL_BYTES:
+            return False
+        digest = values['sha256']
+        if type(digest) is not str or len(digest) != 64 or any(char not in '0123456789abcdef' for char in digest):
+            return False
     else:
         return False
     return projection['sha256'] == _accounting_digest(kind, values)
+
+
+def decoded_image_projection(value):
+    """Bound the actual RGB image passed to the pipeline, before its preprocessing."""
+    from PIL import Image
+
+    from modiff.builtin_media_evidence import media_identity
+
+    if not isinstance(value, Image.Image) or value.mode != 'RGB':
+        return None
+    try:
+        values = media_identity(value)
+    except (ValueError, TypeError, OSError, MemoryError):
+        return None
+    values.pop('kind')
+    return {'kind': 'decoded-image-v1', 'values': values,
+            'sha256': _accounting_digest('decoded-image-v1', values)}
 
 
 def disabled_quantization_projection(value):
@@ -477,6 +511,12 @@ def bind_generation_input_origins(node_id, node, record, overrides=None, *, sour
                 projection.update(source='connected', sourceNodeId=str(param['sourceId']), sourcePortId=str(param['sourceKey']))
             else:
                 projection['source'] = 'literal'
+        if scope == ('DiffusersImage', 'Edit'):
+            image = accounting['inputProjections'].get('image')
+            if image is not None and image['source'] != 'connected':
+                accounting['omittedFields']['image'] = 'unsupported-origin'
+            if overrides:
+                accounting['omittedFields']['overrides'] = 'unsupported-origin'
         accounting['complete'] = not accounting['omittedFields'] and not accounting['unaccountedFields']
         if len(json.dumps(result, ensure_ascii=True).encode('ascii')) > MAX_RECORD_BYTES:
             result['fieldAccounting'] = {'schemaVersion': 1, 'fields': {}, 'inputProjections': {},
