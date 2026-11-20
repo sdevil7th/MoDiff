@@ -126,6 +126,30 @@ def test_additional_modular_callbacks_have_no_model_ownership(action, method, va
     fn(values, {})
 
 
+def test_unwired_guider_waits_for_model_metadata_without_relaxing_admission():
+    fn = metadata_field_callback("Guider", "updateNode", node_id="draft", sid="editing")
+    context = fn.__self__
+    values = {"guider": "SkipLayerGuidance", "model_type": ""}
+    context.get_signal_value = Mock(return_value=None)
+    context.send_node_definition = Mock()
+    fn(values, {})
+    context.get_signal_value.assert_called_once_with("guider_out")
+    context.send_node_definition.assert_not_called()
+
+    with pytest.raises(ValueError, match="class allowed"):
+        fn({**values, "model_type": "UnreviewedPipeline"}, {})
+    context.send_node_definition.assert_not_called()
+
+    context.get_signal_value.return_value = "StableDiffusionXLModularPipeline"
+    fn(values, {})
+    assert "skip_layer_guidance_scale" in context.send_node_definition.call_args.args[0]
+
+    context.send_node_definition.reset_mock()
+    context.get_signal_value.return_value = None
+    fn(values, {})
+    context.send_node_definition.assert_not_called()
+
+
 def test_legacy_custom_definition_keeps_request_workflow_ownership():
     from modiff.NodeBase import node_message_context
     from modules.ModularDiffusers import dynamic_node
