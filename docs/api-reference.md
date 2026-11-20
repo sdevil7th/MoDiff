@@ -2447,7 +2447,8 @@ An upstream node record may additionally contain `fieldAccounting` with its own
 `schemaVersion: 1`. This additive evidence does not widen or replace the existing
 v1 `fields`, `summary`, or display semantics. The scopes include the ordinary
 image loader, quantization and execution-recipe builders, unconditional image
-generation, plain text-to-image generation, and image Preview.
+generation, plain text-to-image generation, reviewed single-image edits, image
+Preview, and the speech consumers.
 
 `fields` accounts for explicitly allowlisted inputs as `consumed`, `inactive`,
 `superseded`, or `metadata`. Scalar entries retain the bounded `inputValue`;
@@ -2471,10 +2472,15 @@ unreviewed call variants retain their legacy receipt scope.
 `inputProjections` and `outputProjections` contain fixed plain configuration
 projections with `kind`, `values`, and `sha256`. Their digest is SHA-256 of the kind,
 a newline, and sorted compact ASCII JSON of the values. Input projections retain
-the exact connected node/port or literal/override origin. Initially only the
-existing disabled quantization marker and the scalar execution-recipe projection
-are supported; enabled quantizers, nonempty mapping options, opaque values and
-unknown configuration keys remain unsupported evidence. Consumers must join
+the exact connected node/port or literal/override origin. Supported projections
+include the disabled quantization marker, the scalar execution recipe, and the
+bounded RGB image supplied to reviewed single-image edits. The image projection
+records dimensions, byte size and a pixel hash before upstream preprocessing.
+The input must be connected and free of run-time overrides for complete edit
+accounting. The recorded dimensions describe the supplied image. The selected
+pipeline and its effective arguments determine the eventual output size.
+Enabled quantizers, nonempty mapping options, opaque values and unknown
+configuration keys remain unsupported evidence. Consumers must join
 producer and consumer identities/digests; a graph wire alone is not that proof.
 Configuration arguments do not assert that an optional library feature was
 implemented or applied by a model that lacks it.
