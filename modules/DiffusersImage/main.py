@@ -147,6 +147,7 @@ class ImagePipelineAdapter:
     native_prompt_encoding: bool = False
     prompt_embedding_encoder_dtype: str | None = None
     prompt_embedding_mask_modes: frozenset[str] = frozenset()
+    normalize_tiled_edit_latent_dtype: bool = False
     max_inference_steps: int = 100
     two_step_intermediate_timestep: bool = False
     min_output_side: int = 16
@@ -498,6 +499,31 @@ class ImagePipelineAdapter:
                 pipeline.encode_prompt = previous_instance_method
             else:
                 del pipeline.encode_prompt
+
+    @contextmanager
+    def edit_latent_dtype_context(self, pipeline: Any):
+        if (not self.normalize_tiled_edit_latent_dtype
+                or getattr(pipeline, "_modiff_image_mode", None) != "edit_image"
+                or not getattr(getattr(pipeline, "vae", None), "use_tiling", False)):
+            yield
+            return
+        prepare = pipeline.prepare_image_latents
+        previous = vars(pipeline).get("prepare_image_latents")
+
+        @wraps(prepare)
+        def prepare_in_requested_dtype(image, dtype, *args, **kwargs):
+            # AutoencoderTiny 0.43 stitches BF16 tiles into a float32 buffer.
+            # Convert the result before concatenation promotes the UNet input.
+            return prepare(image, dtype, *args, **kwargs).to(dtype=dtype)
+
+        pipeline.prepare_image_latents = prepare_in_requested_dtype
+        try:
+            yield
+        finally:
+            if previous is None:
+                del pipeline.prepare_image_latents
+            else:
+                pipeline.prepare_image_latents = previous
 
     def prepare_prompt_embeddings(self, pipeline: Any, values: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
         """Bridge a reviewed mixed-dtype prompt encoder to its denoising component."""
@@ -1227,6 +1253,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         ignored_generation_parameters=frozenset({"image_guidance_scale"}),
         max_sequence_length=200,
         component_dtype_overrides=(("text_encoder", "bfloat16"),),
+        normalize_tiled_edit_latent_dtype=True,
     ),
     "StableDiffusionXLImg2ImgPipeline": ImagePipelineAdapter(
         "StableDiffusionXLImg2ImgPipeline",
@@ -5413,7 +5440,7 @@ class Edit(Generate):
                                  requested_inputs=getattr(self, '_requested_generation_inputs', None))
         self._active_pipeline = pipeline
         try:
-            with adapter.prompt_encoding_context(pipeline):
+            with adapter.prompt_encoding_context(pipeline), adapter.edit_latent_dtype_context(pipeline):
                 result = pipeline(**call_kwargs)
         finally:
             self._active_pipeline = None

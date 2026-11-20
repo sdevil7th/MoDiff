@@ -2942,6 +2942,11 @@ revision, remote code, or serialization fallback is enabled by this resolution.
 Individual component loaders and explicit local selections keep their existing
 paths.
 
+DreamLite Mobile's direct Edit adapter aligns tiled conditioning latents with
+the dtype requested by the pipeline. Diffusers 0.43's tiny VAE stitches tiles
+into a float32 buffer, which would otherwise promote the input to the denoiser.
+The adapter keeps the selected VAE tiling and offload settings.
+
 Direct pipeline mutation state is owned by the actual `LoadPipeline` node and
 its ordered declared pipeline connections. Image `LoadAdapter` and audio
 `LoadAdapter`, `SetAdapters` and `FuseAdapters` use this shared cache contract.
