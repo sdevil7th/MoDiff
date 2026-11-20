@@ -370,24 +370,40 @@ def test_conditional_image_accounting_matches_actual_call(monkeypatch, pipeline_
 
 
 @pytest.mark.parametrize('reviewed', [True, False])
-@pytest.mark.parametrize('pipeline_name,width,steps,guidance,sequence_limit,accepts_negative_prompt,resize', [
-    ('StableDiffusionImg2ImgPipeline', 512, 30, 7.5, 512, True, (48, 32)),
-    ('LatentConsistencyModelImg2ImgPipeline', 1024, 4, 8.5, 256, False, None),
+@pytest.mark.parametrize('pipeline_name,width,steps,guidance,strength,sequence_limit,active_controls,resize', [
+    ('StableDiffusionImg2ImgPipeline', 512, 30, 7.5, 0.8, 512,
+     {'negative_prompt', 'guidance_scale', 'strength'}, (48, 32)),
+    ('LatentConsistencyModelImg2ImgPipeline', 1024, 4, 8.5, 0.8, 256,
+     {'guidance_scale', 'strength'}, None),
+    ('DreamLiteMobilePipeline', 1024, 4, 0.0, 0.8, 200,
+     {'width', 'height', 'max_sequence_length'}, None),
+    ('SanaSprintImg2ImgPipeline', 1024, 2, 4.5, 0.5, 300,
+     {'width', 'height', 'max_sequence_length', 'guidance_scale', 'strength'}, None),
+    ('SanaSprintImg2ImgPipeline', 1024, 4, 4.5, 0.5, 300,
+     {'width', 'height', 'max_sequence_length', 'guidance_scale', 'strength'}, None),
 ])
 def test_direct_image_edit_accounts_for_the_real_normalized_argument(
-        monkeypatch, reviewed, pipeline_name, width, steps, guidance, sequence_limit, accepts_negative_prompt, resize):
+        monkeypatch, tmp_path, reviewed, pipeline_name, width, steps, guidance, strength, sequence_limit,
+        active_controls, resize):
     from inspect import signature
 
     from modiff.model_artifact_catalog import require_catalog_revision
     from modules.DiffusersImage import main as image
+    from modules.Image import main as media
 
     adapter = image.get_image_pipeline_adapter(pipeline_name)
     upstream = image.pipeline_class_from_name(pipeline_name).__call__
     source = Image.new('RGB', (64, 48) if resize else (512, 512), (4, 90, 160))
-    normalized = source
     if resize:
         normalized = source.resize(resize)
         monkeypatch.setattr(image, 'prepare_reference_images', lambda _value, _adapter: normalized)
+    else:
+        fixture = tmp_path / 'source.png'
+        source.save(fixture)
+        monkeypatch.setenv('MODIFF_CAPTURE_BUILTIN_MEDIA', '1')
+        monkeypatch.setattr(media, 'resolve_runtime_input_path', lambda _path: fixture)
+        load = media.Load('source-image')
+        source = normalized = load(file=['source.png'], alpha_channel='ignore')['image']
     calls = {}
 
     @wraps(upstream)
@@ -404,7 +420,7 @@ def test_direct_image_edit_accounts_for_the_real_normalized_argument(
     node.progress = lambda *a, **kw: None
     requested = dict(image_contract=image.image_pipeline_contract(adapter, 'edit_image'),
                      prompt='Flat travel poster', negative_prompt='', width=str(width), height=width, seed=42,
-                     num_inference_steps=steps, guidance_scale=guidance, strength=0.8, reference_strength=1.0,
+                     num_inference_steps=steps, guidance_scale=guidance, strength=strength, reference_strength=1.0,
                      max_sequence_length=sequence_limit, output_type='pil', cfg_normalize=False,
                      control_guidance_start=0, control_guidance_end=1, image_guidance_scale=1.5,
                      layers=4, padding_mask_crop=0, pag_scale=3, pag_adaptive_scale=0,
@@ -412,7 +428,8 @@ def test_direct_image_edit_accounts_for_the_real_normalized_argument(
     output = node(pipeline=pipeline, image=source, **requested)
     assert output['images'] == [normalized]
     assert calls['image'] is normalized
-    assert 'width' not in calls and 'height' not in calls
+    active = {'prompt', 'num_inference_steps', 'output_type'} | active_controls
+    assert calls.keys() & requested.keys() == active
     definition = {'module': 'modules.DiffusersImage', 'action': 'Edit', 'params': {
         **{key: {'value': value} for key, value in requested.items()},
         'image': {'sourceId': 'source-image', 'sourceKey': 'image'},
@@ -421,6 +438,10 @@ def test_direct_image_edit_accounts_for_the_real_normalized_argument(
     original = node._execution_input_record
     bound = bind_generation_input_origins(node.node_id, definition, original)
     assert bound['fields']['executed_task']['value'] == 'edit_image'
+    if pipeline_name == 'SanaSprintImg2ImgPipeline' and steps != 2:
+        assert calls['intermediate_timesteps'] is None
+        assert 'fieldAccounting' not in bound
+        return
     if not reviewed:
         assert 'fieldAccounting' not in bound
         return
@@ -429,23 +450,16 @@ def test_direct_image_edit_accounts_for_the_real_normalized_argument(
     assert accounting['complete'], accounting
     assert accounting['fields'].keys() == requested.keys()
     assert accounting['fields']['image_contract']['disposition'] == 'metadata'
-    for key in ('prompt', 'num_inference_steps', 'guidance_scale', 'strength', 'output_type'):
+    for key in active:
         assert accounting['fields'][key] == {
             'source': 'literal', 'disposition': 'consumed', 'inputValue': requested[key], 'value': calls[key],
         }
     assert accounting['fields']['seed']['value'] == calls['generator'].initial_seed() == 42
-    for key in ('width', 'height', 'max_sequence_length', 'reference_strength', 'cfg_normalize',
-                'control_guidance_start', 'control_guidance_end', 'image_guidance_scale', 'layers',
-                'padding_mask_crop', 'pag_scale', 'pag_adaptive_scale', 'resolution', 'use_en_prompt'):
-        assert accounting['fields'][key]['disposition'] == 'inactive'
-    assert accounting['fields']['width']['inputValue'] == str(width)
-    assert ('negative_prompt' in calls) == accepts_negative_prompt
-    negative = accounting['fields']['negative_prompt']
-    assert negative['source'] == 'literal' and negative['inputValue'] == requested['negative_prompt']
-    if accepts_negative_prompt:
-        assert negative['disposition'] == 'consumed' and negative['value'] == calls['negative_prompt']
-    else:
-        assert negative['disposition'] == 'inactive' and negative['reason'] == 'adapter-inactive'
+    for key in requested.keys() - active - {'seed', 'image_contract'}:
+        assert accounting['fields'][key] == {
+            'source': 'literal', 'disposition': 'inactive', 'reason': 'adapter-inactive',
+            'inputValue': requested[key], 'value': requested[key],
+        }
     projection = accounting['inputProjections']['image']
     assert projection['kind'] == 'decoded-image-v1'
     assert projection['values'] == {
@@ -453,7 +467,11 @@ def test_direct_image_edit_accounts_for_the_real_normalized_argument(
         'byteSize': normalized.width * normalized.height * 3,
         'sha256': hashlib.sha256(normalized.tobytes()).hexdigest(),
     }
-    assert (projection['values']['sha256'] == hashlib.sha256(source.tobytes()).hexdigest()) == (resize is None)
+    if resize:
+        assert projection['values']['sha256'] != hashlib.sha256(source.tobytes()).hexdigest()
+    else:
+        decoded = load._execution_input_record['mediaEvidence']['outputs']['image']
+        assert decoded == [{'kind': 'image', **projection['values']}]
     assert (projection['source'], projection['sourceNodeId'], projection['sourcePortId']) == (
         'connected', 'source-image', 'image',
     )
