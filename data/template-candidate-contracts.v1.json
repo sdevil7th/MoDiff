@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:f1bb2be5a712d39ab37194861af4b88cd01c75c4d4760ebfb411cae573aae39b",
+  "contentHash": "sha256:d173a49bce829eb731ffe1bc6187becfc4c495d91eaab01ec8d62dc4a9d251c8",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -3164,7 +3164,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "a3706e4676b9035d3d5168999028c1e356a01113eefc6203970bfa047751f3b7",
+      "graphHash": "5254814f617e1de974fd034e2f22ce467c8fe478625555e331e65f2067646434",
       "graphPath": "studio/hugging-face-ctc-speech-recognition-model/speech-to-text.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -7231,13 +7231,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:241ff645b00e05685ed1765867b98af3dd938af58cf13fc1a0931609226fd0f0",
+      "contentHash": "sha256:a93985c5ba006d95b9d39a39612808d5d4e45b8411fd539888a1db370911f69a",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:31e8669e15ef04a954abead70d37ddb840a5ee9a9e470a0291c99b6ebbefc2c1"
+      "sha256": "sha256:770cd144196b34bcf25acc70e2962d78e5dc12ca09580cd19d7efc552919f76d"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:1f2241bf2582bfacc4e4e8c3760f8dbc94b085e7aef02de2cdb3ef339f1cb646"
+      "sha256": "sha256:ef73b96f6881229df09298b703541aae1d67dd5d9b71dc91a3c22ef3ae016b43"
     }
   },
   "summary": {

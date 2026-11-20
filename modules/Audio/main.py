@@ -40,14 +40,6 @@ def _pcm_to_float32(array):
     return array.astype(np.float32, copy=False)
 
 
-def _resolve_file(value):
-    file = value[0] if isinstance(value, list) and value else value
-    file = str(file or "")
-    if not file:
-        return None
-    return resolve_runtime_input_path(file)
-
-
 def _collapse_single(values):
     return values[0] if len(values) == 1 else values
 
@@ -371,9 +363,13 @@ class Load(NodeBase):
     }
 
     def execute(self, **kwargs):
-        path = _resolve_file(kwargs.get("file"))
-        if path is None or not path.exists():
+        selection = kwargs.get("file")
+        source_value = selection[0] if isinstance(selection, list) and selection else selection
+        source_value = str(source_value or "")
+        source_path = resolve_runtime_input_path(source_value) if source_value else None
+        if source_path is None or not source_path.exists():
             raise ValueError("Load Audio needs an existing audio file.")
+        path = source_path
         if path.suffix.lower() != ".wav":
             from modiff.media_import import audio_as_wav
 
@@ -397,8 +393,12 @@ class Load(NodeBase):
             # their actual decoded-file identity rather than claiming the
             # original compressed container was read by this WAV decoder.
             loaded = _bounded_audio_object(_read_wav(BytesIO(content)), label="Loaded audio")
-            files['file'] = [{'sourceValue': kwargs.get('file'), 'sha256': hashlib.sha256(content).hexdigest(),
-                              'byteSize': len(content), 'converted': str(_resolve_file(kwargs.get('file'))) != str(path)}]
+            files['file'] = [{
+                'sourceValue': source_value,
+                'sha256': hashlib.sha256(content).hexdigest(),
+                'byteSize': len(content),
+                'converted': path != source_path,
+            }]
         else:
             loaded = _bounded_audio_object(_read_wav(path), label="Loaded audio")
         loaded["path"] = str(path)

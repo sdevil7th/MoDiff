@@ -1235,7 +1235,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "a3706e4676b9035d3d5168999028c1e356a01113eefc6203970bfa047751f3b7",
+      "graphHash": "5254814f617e1de974fd034e2f22ce467c8fe478625555e331e65f2067646434",
       "graphPath": "studio/hugging-face-ctc-speech-recognition-model/speech-to-text.json",
       "id": "HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
       "mode": "speech_to_text",
@@ -2652,7 +2652,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:241ff645b00e05685ed1765867b98af3dd938af58cf13fc1a0931609226fd0f0",
+  "contentHash": "sha256:a93985c5ba006d95b9d39a39612808d5d4e45b8411fd539888a1db370911f69a",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -10743,7 +10743,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "fdcef39fe9f8b7d7d0a8fb82353e2e107ed2d543ae436447d3d95b16bbbd5deb",
+    "templateBundleSha256": "40cd4dc8ab170f5a8c83d82b354f41b529db0c0f6dbfa88ff773fba943942af6",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {

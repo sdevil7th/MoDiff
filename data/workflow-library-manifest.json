@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-15T05:15:20.647Z",
+  "generatedAt": "2026-11-20T14:58:53.147Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
   "supportedCanonicalPairCount": 290,
@@ -3021,7 +3021,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/hugging-face-ctc-speech-recognition-model/speech-to-text.json",
-      "graphHash": "a3706e4676b9035d3d5168999028c1e356a01113eefc6203970bfa047751f3b7"
+      "graphHash": "5254814f617e1de974fd034e2f22ce467c8fe478625555e331e65f2067646434"
     },
     {
       "id": "HuggingFaceImageTextToTextModel:image_to_text",

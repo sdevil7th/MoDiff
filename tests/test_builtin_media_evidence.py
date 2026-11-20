@@ -3,6 +3,7 @@ import hashlib
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 from PIL import Image
 
 from modiff.builtin_media_evidence import begin_media_capture, snapshot_video_inputs
@@ -122,7 +123,8 @@ def test_missing_video_snapshot_cannot_be_reported_complete(tmp_path, monkeypatc
     assert node._execution_input_record['mediaEvidence']['status'] == 'unavailable'
 
 
-def test_audio_loader_hashes_the_same_snapshot_it_decodes(tmp_path, monkeypatch):
+@pytest.mark.parametrize('browser_selection', [False, True])
+def test_audio_loader_hashes_the_same_snapshot_it_decodes(tmp_path, monkeypatch, browser_selection):
     from modules.Audio.main import Load
     from scipy.io import wavfile
     import io
@@ -137,8 +139,13 @@ def test_audio_loader_hashes_the_same_snapshot_it_decodes(tmp_path, monkeypatch)
     monkeypatch.setenv('MODIFF_CAPTURE_BUILTIN_MEDIA', '1')
     monkeypatch.setattr(wavfile, 'read', replace_source_before_decode)
     node = Load('audio-input')
-    result = node(file=str(path))
+    result = node(file=[str(path)] if browser_selection else str(path))
     evidence = node._execution_input_record['mediaEvidence']
-    assert evidence['files']['file'][0]['sha256'] == hashlib.sha256(original).hexdigest()
+    assert evidence['files']['file'] == [{
+        'sourceValue': str(path),
+        'sha256': hashlib.sha256(original).hexdigest(),
+        'byteSize': len(original),
+        'converted': False,
+    }]
     assert evidence['outputs']['audio'][0]['shape'] == [3, 1]
     assert np.allclose(result['audio']['samples'][:, 0], [0, 1000 / 32768, -1000 / 32768])

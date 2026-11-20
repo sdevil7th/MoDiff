@@ -20,7 +20,9 @@ Image Load decodes the same snapshot whose original bytes were hashed. Captured
 WAV loading likewise hashes and decodes one byte snapshot. Compressed-audio
 conversion remains marked as converted; its decoded WAV does not masquerade as
 an execution-bound original-container receipt. Qualification must reject such
-an unresolved root binding.
+an unresolved root binding. Audio Load records the selected source path as a string.
+The client can read older Audio Load receipts that carry the same path in a
+single-item file-picker list.
 
 For captured literal video paths, Process Video streams each source once into
 an owned temporary snapshot while hashing it; FFmpeg consumes only that snapshot.

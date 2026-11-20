@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:ba4b9f3b3164cf8b88db1f19447cbe3ffea75a4be1df7ce72bb09a571260f160",
+  "contentHash": "sha256:4580dc8111cb11c99737b0267a53ab6852999b6c7fee41f5c64281ed60874410",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:f1bb2be5a712d39ab37194861af4b88cd01c75c4d4760ebfb411cae573aae39b",
+      "contentHash": "sha256:d173a49bce829eb731ffe1bc6187becfc4c495d91eaab01ec8d62dc4a9d251c8",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:7976bc721de00b838748aa996caf0f8033848ef229f17305f8ee0087d8086d70"
+      "sha256": "sha256:679310793f759177520d65cebb81b13f4c2995f2a6335fce17428ca47b3f33d1"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:1f2241bf2582bfacc4e4e8c3760f8dbc94b085e7aef02de2cdb3ef339f1cb646"
+      "sha256": "sha256:ef73b96f6881229df09298b703541aae1d67dd5d9b71dc91a3c22ef3ae016b43"
     }
   },
   "specifications": [
@@ -9719,7 +9719,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/hugging-face-ctc-speech-recognition-model/speech-to-text.json",
-        "sha256": "a3706e4676b9035d3d5168999028c1e356a01113eefc6203970bfa047751f3b7"
+        "sha256": "5254814f617e1de974fd034e2f22ce467c8fe478625555e331e65f2067646434"
       },
       "canonicalWorkflowId": "HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
       "claims": {
@@ -9745,11 +9745,11 @@
           {
             "parameter": "timestamps",
             "role": "transcribeAudio",
-            "value": "segment"
+            "value": "word"
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "a3706e4676b9035d3d5168999028c1e356a01113eefc6203970bfa047751f3b7",
+        "sourceGraphSha256": "5254814f617e1de974fd034e2f22ce467c8fe478625555e331e65f2067646434",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {

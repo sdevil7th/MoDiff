@@ -404,7 +404,7 @@
               }
             ],
             "type": "string",
-            "value": "segment"
+            "value": "word"
           },
           "transcript": {
             "display": "output",
