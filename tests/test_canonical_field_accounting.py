@@ -370,18 +370,24 @@ def test_conditional_image_accounting_matches_actual_call(monkeypatch, pipeline_
 
 
 @pytest.mark.parametrize('reviewed', [True, False])
-def test_sd15_single_image_edit_accounts_for_the_real_normalized_argument(monkeypatch, reviewed):
+@pytest.mark.parametrize('pipeline_name,width,steps,guidance,sequence_limit,accepts_negative_prompt,resize', [
+    ('StableDiffusionImg2ImgPipeline', 512, 30, 7.5, 512, True, (48, 32)),
+    ('LatentConsistencyModelImg2ImgPipeline', 1024, 4, 8.5, 256, False, None),
+])
+def test_direct_image_edit_accounts_for_the_real_normalized_argument(
+        monkeypatch, reviewed, pipeline_name, width, steps, guidance, sequence_limit, accepts_negative_prompt, resize):
     from inspect import signature
 
     from modiff.model_artifact_catalog import require_catalog_revision
     from modules.DiffusersImage import main as image
 
-    pipeline_name = 'StableDiffusionImg2ImgPipeline'
     adapter = image.get_image_pipeline_adapter(pipeline_name)
     upstream = image.pipeline_class_from_name(pipeline_name).__call__
-    source = Image.new('RGB', (64, 48), (4, 90, 160))
-    normalized = source.resize((48, 32))
-    monkeypatch.setattr(image, 'prepare_reference_images', lambda _value, _adapter: normalized)
+    source = Image.new('RGB', (64, 48) if resize else (512, 512), (4, 90, 160))
+    normalized = source
+    if resize:
+        normalized = source.resize(resize)
+        monkeypatch.setattr(image, 'prepare_reference_images', lambda _value, _adapter: normalized)
     calls = {}
 
     @wraps(upstream)
@@ -397,9 +403,12 @@ def test_sd15_single_image_edit_accounts_for_the_real_normalized_argument(monkey
     node = image.Edit('edit')
     node.progress = lambda *a, **kw: None
     requested = dict(image_contract=image.image_pipeline_contract(adapter, 'edit_image'),
-                     prompt='Flat travel poster', negative_prompt='', width='512', height=512, seed=42,
-                     num_inference_steps=30, guidance_scale=7.5, strength=0.8, reference_strength=1.0,
-                     max_sequence_length=512, output_type='pil')
+                     prompt='Flat travel poster', negative_prompt='', width=str(width), height=width, seed=42,
+                     num_inference_steps=steps, guidance_scale=guidance, strength=0.8, reference_strength=1.0,
+                     max_sequence_length=sequence_limit, output_type='pil', cfg_normalize=False,
+                     control_guidance_start=0, control_guidance_end=1, image_guidance_scale=1.5,
+                     layers=4, padding_mask_crop=0, pag_scale=3, pag_adaptive_scale=0,
+                     resolution=640, use_en_prompt=False)
     output = node(pipeline=pipeline, image=source, **requested)
     assert output['images'] == [normalized]
     assert calls['image'] is normalized
@@ -420,19 +429,31 @@ def test_sd15_single_image_edit_accounts_for_the_real_normalized_argument(monkey
     assert accounting['complete'], accounting
     assert accounting['fields'].keys() == requested.keys()
     assert accounting['fields']['image_contract']['disposition'] == 'metadata'
-    for key in ('prompt', 'negative_prompt', 'num_inference_steps', 'guidance_scale', 'strength', 'output_type'):
+    for key in ('prompt', 'num_inference_steps', 'guidance_scale', 'strength', 'output_type'):
         assert accounting['fields'][key] == {
             'source': 'literal', 'disposition': 'consumed', 'inputValue': requested[key], 'value': calls[key],
         }
     assert accounting['fields']['seed']['value'] == calls['generator'].initial_seed() == 42
-    for key in ('width', 'height', 'max_sequence_length', 'reference_strength'):
+    for key in ('width', 'height', 'max_sequence_length', 'reference_strength', 'cfg_normalize',
+                'control_guidance_start', 'control_guidance_end', 'image_guidance_scale', 'layers',
+                'padding_mask_crop', 'pag_scale', 'pag_adaptive_scale', 'resolution', 'use_en_prompt'):
         assert accounting['fields'][key]['disposition'] == 'inactive'
-    assert accounting['fields']['width']['inputValue'] == '512'
+    assert accounting['fields']['width']['inputValue'] == str(width)
+    assert ('negative_prompt' in calls) == accepts_negative_prompt
+    negative = accounting['fields']['negative_prompt']
+    assert negative['source'] == 'literal' and negative['inputValue'] == requested['negative_prompt']
+    if accepts_negative_prompt:
+        assert negative['disposition'] == 'consumed' and negative['value'] == calls['negative_prompt']
+    else:
+        assert negative['disposition'] == 'inactive' and negative['reason'] == 'adapter-inactive'
     projection = accounting['inputProjections']['image']
     assert projection['kind'] == 'decoded-image-v1'
-    assert projection['values'] == {'mode': 'RGB', 'width': 48, 'height': 32, 'byteSize': 48 * 32 * 3,
-                                    'sha256': hashlib.sha256(normalized.tobytes()).hexdigest()}
-    assert projection['values']['sha256'] != hashlib.sha256(source.tobytes()).hexdigest()
+    assert projection['values'] == {
+        'mode': 'RGB', 'width': normalized.width, 'height': normalized.height,
+        'byteSize': normalized.width * normalized.height * 3,
+        'sha256': hashlib.sha256(normalized.tobytes()).hexdigest(),
+    }
+    assert (projection['values']['sha256'] == hashlib.sha256(source.tobytes()).hexdigest()) == (resize is None)
     assert (projection['source'], projection['sourceNodeId'], projection['sourcePortId']) == (
         'connected', 'source-image', 'image',
     )

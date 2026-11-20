@@ -195,7 +195,7 @@ def apply_call_inputs(options: dict[str, Any], target: dict[str, Any]) -> None:
 def is_reviewed_direct_image_edit(adapter, pipeline):
     from modiff.model_artifact_catalog import catalog_revision
 
-    if (adapter.pipeline_class != 'StableDiffusionImg2ImgPipeline'
+    if (adapter.pipeline_class not in {'StableDiffusionImg2ImgPipeline', 'LatentConsistencyModelImg2ImgPipeline'}
             or getattr(pipeline, '_modiff_image_mode', None) != 'edit_image'
             or getattr(pipeline, '_modiff_image_source', None) != 'hub'
             or getattr(pipeline, '_modiff_image_repo', None) != adapter.default_repo):
