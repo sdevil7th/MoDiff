@@ -1,4 +1,5 @@
 import hashlib
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -122,14 +123,22 @@ class OriginalInputFixtureLiveLedgerTests(unittest.TestCase):
             ledger = write_original_input_fixtures(ROOT, destination=Path(directory))
         after = hashlib.sha256(path.read_bytes()).hexdigest()
         self.assertEqual(before, after)
-        self.assertEqual(ledger["summary"]["workflowCount"], 96)
+        authoring = json.loads(path.read_text(encoding="utf-8"))
+        pending = {
+            row["canonicalWorkflowId"] for row in authoring["specifications"]
+            if row["authoringState"] == "draft_complete_input_selection_pending"
+        }
         self.assertTrue(ledger["policy"]["doesNotMutateAuthoringLedger"])
         self.assertTrue(ledger["policy"]["doesNotSelectInputs"])
         mapped = {item["canonicalWorkflowId"] for item in ledger["workflows"]}
+        self.assertEqual(mapped, pending)
+        self.assertEqual(ledger["summary"]["workflowCount"], len(pending))
+        self.assertEqual(len(ledger["workflows"]), len(pending))
         self.assertNotIn("MarigoldDepthPipeline:depth_estimation", mapped)
         self.assertNotIn("SpandrelImageUpscale:image_upscale", mapped)
         self.assertNotIn("HuggingFaceSpeechRecognitionModel:speech_to_text", mapped)
         self.assertNotIn("LatentConsistencyModelPipeline:edit_image", mapped)
+        self.assertNotIn("SanaSprintPipeline:edit_image", mapped)
         self.assertIn("AnimateDiffControlNetPipeline:control_to_video", mapped)
         self.assertTrue({
             "Flux3DistilledModularPipeline:edit_image",

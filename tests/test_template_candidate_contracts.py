@@ -73,12 +73,12 @@ class TemplateCandidateContractTests(unittest.TestCase):
             self.ledger["summary"],
             {
                 "canonicalWorkflowCount": 225,
-                "publicTemplateCount": 96,
-                "canonicalWorkflowsWithPublicTemplates": 76,
-                "canonicalWorkflowsWithExecutablePublicTemplates": 65,
-                "candidateContractCount": 160,
-                "mediaKindCounts": {"audio": 6, "image": 113, "json": 8, "video": 33},
-                "contractsRequiringInputExamples": 96,
+                "publicTemplateCount": 97,
+                "canonicalWorkflowsWithPublicTemplates": 77,
+                "canonicalWorkflowsWithExecutablePublicTemplates": 66,
+                "candidateContractCount": 159,
+                "mediaKindCounts": {"audio": 6, "image": 112, "json": 8, "video": 33},
+                "contractsRequiringInputExamples": 95,
                 "contractsWithComfyResearchRecords": 11,
                 "comfyResearchRecordCount": 14,
                 "comfyMappingStatusCounts": {"existing_contract_candidate": 14},
@@ -135,24 +135,28 @@ class TemplateCandidateContractTests(unittest.TestCase):
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 
-        self.assertEqual(len(public_templates), 96)
+        self.assertEqual(len(public_templates), 97)
         experimental_public_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "contract-only"}
         self.assertEqual(len(experimental_public_ids), 11)
         self.assertTrue(experimental_public_ids <= set(contracts_by_id))
-        self.assertEqual(len(public_workflow_ids), 65)
+        self.assertEqual(len(public_workflow_ids), 66)
         self.assertIn("AceStepAudioPipeline:text_to_audio:ace_step_lyric_music_video", public_workflow_ids)
         self.assertIn("HuggingFaceSpeechRecognitionModel:speech_to_text", public_workflow_ids)
         self.assertIn("LatentConsistencyModelPipeline:edit_image", public_workflow_ids)
+        self.assertIn("SanaSprintPipeline:edit_image", public_workflow_ids)
         self.assertEqual(public_workflow_ids, coverage_public_workflow_ids)
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)
         self.assertFalse(set(contracts_by_id) & public_workflow_ids)
-        self.assertEqual(len(contracts_by_id), 160)
+        self.assertEqual(len(contracts_by_id), 159)
         experimental_public_pairs = {
             "flux2_dev_text_to_image": "Flux2ModularPipeline:text_to_image",
             "cosmos3_super_text_to_image": "Cosmos3OmniModularPipeline:text_to_image",
         }
         public_by_id = {row["id"]: row for row in public_templates}
+        sana = public_by_id["sana_sprint_monochrome_tiger"]
+        self.assertEqual(sana["canonicalWorkflowId"], "SanaSprintPipeline:edit_image")
+        self.assertEqual(sana["status"], "executable")
         for template_id, workflow_id in experimental_public_pairs.items():
             self.assertEqual(public_by_id[template_id]["canonicalWorkflowId"], workflow_id)
             self.assertNotIn(workflow_id, contracts_by_id)
