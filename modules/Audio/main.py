@@ -40,6 +40,14 @@ def _pcm_to_float32(array):
     return array.astype(np.float32, copy=False)
 
 
+def _resolve_file(value):
+    file = value[0] if isinstance(value, list) and value else value
+    file = str(file or "")
+    if not file:
+        return None
+    return resolve_runtime_input_path(file)
+
+
 def _collapse_single(values):
     return values[0] if len(values) == 1 else values
 
@@ -366,7 +374,7 @@ class Load(NodeBase):
         selection = kwargs.get("file")
         source_value = selection[0] if isinstance(selection, list) and selection else selection
         source_value = str(source_value or "")
-        source_path = resolve_runtime_input_path(source_value) if source_value else None
+        source_path = _resolve_file(source_value)
         if source_path is None or not source_path.exists():
             raise ValueError("Load Audio needs an existing audio file.")
         path = source_path
