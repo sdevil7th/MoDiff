@@ -25,6 +25,8 @@ your workflow. Intentional Add/Load imports and enables it in one action.
   offer a node dropdown. Alternatively place a file/package in backend `custom/`;
   it appears in the permanent Custom nodes category without executing. Choose
   **Manage nodes → Load** to load it. Advanced accepts another backend source path.
+  Enabled nodes are grouped by their declared `category` within Custom nodes.
+  The library search matches both the displayed `label` and the category.
 - Hugging Face: enter a compatible repository ID or repository URL and click
   **Add node**. A model repository alone is not a custom node.
 - Git: enter an HTTPS repository URL and click **Add node**. Git must be installed
