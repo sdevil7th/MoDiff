@@ -14,14 +14,14 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:4bd04f63d1cec2f8835d8611dc2b4eee309a96c716cc11cae8c4f503c17e21ff",
+  "contentHash": "sha256:6ce5b36888e7096674ce6891fe67d74a24e81756dd22be3b9e4a7d0d48679024",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:96aa444ef097cbea4da95298729b5c4f5f6cafc4399c374b71fbec892b5d447f",
+      "contentHash": "sha256:fb1471cc299e8233abec672d719a5cfdc9b138cbfe0515ff570fc9455b428f2a",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:1fb43228bb323197b3f0d82bf8b8b5e7266337d79f5e2559589112c617d8ea36"
+      "sha256": "sha256:733c11913b33241184a259d493f29a2027b47000ab480c36840bb7ef469c526a"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -16335,154 +16335,6 @@
       },
       "assetState": "not_generated",
       "assets": [],
-      "authoringState": "draft_complete_input_selection_pending",
-      "canonicalGraph": {
-        "path": "studio/sana-sprint-pipeline/edit-image.json",
-        "sha256": "c0e078e0300bd34b518432025afa7366c1c7179ae74a5b0168741cc6c91ea76c"
-      },
-      "canonicalWorkflowId": "SanaSprintPipeline:edit_image",
-      "claims": {
-        "assetGenerated": false,
-        "inputSelected": false,
-        "publicTemplate": false,
-        "qualityApproved": false,
-        "rightsApproved": false,
-        "workflowExecuted": false
-      },
-      "defaultsPlan": {
-        "fields": [
-          {
-            "parameter": "guidance_scale",
-            "role": "diffusersImageEdit",
-            "value": 4.5
-          },
-          {
-            "parameter": "height",
-            "role": "diffusersImageEdit",
-            "value": 1024
-          },
-          {
-            "parameter": "max_sequence_length",
-            "role": "diffusersImageEdit",
-            "value": 300
-          },
-          {
-            "parameter": "num_inference_steps",
-            "role": "diffusersImageEdit",
-            "value": 2
-          },
-          {
-            "parameter": "reference_strength",
-            "role": "diffusersImageEdit",
-            "value": 1
-          },
-          {
-            "parameter": "seed",
-            "role": "diffusersImageEdit",
-            "value": {
-              "isRandom": true,
-              "value": 42
-            }
-          },
-          {
-            "parameter": "strength",
-            "role": "diffusersImageEdit",
-            "value": 0.5
-          },
-          {
-            "parameter": "width",
-            "role": "diffusersImageEdit",
-            "value": 1024
-          },
-          {
-            "parameter": "alpha_channel",
-            "role": "loadImage",
-            "value": "ignore"
-          }
-        ],
-        "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "c0e078e0300bd34b518432025afa7366c1c7179ae74a5b0168741cc6c91ea76c",
-        "status": "canonical_defaults_captured_review_pending"
-      },
-      "generationPlan": {
-        "blockers": [
-          "reviewed_input_selection_and_rights_required",
-          "exact_model_cache_state_must_be_rechecked",
-          "exact_runtime_execution_receipt_required",
-          "resource_recipe_receipt_required",
-          "model_and_output_rights_review_required",
-          "generated_asset_and_human_quality_review_required"
-        ],
-        "requiresQualifiedAccelerator": true,
-        "status": "blocked_pending_external_evidence"
-      },
-      "id": "template-authoring:SanaSprintPipeline:edit_image",
-      "inputPlan": {
-        "items": [
-          {
-            "field": "referenceImages",
-            "mediaKind": "image",
-            "minimumCount": 1,
-            "rightsState": "review_required",
-            "selectionState": "pending_original_or_licensed_asset",
-            "technicalRequirements": [
-              "decodable_image",
-              "matches_exact_workflow_input_contract",
-              "contains_no_unreviewed_brand_or_personal_data"
-            ]
-          }
-        ],
-        "status": "selection_required"
-      },
-      "mediaKind": "image",
-      "mode": "edit_image",
-      "modelFamily": "Sana",
-      "modelType": "SanaSprintPipeline",
-      "outputPlan": {
-        "mediaKinds": [
-          "image"
-        ],
-        "minimumAssetCount": 1,
-        "reviewCriteria": [
-          "expected_dimensions_and_decodable_output",
-          "prompt_or_task_alignment",
-          "coherent_geometry_lighting_and_materials",
-          "no_unrequested_text_watermark_or_duplicate_subject",
-          "source_identity_structure_and_unmasked_region_preservation"
-        ]
-      },
-      "promptPlan": {
-        "editableBeforeQualification": true,
-        "mustBeLockedInGenerationReceipt": true,
-        "negativePrompt": {
-          "status": "drafted",
-          "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
-        },
-        "prompt": "Transform the supplied image into a polished editorial scene with warmer natural light and refined materials while preserving the main subject, pose, perspective, and recognizable composition. Do not invent a second hero object or change identity.",
-        "provenance": "original_modiff_mode_draft_v1",
-        "status": "drafted"
-      },
-      "publicationState": "hidden_candidate",
-      "purpose": "Author and review one image result for the exact Sana edit image workflow without changing its canonical graph contract.",
-      "rightsPlan": {
-        "inputMediaRights": "required",
-        "modelArtifactRights": "review_or_existing_catalog_decision_required",
-        "outputPublicationRights": "required",
-        "status": "review_required",
-        "thirdPartyBrandAndPersonalDataReview": "required"
-      },
-      "title": "Sana — Edit Image [SanaSprintPipeline]"
-    },
-    {
-      "artifactPlan": {
-        "cacheState": "must_be_rechecked_through_app_before_generation",
-        "componentRequirements": [],
-        "requiredArtifacts": [
-          "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
-        ]
-      },
-      "assetState": "not_generated",
-      "assets": [],
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/sana-sprint-pipeline/text-to-image.json",
@@ -22819,16 +22671,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 160,
+    "authoringSpecCount": 159,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 64,
-      "draft_complete_input_selection_pending": 96
+      "draft_complete_input_selection_pending": 95
     },
-    "canonicalDefaultsCapturedCount": 160,
-    "generationPendingCount": 160,
-    "inputSelectionPendingCount": 96,
-    "promptDraftedCount": 137,
+    "canonicalDefaultsCapturedCount": 159,
+    "generationPendingCount": 159,
+    "inputSelectionPendingCount": 95,
+    "promptDraftedCount": 136,
     "promptNotApplicableCount": 23,
-    "rightsReviewPendingCount": 160
+    "rightsReviewPendingCount": 159
   }
 }

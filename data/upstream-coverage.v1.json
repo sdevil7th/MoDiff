@@ -2047,7 +2047,9 @@
       "id": "SanaSprintPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "SanaSprintPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sana_sprint_monochrome_tiger"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2656,7 +2658,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:319a6fb2b8c729ee931b192253f379bf8fb63dd181047c87eb8fb6b1dbaddc1e",
+  "contentHash": "sha256:6429daa5984125adb5803591d6d8cd1e5a1711037e7515dacfc62fe4c96018f8",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -10258,6 +10260,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "SanaSprintPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sana_sprint_monochrome_tiger",
+      "mode": "edit_image",
+      "modelType": "SanaSprintPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -10777,7 +10794,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "4a7a6e6cc381437053c490d33555fb15221675062f1713184396b6af68aaf0f7",
+    "templateBundleSha256": "fbbb0e5eabdded7a92f72f7c8dd0aa62e17f3f6880377c1538dab7a778e9dc1e",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -10825,8 +10842,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithPublicTemplates": 76,
-    "canonicalWorkflowsWithoutPublicTemplates": 149,
+    "canonicalWorkflowsWithPublicTemplates": 77,
+    "canonicalWorkflowsWithoutPublicTemplates": 148,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -10836,12 +10853,12 @@
       "research-blocked": 116,
       "unreviewed": 5
     },
-    "publicTemplateCount": 96,
-    "reviewedGalleryTemplateCount": 89,
+    "publicTemplateCount": 97,
+    "reviewedGalleryTemplateCount": 90,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
-      "executable": 85,
+      "executable": 86,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

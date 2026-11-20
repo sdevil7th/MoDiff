@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:96aa444ef097cbea4da95298729b5c4f5f6cafc4399c374b71fbec892b5d447f",
+  "contentHash": "sha256:fb1471cc299e8233abec672d719a5cfdc9b138cbfe0515ff570fc9455b428f2a",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -5159,49 +5159,6 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
-        "inputExamples": "required",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
-      "canonicalWorkflowId": "SanaSprintPipeline:edit_image",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "c0e078e0300bd34b518432025afa7366c1c7179ae74a5b0168741cc6c91ea76c",
-      "graphPath": "studio/sana-sprint-pipeline/edit-image.json",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "mediaKind": "image",
-      "mode": "edit_image",
-      "modelType": "SanaSprintPipeline",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "SanaSprintImg2ImgPipeline",
-        "SanaSprintPipeline"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
-      ],
-      "requiredInputs": {
-        "note": "Requires one source image for the reviewed two-step Sprint transformation.",
-        "requiredImages": [
-          "referenceImages"
-        ]
-      },
-      "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
         "inputExamples": "not_applicable",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -7146,9 +7103,9 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:319a6fb2b8c729ee931b192253f379bf8fb63dd181047c87eb8fb6b1dbaddc1e",
+      "contentHash": "sha256:6429daa5984125adb5803591d6d8cd1e5a1711037e7515dacfc62fe4c96018f8",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:e1cc64fbbf9af6b93267412066ee380d95c43adcbd4a4fa078c07ca7b37907b4"
+      "sha256": "sha256:fe5c118de710295f4f8b21541d3b62b789565e2f0136ede1cd52165cc8938ba4"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -7156,22 +7113,22 @@
     }
   },
   "summary": {
-    "candidateContractCount": 160,
+    "candidateContractCount": 159,
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithExecutablePublicTemplates": 65,
-    "canonicalWorkflowsWithPublicTemplates": 76,
+    "canonicalWorkflowsWithExecutablePublicTemplates": 66,
+    "canonicalWorkflowsWithPublicTemplates": 77,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 96,
+    "contractsRequiringInputExamples": 95,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 6,
-      "image": 113,
+      "image": 112,
       "json": 8,
       "video": 33
     },
-    "publicTemplateCount": 96
+    "publicTemplateCount": 97
   }
 }
