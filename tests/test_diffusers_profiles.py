@@ -111,6 +111,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "QwenImageControlNetPipeline",
             "QwenImageLayeredPipeline",
             "QwenImage21Pipeline",
+            "QwenImage21TurboPipeline",
             "QwenImageEditPipeline",
             "QwenImageEditPlusPipeline",
             "ZImageInpaintPipeline",

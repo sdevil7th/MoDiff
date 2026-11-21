@@ -462,7 +462,14 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "flux3-klein:official-provider:v1:edit-image:v1",
             "flux3-klein:official-provider:v1:text-to-image:v1",
         }
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 301)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 304)
+        turbo = supported["QwenImage21TurboPipeline"]
+        self.assertEqual(turbo["revisionCandidates"], ["fc13ba1986fcb905854dc8de2f52eee395f49b5b"])
+        self.assertEqual(turbo["recommendedSteps"], 8)
+        self.assertEqual(turbo["recommendedGuidance"], 1)
+        self.assertFalse(turbo["supportsNegativePrompt"])
+        self.assertFalse(turbo["autoEligible"])
+        self.assertFalse(turbo["galleryEligible"])
         self.assertEqual(
             {specification["id"] for specification in payload["studioExecutionSpecs"]
              if specification["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
@@ -493,9 +500,16 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             {specification['id'].removeprefix('') for specification in payload["studioExecutionSpecs"]
              if specification['pipelineClass'] == 'MiniMaxH3ImageModularPipeline'}, h3_image_ids,
         )
+        turbo_ids = {f"qwen-image-21-turbo:{task}:v1"
+                     for task in ("text-to-image", "edit-image", "multi-image-reference-edit")}
         self.assertEqual(
-            sum(specification["id"] not in public_flux3_spec_ids | pika_ids | h3_image_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
-                for specification in payload["studioExecutionSpecs"]),
+            {specification["id"] for specification in payload["studioExecutionSpecs"]
+             if specification["pipelineClass"] == "QwenImage21TurboPipeline"},
+            turbo_ids,
+        )
+        new_ids = public_flux3_spec_ids | pika_ids | h3_image_ids | turbo_ids | {"wan-22-ti2v-5b:image-to-video:v1"}
+        self.assertEqual(
+            sum(specification["id"] not in new_ids for specification in payload["studioExecutionSpecs"]),
             290,
         )
         for model_type in (

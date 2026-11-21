@@ -17,7 +17,7 @@ this integration.
 
 The historical source review inspected
 [`fbf49e7f35857f76bc57b177e26f12b03687c668`](https://github.com/huggingface/diffusers/commit/fbf49e7f35857f76bc57b177e26f12b03687c668).
-Ordinary setup now pins the reviewed stable release `diffusers==0.41.0`, with
+Ordinary setup pins the reviewed stable release `diffusers==0.43.0`, with
 artifact hashes recorded in `uv.lock`; the historical source revision does not identify the
 installed wheel. Modular Diffusers is part of the same package. Transformers
 and PEFT come with ordinary backend setup, with compatible versions recorded
@@ -36,10 +36,27 @@ See the [image demo checkpoint](image-demo.md) for measured timings, exact test
 scope and source revisions. Full release acceptance and reference-replacement
 coverage remain open; this does not establish Windows 16 GB VRAM / 32 GB RAM viability.
 
-The reviewed upstream source has **no native Qwen 2.1 Modular pipeline**. This
-integration runs its standard Diffusers pipeline. Exposing a latent output and
-an explicit decoder does not imply independently composable native prompt and
-denoise blocks.
+MoDiff uses the standard Diffusers pipeline for these routes. The installed
+library also ships Qwen Image 2.1 Modular pipelines. Separate Modular graph
+integration remains unqualified. The generic decoder accepts the standard
+pipeline's emitted latents.
+
+## Turbo checkpoint
+
+Choose **Qwen Image 2.1 Turbo** for the same text generation, image edit and
+ordered-reference edit workflows. MoDiff installs the 18 selected files at
+`fc13ba1986fcb905854dc8de2f52eee395f49b5b` through Model Manager. This
+checkpoint has its own [model terms](https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo/blob/fc13ba1986fcb905854dc8de2f52eee395f49b5b/LICENSE)
+for non-commercial research and evaluation. The model terms acknowledgement
+is scoped to this repository and revision.
+
+The native Diffusers pipeline reads the checkpoint's eight-step sampling
+schedule with guidance 1.0. The image stages hide steps, guidance, custom
+sigmas and the negative prompt for this profile. Prompt, seed, dimensions,
+reference order and attention-context reuse remain available. Switch between
+Base and Turbo through Model Setup to load the matching checkpoint and
+task controls. Base retains its 40-step default and adjustable guidance.
+[Official Turbo model and generation example](https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo)
 
 ## Reuse attention context
 

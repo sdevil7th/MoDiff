@@ -155,6 +155,7 @@ class ImagePipelineAdapter:
     output_side_step: int = 16
     max_output_pixels: int = _MAX_IMAGE_OUTPUT_PIXELS
     fixed_guidance_scale: float | None = None
+    checkpoint_sample_sigmas: tuple[float, ...] = ()
     maximum_guidance_scale: float = 20.0
     minimum_image_guidance_scale: float = 0.0
     default_image_guidance_scale: float = 1.5
@@ -206,6 +207,8 @@ class ImagePipelineAdapter:
             raise ValueError("An upstream image pipeline class cannot be blank.")
         if not 1 <= self.max_inference_steps <= 100:
             raise ValueError("Image adapters must bound inference steps between 1 and 100.")
+        if self.checkpoint_sample_sigmas and len(self.checkpoint_sample_sigmas) != self.max_inference_steps:
+            raise ValueError("The checkpoint sampling schedule must match the reviewed step count.")
         if type(self.two_step_intermediate_timestep) is not bool:
             raise ValueError("Intermediate-timestep policy must be an exact boolean.")
         if not 16 <= self.min_output_side <= self.max_output_side <= 4096:
@@ -254,7 +257,7 @@ class ImagePipelineAdapter:
             raise ValueError("An image adapter maximum input side must be a 16-pixel multiple between 16 and 8192.")
         if not self.max_sequence_length_parameter:
             raise ValueError("An image adapter prompt-length parameter cannot be blank.")
-        unsupported_ignored = self.ignored_generation_parameters - {"image_guidance_scale"}
+        unsupported_ignored = self.ignored_generation_parameters - {"image_guidance_scale", "negative_prompt"}
         if unsupported_ignored:
             raise ValueError("Image adapters can ignore only reviewed no-op generation parameters.")
         if (
@@ -647,6 +650,26 @@ IMAGE_PIPELINE_ADAPTERS = {
         output_side_step=32,
         # The publisher's 2K aspect presets include 2752x1536. Keep the
         # cumulative allocation bounded; existing adapters retain their limits.
+        max_output_side=4096,
+        max_output_pixels=5 * 1024 * 1024,
+    ),
+    "QwenImage21TurboPipeline": ImagePipelineAdapter(
+        "QwenImage21TurboPipeline",
+        frozenset({"text_to_image", "edit_image", "multi_image_reference_edit"}),
+        "Qwen/Qwen-Image-2.1-Turbo",
+        upstream_pipeline_class="QwenImage21Pipeline",
+        artifact_pipeline_classes=("QwenImage21Pipeline",),
+        runtime_pipeline_classes=("QwenImage21Pipeline",),
+        guidance_parameter="true_cfg_scale",
+        fixed_guidance_scale=1.0,
+        image_guidance_parameter=None,
+        max_inference_steps=8,
+        checkpoint_sample_sigmas=(1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568),
+        ignored_generation_parameters=frozenset({"negative_prompt"}),
+        safe_serialization_required=True,
+        max_reference_images=10,
+        min_output_side=32,
+        output_side_step=32,
         max_output_side=4096,
         max_output_pixels=5 * 1024 * 1024,
     ),
@@ -1638,7 +1661,11 @@ IMAGE_PIPELINE_ADAPTERS = {
         safe_serialization_required=True,
     ),
 }
-IMAGE_PIPELINE_CLASSES = list(IMAGE_PIPELINE_ADAPTERS)
+# The generic raw loader's historical options are part of registered Block
+# identities. A checkpoint-specific profile supplies its own exact chooser.
+IMAGE_PIPELINE_CLASSES = [
+    name for name, adapter in IMAGE_PIPELINE_ADAPTERS.items() if not adapter.checkpoint_sample_sigmas
+]
 IMAGE_PIPELINE_MODES = {name: set(adapter.modes) for name, adapter in IMAGE_PIPELINE_ADAPTERS.items()}
 IMAGE_PIPELINE_MODE_OPTIONS = [
     "unconditional_image",
@@ -1758,6 +1785,10 @@ _SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE = (
 IMAGE_MODE_FIELD_CONTRACTS = {
     "QwenImage21Pipeline": {
         mode: _image_field_contract("negative_prompt", "width", "height", "guidance_scale")
+        for mode in ("text_to_image", "edit_image", "multi_image_reference_edit")
+    },
+    "QwenImage21TurboPipeline": {
+        mode: _image_field_contract("width", "height")
         for mode in ("text_to_image", "edit_image", "multi_image_reference_edit")
     },
     "DDPMPipeline": {
@@ -2235,7 +2266,7 @@ def get_image_pipeline_adapter(name: Any) -> ImagePipelineAdapter:
         raise ValueError(removed_reason)
     adapter = IMAGE_PIPELINE_ADAPTERS.get(name)
     if adapter is None:
-        supported = ", ".join(IMAGE_PIPELINE_CLASSES)
+        supported = ", ".join(IMAGE_PIPELINE_ADAPTERS)
         raise ValueError(f"Unsupported Diffusers image pipeline class {name!r}. Supported classes: {supported}.")
     return adapter
 
@@ -2313,6 +2344,8 @@ def resolve_image_model_selection(adapter: ImagePipelineAdapter, value: Any):
         raise ValueError("Diffusers image model selection must be a repository ID or a hub/local selection object.")
 
     if source == "local":
+        if adapter.checkpoint_sample_sigmas:
+            raise ValueError(f"{adapter.pipeline_class} requires the reviewed Hub checkpoint {adapter.default_repo}.")
         return {"source": "local", "value": selected}
 
     selected = _validated_image_hub_repository(selected, label="Diffusers image model repository")
@@ -2321,6 +2354,8 @@ def resolve_image_model_selection(adapter: ImagePipelineAdapter, value: Any):
     compatible_repos = {repo.casefold() for repo in adapter.managed_repos}
     if selected_key in managed_repos and selected_key not in compatible_repos:
         return {"source": "hub", "value": adapter.default_repo}
+    if adapter.checkpoint_sample_sigmas and selected_key != adapter.default_repo.casefold():
+        raise ValueError(f"{adapter.pipeline_class} requires the reviewed Hub checkpoint {adapter.default_repo}.")
     return {"source": "hub", "value": managed_repos.get(selected_key, selected)}
 
 
@@ -2445,7 +2480,7 @@ def image_model_field_options(adapter: ImagePipelineAdapter) -> dict[str, Any]:
     classes = list(adapter.model_filter_classes)
     return {
         "noValidation": True,
-        "sources": ["hub", "local"],
+        "sources": ["hub"] if adapter.checkpoint_sample_sigmas else ["hub", "local"],
         "filter": {
             "hub": {"className": classes},
             "local": {"className": classes},
@@ -2472,7 +2507,11 @@ def image_loader_field_params(adapter: ImagePipelineAdapter) -> dict[str, dict[s
     never reseeded by compiling or by an unrelated field update.
     """
     has_conditioning = adapter.conditioning_kind is not None
+    profile_options = (
+        {"pipeline_class": {"options": [adapter.pipeline_class]}} if adapter.checkpoint_sample_sigmas else {}
+    )
     return {
+        **profile_options,
         "mode": {"options": list(adapter.mode_options), "default": adapter.mode_options[0]},
         "model_id": {"fieldOptions": image_model_field_options(adapter)},
         "conditioning_kind": {"hidden": not has_conditioning,
@@ -2529,6 +2568,12 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         defaults = CALL_INPUT_DEFAULTS.get(adapter.load_pipeline_class, {})
         if key in defaults:
             field_params[key]["default"] = defaults[key]
+    if adapter.checkpoint_sample_sigmas:
+        field_params["sigmas"] = {"hidden": True}
+        field_params["guidance_scale"]["default"] = adapter.fixed_guidance_scale
+        field_params["num_inference_steps"] = {
+            "hidden": True, "default": len(adapter.checkpoint_sample_sigmas),
+        }
     if adapter.secondary_guidance_parameter is not None:
         field_params["guidance_scale"] = {**field_params["guidance_scale"], "label": adapter.guidance_label}
         field_params["use_guidance_scale_2"] = {
@@ -2675,9 +2720,12 @@ def image_action_field_params(contract: dict[str, Any], action: str) -> dict:
     return {
         **fields,
         **contract["fieldParams"],
-        # Publish the same bound as preflight for each selected model. Keep it
-        # out of the persisted signal identity and do not change authored values.
-        "num_inference_steps": {"min": 1, "max": adapter.max_inference_steps},
+        # Keep bounds out of the persisted signal identity.
+        "num_inference_steps": {
+            **contract["fieldParams"].get("num_inference_steps", {}),
+            "min": len(adapter.checkpoint_sample_sigmas) or 1,
+            "max": adapter.max_inference_steps,
+        },
     }
 
 
@@ -2904,6 +2952,8 @@ def _image_pipeline_adapter(pipeline: Any) -> ImagePipelineAdapter:
         if not isinstance(repository, str) or not repository or repository != repository.strip():
             raise ValueError("Diffusers image pipeline repository tag must be a nonblank canonical string.")
         revision = getattr(pipeline, "_modiff_image_revision")
+        if adapter.checkpoint_sample_sigmas and (source != "hub" or repository != adapter.default_repo):
+            raise ValueError(f"{adapter.pipeline_class} requires the reviewed Hub checkpoint {adapter.default_repo}.")
         if source == "hub":
             if (
                 not isinstance(revision, str)
@@ -2957,8 +3007,11 @@ def _image_pipeline_adapter(pipeline: Any) -> ImagePipelineAdapter:
                 raise ValueError("A custom image conditioning component requires an immutable commit tag.")
         return adapter
 
+    # A checkpoint-specific alias requires the canonical loader tags. A shared
+    # upstream class alone cannot establish the pinned checkpoint.
     candidates = [
-        adapter for adapter in IMAGE_PIPELINE_ADAPTERS.values() if runtime_name in adapter.allowed_runtime_classes
+        adapter for adapter in IMAGE_PIPELINE_ADAPTERS.values()
+        if runtime_name in adapter.allowed_runtime_classes and not adapter.checkpoint_sample_sigmas
     ]
     if len(candidates) == 1:
         return candidates[0]
@@ -3242,17 +3295,20 @@ def preflight_image_action(
         if image_count > 8 or image_count * output_pixels > 16 * 1024 * 1024:
             raise ValueError("num_images_per_prompt and prompt batch must produce at most 8 images and 16 megapixels in total.")
     values["seed"] = _bounded_image_int(values.get("seed"), field="seed", default=0, minimum=0, maximum=4294967295)
+    checkpoint_steps = len(adapter.checkpoint_sample_sigmas)
+    if checkpoint_steps and (values["negative_prompt"] or "sigmas" in optional_inputs):
+        raise ValueError("The checkpoint sampling schedule does not accept a custom schedule or negative prompt.")
     values["num_inference_steps"] = _bounded_image_int(
         values.get("num_inference_steps"),
         field="num_inference_steps",
-        default=4,
-        minimum=1,
+        default=checkpoint_steps or 4,
+        minimum=checkpoint_steps or 1,
         maximum=adapter.max_inference_steps,
     )
     values["guidance_scale"] = _bounded_image_float(
         values.get("guidance_scale"),
         field="guidance_scale",
-        default=0.0,
+        default=adapter.fixed_guidance_scale if checkpoint_steps else 0.0,
         minimum=0.0,
         maximum=adapter.maximum_guidance_scale,
     )
@@ -4422,6 +4478,14 @@ class LoadPipeline(NodeBase):
             values["conditioning_kind"] = "none"
             values["conditioning_model_id"] = ""
             values["conditioning_revision"] = ""
+        # The profile has already been resolved against the exact adapter
+        # registry and checkpoint. NodeBase validates the selected instance.
+        options = [adapter.pipeline_class] if adapter.checkpoint_sample_sigmas else IMAGE_PIPELINE_CLASSES
+        if self.default_params["pipeline_class"]["options"] != options:
+            self.default_params = {
+                **self.default_params,
+                "pipeline_class": {**self.default_params["pipeline_class"], "options": options},
+            }
         result = super().__call__(**values)
         pipeline = result.get("pipeline") if isinstance(result, dict) else None
         if pipeline is not None:
@@ -4458,7 +4522,8 @@ class LoadPipeline(NodeBase):
             _loader_image_mode(values, adapter)
             raise AssertionError("unreachable")
         current_selection = values.get("model_id")
-        resolved_selection = resolve_image_model_selection(adapter, current_selection)
+        candidate = None if signal_origin == "pipeline_class" and adapter.checkpoint_sample_sigmas else current_selection
+        resolved_selection = resolve_image_model_selection(adapter, candidate)
         raw_revision = _normalize_image_revision(values.get("revision"))
         if resolved_selection.get("source") == "local":
             resolved_revision = ""
@@ -4751,6 +4816,10 @@ class LoadPipeline(NodeBase):
             pipeline_class = pipeline_class_from_name(adapter.load_pipeline_class)
             with self.diffusers_loading_progress():
                 pipeline = load_cached_image_component(pipeline_class, model_id, **load_kwargs)
+        if adapter.checkpoint_sample_sigmas:
+            actual_sigmas = getattr(getattr(pipeline, "config", None), "sample_sigmas", None)
+            if not isinstance(actual_sigmas, (list, tuple)) or tuple(actual_sigmas) != adapter.checkpoint_sample_sigmas:
+                raise RuntimeError(f"{pipeline_class_name} does not expose the reviewed checkpoint sampling schedule.")
         attach_image_prompt_adapters(pipeline, adapter.load_pipeline_class,
                                      kwargs.get('image_prompt_adapter'), dtype=dtype)
         component_dtype_overrides = list(adapter.component_dtype_overrides)
@@ -5342,6 +5411,10 @@ class Generate(NodeBase):
             self.set_field_params('output_type', {'options': _image_output_options(adapter, self.class_name)})
         for field, params in image_action_field_params(expected_signal, self.class_name).items():
             if field in self.__class__.params:
+                if field == "num_inference_steps":
+                    # Restore the ordinary control after a live model change.
+                    # Keep its registered schema byte-identical for saved Blocks.
+                    params = {"hidden": False, **params}
                 self.set_field_params(field, params)
 
     def execute(self, **kwargs):

@@ -41,7 +41,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             "flux3-klein:official-provider:v1:edit-image:v1",
             "flux3-klein:official-provider:v1:text-to-image:v1",
         }
-        self.assertEqual(len(self.contracts), 301)
+        self.assertEqual(len(self.contracts), 304)
         self.assertEqual(
             {contract["id"] for contract in self.contracts
              if contract["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
@@ -72,8 +72,15 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             {contract['id'].removeprefix('task-template:') for contract in self.contracts
              if contract['pipelineClass'] == 'MiniMaxH3ImageModularPipeline'}, h3_image_ids,
         )
+        qwen_turbo_ids = {f"qwen-image-21-turbo:{task}:v1"
+                          for task in ("text-to-image", "edit-image", "multi-image-reference-edit")}
         self.assertEqual(
-            sum(contract["id"].removeprefix("task-template:") not in public_flux3_spec_ids | pika_ids | h3_image_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
+            {contract["id"].removeprefix("task-template:") for contract in self.contracts
+             if contract["pipelineClass"] == "QwenImage21TurboPipeline"},
+            qwen_turbo_ids,
+        )
+        self.assertEqual(
+            sum(contract["id"].removeprefix("task-template:") not in qwen_turbo_ids | public_flux3_spec_ids | pika_ids | h3_image_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
                 for contract in self.contracts),
             290,
         )

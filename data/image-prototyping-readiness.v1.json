@@ -1,5 +1,5 @@
 {
-  "contentHash": "sha256:5460d0d37dbb4f5c5bcf49ba9ad00f9d4f9591b48bf80f88b745fd3c3dc52275",
+  "contentHash": "sha256:d7b57487d69f4b88b0d649677effb0793212b31b08f687f823521887409b6c0f",
   "coverageBoundary": {
     "backendArtifactPins": "snapshotted",
     "backendExecutionProfiles": "snapshotted",
@@ -9957,6 +9957,228 @@
     },
     {
       "advertisementEntryPoints": [
+        "execution_profile:qwen-image-21-turbo:direct",
+        "model_capability:QwenImage21TurboPipeline",
+        "node_model_dropdown:modules.DiffusersImage.LoadPipeline",
+        "studio_execution_spec:qwen-image-21-turbo:edit-image:v1"
+      ],
+      "artifact": {
+        "declaredFileCount": 18,
+        "exactBytes": 32451624677,
+        "gated": false,
+        "inventoryState": "exact_bytes",
+        "license": "qwen-research",
+        "repository": "Qwen/Qwen-Image-2.1-Turbo",
+        "revision": "fc13ba1986fcb905854dc8de2f52eee395f49b5b"
+      },
+      "artifactVariantOf": null,
+      "canonicalTask": "edit_image",
+      "displayName": "Qwen-Image-2.1-Turbo",
+      "disposition": "documented_whole_pipeline_exception",
+      "dispositionReason": "no_pinned_modular_workflow_for_exact_profile",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "not_applicable_or_missing"
+      },
+      "exactVariantReview": null,
+      "exception": {
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "limitations": [
+          "no_independent_stage_editing",
+          "no_cross_stage_prompt_or_latent_cache",
+          "component_substitution_limited_to_standard_pipeline_contract"
+        ],
+        "revisitTrigger": "reviewed_diffusers_pin_or_native_profile_change"
+      },
+      "implementation": {
+        "executionPath": "direct-diffusers-image",
+        "loader": "modules.DiffusersImage.LoadPipeline",
+        "pipelineClass": "QwenImage21TurboPipeline",
+        "profileId": "qwen-image-21-turbo:direct"
+      },
+      "integratedNativeAlternativeProfileIds": [],
+      "knownDefects": [],
+      "modelType": "QwenImage21TurboPipeline",
+      "optionalRuntime": {
+        "delivery": "base",
+        "executionProfileIds": [
+          "qwen-image-21-turbo:direct"
+        ],
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
+        "schemaVersion": 1,
+        "state": "base_satisfied"
+      },
+      "routeId": "qwen-image-21-turbo:direct/edit_image",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "edit_image",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "fullStageChain": false,
+        "inventoryCoverage": null,
+        "nativePipelineClass": null,
+        "nativeWorkflowId": null,
+        "requiredCoreRolesPresent": false,
+        "stageRoles": []
+      }
+    },
+    {
+      "advertisementEntryPoints": [
+        "execution_profile:qwen-image-21-turbo:direct",
+        "model_capability:QwenImage21TurboPipeline",
+        "node_model_dropdown:modules.DiffusersImage.LoadPipeline",
+        "studio_execution_spec:qwen-image-21-turbo:multi-image-reference-edit:v1"
+      ],
+      "artifact": {
+        "declaredFileCount": 18,
+        "exactBytes": 32451624677,
+        "gated": false,
+        "inventoryState": "exact_bytes",
+        "license": "qwen-research",
+        "repository": "Qwen/Qwen-Image-2.1-Turbo",
+        "revision": "fc13ba1986fcb905854dc8de2f52eee395f49b5b"
+      },
+      "artifactVariantOf": null,
+      "canonicalTask": "multi_image_reference_edit",
+      "displayName": "Qwen-Image-2.1-Turbo",
+      "disposition": "documented_whole_pipeline_exception",
+      "dispositionReason": "no_pinned_modular_workflow_for_exact_profile",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "not_applicable_or_missing"
+      },
+      "exactVariantReview": null,
+      "exception": {
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "limitations": [
+          "no_independent_stage_editing",
+          "no_cross_stage_prompt_or_latent_cache",
+          "component_substitution_limited_to_standard_pipeline_contract"
+        ],
+        "revisitTrigger": "reviewed_diffusers_pin_or_native_profile_change"
+      },
+      "implementation": {
+        "executionPath": "direct-diffusers-image",
+        "loader": "modules.DiffusersImage.LoadPipeline",
+        "pipelineClass": "QwenImage21TurboPipeline",
+        "profileId": "qwen-image-21-turbo:direct"
+      },
+      "integratedNativeAlternativeProfileIds": [],
+      "knownDefects": [],
+      "modelType": "QwenImage21TurboPipeline",
+      "optionalRuntime": {
+        "delivery": "base",
+        "executionProfileIds": [
+          "qwen-image-21-turbo:direct"
+        ],
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
+        "schemaVersion": 1,
+        "state": "base_satisfied"
+      },
+      "routeId": "qwen-image-21-turbo:direct/multi_image_reference_edit",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "multi_image_reference_edit",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "fullStageChain": false,
+        "inventoryCoverage": null,
+        "nativePipelineClass": null,
+        "nativeWorkflowId": null,
+        "requiredCoreRolesPresent": false,
+        "stageRoles": []
+      }
+    },
+    {
+      "advertisementEntryPoints": [
+        "execution_profile:qwen-image-21-turbo:direct",
+        "model_capability:QwenImage21TurboPipeline",
+        "node_model_dropdown:modules.DiffusersImage.LoadPipeline",
+        "studio_execution_spec:qwen-image-21-turbo:text-to-image:v1"
+      ],
+      "artifact": {
+        "declaredFileCount": 18,
+        "exactBytes": 32451624677,
+        "gated": false,
+        "inventoryState": "exact_bytes",
+        "license": "qwen-research",
+        "repository": "Qwen/Qwen-Image-2.1-Turbo",
+        "revision": "fc13ba1986fcb905854dc8de2f52eee395f49b5b"
+      },
+      "artifactVariantOf": null,
+      "canonicalTask": "text_to_image",
+      "displayName": "Qwen-Image-2.1-Turbo",
+      "disposition": "documented_whole_pipeline_exception",
+      "dispositionReason": "no_pinned_modular_workflow_for_exact_profile",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "not_applicable_or_missing"
+      },
+      "exactVariantReview": null,
+      "exception": {
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "limitations": [
+          "no_independent_stage_editing",
+          "no_cross_stage_prompt_or_latent_cache",
+          "component_substitution_limited_to_standard_pipeline_contract"
+        ],
+        "revisitTrigger": "reviewed_diffusers_pin_or_native_profile_change"
+      },
+      "implementation": {
+        "executionPath": "direct-diffusers-image",
+        "loader": "modules.DiffusersImage.LoadPipeline",
+        "pipelineClass": "QwenImage21TurboPipeline",
+        "profileId": "qwen-image-21-turbo:direct"
+      },
+      "integratedNativeAlternativeProfileIds": [],
+      "knownDefects": [],
+      "modelType": "QwenImage21TurboPipeline",
+      "optionalRuntime": {
+        "delivery": "base",
+        "executionProfileIds": [
+          "qwen-image-21-turbo:direct"
+        ],
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
+        "schemaVersion": 1,
+        "state": "base_satisfied"
+      },
+      "routeId": "qwen-image-21-turbo:direct/text_to_image",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "text_to_image",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "fullStageChain": false,
+        "inventoryCoverage": null,
+        "nativePipelineClass": null,
+        "nativeWorkflowId": null,
+        "requiredCoreRolesPresent": false,
+        "stageRoles": []
+      }
+    },
+    {
+      "advertisementEntryPoints": [
         "execution_profile:qwen-image-21:direct",
         "model_capability:QwenImage21Pipeline",
         "node_model_dropdown:modules.DiffusersImage.LoadPipeline",
@@ -16278,17 +16500,17 @@
   "schemaVersion": 1,
   "sources": {
     "exactVariantReviews": "sha256:a4fc259889ff19358b1be6411be27d331cf81c9bf3d55291ded695acf9bb2498",
-    "modelArtifactCatalog": "sha256:a99b9c7c67d59ca87124cc6e56eb0973b466e8f84a5409917a5a0c3c2923200c",
+    "modelArtifactCatalog": "sha256:b5a6dec0c34bf7a74d24ad1f59805525db2c4957f3f3ba24f541a6d2a55e6d84",
     "modularWorkflowSnapshot": "sha256:dd06d28cde763faf3245580f6ab3ef290715764a58f2b5c9321d9c9e40c8d3c9",
     "operationInventory": "sha256:fb3d203981cbc1b2b2cb674912d1d88920af0018d4097fda3f8ec18b0e6b0654",
-    "publicExecutionProfiles": "sha256:d24da994cbab023499796be3a91fd6805d6304772b9675fd726255ad2823f61d"
+    "publicExecutionProfiles": "sha256:9eb043778e36cd7d97d670d265341c1d1d313006e6f861bb0b584528bb139881"
   },
   "summary": {
     "denominatorFrozen": false,
     "dispositions": {
       "backend_stages_integrated": 6,
       "blocked": 2,
-      "documented_whole_pipeline_exception": 83,
+      "documented_whole_pipeline_exception": 86,
       "native_integrated": 77,
       "native_integration_missing": 3,
       "non_diffusion_image_task": 14,
@@ -16301,7 +16523,7 @@
     ],
     "knownDefectRouteCount": 15,
     "nativeIntegrationMissingCount": 3,
-    "profileCount": 128,
-    "routeCount": 223
+    "profileCount": 129,
+    "routeCount": 226
   }
 }

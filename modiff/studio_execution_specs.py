@@ -15,7 +15,7 @@ from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_NONE,
     OFFLOAD_MODE_SEQUENTIAL_CPU,
 )
-from modiff.model_artifact_catalog import require_catalog_revision
+from modiff.model_artifact_catalog import read_model_artifact_catalog, require_catalog_revision
 from modiff.modular_weight_formats import weight_format_download_selections
 from modiff.optional_runtimes import TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID
 from modiff.joint_av_studio_specs import h3_studio_specifications, pika_studio_specifications
@@ -16468,6 +16468,69 @@ for _qwen21_mode in _QWEN_IMAGE_21_MODES:
         "edges": _EDIT_GRAPH_EDGES if _qwen21_edit else _GRAPH_EDGES,
         "bindings": tuple(binding for binding in _qwen21_bindings
                           if binding[1] not in {"strength", "reference_strength", "max_sequence_length"}),
+    }
+
+
+QWEN_IMAGE_21_TURBO_REPO = "Qwen/Qwen-Image-2.1-Turbo"
+QWEN_IMAGE_21_TURBO_MODEL_TYPE = "QwenImage21TurboPipeline"
+QWEN_IMAGE_21_TURBO_PROFILE_ID = "qwen-image-21-turbo:direct"
+_QWEN_IMAGE_21_TURBO_REVISION = require_catalog_revision(
+    QWEN_IMAGE_21_TURBO_REPO, model_type=QWEN_IMAGE_21_TURBO_MODEL_TYPE,
+)
+_QWEN_IMAGE_21_TURBO_INVENTORIES = [
+    inventory for inventory in read_model_artifact_catalog().get("downloadInventories", [])
+    if inventory.get("repo") == QWEN_IMAGE_21_TURBO_REPO
+    and inventory.get("revision") == _QWEN_IMAGE_21_TURBO_REVISION
+]
+if len(_QWEN_IMAGE_21_TURBO_INVENTORIES) != 1:
+    raise ValueError("Qwen Image 2.1 Turbo requires one exact cataloged download inventory.")
+
+_QWEN_IMAGE_21_TURBO_PROFILE = {
+    **_QWEN_IMAGE_21_PROFILE,
+    "id": QWEN_IMAGE_21_TURBO_PROFILE_ID,
+    "model_type": QWEN_IMAGE_21_TURBO_MODEL_TYPE,
+    "pipeline_class": QWEN_IMAGE_21_TURBO_MODEL_TYPE,
+    "default_repo": QWEN_IMAGE_21_TURBO_REPO,
+    "quantizable_components": (),
+    "max_low_memory_steps": 8,
+}
+_QWEN_IMAGE_21_TURBO_CAPABILITY = {
+    **_QWEN_IMAGE_21_CAPABILITY,
+    "modelType": QWEN_IMAGE_21_TURBO_MODEL_TYPE,
+    "label": "Qwen Image 2.1 Turbo",
+    "displayName": "Qwen-Image-2.1-Turbo",
+    "defaultRepo": QWEN_IMAGE_21_TURBO_REPO,
+    "revisionCandidates": [_QWEN_IMAGE_21_TURBO_REVISION],
+    "downloadFiles": [item["path"] for item in _QWEN_IMAGE_21_TURBO_INVENTORIES[0]["files"]],
+    "recommendedSteps": 8,
+    "recommendedGuidance": 1.0,
+    "modeDefaults": {
+        mode: {"width": 1024, "height": 1024}
+        for mode in ("edit_image", "multi_image_reference_edit")
+    },
+    "lowVram": {**_QWEN_IMAGE_21_CAPABILITY["lowVram"], "steps": 8},
+    "supportsGuidance": False,
+    "supportsNegativePrompt": False,
+    "supportsLora": False,
+    "notes": [
+        "Qwen Research License limits use to non-commercial research and evaluation unless separately licensed.",
+        "Uses the checkpoint's eight-step sampling schedule and guidance of one.",
+        "Reuse attention context controls the native per-generation cache.",
+        "Full-weight execution and hardware qualification remain pending.",
+    ],
+}
+for _qwen21_mode in _QWEN_IMAGE_21_MODES:
+    _qwen21_task_id = f"{_qwen21_mode.replace('_', '-')}:v1"
+    _qwen21_base = STUDIO_EXECUTION_SPEC_DEFINITIONS[f"qwen-image-21:{_qwen21_task_id}"]
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f"qwen-image-21-turbo:{_qwen21_task_id}"] = {
+        **_qwen21_base,
+        "modelType": QWEN_IMAGE_21_TURBO_MODEL_TYPE,
+        "profile": _QWEN_IMAGE_21_TURBO_PROFILE,
+        "capability": _QWEN_IMAGE_21_TURBO_CAPABILITY,
+        "bindings": tuple(
+            binding for binding in _qwen21_base["bindings"]
+            if binding[1] not in {"num_inference_steps", "guidance_scale", "negative_prompt"}
+        ),
     }
 
 

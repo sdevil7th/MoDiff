@@ -1010,6 +1010,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                         expected_fields | ({"guidance_scale_2", "use_guidance_scale_2"}
                                            if adapter.secondary_guidance_parameter else set())
                         | set(PIPELINE_CALL_INPUTS.get(adapter.load_pipeline_class, ()))
+                        | ({"num_inference_steps"} if adapter.checkpoint_sample_sigmas else set())
                         | ({'output_type', 'latents_out'} if adapter.load_pipeline_class in PIPELINE_CALL_INPUTS
                            and adapter.load_pipeline_class != 'FluxReduxPipeline' else set()),
                     )

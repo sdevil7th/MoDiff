@@ -27,7 +27,10 @@ def test_prompt_conditioned_actions_publish_the_selected_adapter_bound(pipeline)
                 continue
             original = deepcopy(contract)
             field = image_action_field_params(contract, action)["num_inference_steps"]
-            assert field == {"min": 1, "max": adapter.max_inference_steps}
+            if adapter.checkpoint_sample_sigmas:
+                assert field == {"min": 8, "max": 8, "default": 8, "hidden": True}
+            else:
+                assert field == {"min": 1, "max": adapter.max_inference_steps}
             assert contract == original
 
 
@@ -42,7 +45,9 @@ def test_dynamic_model_switch_refreshes_bound_without_rewriting_authored_steps()
             "image_contract": image_pipeline_contract(adapter, "text_to_image"),
             "num_inference_steps": 17,
         }, None)
-        node.set_field_params.assert_any_call("num_inference_steps", {"min": 1, "max": adapter.max_inference_steps})
+        node.set_field_params.assert_any_call(
+            "num_inference_steps", {"min": 1, "max": adapter.max_inference_steps, "hidden": False}
+        )
         for args, _ in node.set_field_params.call_args_list:
             assert "value" not in args[1]
 
