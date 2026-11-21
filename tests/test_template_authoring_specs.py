@@ -53,39 +53,28 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 159,
+                "authoringSpecCount": 158,
                 "promptDraftedCount": 136,
-                "promptNotApplicableCount": 23,
-                "canonicalDefaultsCapturedCount": 159,
-                "inputSelectionPendingCount": 95,
-                "rightsReviewPendingCount": 159,
-                "generationPendingCount": 159,
+                "promptNotApplicableCount": 22,
+                "canonicalDefaultsCapturedCount": 158,
+                "inputSelectionPendingCount": 94,
+                "rightsReviewPendingCount": 158,
+                "generationPendingCount": 158,
                 "assetCount": 0,
                 "authoringStateCounts": {
                     "draft_complete_execution_pending": 64,
-                    "draft_complete_input_selection_pending": 95,
+                    "draft_complete_input_selection_pending": 94,
                 },
             },
         )
 
-    def test_ctc_authoring_keeps_audio_input_rights_and_execution_pending(self):
-        specification = next(
-            row for row in self.ledger["specifications"]
-            if row["canonicalWorkflowId"] == "HuggingFaceCTCSpeechRecognitionModel:speech_to_text"
-        )
-        self.assertEqual(specification["mediaKind"], "json")
-        self.assertEqual(specification["authoringState"], "draft_complete_input_selection_pending")
-        self.assertEqual(specification["promptPlan"]["status"], "not_applicable")
-        self.assertIsNone(specification["promptPlan"]["prompt"])
-        self.assertEqual(
-            [(item["field"], item["mediaKind"], item["minimumCount"])
-             for item in specification["inputPlan"]["items"]],
-            [("sourceAudio", "audio", 1)],
-        )
-        self.assertEqual(specification["artifactPlan"]["requiredArtifacts"], ["facebook/wav2vec2-base-960h"])
-        self.assertEqual(specification["generationPlan"]["status"], "blocked_pending_external_evidence")
-        self.assertEqual(specification["assets"], [])
-        self.assertTrue(all(value is False for value in specification["claims"].values()))
+    def test_public_ctc_recipe_has_no_duplicate_hidden_authoring_spec(self):
+        workflow_id = "HuggingFaceCTCSpeechRecognitionModel:speech_to_text"
+        self.assertFalse(any(row["canonicalWorkflowId"] == workflow_id for row in self.ledger["specifications"]))
+        row = next(item for item in self.manifest["workflows"] if item["id"] == workflow_id)
+        self.assertEqual(row["requiredInputs"]["requiredAudio"], ["sourceAudio"])
+        self.assertEqual(row["mediaKind"], "json")
+        self.assertEqual(row["runtimeQualificationStatus"], "unqualified")
 
     def test_every_hidden_candidate_has_one_original_authoring_spec(self):
         candidate_by_id = {row["canonicalWorkflowId"]: row for row in self.candidates["contracts"]}

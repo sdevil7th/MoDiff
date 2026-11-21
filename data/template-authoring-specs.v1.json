@@ -14,14 +14,14 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:c7badf1daebd4b3459f03604c64f763bee9607da808760010d0ea9a52b41bb82",
+  "contentHash": "sha256:5ac9d3f657c70d93b7b191996648d85d59926e6076398bdccbb9602e941a6e47",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:664009ce5814553f2baea4c729917dd6cdb28fe474eb9fbd1583bffcab025d36",
+      "contentHash": "sha256:1c3b4676734b31899df611774a188b26089c7d7a6f5aa44c8c6a3cfef4930c17",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:c84a25e2fd14a325e32a0cc75e34426efec669a13bb8f78e2b6d99e96605b89f"
+      "sha256": "sha256:040b16acd4035e74ed74a5e7191ccd85f4d3d48df7fbecf890e186cda676794a"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -9705,120 +9705,6 @@
         "thirdPartyBrandAndPersonalDataReview": "required"
       },
       "title": "Janus — Text To Image [HuggingFaceAnyToAnyModel]"
-    },
-    {
-      "artifactPlan": {
-        "cacheState": "must_be_rechecked_through_app_before_generation",
-        "componentRequirements": [],
-        "requiredArtifacts": [
-          "facebook/wav2vec2-base-960h"
-        ]
-      },
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": "draft_complete_input_selection_pending",
-      "canonicalGraph": {
-        "path": "studio/hugging-face-ctc-speech-recognition-model/speech-to-text.json",
-        "sha256": "5254814f617e1de974fd034e2f22ce467c8fe478625555e331e65f2067646434"
-      },
-      "canonicalWorkflowId": "HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
-      "claims": {
-        "assetGenerated": false,
-        "inputSelected": false,
-        "publicTemplate": false,
-        "qualityApproved": false,
-        "rightsApproved": false,
-        "workflowExecuted": false
-      },
-      "defaultsPlan": {
-        "fields": [
-          {
-            "parameter": "chunk_length_seconds",
-            "role": "transcribeAudio",
-            "value": 30
-          },
-          {
-            "parameter": "stride_length_seconds",
-            "role": "transcribeAudio",
-            "value": 5
-          },
-          {
-            "parameter": "timestamps",
-            "role": "transcribeAudio",
-            "value": "word"
-          }
-        ],
-        "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "5254814f617e1de974fd034e2f22ce467c8fe478625555e331e65f2067646434",
-        "status": "canonical_defaults_captured_review_pending"
-      },
-      "generationPlan": {
-        "blockers": [
-          "reviewed_input_selection_and_rights_required",
-          "exact_model_cache_state_must_be_rechecked",
-          "exact_runtime_execution_receipt_required",
-          "resource_recipe_receipt_required",
-          "model_and_output_rights_review_required",
-          "generated_asset_and_human_quality_review_required"
-        ],
-        "requiresQualifiedAccelerator": false,
-        "status": "blocked_pending_external_evidence"
-      },
-      "id": "template-authoring:HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
-      "inputPlan": {
-        "items": [
-          {
-            "field": "sourceAudio",
-            "mediaKind": "audio",
-            "minimumCount": 1,
-            "rightsState": "review_required",
-            "selectionState": "pending_original_or_licensed_asset",
-            "technicalRequirements": [
-              "decodable_audio",
-              "matches_exact_workflow_input_contract",
-              "contains_no_unreviewed_brand_or_personal_data"
-            ]
-          }
-        ],
-        "status": "selection_required"
-      },
-      "mediaKind": "json",
-      "mode": "speech_to_text",
-      "modelFamily": "Wav2Vec2 CTC",
-      "modelType": "HuggingFaceCTCSpeechRecognitionModel",
-      "outputPlan": {
-        "mediaKinds": [
-          "json"
-        ],
-        "minimumAssetCount": 1,
-        "reviewCriteria": [
-          "bounded_decodable_result",
-          "instruction_or_source_alignment",
-          "no_unsupported_claims_or_hidden_detail_invention",
-          "receipt_matches_exact_input_and_runtime"
-        ]
-      },
-      "promptPlan": {
-        "editableBeforeQualification": true,
-        "mustBeLockedInGenerationReceipt": false,
-        "negativePrompt": {
-          "status": "not_supported_by_canonical_graph",
-          "value": null
-        },
-        "prompt": null,
-        "provenance": "original_modiff_mode_draft_v1",
-        "status": "not_applicable"
-      },
-      "publicationState": "hidden_candidate",
-      "purpose": "Author and review one json result for the exact Wav2Vec2 CTC speech to text workflow without changing its canonical graph contract.",
-      "rightsPlan": {
-        "inputMediaRights": "required",
-        "modelArtifactRights": "review_or_existing_catalog_decision_required",
-        "outputPublicationRights": "required",
-        "status": "review_required",
-        "thirdPartyBrandAndPersonalDataReview": "required"
-      },
-      "title": "Wav2Vec2 CTC — Speech To Text [HuggingFaceCTCSpeechRecognitionModel]"
     },
     {
       "artifactPlan": {
@@ -22671,16 +22557,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 159,
+    "authoringSpecCount": 158,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 64,
-      "draft_complete_input_selection_pending": 95
+      "draft_complete_input_selection_pending": 94
     },
-    "canonicalDefaultsCapturedCount": 159,
-    "generationPendingCount": 159,
-    "inputSelectionPendingCount": 95,
+    "canonicalDefaultsCapturedCount": 158,
+    "generationPendingCount": 158,
+    "inputSelectionPendingCount": 94,
     "promptDraftedCount": 136,
-    "promptNotApplicableCount": 23,
-    "rightsReviewPendingCount": 159
+    "promptNotApplicableCount": 22,
+    "rightsReviewPendingCount": 158
   }
 }

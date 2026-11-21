@@ -1240,7 +1240,9 @@
       "id": "HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
       "mode": "speech_to_text",
       "modelType": "HuggingFaceCTCSpeechRecognitionModel",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "wav2vec2_station_announcement"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2658,7 +2660,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:12a1b8caa39e40e84e6d84e30d18cc107d4d5edf5050691ce66d454dfc9918ec",
+  "contentHash": "sha256:3a147e7a8697cea4482b5b76478655bf9837cf9c7b4f9bd8c31475cd6acf6764",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -10615,6 +10617,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "wav2vec2_station_announcement",
+      "mode": "speech_to_text",
+      "modelType": "HuggingFaceCTCSpeechRecognitionModel",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_to_text",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -10794,7 +10811,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "8ae4b051197f281dc29d49ac022fb9477f3c41e832f70aa2da0dade4bbcff1bc",
+    "templateBundleSha256": "f88290af979c8ee4bd21775a119dd21b1ca8c63368d4eb9a263cd03f7a7a91c1",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -10842,8 +10859,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithPublicTemplates": 77,
-    "canonicalWorkflowsWithoutPublicTemplates": 148,
+    "canonicalWorkflowsWithPublicTemplates": 78,
+    "canonicalWorkflowsWithoutPublicTemplates": 147,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -10853,12 +10870,12 @@
       "research-blocked": 116,
       "unreviewed": 5
     },
-    "publicTemplateCount": 97,
-    "reviewedGalleryTemplateCount": 90,
+    "publicTemplateCount": 98,
+    "reviewedGalleryTemplateCount": 91,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
-      "executable": 86,
+      "executable": 87,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0
