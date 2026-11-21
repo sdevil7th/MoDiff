@@ -200,6 +200,7 @@ def is_reviewed_direct_image_edit(adapter, pipeline):
         'LatentConsistencyModelImg2ImgPipeline',
         'SanaSprintImg2ImgPipeline',
         'StableDiffusionImg2ImgPipeline',
+        'StableDiffusionXLImg2ImgPipeline',
     }
     if (adapter.pipeline_class not in reviewed_pipelines
             or getattr(pipeline, '_modiff_image_mode', None) != 'edit_image'

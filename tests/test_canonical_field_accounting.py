@@ -373,6 +373,8 @@ def test_conditional_image_accounting_matches_actual_call(monkeypatch, pipeline_
 @pytest.mark.parametrize('pipeline_name,width,steps,guidance,strength,sequence_limit,active_controls,resize', [
     ('StableDiffusionImg2ImgPipeline', 512, 30, 7.5, 0.8, 512,
      {'negative_prompt', 'guidance_scale', 'strength'}, (48, 32)),
+    ('StableDiffusionXLImg2ImgPipeline', 1024, 30, 5.0, 0.8, 512,
+     {'negative_prompt', 'guidance_scale', 'strength'}, None),
     ('LatentConsistencyModelImg2ImgPipeline', 1024, 4, 8.5, 0.8, 256,
      {'guidance_scale', 'strength'}, None),
     ('DreamLiteMobilePipeline', 1024, 4, 0.0, 0.8, 200,
@@ -393,7 +395,9 @@ def test_direct_image_edit_accounts_for_the_real_normalized_argument(
 
     adapter = image.get_image_pipeline_adapter(pipeline_name)
     upstream = image.pipeline_class_from_name(pipeline_name).__call__
-    source = Image.new('RGB', (64, 48) if resize else (512, 512), (4, 90, 160))
+    source_size = ((1024, 1024) if pipeline_name == 'StableDiffusionXLImg2ImgPipeline' else
+                   (64, 48) if resize else (512, 512))
+    source = Image.new('RGB', source_size, (4, 90, 160))
     if resize:
         normalized = source.resize(resize)
         monkeypatch.setattr(image, 'prepare_reference_images', lambda _value, _adapter: normalized)
@@ -414,8 +418,12 @@ def test_direct_image_edit_accounts_for_the_real_normalized_argument(
 
     pipeline = type(pipeline_name, (), {'__call__': edit, '_execution_device': 'cpu'})()
     revision = require_catalog_revision(adapter.default_repo) if reviewed else None
-    image._tag_image_pipeline(pipeline, adapter, 'edit_image', adapter.default_repo if reviewed else 'local-model',
-                              'hub' if reviewed else 'local', revision)
+    source_repo = adapter.default_repo if reviewed else 'local-model'
+    source_kind = 'hub' if reviewed else 'local'
+    if not reviewed and pipeline_name == 'StableDiffusionXLImg2ImgPipeline':
+        # An exact repository name by itself is insufficient.
+        revision, source_repo, source_kind = '0' * 40, adapter.default_repo, 'hub'
+    image._tag_image_pipeline(pipeline, adapter, 'edit_image', source_repo, source_kind, revision)
     node = image.Edit('edit')
     node.progress = lambda *a, **kw: None
     requested = dict(image_contract=image.image_pipeline_contract(adapter, 'edit_image'),
@@ -425,6 +433,11 @@ def test_direct_image_edit_accounts_for_the_real_normalized_argument(
                      control_guidance_start=0, control_guidance_end=1, image_guidance_scale=1.5,
                      layers=4, padding_mask_crop=0, pag_scale=3, pag_adaptive_scale=0,
                      resolution=640, use_en_prompt=False)
+    if not reviewed and pipeline_name == 'StableDiffusionXLImg2ImgPipeline':
+        with pytest.raises(ValueError, match='does not match the reviewed pin'):
+            node(pipeline=pipeline, image=source, **requested)
+        assert calls == {}
+        return
     output = node(pipeline=pipeline, image=source, **requested)
     assert output['images'] == [normalized]
     assert calls['image'] is normalized
@@ -470,8 +483,10 @@ def test_direct_image_edit_accounts_for_the_real_normalized_argument(
     if resize:
         assert projection['values']['sha256'] != hashlib.sha256(source.tobytes()).hexdigest()
     else:
-        decoded = load._execution_input_record['mediaEvidence']['outputs']['image']
+        media_evidence = load._execution_input_record['mediaEvidence']
+        decoded = media_evidence['outputs']['image']
         assert decoded == [{'kind': 'image', **projection['values']}]
+        assert media_evidence['files']['file'][0]['sha256'] == hashlib.sha256(fixture.read_bytes()).hexdigest()
     assert (projection['source'], projection['sourceNodeId'], projection['sourcePortId']) == (
         'connected', 'source-image', 'image',
     )
