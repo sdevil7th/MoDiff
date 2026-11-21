@@ -18,6 +18,14 @@ These rules apply to AI-assisted work in this repository. `CONTRIBUTING.md` is t
 - Never enable arbitrary remote Python code, mutable model revisions, or custom model execution implicitly. Trust-sensitive behavior requires an explicit operator choice and an immutable revision.
 - Prefer existing module, graph, configuration, error, and test patterns. Do not create a parallel workflow representation or model-loading path.
 
+## Generic Workflow Stages
+
+- Reuse a task- or modality-generic node for the same user-visible job across models and workflows. Put model-specific execution and schema differences in the declared backend adapter.
+- Use an ordinary node for a stage with one executable action. Expose the inputs, effective controls and outputs the user needs. Fold internal preparation or decoding into a stage only when it shares one owner and its intermediate result has no independent consumer.
+- Reserve new Blocks for meaningful typed boundaries, such as storyboard shots, reusable compositions, loops or genuine nested control flow. Preserve existing saved Block interfaces and registered definition hashes.
+- Label ports by role, including Source, Mask, Control, and First or Last Frame. Show one editor per effective setting and retain the saved fallback when a typed connection supplies the value. Choose a shared default only after it works in both the fresh workflow and the corresponding saved workflow.
+- Test the canvas and the ordered executable graph separately. Compare controls, typed bindings, model switching, and save/reopen. A presentation-only change preserves the executable graph and reuses the original run evidence.
+
 ## Hugging Face Model Libraries
 
 - Keep the reviewed Diffusers release pinned in the executable installation contract and record its artifact hashes in `uv.lock`. Keep immutable upstream catalog provenance separate from the installed distribution identity; update no-download compatibility tests and source-generated contracts when changing either.

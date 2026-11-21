@@ -30,6 +30,16 @@ unreasonable user expectations. The corrective obligations are:
 
 ## Invariants to protect
 
+- One ordinary node is the default for a single executable stage. Reuse
+  generic stages across compatible models and keep their ports named by role.
+  Fold internal operations only under the same owner with no independent
+  consumer of the intermediate result. Reserve new Blocks for a meaningful
+  typed boundary, such as a complete shot, reusable composition or loop.
+- Present one editor for a connected setting and retain the saved fallback.
+  When selecting the default for similar stages, verify the fresh Creator
+  path and the corresponding saved workflow, including the precise ordered
+  execution export, compatible model switch and reopening. Preserve legacy
+  Block interfaces and registered definition hashes.
 - One owning `BlockInstanceV2`, one flat effective execution graph and one
   existing backend executor. Nested containment is not a second persisted
   execution system. Ordinary leaves remain ordinary nodes.

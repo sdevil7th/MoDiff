@@ -74,6 +74,26 @@ unchanged, unambiguously matched executable nodes, rather than substituting the
 generator host's defaults. Authored device values and fresh field schemas remain
 intact; ambiguous matches or incompatible preserved defaults reject regeneration.
 
+## Generic stage design
+
+Use one ordinary, task-generic node for a stage that performs one executable
+action. Model Setup owns the selected model and its advanced placement
+controls. Input nodes name each required role. A whole-pipeline action can
+appear as Generate, Edit or Inpaint with the ports from its backend contract.
+An independent upscale, mask, composite or output remains directly editable.
+
+Combine stages visually when the same owner controls them and their intermediate
+result has no other consumer. For example, Load and Normalize can share a video
+input stage when all consumers want the normalized clip. Denoise and Decode can
+share Generate when the latent stays within that stage. An external latent or
+source connection keeps that endpoint available. Show the effective connected
+parameter once and preserve its editable fallback for use after disconnect.
+
+Use Blocks for reusable graphs, repeated shots and real nested control flow.
+Keep saved definitions and their original interfaces. Verify both the intended
+fresh Creator flow and a saved workflow, with the same ordered actions,
+parameter values, typed bindings and deliverable outputs for presentation changes.
+
 ## Group nodes into a reusable Block
 
 Select nodes and choose **Create block**. New definitions use Block V2 and can
