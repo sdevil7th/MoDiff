@@ -211,6 +211,27 @@ def is_reviewed_direct_image_edit(adapter, pipeline):
     return revision is not None and getattr(pipeline, '_modiff_image_revision', None) == revision
 
 
+def direct_image_accounting_fields(action, adapter, pipeline):
+    """Pick the bounded field contract for the actual generic action and owner."""
+    from modiff.execution_input_provenance import (
+        CONDITIONAL_IMAGE_ACCOUNTING_FIELDS, DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS,
+    )
+    from modiff.model_artifact_catalog import catalog_revision
+
+    if action == 'Generate':
+        return CONDITIONAL_IMAGE_ACCOUNTING_FIELDS
+    if action == 'Edit' and is_reviewed_direct_image_edit(adapter, pipeline):
+        return DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS
+    if (action == 'Inpaint' and adapter.pipeline_class == 'StableDiffusionInpaintPipeline'
+            and getattr(pipeline, '_modiff_image_mode', None) == 'inpaint'
+            and getattr(pipeline, '_modiff_image_source', None) == 'hub'
+            and getattr(pipeline, '_modiff_image_repo', None) == adapter.default_repo):
+        revision = catalog_revision(adapter.default_repo)
+        if revision is not None and getattr(pipeline, '_modiff_image_revision', None) == revision:
+            return DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS
+    return frozenset()
+
+
 def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=None, *, requested_inputs=None):
     """Capture effective bounded controls without claiming opaque RNG state.
 
@@ -274,16 +295,18 @@ def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=
                                      metadata={'image_contract': expected})
     elif not encoded_inputs and requested_inputs is not None:
         task = effective['executed_task']
-        if ((node.class_name == 'Generate' and task == 'text_to_image')
-                or (node.class_name == 'Edit' and is_reviewed_direct_image_edit(adapter, values['pipeline']))):
-            _record_direct_image_accounting(node, requested_inputs, values, call_kwargs, adapter, task=task)
+        supported_tasks = {'Generate': 'text_to_image', 'Edit': 'edit_image', 'Inpaint': 'inpaint'}
+        if task != supported_tasks.get(node.class_name):
+            return
+        fields = direct_image_accounting_fields(node.class_name, adapter, values['pipeline'])
+        if fields:
+            _record_direct_image_accounting(node, requested_inputs, values, call_kwargs, adapter, task=task,
+                                            allowed=fields)
 
 
-def _record_direct_image_accounting(node, requested, values, call_kwargs, adapter, *, task):
-    # Observe only reviewed scalar controls and the actual single source argument.
-    from modiff.execution_input_provenance import (
-        CONDITIONAL_IMAGE_ACCOUNTING_FIELDS, DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS, decoded_image_projection,
-    )
+def _record_direct_image_accounting(node, requested, values, call_kwargs, adapter, *, task, allowed):
+    # Observe only reviewed scalar controls and the actual PIL arguments at dispatch.
+    from modiff.execution_input_provenance import decoded_image_projection
     from .main import image_pipeline_contract
 
     # Optional schedules, supplied state and other runtime inputs need their
@@ -291,8 +314,6 @@ def _record_direct_image_accounting(node, requested, values, call_kwargs, adapte
     if (call_kwargs['output_type'] != 'pil' or values['use_guidance_scale_2']
             or any(values.get(key) is not None for key in CALL_INPUT_PARAMS)):
         return
-    edit = task == 'edit_image'
-    allowed = DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS if edit else CONDITIONAL_IMAGE_ACCOUNTING_FIELDS
     disabled_guidance = {'use_guidance_scale_2', 'guidance_scale_2'}
     aliases = {key: key for key in allowed
                - {'image_contract', 'seed'} - disabled_guidance}
@@ -300,16 +321,16 @@ def _record_direct_image_accounting(node, requested, values, call_kwargs, adapte
                    image_guidance_scale=adapter.image_guidance_parameter,
                    max_sequence_length=adapter.max_sequence_length_parameter)
     internal = {'generator', 'return_dict', 'callback_on_step_end', 'callback_on_step_end_tensor_inputs'}
-    if edit:
-        internal.add('image')
+    image_ports = {'edit_image': ('image',), 'inpaint': ('image', 'mask_image')}.get(task, ())
+    internal.update(image_ports)
     if call_kwargs.keys() - internal - set(aliases.values()):
         return
     input_projections = {}
-    if edit:
-        source = decoded_image_projection(call_kwargs.get('image'))
+    for port in image_ports:
+        source = decoded_image_projection(call_kwargs.get(port), mask=port == 'mask_image')
         if source is None:
             return
-        input_projections['image'] = source
+        input_projections[port] = source
     consumed = {key: call_kwargs[argument] for key, argument in aliases.items()
                 if key in requested and argument in call_kwargs}
     if 'seed' in requested:

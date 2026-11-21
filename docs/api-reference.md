@@ -2512,6 +2512,17 @@ audio identity at their input before downmixing and clipping. This can be
 matched to the connected audio loader output. Direct file arguments do not
 produce consumer-side file evidence. The receipt contains no samples,
 internal Transformers state, or transcript.
+
+The ordinary direct SD 1.5 Inpaint action can account for the exact pinned Hub
+pipeline's two PIL input arguments. It records the RGB source as
+`decoded-image-v1` and the single-channel grayscale mask as `decoded-mask-v1`,
+before Diffusers preprocesses either one. Both projections carry decoded
+dimensions, byte sizes and pixel hashes. In an isolated capture they can be
+joined to the two distinct Image Load node records and the exact submitted
+input wires. The reader verifies those joins and the selected model revision.
+The action still supports its existing input forms. Only the reviewed
+single-image, single-mask configuration contributes this accounting.
+
 Existing ancestry and task/attempt identity limits still apply. Completeness is
 field accounting only: it grants no canonical execution, Auto, hardware, quality,
 rights, publication or release qualification. A paired client/recorder must

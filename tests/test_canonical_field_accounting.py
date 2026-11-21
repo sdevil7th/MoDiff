@@ -495,6 +495,106 @@ def test_direct_image_edit_accounts_for_the_real_normalized_argument(
     assert overridden['fieldAccounting']['inputProjections']['image']['source'] == 'override'
 
 
+@pytest.mark.parametrize('identity', ['pinned', 'wrong-revision', 'local', 'external-generator', 'rgb-mask'])
+def test_direct_inpaint_accounts_for_both_actual_image_arguments(monkeypatch, tmp_path, identity):
+    from inspect import signature
+
+    from modiff.model_artifact_catalog import require_catalog_revision
+    from modules.DiffusersImage import main as image
+    from modules.Image import main as media
+
+    pipeline_name = 'StableDiffusionInpaintPipeline'
+    adapter = image.get_image_pipeline_adapter(pipeline_name)
+    upstream = image.pipeline_class_from_name(pipeline_name).__call__
+    calls = {}
+
+    @wraps(upstream)
+    def inpaint(self, **kwargs):
+        signature(upstream).bind(self, **kwargs)
+        calls.update(kwargs)
+        return SimpleNamespace(images=[Image.new('RGB', (512, 512), (215, 132, 18))])
+
+    original = Image.new('RGB', (512, 512), (23, 58, 176))
+    original_mask = Image.new('L', (512, 512), 0)
+    original_mask.paste(255, (128, 128, 384, 384))
+    if identity == 'rgb-mask':
+        original_mask = original_mask.convert('RGB')
+    original.save(tmp_path / 'source.png')
+    original_mask.save(tmp_path / 'mask.png')
+    monkeypatch.setenv('MODIFF_CAPTURE_BUILTIN_MEDIA', '1')
+    monkeypatch.setattr(media, 'resolve_runtime_input_path', lambda value: tmp_path / value)
+    load_source, load_mask = media.Load('source-loader'), media.Load('mask-loader')
+    source = load_source(file=['source.png'], alpha_channel='ignore')['image']
+    mask = load_mask(file=['mask.png'], alpha_channel='remove alpha')['image']
+    pipeline = type(pipeline_name, (), {'__call__': inpaint, '_execution_device': 'cpu'})()
+    revision = require_catalog_revision(adapter.default_repo)
+    if identity == 'local':
+        revision = None
+    elif identity == 'wrong-revision':
+        revision = '0' * 40
+    image._tag_image_pipeline(pipeline, adapter, 'inpaint', 'local-model' if identity == 'local' else adapter.default_repo,
+                              'local' if identity == 'local' else 'hub', revision)
+    node = image.Inpaint('inpaint')
+    node.progress = lambda *args, **kwargs: None
+    requested = dict(
+        image_contract=image.image_pipeline_contract(adapter, 'inpaint'),
+        prompt='Amber glass panel', negative_prompt='', width=512, height=512, seed=42,
+        num_inference_steps=30, guidance_scale=7.5, strength=0.8, padding_mask_crop=0,
+        output_type='pil', layers=4, reference_strength=1.0, cfg_normalize=False,
+        control_guidance_start=0, control_guidance_end=1, image_guidance_scale=1.5,
+        max_sequence_length=512, pag_adaptive_scale=0, pag_scale=3, resolution=640, use_en_prompt=False,
+    )
+    if identity == 'external-generator':
+        import torch
+        requested['generator'] = torch.Generator().manual_seed(77)
+        with pytest.raises(ValueError, match='does not support optional input'):
+            node(pipeline=pipeline, image=source, mask_image=mask, **requested)
+        assert calls == {}
+        return
+    if identity == 'wrong-revision':
+        with pytest.raises(ValueError, match='revision tag does not match'):
+            node(pipeline=pipeline, image=source, mask_image=mask, **requested)
+        assert calls == {}
+        return
+    output = node(pipeline=pipeline, image=source, mask_image=mask, **requested)['images'][0]
+    assert output.getpixel((0, 0)) == original.getpixel((0, 0))
+    assert output.getpixel((256, 256)) == (215, 132, 18)
+    assert calls['image'].tobytes() == original.tobytes()
+    assert calls['mask_image'].tobytes() == original_mask.tobytes()
+    definition = {'module': 'modules.DiffusersImage', 'action': 'Inpaint', 'params': {
+        **{key: {'value': value} for key, value in requested.items()},
+        'image': {'sourceId': load_source.node_id, 'sourceKey': 'image'},
+        'mask_image': {'sourceId': load_mask.node_id, 'sourceKey': 'image'},
+        'pipeline': {'sourceId': 'model', 'sourceKey': 'pipeline'},
+    }}
+    record = node._execution_input_record
+    bound = bind_generation_input_origins(node.node_id, definition, record)
+    assert bound['fields']['executed_task']['value'] == 'inpaint'
+    if identity != 'pinned':
+        assert 'fieldAccounting' not in bound
+        return
+
+    accounting = bound['fieldAccounting']
+    assert accounting['complete'], accounting
+    assert accounting['fields'].keys() == requested.keys()
+    assert set(accounting['inputProjections']) == {'image', 'mask_image'}
+    assert accounting['fields']['seed']['value'] == calls['generator'].initial_seed() == 42
+    assert accounting['fields']['layers']['disposition'] == 'inactive'
+    assert accounting['fields']['reference_strength']['disposition'] == 'inactive'
+    for field, loader in [('image', load_source), ('mask_image', load_mask)]:
+        projection = accounting['inputProjections'][field]
+        assert projection['kind'] == ('decoded-mask-v1' if field == 'mask_image' else 'decoded-image-v1')
+        assert projection['source'] == 'connected'
+        assert projection['sourceNodeId'] == loader.node_id
+        assert projection['sourcePortId'] == 'image'
+        assert loader._execution_input_record['mediaEvidence']['outputs']['image'] == [
+            {'kind': 'image', **projection['values']},
+        ]
+        overridden = bind_generation_input_origins(node.node_id, definition, record, {field: calls[field]})
+        assert not overridden['fieldAccounting']['complete']
+        assert overridden['fieldAccounting']['inputProjections'][field]['source'] == 'override'
+
+
 def test_conditional_accounting_holds_stale_metadata_and_unreviewed_literals(monkeypatch):
     receipt, _, _ = run_conditional_image(monkeypatch, 'StableDiffusionPipeline',
         image_contract={'pipelineClass': 'ObsoletePipeline'}, unreviewed_control='untrusted-value')

@@ -15,7 +15,7 @@ from PIL import Image, ImageColor, ImageDraw, ImageFilter
 from modiff.NodeBase import NodeBase
 from modules.DiffusersImage.call_inputs import (
     CALL_INPUT_ADDITIONS, CALL_INPUT_DEFAULTS, CALL_INPUT_PARAMS, PIPELINE_CALL_INPUTS, apply_call_inputs, normalize_call_inputs,
-    is_reviewed_direct_image_edit, record_image_call_inputs,
+    direct_image_accounting_fields, record_image_call_inputs,
 )
 from modules.DiffusersImage.image_prompt_adapter import (
     attach_image_prompt_adapters, image_prompt_adapter_config,
@@ -5379,13 +5379,12 @@ class Generate(NodeBase):
         self.default_params = {**self.default_params, 'output_type': {
             **self.default_params['output_type'], 'options': _image_output_options(adapter, action),
         }}
-        if action != 'Generate' and not (action == 'Edit' and is_reviewed_direct_image_edit(adapter, values['pipeline'])):
+        fields = direct_image_accounting_fields(action, adapter, values['pipeline'])
+        if not fields:
             return super().__call__(**values)
-        from modiff.execution_input_provenance import CONDITIONAL_IMAGE_ACCOUNTING_FIELDS, DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS
 
         # Preflight can replace inactive controls or normalize active values.
         # Preserve their authored values only for the current dispatch.
-        fields = DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS if action == 'Edit' else CONDITIONAL_IMAGE_ACCOUNTING_FIELDS
         self._requested_generation_inputs = {key: kwargs[key] for key in fields & kwargs.keys()}
         try:
             return super().__call__(**values)
