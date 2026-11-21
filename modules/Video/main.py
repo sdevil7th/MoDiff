@@ -792,6 +792,7 @@ class FrameExtract(NodeBase):
             frame_count = len(frames)
         if frame_count < 1:
             raise ValueError("Extract Video Frames needs a non-empty video.")
+        fps = float(file_asset["fps"] if file_asset and file_asset.get("fps") else kwargs.get("fps") or 16)
         mode = str(kwargs.get("mode") or "first_last")
         if mode == "first":
             indices = [0]
@@ -802,7 +803,6 @@ class FrameExtract(NodeBase):
         elif mode == "indices":
             indices = _parse_numbers(kwargs.get("indices"), cast=int)
         elif mode == "timecodes":
-            fps = float(kwargs.get("fps") or 16)
             indices = [round(value * fps) for value in _parse_numbers(kwargs.get("timecodes"), cast=float)]
         elif mode == "every_n":
             step = max(1, int(kwargs.get("every_n") or 1))
@@ -820,7 +820,6 @@ class FrameExtract(NodeBase):
             raise ValueError("The requested frame selection is outside this video.")
         if len(normalized) > MAX_EXTRACTED_FRAMES:
             raise ValueError(f"Extract Video Frames accepts at most {MAX_EXTRACTED_FRAMES} output frames.")
-        fps = float(file_asset["fps"] if file_asset and file_asset.get("fps") else kwargs.get("fps") or 16)
         if file_asset:
             import imageio.v2 as imageio
             from PIL import Image
