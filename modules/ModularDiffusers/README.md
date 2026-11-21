@@ -153,6 +153,11 @@ The bundled `text_to_image` graph illustrates five stages:
 4. **Decode Latents** converts latent output into image output with the VAE.
 5. **Preview Image** publishes the generated image to the client/cache surface.
 
+**Preview Latents** gives a quick color approximation for a single four-channel
+spatial latent shaped `4 × H × W` or `1 × 4 × H × W`. For packed latents,
+batches and other channel layouts, use a compatible **Decode Latents** node
+followed by **Preview Image**.
+
 The exact fields and defaults come from the live registry. For example, Flux, Qwen Image, Z-Image, and Wan pipelines do not share one universal guidance, prompt, or step contract. Refresh or recreate a graph when a model's dynamic definition changes.
 
 Current developer starters can group actual encoding nodes as **Encode Inputs**.

@@ -141,35 +141,52 @@ def prepare_image_for_vae_pipeline(image, pipeline_class):
     return image
 
 
-# YiYi Notes: this is not working for qwen/flux as latents needs to be unpacked first
 class LatentsPreview(NodeBase):
+    """Show a fast color approximation of one four-channel spatial latent."""
+
     label = "Latents Preview"
     category = "image"
     resizable = True
     params = {
-        "latents": {"label": "Latents", "display": "input", "type": "latent"},
+        "latents": {
+            "label": "Latents",
+            "display": "input",
+            "type": "latent",
+            "description": "Single four-channel spatial latent, with or without a batch dimension of size 1.",
+        },
         "image": {"label": "Image", "display": "output", "type": "image", "hidden": True},
         "preview": {"display": "ui_image", "dataSource": "image"},
     }
 
     def execute(self, latents):
+        if latents is None:
+            return {"image": None}
+        if (
+            not isinstance(latents, torch.Tensor)
+            or latents.ndim not in (3, 4)
+            or (latents.ndim == 4 and latents.shape[0] != 1)
+            or latents.shape[-3] != 4
+            or min(latents.shape[-2:]) == 0
+            or latents.layout != torch.strided
+            or latents.device.type == "meta"
+        ):
+            raise ValueError(
+                "Preview Latents requires a single four-channel spatial latent shaped (4, H, W) or (1, 4, H, W). "
+                "For other layouts, use a compatible Decode Latents node followed by Preview Image."
+            )
+
         latent_rgb_factors = [
             [0.3920, 0.4054, 0.4549],
             [-0.2634, -0.0196, 0.0653],
             [0.0568, 0.1687, -0.0755],
             [-0.3112, -0.2359, -0.2076],
         ]
-
-        image = None
-
-        if latents is not None:
-            latent_rgb_factors = torch.tensor(latent_rgb_factors, dtype=latents.dtype).to(device=latents.device)
-            latent_image = latents.squeeze(0).permute(1, 2, 0) @ latent_rgb_factors
-            latents_ubyte = ((latent_image + 1.0) / 2.0).clamp(0, 1).mul(0xFF)
-            denoised_image = latents_ubyte.byte().cpu().numpy()
-            image = Image.fromarray(denoised_image)
-            image = image.resize((image.width * 2, image.height * 2), resample=Image.Resampling.BICUBIC)
-
+        latent_rgb_factors = torch.tensor(latent_rgb_factors, dtype=latents.dtype).to(device=latents.device)
+        latent_image = latents.squeeze(0).permute(1, 2, 0) @ latent_rgb_factors
+        latents_ubyte = ((latent_image + 1.0) / 2.0).clamp(0, 1).mul(0xFF)
+        denoised_image = latents_ubyte.byte().cpu().numpy()
+        image = Image.fromarray(denoised_image)
+        image = image.resize((image.width * 2, image.height * 2), resample=Image.Resampling.BICUBIC)
         return {"image": image}
 
 
