@@ -20,6 +20,7 @@ from modiff.huggingface_cluster_runtime import (
     qualify_huggingface_cluster_expert_runtime,
 )
 from modiff.huggingface_node_library import build_huggingface_node_library
+from modiff.registered_block_v2_catalog import registered_block_v2_catalog_entry
 
 
 WAN_REPO = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
@@ -268,6 +269,65 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
         }
         self.assertEqual(len(client_pins), 124)
         self.assertEqual(dict(REGISTERED_BLOCK_V2_DEFINITION_PINS), client_pins)
+
+    def test_helios_video_ports_keep_exact_saved_auto_authority(self):
+        for pipeline in ("Helios", "HeliosPyramid", "HeliosPyramidDistilled"):
+            for task in ("image2video", "video2video"):
+                with self.subTest(pipeline=pipeline, task=task):
+                    route = f"{pipeline}ModularPipeline:{task}"
+                    admission = f"diffusers.cluster-admission:{route}:workflow:official_top_level_blocks"
+                    entry = registered_block_v2_catalog_entry(f"diffusers.modular:{route}", admission)
+                    self.assertIsNotNone(entry)
+                    definition = entry["definition"]
+                    outputs = definition["boundary"]["outputs"]
+                    self.assertEqual([output["portId"] for output in outputs], ["height", "width", "videos"])
+                    self.assertEqual(outputs[-1]["valueType"], "video")
+                    self.assertEqual(outputs[-1]["binding"], {"nodeId": "videoExport", "fieldOrPortId": "file"})
+                    historical = copy.deepcopy(definition)
+                    historical["boundary"]["outputs"].pop()
+                    altered = copy.deepcopy(historical)
+                    altered["boundary"]["outputs"][0]["label"] = "Different output label"
+                    for snapshot, failure in (
+                        (definition, "the authority form is missing"),
+                        (historical, "the authority form is missing"),
+                        (altered, "backend-pinned compiler output"),
+                    ):
+                        graph = snapshot["graph"]
+                        content_hash = block_definition_content_hash_v2(snapshot)
+                        instance = {
+                            "schemaVersion": 2,
+                            "instanceId": "saved-helios",
+                            "definitionRef": {"definitionId": admission, "contentHash": content_hash},
+                            "definitionSnapshot": {**snapshot, "contentHash": content_hash},
+                            "effectiveGraph": graph,
+                            "values": entry["values"],
+                            "customization": {
+                                "state": "unchanged",
+                                "baseGraphHash": graph["graphHash"],
+                                "effectiveGraphHash": graph["graphHash"],
+                            },
+                            "presentation": {
+                                "expanded": False,
+                                "position": {"x": 0, "y": 0},
+                                "size": {"width": 360, "height": 320},
+                                "internalLayout": entry["internalLayout"],
+                                "internalLayoutMode": entry["internalLayoutMode"],
+                            },
+                            "previewStates": [
+                                {"binding": preview, "status": "idle"} for preview in snapshot["previews"]
+                            ],
+                            "authorities": [],
+                        }
+                        # Reach the normal form checks after accepting the exact graph and
+                        # interface pins. No planner or fabricated resource fixture is needed.
+                        with self.assertRaisesRegex(ValueError, failure):
+                            qualify_huggingface_cluster_auto_authority(
+                                {"schemaVersion": 1, "instance": instance, "form": None},
+                                library={},
+                                runtime_fingerprint={},
+                                local_models=None,
+                                data_dir=str(self.cache_dir),
+                            )
 
     def test_transformers_composite_receipt_joins_direct_profile_and_optional_runtime(self):
         snapshot = (
