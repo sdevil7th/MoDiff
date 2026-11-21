@@ -805,6 +805,11 @@ successful run, and retain immutable definitions and unrelated preview owners.
 - Opt-in generation tests need explicit backend isolation, installed-artifact
   checks, an idle queue, bounded execution and task-scoped cleanup. A file-path
   environment variable or an empty queue alone does not establish isolation.
+- Exercise ordinary output persistence after a native submission. The Client
+  writes the executed API snapshot through `/studio_outputs`. An isolated
+  capture must accept the metadata save for its own task, then independently
+  join it to the original graph request and terminal event. Preserve any
+  missing snapshot as a capture gap.
 - Keep reviewed upstream source checkouts outside ordinary application test
   discovery. Distinguish collection/harness failures from product failures;
   reproduce suspect pre-existing assertions on the original commit.
