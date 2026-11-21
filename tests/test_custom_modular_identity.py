@@ -1419,6 +1419,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
         )
         self.assertTrue(all(CUSTOM_PIPELINE_IDENTITY_FIELD not in value for value in outputs.values()))
 
+    @patch("huggingface_hub.constants.HF_HUB_OFFLINE", False)
     def test_standard_component_load_does_not_force_local_only(self):
         spec = SimpleNamespace(
             pretrained_model_name_or_path="owner/component",
@@ -2566,8 +2567,8 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             ):
                 _validate_reviewed_pipeline_index(
                     model_type,
-                    config.default_repo,
-                    require_catalog_revision(config.default_repo, model_type=model_type),
+                    'example/installed-component-contract',
+                    'c' * 40,
                 )
 
 

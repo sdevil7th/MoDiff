@@ -106,5 +106,25 @@ def test_native_context_cache_prefills_once_and_is_private_to_each_invocation(mo
         torch.testing.assert_close(baseline, original, atol=0, rtol=0)
         with pytest.raises(ValueError, match="incompatible layout"):
             object.__new__(DecodeLatents).execute(pipeline, baseline, width=128, height=64)
+
+        from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
+
+        turbo = IMAGE_PIPELINE_ADAPTERS["QwenImage21TurboPipeline"]
+        pipeline.register_to_config(sample_sigmas=list(turbo.checkpoint_sample_sigmas))
+        steps = []
+
+        def record_step(_owner, index, timestep, values):
+            steps.append((index, timestep.item()))
+            return values
+
+        result = pipeline(
+            prompt_embeds=embeddings, height=64, width=64,
+            num_inference_steps=8, true_cfg_scale=1,
+            generator=torch.Generator().manual_seed(123), output_type="pil",
+            callback_on_step_end=record_step,
+        )
+        assert [index for index, _ in steps] == list(range(8))
+        assert [timestep / 1000 for _, timestep in steps] == pytest.approx(turbo.checkpoint_sample_sigmas)
+        assert [(image.mode, image.size) for image in result.images] == [("RGBA", (64, 64))]
     finally:
         torch.set_num_threads(previous_threads)

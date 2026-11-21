@@ -530,6 +530,10 @@ def _cached_reviewed_modular_workflow_snapshot() -> dict[str, Any]:
 
 
 def reviewed_modular_workflow_contract(pipeline_class: str) -> dict[str, Any]:
+    from modiff.supplemental_modular_contracts import reviewed_supplemental_modular_contract
+    supplemental = reviewed_supplemental_modular_contract(pipeline_class)
+    if supplemental is not None:
+        return supplemental
     snapshot = _cached_reviewed_modular_workflow_snapshot()
     contract = next(
         (item for item in snapshot["contracts"] if item["pipelineClass"] == pipeline_class),

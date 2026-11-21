@@ -14,39 +14,49 @@ The [modularity walkthrough](docs/modularity-demo.md) covers editable generation
 stages, a custom image-and-mask node, connected refinement, model switching and
 saved-workflow restoration.
 
+Previously published Shap-E text-to-3D workflows can run with their original
+settings. The [API reference](docs/api-reference.md) describes the supported
+task metadata formats.
+
 > [!CAUTION]
 > MoDiff is early-stage software. It is not a production service, a multi-user platform, or a security sandbox. The server has no authentication and can execute model workflows, import custom Python modules, and access files inside its configured working directory. Keep it bound to `127.0.0.1`, install only code you trust, and read [SECURITY.md](SECURITY.md) before changing its network exposure.
 
 ## Developer setup with uv and npm
 
-Install Git, [uv `0.11.26`](https://docs.astral.sh/uv/getting-started/installation/),
+Install Git, [uv](https://docs.astral.sh/uv/getting-started/installation/),
 Node.js `24.12.0`, and npm `11.6.2`. uv can provision Python 3.12.
 Use two terminals for the backend and the editable frontend.
+
+Use the current `fix-ui-ux-issues` branch in both repositories for the interim
+Windows candidate. These updates are not released on `main`. If you already
+cloned the branch, update both checkouts before using these commands.
 
 **Terminal 1 — backend:** clone both repositories into the same parent directory,
 then start the backend. These commands work in Linux shells and Windows PowerShell.
 
 ```text
-git clone https://github.com/sdevil7th/MoDiff.git MoDiff
-git clone https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
-uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator cpu --backend-only --json
-uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator cpu --backend-only --non-interactive
-uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
-uv run --no-project --no-sync --python 3.12 -m modiff.dev run
+uv sync --locked --extra cpu
+uv run --locked --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
+uv run --locked --extra cpu python main.py
 ```
 
-The CPU profile is for API/UI development. For NVIDIA inference, replace `cpu`
-with `nvidia` in both `plan` and `setup`; other accelerators are covered in the
-[full setup guide](docs/developer-setup.md). Setup preserves an existing `.venv` and
-does not download model weights. Use the guide for deliberate environment repair;
-ordinary `uv sync` is not supported.
+The CPU profile is for API/UI development. For NVIDIA inference, use `--extra cuda`
+in each command; for Intel, use `--extra xpu`. On Apple Silicon, omit the extra.
+The base application includes Transformers, PEFT and PyAV. PyAV provides the
+H.264 codec used for LTX image conditioning. Setup installs Python packages
+without downloading model weights. `uv sync --locked` reconciles `.venv`
+with the selected profile: use a separate checkout when testing a different
+accelerator. See the [full setup guide](docs/developer-setup.md) for specialized AMD profiles,
+explicit `uv pip` commands, repair, and upgrades.
 
 **Terminal 2 — frontend:** from the same parent directory, run:
 
 ```text
 cd MoDiff-client
-npm ci
+npm ci --include=dev
 npm run dev
 ```
 
@@ -54,6 +64,16 @@ Keep the backend running at <http://127.0.0.1:8088> and open the URL printed by
 Vite for the editable frontend. Press `Ctrl+C` in each terminal to stop it.
 See the [full developer setup guide](docs/developer-setup.md) for accelerator prerequisites,
 optional runtimes, repair, and bundled-app setup.
+
+## Historical Windows test baseline
+
+The application source reviewed on 1 November 2026 predates the current setup
+commands. The following revisions identify that test baseline.
+
+| Repository    | Application source before final packaging  |
+| ------------- | ------------------------------------------ |
+| MoDiff        | `1239d1cecd12a7318eb263ca17c34d4fc0445d14` |
+| MoDiff-client | `c561a01395044fd71c1918e95fb9e9709d8e7601` |
 
 ## Before you install
 
@@ -69,8 +89,9 @@ use you need:
   available, but many image workflows will be slow and most large video/audio
   workflows will be impractical.
 
-The guided installer provisions its pinned `uv`, Python 3.12, and Node.js
-toolchains when the selected platform supports bootstrapping them. The managed
+Install uv through its official instructions or your package manager; MoDiff does
+not require an exact uv version. The guided installer can provision Python 3.12
+and Node.js when the selected platform supports bootstrapping them. The managed
 NVIDIA profile uses the reviewed PyTorch CUDA 12.8 wheels. Qualified Linux AMD
 hosts use the pinned ROCm profile. AMD's selected Windows stack is represented
 as a conditional target but remains blocked until MoDiff pins and validates its
@@ -89,8 +110,8 @@ client automatically.
 Linux or macOS:
 
 ```bash
-git clone https://github.com/sdevil7th/MoDiff.git MoDiff
-git clone https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
 ./install.sh --accelerator auto --system-check
 ./install.sh --accelerator auto
@@ -100,8 +121,8 @@ cd MoDiff
 Windows PowerShell:
 
 ```powershell
-git clone https://github.com/sdevil7th/MoDiff.git MoDiff
-git clone https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
 .\install.ps1 -Accelerator auto -SystemCheck
 .\install.ps1 -Accelerator auto
@@ -172,7 +193,7 @@ machine, or fast enough for practical use.
 7. Open **Gallery** after completion to inspect, download, restore, or reuse the
    output. Export important workflows instead of relying only on browser state.
 
-The client [Studio user guide](https://github.com/sdevil7th/MoDiff-client/blob/main/docs/studio-user-flow.md)
+The client [Studio user guide](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/docs/studio-user-flow.md)
 explains the complete guided workflow, Auto/Expert controls, Queue, Gallery,
 and recovery behavior.
 
@@ -244,6 +265,23 @@ cp config.example.ini config.ini
 
 ## Developer tools and service prototyping
 
+Image templates author the current ordinary workflow nodes, including real
+encoding stages where the selected implementation supports them. Templates
+preserve their creator settings and controlled LoRA/media branches. Existing
+saved workflows keep their original graph; historical Gallery examples are
+references rather than proof of a migrated graph. See
+[image template validation](docs/image-template-validation.md) for fresh
+output comparison, repeated-run Auto checks and the Windows handoff.
+The [Mellon comparison](docs/simpler-image-workflows-mellon-comparison.md)
+explains the current optional stage actions while retaining editable stages and
+existing capabilities. [Guidance transfer](docs/guidance-control-transfer.md)
+preserves compatible controls during model changes; the opt-in
+[component bundle](docs/component-bundle-authoring.md) reduces reviewed Qwen
+text-to-image wiring. Use [three-machine validation](docs/three-machine-app-validation.md)
+for the local, dedicated AMD and Windows checks. See [larger image model validation](docs/large-image-model-validation.md)
+and [AMD cloud preparation](docs/amd-cloud-qualification.md) for dedicated-device
+testing beyond the migrated templates.
+
 For installation, use the [uv/npm quick start](#developer-setup-with-uv-and-npm)
 above and the [full setup guide](docs/developer-setup.md).
 See [service prototyping](docs/service-prototyping.md) to export a named service
@@ -265,7 +303,7 @@ contract](docs/api-reference.md#graph-execution-and-queue-state).
 
 ## Managed installation profiles
 
-MoDiff's installer owns the executable Python/Torch environment. The project is intentionally marked `uv`-unmanaged, so ordinary `uv sync` and `uv run` are not supported setup or launch commands. The explicit `uv run --no-project --no-sync ... -m modiff.dev` bootstrap described above delegates to this same installer without project resolution. The installer stages a fresh environment, checks its package policy and a real device tensor, then atomically promotes it to `.venv/` while retaining the previous environment for rollback. When the sibling client is installed, setup also downloads and SHA-256 verifies the pinned rights-approved Template Gallery snapshot and bundles it under `web/template-gallery` so normal use does not wait on Hub media requests. Four permission-dependent preview files are currently unavailable; their templates remain usable and do not request those files.
+Ordinary setup uses native `uv sync` and `uv run` with the committed `uv.lock`. The guided installer remains available for staged installs and specialized accelerator wheel profiles. The installer stages a fresh environment, checks its package policy and a real device tensor, then atomically promotes it to `.venv/` while retaining the previous environment for rollback. When the sibling client is installed, setup also downloads and SHA-256 verifies the pinned rights-approved Template Gallery snapshot and bundles it under `web/template-gallery` so normal use does not wait on Hub media requests. Four permission-dependent preview files are currently unavailable; their templates remain usable and do not request those files.
 
 | Installer choice | Managed profile          | Current scope                                                                                                                                                              |
 | ---------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -359,8 +397,19 @@ See [docs/api-reference.md](docs/api-reference.md) for route groups and trust im
 
 The Modular Diffusers integration is documented in [modules/ModularDiffusers/README.md](modules/ModularDiffusers/README.md). MoDiff owns the pipeline configuration schema used by its dynamic node contracts while relying on upstream Diffusers for model and pipeline execution.
 
+MiniMax H3 Image uses the generic image stages and Model Setup switching with its
+exact optional Diffusers provider. Its six-head sampler supports text and ordered
+reference images. See the [H3 Image setup](modules/ModularDiffusers/README.md#minimax-h3-image)
+for controls and execution requirements.
+
 For the current task browser, picker behavior and qualification limits, see
 [Workflow authoring and model selection](docs/workflow-authoring-ux.md).
+Exact reviewed evaluation installations can expose separate private Expert
+authoring metadata; public model and qualification boundaries remain explicit.
+Execution preflight rejects the exact recorded device/kernel failures described
+in [cross-platform validation](docs/image-cross-platform-validation.md).
+See [audio workflow stages](docs/audio-workflows.md) for generation, transcription,
+audio processing, selected adapters and playback.
 
 ## Custom nodes
 
@@ -408,8 +457,9 @@ Set-Location .\MoDiff
 Use the accelerator you deliberately selected instead of `auto` when retaining
 an explicit profile. The installer detects changes across profile
 requirements, `pyproject.toml`, and the accelerator manifest, then rebuilds the
-sibling client bundle during a normal paired installation. There is no
-repository `uv.lock` to regenerate. A `--backend-only`/`-BackendOnly` repair
+sibling client bundle during a normal paired installation. For native installs,
+run `uv sync --locked` with the same accelerator extra after pulling; intentional dependency
+upgrades use `uv lock --upgrade-package <package>` followed by validation. A `--backend-only`/`-BackendOnly` repair
 does not update the installed client.
 
 For failures, begin with [troubleshooting](docs/troubleshooting.md) rather than
@@ -422,7 +472,7 @@ individual review and backups.
 Do not edit `web/assets/index.js` or `web/assets/index.css` by hand. They are generated artifacts.
 
 1. Finish and validate changes in the MoDiff-client repository.
-2. Run `npm ci` and `npm run check` there. The check command produces `dist/` after frontend tests and validation.
+2. Run `npm ci --include=dev` and `npm run check` there. The check command produces `dist/` after frontend tests and validation.
 3. Mirror the **contents** of `dist/` into this backend's `web/` directory, deleting stale generated bundle files while preserving backend-owned `web/user/` custom fields. Do not create `web/dist/`.
 4. Confirm that `web/index.html`, `web/assets/`, and `web/favicon.ico` came from the same build, and that any existing `web/user/` directory survived the sync. A source-release build intentionally has no `web/template-gallery/` directory; the normal installer adds the verified local payload.
 5. Start the backend and verify `/`, `/assets/index.js`, and `/template-gallery/manifest.json`. Lightweight source-release builds without an installer pass retain immutable Hub URL resolution.

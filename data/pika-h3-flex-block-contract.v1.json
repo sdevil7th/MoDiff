@@ -1,0 +1,3702 @@
+{
+  "schemaVersion": 1,
+  "kind": "official-source-block-supplement",
+  "source": {
+    "repository": "https://github.com/huggingface/diffusers.git",
+    "revision": "d0b9b1b5a540e5f9df2f8ec236347bf9c5aa7d1f",
+    "sourceTree": "bf0c806c8af9af94867b1e8069e6230b71feb3d8",
+    "license": "Apache-2.0",
+    "files": {
+      "src/diffusers/modular_pipelines/pika_h3_flex/__init__.py": "ac158f354630572f69f6fc51d571ceadad961961dbcf91d9716b17bc76b7652d",
+      "src/diffusers/modular_pipelines/pika_h3_flex/before_denoise.py": "f089eb0b3aafb484934de5855950b16d72649a9c866050e37369769ba7d9f45a",
+      "src/diffusers/modular_pipelines/pika_h3_flex/before_encoder.py": "db88da4b0d5620aa9bb8837e9dc348b3fa81b9b7f72661d8c15975b626056a51",
+      "src/diffusers/modular_pipelines/pika_h3_flex/decoders.py": "e4072f883f8ad8d72237b49219219210c942f51e2ef2cc8ea722f2210564f289",
+      "src/diffusers/modular_pipelines/pika_h3_flex/denoise.py": "bbaa5766a7fd74f1b6972e0b78a8dcb6e450d28219f6ca988aac55d0931a2183",
+      "src/diffusers/modular_pipelines/pika_h3_flex/encoders.py": "2573c5c42e3973c80f1ed65b7b1f43d128ef78f5ca6cbb706cd6b8b9de58994e",
+      "src/diffusers/modular_pipelines/pika_h3_flex/modular_blocks_pika_h3_flex.py": "205d5dbafa5b74b5cef611ab71bb6a6e08d36bb7eec551ef8f3d6770a981fd4c",
+      "src/diffusers/modular_pipelines/pika_h3_flex/modular_pipeline.py": "1e431dd4a668571b2ca1cf39d4a588f6d8586e4250c1d8e1de8bbb328bf392e8",
+      "src/diffusers/modular_pipelines/pika_h3_flex/references.py": "6d21a6c0a6b76825551d1f4e8cd78466824b5b33f011e315b69b205232807907",
+      "src/diffusers/schedulers/scheduling_minimax_h3.py": "1b3dc1f0f43e3b11ee71bf540201b3fd8e3c4dfab33b19335200c362b48a139a",
+      "src/diffusers/loaders/lora_pipeline.py": "44d65463bd3c970856a91952008e66017add7b9e1410aa986ac0706e4566c74d"
+    }
+  },
+  "runtimeProfileId": "huggingface-diffusers-video-d0b9b1b",
+  "workflowContractHash": "sha256:11e2f02824e61d25e5b784178ac443519dff0c31b95b3eeccbaf4889dcecc2cb",
+  "blocks": {
+    "schemaVersion": 1,
+    "diffusersRevision": "d0b9b1b5a540e5f9df2f8ec236347bf9c5aa7d1f",
+    "blockDefinitions": [
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexAfterDenoiseStep",
+        "kind": "block",
+        "description": "Turns the denoised rows of the packed sequence back into latents: drops the conditioning rows the loop never wrote, then unpacks the video rows into `(1, latent_channels, num_latent_frames, latent_height, latent_width)` and the channel-major audio rows into the `(2, audio_latent_channels, num_audio_latents)` the mono audio VAE consumes. The decoders then take latents from any source, and popping them leaves latents in hand.",
+        "inputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The denoised video rows of the packed sequence, conditioning rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The denoised audio rows of the packed sequence, reference rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_video_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many leading video rows are conditioning rows and are dropped here.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_audio_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many leading audio rows are reference rows and are dropped here.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_latent_frames",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Number of video latent frames.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_height",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Height of the video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_width",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Width of the video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_audio_latents",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Number of audio latents per channel.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": [
+          "audio_latents",
+          "latent_height",
+          "latent_width",
+          "latents",
+          "num_audio_latents",
+          "num_latent_frames"
+        ],
+        "outputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated video latents, of shape `(1, latent_channels, num_latent_frames, latent_height, latent_width)`.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated audio latents, one batch item per stereo channel.",
+            "kwargsType": null
+          }
+        ],
+        "components": [],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexAfterDenoiseStep:sha256:577b55f3cb80a588cba5bde8acc74573f8cc10578dc6dc6a62105c29a656a648",
+        "contentHash": "sha256:577b55f3cb80a588cba5bde8acc74573f8cc10578dc6dc6a62105c29a656a648"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexAudioDecodeStep",
+        "kind": "block",
+        "description": "Denormalizes the generated audio latents and decodes them into a stereo waveform, truncated to the video's length when `num_frames` is known: the audio latents cover whole 25 ms hops, so the decoded soundtrack runs a few milliseconds past the last frame. The audio VAE is mono and takes the two stereo channels as two batch items.",
+        "inputs": [
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The generated audio latents, one batch item per stereo channel.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Number of video frames the soundtrack accompanies, at the fixed 24 fps. The waveform is truncated to that duration; without it, it runs to the end of the last audio latent.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["audio_latents"],
+        "outputs": [
+          {
+            "name": "audio",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated soundtrack, of shape `(1, 2, num_samples)`, the video's duration long.",
+            "kwargsType": null
+          },
+          {
+            "name": "sampling_rate",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Sample rate of the generated soundtrack in Hz.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "audio_vae",
+            "type": "diffusers.models.autoencoders.autoencoder_kl_minimax_h3_audio.AutoencoderKLMiniMaxH3Audio",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexAudioDecodeStep:sha256:b36188712033f10cfd01176a62393eb960b0705f2c352808e3fee3b5d4177ec8",
+        "contentHash": "sha256:b36188712033f10cfd01176a62393eb960b0705f2c352808e3fee3b5d4177ec8"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexDenoiseStep",
+        "kind": "loop",
+        "description": "Runs the `t2va` / `fl2va` MiniMax-H3 denoising loop, one forward pass per step.",
+        "inputs": [
+          {
+            "name": "timesteps",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Timesteps of the video schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The video rows of the packed sequence, conditioning rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The channel-major audio rows of the packed sequence, reference rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "prompt_embeds",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "text embeddings used to guide the image generation. Can be generated from text_encoder step.",
+            "kwargsType": null
+          },
+          {
+            "name": "row_timestep_plan",
+            "type": "builtins.list",
+            "required": true,
+            "default": null,
+            "description": "One `(timestep, timestep_indices)` pair per step.",
+            "kwargsType": null
+          },
+          {
+            "name": "attention_kwargs",
+            "type": "dict[builtins.str,typing.Any]",
+            "required": false,
+            "default": null,
+            "description": "Additional kwargs for attention processors.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_timesteps",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Timesteps of the audio schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_video_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many leading video rows are conditioning rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_audio_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many leading audio rows are reference rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "generator",
+            "type": "torch._C.Generator",
+            "required": false,
+            "default": null,
+            "description": "The generator of the request. Every step but the last draws the fresh noise of the next sigma from it, the video rows' first and the audio rows' second.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [
+          {
+            "kwargsType": "denoiser_input_fields",
+            "type": "opaque",
+            "required": false,
+            "default": null,
+            "description": "The structural description of the packed sequence the transformer reads by name: `token_tags`, `position_ids` and the three row-index tensors."
+          }
+        ],
+        "requiredInputs": [
+          "audio_latents",
+          "audio_noise_pred",
+          "audio_timesteps",
+          "latents",
+          "noise_pred",
+          "prompt_embeds",
+          "row_timestep_plan",
+          "timesteps"
+        ],
+        "outputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The video rows of the packed sequence after one step.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The audio rows of the packed sequence after one step.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "transformer",
+            "type": "diffusers.models.transformers.transformer_minimax_h3.MiniMaxH3Transformer3DModel",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "audio_scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexDenoiseStep:sha256:5ab72404ca81696eaa5dadac8387226afca53ef0342f45a23b87f7b4e5919f2c",
+        "contentHash": "sha256:5ab72404ca81696eaa5dadac8387226afca53ef0342f45a23b87f7b4e5919f2c"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexFL2VAPrepareLatentsStep",
+        "kind": "block",
+        "description": "Finishes the video rows of a `fl2va` request by putting its noised keyframe conditioning in front of the generated rows, which is where the layout reserved it. The denoising loop only ever writes the generated rows, so the conditioning rides through every step unchanged.",
+        "inputs": [
+          {
+            "name": "condition_rows",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The noised keyframe conditioning, packed into rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The generated video rows of the packed sequence.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["condition_rows", "latents"],
+        "outputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The video rows of the packed sequence, conditioning rows first.",
+            "kwargsType": null
+          }
+        ],
+        "components": [],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexFL2VAPrepareLatentsStep:sha256:e3758f3a4db40bad7f1a63f24a604a657ef5176ef2626b584d79a00ce07a5060",
+        "contentHash": "sha256:e3758f3a4db40bad7f1a63f24a604a657ef5176ef2626b584d79a00ce07a5060"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexFL2VATextEncoderStep",
+        "kind": "block",
+        "description": "Encodes MiniMax-H3's presentation of a `fl2va` request: the prompt verbatim, preceded by a `\"<Picture i>: \"` label and a vision block per keyframe, with no chat template and no special tokens. The checkpoint is guidance-distilled, so there is no negative prompt and no unconditional branch.",
+        "inputs": [
+          {
+            "name": "prompt",
+            "type": "builtins.str",
+            "required": true,
+            "default": null,
+            "description": "The prompt to guide generation, a single string.",
+            "kwargsType": null
+          },
+          {
+            "name": "keyframes",
+            "type": "builtins.list",
+            "required": false,
+            "default": null,
+            "description": "The keyframes put onto the target canvas, in packed order.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["prompt"],
+        "outputs": [
+          {
+            "name": "prompt_embeds",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The hidden state MiniMax-H3 conditions on, of shape `(1, num_text_tokens, 5120)`, read after the 50th decoder layer of the Qwen3-VL conditioner.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "text_token_tags",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The per-row modality tag of every row of `prompt_embeds`; a vision block is tagged as video.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "text_encoder",
+            "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "tokenizer",
+            "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "processor",
+            "type": "transformers.models.qwen3_vl.processing_qwen3_vl.Qwen3VLProcessor",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexFL2VATextEncoderStep:sha256:1511f6a27c3991d4ec6cc724f90ed8a4f875f043804e92faf930ddea3f7aea52",
+        "contentHash": "sha256:1511f6a27c3991d4ec6cc724f90ed8a4f875f043804e92faf930ddea3f7aea52"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexKeyframeVaeEncoderStep",
+        "kind": "block",
+        "description": "Encodes the `fl2va` keyframes into conditioning latents. They become the anchors of the whole denoising loop, which only ever writes the generated rows, so they are never updated again — the prepare-latents step noises them to MiniMax-H3's conditioning level and packs them.",
+        "inputs": [
+          {
+            "name": "keyframes",
+            "type": "builtins.list",
+            "required": true,
+            "default": null,
+            "description": "The keyframes put onto the target canvas, in packed order.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["keyframes"],
+        "outputs": [
+          {
+            "name": "condition_latents",
+            "type": "list[torch.Tensor]",
+            "required": false,
+            "default": null,
+            "description": "The normalized video conditioning latents, one `(1, latent_channels, 1, latent_height, latent_width)` tensor per keyframe, in packed order. One entry per condition is what the prepare-latents step draws its noise against, so the list is the unit the request's generator is consumed in.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "vae",
+            "type": "diffusers.models.autoencoders.autoencoder_kl_minimax_h3.AutoencoderKLMiniMaxH3",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexKeyframeVaeEncoderStep:sha256:c138228fb988d4db057bbe18728a483acbfc48b4ef846f7e0ee2db260f82cf85",
+        "contentHash": "sha256:c138228fb988d4db057bbe18728a483acbfc48b4ef846f7e0ee2db260f82cf85"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexLoopDenoiser",
+        "kind": "block",
+        "description": "Runs the one MiniMax-H3 forward pass of a denoising iteration, which predicts the velocity of every row of the packed sequence at once. The checkpoint is guidance-distilled, so there is no unconditional pass and no guider.",
+        "inputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The video rows of the packed sequence, conditioning rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The channel-major audio rows of the packed sequence, reference rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "prompt_embeds",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "text embeddings used to guide the image generation. Can be generated from text_encoder step.",
+            "kwargsType": null
+          },
+          {
+            "name": "row_timestep_plan",
+            "type": "builtins.list",
+            "required": true,
+            "default": null,
+            "description": "One `(timestep, timestep_indices)` pair per step.",
+            "kwargsType": null
+          },
+          {
+            "name": "attention_kwargs",
+            "type": "dict[builtins.str,typing.Any]",
+            "required": false,
+            "default": null,
+            "description": "Additional kwargs for attention processors.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [
+          {
+            "kwargsType": "denoiser_input_fields",
+            "type": "opaque",
+            "required": false,
+            "default": null,
+            "description": "The structural description of the packed sequence the transformer reads by name: `token_tags`, `position_ids` and the three row-index tensors."
+          }
+        ],
+        "requiredInputs": [
+          "audio_latents",
+          "latents",
+          "prompt_embeds",
+          "row_timestep_plan"
+        ],
+        "outputs": [
+          {
+            "name": "noise_pred",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Predicted velocity of the video rows of the sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_noise_pred",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Predicted velocity of the audio rows of the sequence.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "transformer",
+            "type": "diffusers.models.transformers.transformer_minimax_h3.MiniMaxH3Transformer3DModel",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexLoopDenoiser:sha256:e861e6da5147e456627bd96ff251bea16914561ab0619ebec10a840a5ef9e7dc",
+        "contentHash": "sha256:e861e6da5147e456627bd96ff251bea16914561ab0619ebec10a840a5ef9e7dc"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexLoopSchedulerStep",
+        "kind": "block",
+        "description": "Re-noises the generated video and audio rows onto the next sigma of their own schedule: each scheduler turns the velocity into the clean prediction and, unless this was the last step, mixes it with fresh noise drawn from the request's generator — the video rows first, then the audio rows. The conditioning rows are re-imposed by construction: only the generated rows are ever written, so the anchors survive the whole loop.",
+        "inputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The video rows of the packed sequence, conditioning rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The channel-major audio rows of the packed sequence, reference rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "noise_pred",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Predicted velocity of the video rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_noise_pred",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Predicted velocity of the audio rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_timesteps",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Timesteps of the audio schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_video_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many leading video rows are conditioning rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_audio_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many leading audio rows are reference rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "generator",
+            "type": "torch._C.Generator",
+            "required": false,
+            "default": null,
+            "description": "The generator of the request. Every step but the last draws the fresh noise of the next sigma from it, the video rows' first and the audio rows' second.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": [
+          "audio_latents",
+          "audio_noise_pred",
+          "audio_timesteps",
+          "latents",
+          "noise_pred"
+        ],
+        "outputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The video rows of the packed sequence after one step.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The audio rows of the packed sequence after one step.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "audio_scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexLoopSchedulerStep:sha256:71810a578b61b441f212da6ee7f5f1f0d8c2fad85ae9236b13a41cac42a378c7",
+        "contentHash": "sha256:71810a578b61b441f212da6ee7f5f1f0d8c2fad85ae9236b13a41cac42a378c7"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexNoKeyframeAnchorsStep",
+        "kind": "block",
+        "description": "Declares that a `t2va` request anchors no keyframes. The layout step is the same block for `t2va` and `fl2va` and reads the anchors the request resolved; a text-only one resolves none, and saying so here keeps `keyframe_anchors` off the `t2va` signature.",
+        "inputs": [],
+        "variadicInputs": [],
+        "requiredInputs": [],
+        "outputs": [
+          {
+            "name": "keyframe_anchors",
+            "type": "builtins.tuple",
+            "required": false,
+            "default": null,
+            "description": "Which end of the video every keyframe is anchored to — empty, since there are none.",
+            "kwargsType": null
+          }
+        ],
+        "components": [],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexNoKeyframeAnchorsStep:sha256:4064946ab739cab42c62c436157d0fcdcad4aaae65f42d1ec72d17d6aa12c9d1",
+        "contentHash": "sha256:4064946ab739cab42c62c436157d0fcdcad4aaae65f42d1ec72d17d6aa12c9d1"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexPrepareConditionLatentsStep",
+        "kind": "block",
+        "description": "Noises the encoded visual conditioning to MiniMax-H3's conditioning level and packs it into rows — the `fl2va` keyframes or the `ref2va` image and video references, the same recipe either way. It runs *before* the noise of the generated rows is drawn, because a request draws one condition at a time first and that order is part of what its generator reproduces.",
+        "inputs": [
+          {
+            "name": "generator",
+            "type": "torch._C.Generator",
+            "required": false,
+            "default": null,
+            "description": "The generator of the request. The conditioning noise is drawn from it first, one draw per condition, before the noise of the generated rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_video_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many conditioning rows the layout reserved, which the packed conditioning must match.",
+            "kwargsType": null
+          },
+          {
+            "name": "condition_latents",
+            "type": "list[torch.Tensor]",
+            "required": true,
+            "default": null,
+            "description": "The encoded video conditioning latents, one `(1, latent_channels, num_latent_frames, latent_height, latent_width)` tensor per condition in packed order.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["condition_latents"],
+        "outputs": [
+          {
+            "name": "condition_rows",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The noised conditioning, packed into the leading video rows of the sequence.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexPrepareConditionLatentsStep:sha256:a49547df78f86d95aeb86135074a06deca0d81d01a98abff1bff147955bf8aef",
+        "contentHash": "sha256:a49547df78f86d95aeb86135074a06deca0d81d01a98abff1bff147955bf8aef"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexPrepareLatentsStep",
+        "kind": "block",
+        "description": "Draws the noise of the generated rows and packs them: the video noise as a latent tensor first, then the audio noise directly in row layout, both off the request's generator, in that order. Every workflow generates the same way, so this is the same block for all of them; a request that conditions on something noises it *before* this block — the draw order is part of what its generator reproduces — and puts it in front of these rows after.",
+        "inputs": [
+          {
+            "name": "num_latent_frames",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Number of video latent frames.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_height",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Height of the video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_width",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Width of the video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_audio_latents",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Number of audio latents per channel.",
+            "kwargsType": null
+          },
+          {
+            "name": "generator",
+            "type": "torch._C.Generator",
+            "required": false,
+            "default": null,
+            "description": "The generator of the request. The video noise is drawn from it first, then the audio noise.",
+            "kwargsType": null
+          },
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Pre-generated video noise of shape `(1, 24, num_latent_frames, latent_height, latent_width)`, used instead of the draw.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Pre-generated audio noise of shape `(2, 32, num_audio_latents)`.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": [
+          "latent_height",
+          "latent_width",
+          "num_audio_latents",
+          "num_latent_frames"
+        ],
+        "outputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated video rows of the packed sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated audio rows of the packed sequence, channel-major.",
+            "kwargsType": null
+          }
+        ],
+        "components": [],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexPrepareLatentsStep:sha256:08ea3d4cd1c08a2fc237d19ae9593d1386b85d6a0aac287657a258d30e7d7054",
+        "contentHash": "sha256:08ea3d4cd1c08a2fc237d19ae9593d1386b85d6a0aac287657a258d30e7d7054"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexPrepareLayoutStep",
+        "kind": "block",
+        "description": "Resolves the geometry of a `t2va` / `fl2va` request — the canvas, the `17 * n + 5` frame count the video VAE can decode and the latent shapes every later block keys off — and builds the packed layout from it: `[text | keyframe conditions | target audio | target video]` plus its fp64 rotary grid. MiniMax-H3 runs full self-attention over this one sequence, so the layout is what every later block addresses rows through.",
+        "inputs": [
+          {
+            "name": "text_token_tags",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The per-row modality tag of every row of `prompt_embeds`.",
+            "kwargsType": null
+          },
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Height of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Width of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": 124,
+            "description": "Number of frames to generate, at the fixed 24 fps: 120 to 360, i.e. 5 to 15 seconds, snapped up to the next `17 * n + 5` the video VAE can decode.",
+            "kwargsType": null
+          },
+          {
+            "name": "keyframe_anchors",
+            "type": "builtins.tuple",
+            "required": false,
+            "default": [],
+            "description": "Which end of the video every keyframe is anchored to, in packed order.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["text_token_tags"],
+        "outputs": [
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved height of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved width of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved number of frames, of the form 17 * n + 5.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_latent_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Number of generated video latent frames.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Height of the generated video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Width of the generated video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_audio_latents",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Number of generated audio latents per channel.",
+            "kwargsType": null
+          },
+          {
+            "name": "position_ids",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The `(t, h, w)` rotary coordinate of every row, in float64.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "token_tags",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The modality tag of every row.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "video_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the video rows, conditioning rows first.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "audio_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the audio rows, reference rows first.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "text_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the text rows.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "num_condition_video_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "How many leading video rows are conditioning rows rather than generated rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_audio_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "How many leading audio rows are reference rows rather than generated rows.",
+            "kwargsType": null
+          }
+        ],
+        "components": [],
+        "configs": [
+          {
+            "name": "canvas_short_edge",
+            "default": 768,
+            "description": ""
+          },
+          {
+            "name": "canvas_max_pixels",
+            "default": 1032192,
+            "description": ""
+          }
+        ],
+        "id": "diffusers.modular-block:PikaH3FlexPrepareLayoutStep:sha256:bd4ef21ca53f1aee7a61c96096913f56ebeffa51edcaabf10bce1ae10c89c40c",
+        "contentHash": "sha256:bd4ef21ca53f1aee7a61c96096913f56ebeffa51edcaabf10bce1ae10c89c40c"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexRef2VADenoiseStep",
+        "kind": "loop",
+        "description": "Runs the `ref2va` MiniMax-H3 denoising loop, one forward pass per step.",
+        "inputs": [
+          {
+            "name": "timesteps",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Timesteps of the video schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The video rows of the packed sequence, conditioning rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The channel-major audio rows of the packed sequence, reference rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "prompt_embeds",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "text embeddings used to guide the image generation. Can be generated from text_encoder step.",
+            "kwargsType": null
+          },
+          {
+            "name": "row_timestep_plan",
+            "type": "builtins.list",
+            "required": true,
+            "default": null,
+            "description": "One `(timestep, timestep_indices)` pair per step.",
+            "kwargsType": null
+          },
+          {
+            "name": "attention_kwargs",
+            "type": "dict[builtins.str,typing.Any]",
+            "required": false,
+            "default": null,
+            "description": "Additional kwargs for attention processors.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_timesteps",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Timesteps of the audio schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_video_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many leading video rows are conditioning rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_audio_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many leading audio rows are reference rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "generator",
+            "type": "torch._C.Generator",
+            "required": false,
+            "default": null,
+            "description": "The generator of the request. Every step but the last draws the fresh noise of the next sigma from it, the video rows' first and the audio rows' second.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [
+          {
+            "kwargsType": "denoiser_input_fields",
+            "type": "opaque",
+            "required": false,
+            "default": null,
+            "description": "The structural description of the packed sequence the transformer reads by name: `token_tags`, `position_ids` and the three row-index tensors."
+          }
+        ],
+        "requiredInputs": [
+          "audio_latents",
+          "audio_noise_pred",
+          "audio_timesteps",
+          "latents",
+          "noise_pred",
+          "prompt_embeds",
+          "row_timestep_plan",
+          "timesteps"
+        ],
+        "outputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The video rows of the packed sequence after one step.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The audio rows of the packed sequence after one step.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "transformer_ref",
+            "type": "diffusers.models.transformers.transformer_minimax_h3.MiniMaxH3Transformer3DModel",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "audio_scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexRef2VADenoiseStep:sha256:767f28907aa6b5659fb444b1b59350ef0228da74b86e97fb501b695c9da6c580",
+        "contentHash": "sha256:767f28907aa6b5659fb444b1b59350ef0228da74b86e97fb501b695c9da6c580"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexRef2VALoopDenoiser",
+        "kind": "block",
+        "description": "Runs the one MiniMax-H3 forward pass of a denoising iteration, which predicts the velocity of every row of the packed sequence at once. The checkpoint is guidance-distilled, so there is no unconditional pass and no guider.",
+        "inputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The video rows of the packed sequence, conditioning rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The channel-major audio rows of the packed sequence, reference rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "prompt_embeds",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "text embeddings used to guide the image generation. Can be generated from text_encoder step.",
+            "kwargsType": null
+          },
+          {
+            "name": "row_timestep_plan",
+            "type": "builtins.list",
+            "required": true,
+            "default": null,
+            "description": "One `(timestep, timestep_indices)` pair per step.",
+            "kwargsType": null
+          },
+          {
+            "name": "attention_kwargs",
+            "type": "dict[builtins.str,typing.Any]",
+            "required": false,
+            "default": null,
+            "description": "Additional kwargs for attention processors.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [
+          {
+            "kwargsType": "denoiser_input_fields",
+            "type": "opaque",
+            "required": false,
+            "default": null,
+            "description": "The structural description of the packed sequence the transformer reads by name: `token_tags`, `position_ids` and the three row-index tensors."
+          }
+        ],
+        "requiredInputs": [
+          "audio_latents",
+          "latents",
+          "prompt_embeds",
+          "row_timestep_plan"
+        ],
+        "outputs": [
+          {
+            "name": "noise_pred",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Predicted velocity of the video rows of the sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_noise_pred",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Predicted velocity of the audio rows of the sequence.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "transformer_ref",
+            "type": "diffusers.models.transformers.transformer_minimax_h3.MiniMaxH3Transformer3DModel",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexRef2VALoopDenoiser:sha256:ffb6a5b86ceda7d783802206b49fcfe9e60bb8f42e70d4f6c558686f20fcc60a",
+        "contentHash": "sha256:ffb6a5b86ceda7d783802206b49fcfe9e60bb8f42e70d4f6c558686f20fcc60a"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexRef2VAPrepareLatentsStep",
+        "kind": "block",
+        "description": "Finishes both streams of a `ref2va` request by putting its conditioning in front of the generated rows, which is where the layout reserved it: the noised image and video references on the video side, and the reference soundtracks on the audio side. The soundtracks are never noised — a reference soundtrack conditions at `t = 0` — and the denoising loop only ever writes the generated rows, so all of it rides through every step unchanged.",
+        "inputs": [
+          {
+            "name": "condition_rows",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The noised conditioning of the image and video references, packed into rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The generated video rows of the packed sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_condition_latents",
+            "type": "list[torch.Tensor]",
+            "required": true,
+            "default": null,
+            "description": "The audio conditioning rows to prepend, one tensor per audio-bearing reference in packed order. Empty for a request that has none.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_audio_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many reference audio rows the layout reserved, which the packed rows must match.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The generated audio rows of the packed sequence, channel-major.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": [
+          "audio_condition_latents",
+          "audio_latents",
+          "condition_rows",
+          "latents"
+        ],
+        "outputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The video rows of the packed sequence, conditioning rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The channel-major audio rows of the packed sequence, reference rows first.",
+            "kwargsType": null
+          }
+        ],
+        "components": [],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexRef2VAPrepareLatentsStep:sha256:0df81523cf8cd6747338b2d7dbbfd9e32fd626b4bf19d3dd0db38337699fb067",
+        "contentHash": "sha256:0df81523cf8cd6747338b2d7dbbfd9e32fd626b4bf19d3dd0db38337699fb067"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexRef2VAPrepareLayoutStep",
+        "kind": "block",
+        "description": "Resolves the latent shapes of a `ref2va` request and builds its packed layout — `[text | reference blocks | target audio | target video]` — plus its fp64 rotary grid. The reference order advances the shared audio/video rotary clock, so it is part of the layout rather than a detail of the presentation.",
+        "inputs": [
+          {
+            "name": "text_token_tags",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The per-row modality tag of every row of `prompt_embeds`.",
+            "kwargsType": null
+          },
+          {
+            "name": "normalized_references",
+            "type": "list[diffusers.modular_pipelines.pika_h3_flex.references.PikaH3FlexReference]",
+            "required": true,
+            "default": null,
+            "description": "The references normalized by the setup step, in packed order.",
+            "kwargsType": null
+          },
+          {
+            "name": "condition_latents",
+            "type": "list[torch.Tensor]",
+            "required": true,
+            "default": null,
+            "description": "The encoded video conditioning latents, one per image and video reference in packed order. Their shape is where every reference block's geometry comes from.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_condition_latents",
+            "type": "list[torch.Tensor]",
+            "required": true,
+            "default": null,
+            "description": "The encoded audio conditioning rows, one per audio-bearing reference in packed order.",
+            "kwargsType": null
+          },
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Height of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Width of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Resolved number of frames, of the form 17 * n + 5.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": [
+          "audio_condition_latents",
+          "condition_latents",
+          "height",
+          "normalized_references",
+          "num_frames",
+          "text_token_tags",
+          "width"
+        ],
+        "outputs": [
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved height of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved width of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved number of frames, of the form 17 * n + 5.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_latent_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Number of generated video latent frames.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Height of the generated video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Width of the generated video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_audio_latents",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Number of generated audio latents per channel.",
+            "kwargsType": null
+          },
+          {
+            "name": "position_ids",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The `(t, h, w)` rotary coordinate of every row, in float64.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "token_tags",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The modality tag of every row.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "video_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the video rows, conditioning rows first.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "audio_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the audio rows, reference rows first.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "text_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the text rows.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "num_condition_video_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "How many leading video rows are conditioning rows rather than generated rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_audio_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "How many leading audio rows are reference rows rather than generated rows.",
+            "kwargsType": null
+          }
+        ],
+        "components": [],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexRef2VAPrepareLayoutStep:sha256:f9b33454bb22cb7cf99a2347967193ddcde9e804e3fc9bfb548c61f7e06632d2",
+        "contentHash": "sha256:f9b33454bb22cb7cf99a2347967193ddcde9e804e3fc9bfb548c61f7e06632d2"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexRef2VAReferenceEncoderStep",
+        "kind": "block",
+        "description": "Encodes the `ref2va` references — image and video references through the video VAE, soundtracks through the audio VAE. They are the anchors of the whole denoising loop, which only ever writes the generated rows; the prepare-latents step noises the visual ones to MiniMax-H3's conditioning level and packs them, while soundtracks ride along clean at `t = 1.0`. The latent geometry of every reference is the shape of what this emits, which is what the packed layout is built from.",
+        "inputs": [
+          {
+            "name": "normalized_references",
+            "type": "list[diffusers.modular_pipelines.pika_h3_flex.references.PikaH3FlexReference]",
+            "required": true,
+            "default": null,
+            "description": "The references normalized by the setup step, in packed order.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["normalized_references"],
+        "outputs": [
+          {
+            "name": "condition_latents",
+            "type": "list[torch.Tensor]",
+            "required": false,
+            "default": null,
+            "description": "The encoded video conditioning latents of the image and video references, one `(1, latent_channels, num_latent_frames, latent_height, latent_width)` tensor each in packed order, or None when the references carry none.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_condition_latents",
+            "type": "list[torch.Tensor]",
+            "required": false,
+            "default": null,
+            "description": "The clean audio conditioning rows of the reference soundtracks, one `(num_audio_latents * 2, audio_latent_channels)` tensor per audio-bearing reference in packed order. One entry per reference rather than one concatenated block, because the packed layout is built from the row count of each.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "vae",
+            "type": "diffusers.models.autoencoders.autoencoder_kl_minimax_h3.AutoencoderKLMiniMaxH3",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "audio_vae",
+            "type": "diffusers.models.autoencoders.autoencoder_kl_minimax_h3_audio.AutoencoderKLMiniMaxH3Audio",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexRef2VAReferenceEncoderStep:sha256:77736bbaf64fd550c40df3a282d0c3c39bbfc4ee7f3ff07ad70074137cac412e",
+        "contentHash": "sha256:77736bbaf64fd550c40df3a282d0c3c39bbfc4ee7f3ff07ad70074137cac412e"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexRef2VASetupStep",
+        "kind": "block",
+        "description": "Resolves the `ref2va` plan — the canvas (Pika H3 Flex's own 16:9 unless asked otherwise; references never bind the generated geometry) and the `17 * n + 5` frame count — and normalizes every reference onto the model's own rates and the resolutions of the canvas' tier: an image reference is encoded at the tier's reference short edge (1024 pixels below the 768 tier, 2048 from it upwards) and a video reference is put on the tier's own canvas rule.",
+        "inputs": [
+          {
+            "name": "references",
+            "type": "list[diffusers.modular_pipelines.pika_h3_flex.references.PikaH3FlexReference]",
+            "required": true,
+            "default": null,
+            "description": "The references to condition on, **in the order the model should read them**: the order labels them in the prompt presentation and lays them out on the shared rotary clock, so a different order is a different request. One dataclass per modality, all holding in-memory media — a [`PikaH3FlexImageReference`] (at most 9), a [`PikaH3FlexVideoReference`] at its own `fps` (at most 3, whose `audio` soundtrack is conditioned on as well), or a [`PikaH3FlexAudioReference`] at its own `sample_rate` (at most 3) — for at most 12 references in total, and audio references cannot be the only ones. Every video or standalone audio reference runs 2 to 15 seconds, and the video durations and the standalone audio durations each sum to at most 15 seconds. These blocks never open a media file: decode with each class's `from_file` classmethod, which brings the rates along.",
+            "kwargsType": null
+          },
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Height of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Width of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Number of frames to generate, at the fixed 24 fps: 120 to 360, i.e. 5 to 15 seconds, snapped up to the next `17 * n + 5` the video VAE can decode. To generate a video as long as a reference soundtrack, pass `round(samples / sample_rate * 24)`.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["num_frames", "references"],
+        "outputs": [
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved height of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved width of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved number of frames, of the form 17 * n + 5.",
+            "kwargsType": null
+          },
+          {
+            "name": "normalized_references",
+            "type": "list[diffusers.modular_pipelines.pika_h3_flex.references.PikaH3FlexReference]",
+            "required": false,
+            "default": null,
+            "description": "The references normalized onto Pika H3 Flex's own rates and the resolutions of the canvas' tier, in packed order: the same public reference types the request passed in, with an image resized to the tier's reference short edge, a video resampled onto 24 fps and onto the canvas its own aspect ratio resolves to under the tier's rule, and a soundtrack put on the audio VAE's sample rate and truncated to the generated duration.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "image_processor",
+            "type": "diffusers.image_processor.VaeImageProcessor",
+            "description": "",
+            "creationMethod": "from_config",
+            "defaultConfig": {
+              "vae_scale_factor": 16
+            }
+          }
+        ],
+        "configs": [
+          {
+            "name": "canvas_short_edge",
+            "default": 768,
+            "description": ""
+          },
+          {
+            "name": "canvas_max_pixels",
+            "default": 1032192,
+            "description": ""
+          }
+        ],
+        "id": "diffusers.modular-block:PikaH3FlexRef2VASetupStep:sha256:921eae679e8e6033fa0b533c0977895e27b1096586f5cbcfa675e9964f4d6cd5",
+        "contentHash": "sha256:921eae679e8e6033fa0b533c0977895e27b1096586f5cbcfa675e9964f4d6cd5"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexRef2VATextEncoderStep",
+        "kind": "block",
+        "description": "Encodes MiniMax-H3's presentation of a `ref2va` request: a label per reference, numbered per modality (`\"<Picture i>: \"` plus a vision block, `\"<Audio j>: \"` alone, `\"<Video k>: \"` plus one timestamped vision block per merged frame pair), then the prompt verbatim. The checkpoint is guidance-distilled, so there is no negative prompt and no unconditional branch.",
+        "inputs": [
+          {
+            "name": "prompt",
+            "type": "builtins.str",
+            "required": true,
+            "default": null,
+            "description": "The prompt to guide generation, a single string.",
+            "kwargsType": null
+          },
+          {
+            "name": "normalized_references",
+            "type": "list[diffusers.modular_pipelines.pika_h3_flex.references.PikaH3FlexReference]",
+            "required": true,
+            "default": null,
+            "description": "The references normalized by the setup step, in packed order.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["normalized_references", "prompt"],
+        "outputs": [
+          {
+            "name": "prompt_embeds",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The hidden state MiniMax-H3 conditions on, of shape `(1, num_text_tokens, 5120)`, read after the 50th decoder layer of the Qwen3-VL conditioner.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "text_token_tags",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The per-row modality tag of every row of `prompt_embeds`; a vision block is tagged as video.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "text_encoder",
+            "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "tokenizer",
+            "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "processor",
+            "type": "transformers.models.qwen3_vl.processing_qwen3_vl.Qwen3VLProcessor",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexRef2VATextEncoderStep:sha256:ab30e73425a17313b83d18b51edcc0da0274d5b132aa65ad69a125c3d978e4f6",
+        "contentHash": "sha256:ab30e73425a17313b83d18b51edcc0da0274d5b132aa65ad69a125c3d978e4f6"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexResizeStep",
+        "kind": "block",
+        "description": "Puts the `fl2va` keyframes onto the target canvas — Pika H3 Flex's 768-short-edge geometry for the aspect ratio of the first keyframe unless `height` and `width` say otherwise — the way the released package fits them: every keyframe is center-cropped to the canvas' aspect ratio at its own resolution, then resized onto the canvas, so nothing is ever stretched. The canvas resolved here is the one the whole request generates at.",
+        "inputs": [
+          {
+            "name": "image",
+            "type": "PIL.Image.Image",
+            "required": false,
+            "default": null,
+            "description": "Keyframe the video starts from. It is center-cropped to the canvas' aspect ratio and resized onto it; the canvas by default is derived from its own aspect ratio.",
+            "kwargsType": null
+          },
+          {
+            "name": "last_image",
+            "type": "PIL.Image.Image",
+            "required": false,
+            "default": null,
+            "description": "Keyframe the video ends on. Can be passed on its own to generate *up to* a frame. It is center-cropped to the canvas' aspect ratio and resized onto it, like `image`.",
+            "kwargsType": null
+          },
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Height of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Width of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": [],
+        "outputs": [
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved height of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved width of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "keyframes",
+            "type": "builtins.list",
+            "required": false,
+            "default": null,
+            "description": "The keyframes put onto the target canvas, in packed order.",
+            "kwargsType": null
+          },
+          {
+            "name": "keyframe_anchors",
+            "type": "builtins.tuple",
+            "required": false,
+            "default": null,
+            "description": "Which end of the video every keyframe is anchored to, in packed order. Positional with `keyframes`, so both are resolved here.",
+            "kwargsType": null
+          }
+        ],
+        "components": [],
+        "configs": [
+          {
+            "name": "canvas_short_edge",
+            "default": 768,
+            "description": ""
+          },
+          {
+            "name": "canvas_max_pixels",
+            "default": 1032192,
+            "description": ""
+          }
+        ],
+        "id": "diffusers.modular-block:PikaH3FlexResizeStep:sha256:b9e3a0fa133533aa316b389bc848c19708e2f2bb81b72e2f8efaf5e4498bdb0e",
+        "contentHash": "sha256:b9e3a0fa133533aa316b389bc848c19708e2f2bb81b72e2f8efaf5e4498bdb0e"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexSetTimestepsStep",
+        "kind": "block",
+        "description": "Initializes the two six-step schedules from the pipeline's `denoising_step_list` config — the sigmas the released adapters were trained for, which each scheduler pushes through its shift (`12.0` for video, `3.0` for audio) — and stages the row-to-timestep plan of every step. One forward serves every modality and every noise level at once: the generated rows step down their own schedule while the conditioning rows stay pinned at their noise-augmentation level, and that assignment is static per step. There is no `num_inference_steps`: the step count is the adapter's, fixed by the schedule.",
+        "inputs": [
+          {
+            "name": "video_indices",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Sequence positions of the video rows, conditioning rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_indices",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Sequence positions of the audio rows, reference rows first.",
+            "kwargsType": null
+          },
+          {
+            "name": "text_indices",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Sequence positions of the text rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_video_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many leading video rows are conditioning rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_audio_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": 0,
+            "description": "How many leading audio rows are reference rows.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["audio_indices", "text_indices", "video_indices"],
+        "outputs": [
+          {
+            "name": "timesteps",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Timesteps of the video schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_timesteps",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Timesteps of the audio schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "row_timestep_plan",
+            "type": "builtins.list",
+            "required": false,
+            "default": null,
+            "description": "One `(timestep, timestep_indices)` pair per step: the distinct timesteps of the sequence and the index of every row into them.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "audio_scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [
+          {
+            "name": "denoising_step_list",
+            "default": [1000, 750, 500, 250, 100, 40, 0],
+            "description": ""
+          }
+        ],
+        "id": "diffusers.modular-block:PikaH3FlexSetTimestepsStep:sha256:8582195c875cede29735650c39773813c13360ded3f77cf0148f220bf95f5e76",
+        "contentHash": "sha256:8582195c875cede29735650c39773813c13360ded3f77cf0148f220bf95f5e76"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexTextEncoderStep",
+        "kind": "block",
+        "description": "Encodes MiniMax-H3's presentation of a `t2va` request: the prompt verbatim, with no chat template and no special tokens. The checkpoint is guidance-distilled, so there is no negative prompt and no unconditional branch.",
+        "inputs": [
+          {
+            "name": "prompt",
+            "type": "builtins.str",
+            "required": true,
+            "default": null,
+            "description": "The prompt to guide generation, a single string.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["prompt"],
+        "outputs": [
+          {
+            "name": "prompt_embeds",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The hidden state MiniMax-H3 conditions on, of shape `(1, num_text_tokens, 5120)`, read after the 50th decoder layer of the Qwen3-VL conditioner.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "text_token_tags",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The per-row modality tag of every row of `prompt_embeds` — all text for this presentation.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "text_encoder",
+            "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "tokenizer",
+            "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "processor",
+            "type": "transformers.models.qwen3_vl.processing_qwen3_vl.Qwen3VLProcessor",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexTextEncoderStep:sha256:6c0d8e9835b1c9e3c0258635ef22a3f1e1c83a1392bdb4697ec14341cc332cc8",
+        "contentHash": "sha256:6c0d8e9835b1c9e3c0258635ef22a3f1e1c83a1392bdb4697ec14341cc332cc8"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "PikaH3FlexVideoDecodeStep",
+        "kind": "block",
+        "description": "Denormalizes the generated video latents and decodes them into video. The spatial tiling of the video VAE covers the canvas exactly, so the decoded frames need no crop back, and the VAE produces ImageNet-normalized RGB that is reverted here.",
+        "inputs": [
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "The generated video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "output_type",
+            "type": "builtins.str",
+            "required": false,
+            "default": "pil",
+            "description": "Output format: 'pil', 'np' or 'pt'.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [],
+        "requiredInputs": ["latents"],
+        "outputs": [
+          {
+            "name": "videos",
+            "type": "list[PIL.Image.Image]",
+            "required": false,
+            "default": null,
+            "description": "The generated video.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "vae",
+            "type": "diffusers.models.autoencoders.autoencoder_kl_minimax_h3.AutoencoderKLMiniMaxH3",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "video_processor",
+            "type": "diffusers.video_processor.VideoProcessor",
+            "description": "",
+            "creationMethod": "from_config",
+            "defaultConfig": {
+              "vae_scale_factor": 16,
+              "do_normalize": false
+            }
+          }
+        ],
+        "configs": [],
+        "id": "diffusers.modular-block:PikaH3FlexVideoDecodeStep:sha256:d1e7dad91bf33c0f44b87c3c974451e7610285e0445898d09a0fbdaba3e1e34d",
+        "contentHash": "sha256:d1e7dad91bf33c0f44b87c3c974451e7610285e0445898d09a0fbdaba3e1e34d"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "SequentialPipelineBlocks",
+        "kind": "sequential",
+        "description": "",
+        "inputs": [
+          {
+            "name": "prompt",
+            "type": "builtins.str",
+            "required": true,
+            "default": null,
+            "description": "The prompt to guide generation, a single string.",
+            "kwargsType": null
+          },
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Height of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Width of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": 124,
+            "description": "Number of frames to generate, at the fixed 24 fps: 120 to 360, i.e. 5 to 15 seconds, snapped up to the next `17 * n + 5` the video VAE can decode.",
+            "kwargsType": null
+          },
+          {
+            "name": "generator",
+            "type": "torch._C.Generator",
+            "required": false,
+            "default": null,
+            "description": "The generator of the request. The video noise is drawn from it first, then the audio noise.",
+            "kwargsType": null
+          },
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Pre-generated video noise of shape `(1, 24, num_latent_frames, latent_height, latent_width)`, used instead of the draw.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Pre-generated audio noise of shape `(2, 32, num_audio_latents)`.",
+            "kwargsType": null
+          },
+          {
+            "name": "attention_kwargs",
+            "type": "dict[builtins.str,typing.Any]",
+            "required": false,
+            "default": null,
+            "description": "Additional kwargs for attention processors.",
+            "kwargsType": null
+          },
+          {
+            "name": "output_type",
+            "type": "builtins.str",
+            "required": false,
+            "default": "pil",
+            "description": "Output format: 'pil', 'np' or 'pt'.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [
+          {
+            "kwargsType": "denoiser_input_fields",
+            "type": "opaque",
+            "required": false,
+            "default": null,
+            "description": "The structural description of the packed sequence the transformer reads by name: `token_tags`, `position_ids` and the three row-index tensors."
+          }
+        ],
+        "requiredInputs": [
+          "audio_indices",
+          "audio_latents",
+          "audio_noise_pred",
+          "audio_timesteps",
+          "latent_height",
+          "latent_width",
+          "latents",
+          "noise_pred",
+          "num_audio_latents",
+          "num_latent_frames",
+          "prompt",
+          "prompt_embeds",
+          "row_timestep_plan",
+          "text_indices",
+          "text_token_tags",
+          "timesteps",
+          "video_indices"
+        ],
+        "outputs": [
+          {
+            "name": "prompt_embeds",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The hidden state MiniMax-H3 conditions on, of shape `(1, num_text_tokens, 5120)`, read after the 50th decoder layer of the Qwen3-VL conditioner.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "text_token_tags",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The per-row modality tag of every row of `prompt_embeds` — all text for this presentation.",
+            "kwargsType": null
+          },
+          {
+            "name": "keyframe_anchors",
+            "type": "builtins.tuple",
+            "required": false,
+            "default": null,
+            "description": "Which end of the video every keyframe is anchored to — empty, since there are none.",
+            "kwargsType": null
+          },
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved height of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved width of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved number of frames, of the form 17 * n + 5.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_latent_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Number of generated video latent frames.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Height of the generated video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Width of the generated video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_audio_latents",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Number of generated audio latents per channel.",
+            "kwargsType": null
+          },
+          {
+            "name": "position_ids",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The `(t, h, w)` rotary coordinate of every row, in float64.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "token_tags",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The modality tag of every row.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "video_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the video rows, conditioning rows first.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "audio_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the audio rows, reference rows first.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "text_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the text rows.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "num_condition_video_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "How many leading video rows are conditioning rows rather than generated rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_audio_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "How many leading audio rows are reference rows rather than generated rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated video rows of the packed sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated audio rows of the packed sequence, channel-major.",
+            "kwargsType": null
+          },
+          {
+            "name": "timesteps",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Timesteps of the video schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_timesteps",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Timesteps of the audio schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "row_timestep_plan",
+            "type": "builtins.list",
+            "required": false,
+            "default": null,
+            "description": "One `(timestep, timestep_indices)` pair per step: the distinct timesteps of the sequence and the index of every row into them.",
+            "kwargsType": null
+          },
+          {
+            "name": "noise_pred",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Predicted velocity of the video rows of the sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_noise_pred",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Predicted velocity of the audio rows of the sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "videos",
+            "type": "list[PIL.Image.Image]",
+            "required": false,
+            "default": null,
+            "description": "The generated video.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated soundtrack, of shape `(1, 2, num_samples)`, the video's duration long.",
+            "kwargsType": null
+          },
+          {
+            "name": "sampling_rate",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Sample rate of the generated soundtrack in Hz.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "text_encoder",
+            "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "tokenizer",
+            "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "processor",
+            "type": "transformers.models.qwen3_vl.processing_qwen3_vl.Qwen3VLProcessor",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "audio_scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "transformer",
+            "type": "diffusers.models.transformers.transformer_minimax_h3.MiniMaxH3Transformer3DModel",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "vae",
+            "type": "diffusers.models.autoencoders.autoencoder_kl_minimax_h3.AutoencoderKLMiniMaxH3",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "video_processor",
+            "type": "diffusers.video_processor.VideoProcessor",
+            "description": "",
+            "creationMethod": "from_config",
+            "defaultConfig": {
+              "vae_scale_factor": 16,
+              "do_normalize": false
+            }
+          },
+          {
+            "name": "audio_vae",
+            "type": "diffusers.models.autoencoders.autoencoder_kl_minimax_h3_audio.AutoencoderKLMiniMaxH3Audio",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [
+          {
+            "name": "canvas_short_edge",
+            "default": 768,
+            "description": ""
+          },
+          {
+            "name": "canvas_max_pixels",
+            "default": 1032192,
+            "description": ""
+          },
+          {
+            "name": "denoising_step_list",
+            "default": [1000, 750, 500, 250, 100, 40, 0],
+            "description": ""
+          }
+        ],
+        "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:36e5a33de8d45e9fbff38a978b8fc6f1e1aa302b0b82793725fe5f14ac145dcd",
+        "contentHash": "sha256:36e5a33de8d45e9fbff38a978b8fc6f1e1aa302b0b82793725fe5f14ac145dcd"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "SequentialPipelineBlocks",
+        "kind": "sequential",
+        "description": "",
+        "inputs": [
+          {
+            "name": "references",
+            "type": "list[diffusers.modular_pipelines.pika_h3_flex.references.PikaH3FlexReference]",
+            "required": true,
+            "default": null,
+            "description": "The references to condition on, **in the order the model should read them**: the order labels them in the prompt presentation and lays them out on the shared rotary clock, so a different order is a different request. One dataclass per modality, all holding in-memory media — a [`PikaH3FlexImageReference`] (at most 9), a [`PikaH3FlexVideoReference`] at its own `fps` (at most 3, whose `audio` soundtrack is conditioned on as well), or a [`PikaH3FlexAudioReference`] at its own `sample_rate` (at most 3) — for at most 12 references in total, and audio references cannot be the only ones. Every video or standalone audio reference runs 2 to 15 seconds, and the video durations and the standalone audio durations each sum to at most 15 seconds. These blocks never open a media file: decode with each class's `from_file` classmethod, which brings the rates along.",
+            "kwargsType": null
+          },
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Height of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Width of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": true,
+            "default": null,
+            "description": "Number of frames to generate, at the fixed 24 fps: 120 to 360, i.e. 5 to 15 seconds, snapped up to the next `17 * n + 5` the video VAE can decode. To generate a video as long as a reference soundtrack, pass `round(samples / sample_rate * 24)`.",
+            "kwargsType": null
+          },
+          {
+            "name": "prompt",
+            "type": "builtins.str",
+            "required": true,
+            "default": null,
+            "description": "The prompt to guide generation, a single string.",
+            "kwargsType": null
+          },
+          {
+            "name": "generator",
+            "type": "torch._C.Generator",
+            "required": false,
+            "default": null,
+            "description": "The generator of the request. The conditioning noise is drawn from it first, one draw per condition, before the noise of the generated rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Pre-generated video noise of shape `(1, 24, num_latent_frames, latent_height, latent_width)`, used instead of the draw.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Pre-generated audio noise of shape `(2, 32, num_audio_latents)`.",
+            "kwargsType": null
+          },
+          {
+            "name": "attention_kwargs",
+            "type": "dict[builtins.str,typing.Any]",
+            "required": false,
+            "default": null,
+            "description": "Additional kwargs for attention processors.",
+            "kwargsType": null
+          },
+          {
+            "name": "output_type",
+            "type": "builtins.str",
+            "required": false,
+            "default": "pil",
+            "description": "Output format: 'pil', 'np' or 'pt'.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [
+          {
+            "kwargsType": "denoiser_input_fields",
+            "type": "opaque",
+            "required": false,
+            "default": null,
+            "description": "The structural description of the packed sequence the transformer reads by name: `token_tags`, `position_ids` and the three row-index tensors."
+          }
+        ],
+        "requiredInputs": [
+          "audio_condition_latents",
+          "audio_indices",
+          "audio_latents",
+          "audio_noise_pred",
+          "audio_timesteps",
+          "condition_latents",
+          "condition_rows",
+          "height",
+          "latent_height",
+          "latent_width",
+          "latents",
+          "noise_pred",
+          "normalized_references",
+          "num_audio_latents",
+          "num_frames",
+          "num_latent_frames",
+          "prompt",
+          "prompt_embeds",
+          "references",
+          "row_timestep_plan",
+          "text_indices",
+          "text_token_tags",
+          "timesteps",
+          "video_indices",
+          "width"
+        ],
+        "outputs": [
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved height of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved width of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved number of frames, of the form 17 * n + 5.",
+            "kwargsType": null
+          },
+          {
+            "name": "normalized_references",
+            "type": "list[diffusers.modular_pipelines.pika_h3_flex.references.PikaH3FlexReference]",
+            "required": false,
+            "default": null,
+            "description": "The references normalized onto Pika H3 Flex's own rates and the resolutions of the canvas' tier, in packed order: the same public reference types the request passed in, with an image resized to the tier's reference short edge, a video resampled onto 24 fps and onto the canvas its own aspect ratio resolves to under the tier's rule, and a soundtrack put on the audio VAE's sample rate and truncated to the generated duration.",
+            "kwargsType": null
+          },
+          {
+            "name": "prompt_embeds",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The hidden state MiniMax-H3 conditions on, of shape `(1, num_text_tokens, 5120)`, read after the 50th decoder layer of the Qwen3-VL conditioner.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "text_token_tags",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The per-row modality tag of every row of `prompt_embeds`; a vision block is tagged as video.",
+            "kwargsType": null
+          },
+          {
+            "name": "condition_latents",
+            "type": "list[torch.Tensor]",
+            "required": false,
+            "default": null,
+            "description": "The encoded video conditioning latents of the image and video references, one `(1, latent_channels, num_latent_frames, latent_height, latent_width)` tensor each in packed order, or None when the references carry none.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_condition_latents",
+            "type": "list[torch.Tensor]",
+            "required": false,
+            "default": null,
+            "description": "The clean audio conditioning rows of the reference soundtracks, one `(num_audio_latents * 2, audio_latent_channels)` tensor per audio-bearing reference in packed order. One entry per reference rather than one concatenated block, because the packed layout is built from the row count of each.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_latent_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Number of generated video latent frames.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Height of the generated video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Width of the generated video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_audio_latents",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Number of generated audio latents per channel.",
+            "kwargsType": null
+          },
+          {
+            "name": "position_ids",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The `(t, h, w)` rotary coordinate of every row, in float64.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "token_tags",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The modality tag of every row.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "video_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the video rows, conditioning rows first.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "audio_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the audio rows, reference rows first.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "text_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the text rows.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "num_condition_video_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "How many leading video rows are conditioning rows rather than generated rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_audio_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "How many leading audio rows are reference rows rather than generated rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "condition_rows",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The noised conditioning, packed into the leading video rows of the sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated video rows of the packed sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated audio rows of the packed sequence, channel-major.",
+            "kwargsType": null
+          },
+          {
+            "name": "timesteps",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Timesteps of the video schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_timesteps",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Timesteps of the audio schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "row_timestep_plan",
+            "type": "builtins.list",
+            "required": false,
+            "default": null,
+            "description": "One `(timestep, timestep_indices)` pair per step: the distinct timesteps of the sequence and the index of every row into them.",
+            "kwargsType": null
+          },
+          {
+            "name": "noise_pred",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Predicted velocity of the video rows of the sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_noise_pred",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Predicted velocity of the audio rows of the sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "videos",
+            "type": "list[PIL.Image.Image]",
+            "required": false,
+            "default": null,
+            "description": "The generated video.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated soundtrack, of shape `(1, 2, num_samples)`, the video's duration long.",
+            "kwargsType": null
+          },
+          {
+            "name": "sampling_rate",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Sample rate of the generated soundtrack in Hz.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "image_processor",
+            "type": "diffusers.image_processor.VaeImageProcessor",
+            "description": "",
+            "creationMethod": "from_config",
+            "defaultConfig": {
+              "vae_scale_factor": 16
+            }
+          },
+          {
+            "name": "text_encoder",
+            "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "tokenizer",
+            "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "processor",
+            "type": "transformers.models.qwen3_vl.processing_qwen3_vl.Qwen3VLProcessor",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "vae",
+            "type": "diffusers.models.autoencoders.autoencoder_kl_minimax_h3.AutoencoderKLMiniMaxH3",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "audio_vae",
+            "type": "diffusers.models.autoencoders.autoencoder_kl_minimax_h3_audio.AutoencoderKLMiniMaxH3Audio",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "audio_scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "transformer_ref",
+            "type": "diffusers.models.transformers.transformer_minimax_h3.MiniMaxH3Transformer3DModel",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "video_processor",
+            "type": "diffusers.video_processor.VideoProcessor",
+            "description": "",
+            "creationMethod": "from_config",
+            "defaultConfig": {
+              "vae_scale_factor": 16,
+              "do_normalize": false
+            }
+          }
+        ],
+        "configs": [
+          {
+            "name": "canvas_short_edge",
+            "default": 768,
+            "description": ""
+          },
+          {
+            "name": "canvas_max_pixels",
+            "default": 1032192,
+            "description": ""
+          },
+          {
+            "name": "denoising_step_list",
+            "default": [1000, 750, 500, 250, 100, 40, 0],
+            "description": ""
+          }
+        ],
+        "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:73c60dfe83285c1c1bbfc7daf38f2350856325535dd19c20997320289a5764e1",
+        "contentHash": "sha256:73c60dfe83285c1c1bbfc7daf38f2350856325535dd19c20997320289a5764e1"
+      },
+      {
+        "schemaVersion": 1,
+        "className": "SequentialPipelineBlocks",
+        "kind": "sequential",
+        "description": "",
+        "inputs": [
+          {
+            "name": "image",
+            "type": "PIL.Image.Image",
+            "required": false,
+            "default": null,
+            "description": "Keyframe the video starts from. It is center-cropped to the canvas' aspect ratio and resized onto it; the canvas by default is derived from its own aspect ratio.",
+            "kwargsType": null
+          },
+          {
+            "name": "last_image",
+            "type": "PIL.Image.Image",
+            "required": false,
+            "default": null,
+            "description": "Keyframe the video ends on. Can be passed on its own to generate *up to* a frame. It is center-cropped to the canvas' aspect ratio and resized onto it, like `image`.",
+            "kwargsType": null
+          },
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Height of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Width of the generated video in pixels, a multiple of 32.",
+            "kwargsType": null
+          },
+          {
+            "name": "prompt",
+            "type": "builtins.str",
+            "required": true,
+            "default": null,
+            "description": "The prompt to guide generation, a single string.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": 124,
+            "description": "Number of frames to generate, at the fixed 24 fps: 120 to 360, i.e. 5 to 15 seconds, snapped up to the next `17 * n + 5` the video VAE can decode.",
+            "kwargsType": null
+          },
+          {
+            "name": "generator",
+            "type": "torch._C.Generator",
+            "required": false,
+            "default": null,
+            "description": "The generator of the request. The conditioning noise is drawn from it first, one draw per condition, before the noise of the generated rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Pre-generated video noise of shape `(1, 24, num_latent_frames, latent_height, latent_width)`, used instead of the draw.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": true,
+            "default": null,
+            "description": "Pre-generated audio noise of shape `(2, 32, num_audio_latents)`.",
+            "kwargsType": null
+          },
+          {
+            "name": "attention_kwargs",
+            "type": "dict[builtins.str,typing.Any]",
+            "required": false,
+            "default": null,
+            "description": "Additional kwargs for attention processors.",
+            "kwargsType": null
+          },
+          {
+            "name": "output_type",
+            "type": "builtins.str",
+            "required": false,
+            "default": "pil",
+            "description": "Output format: 'pil', 'np' or 'pt'.",
+            "kwargsType": null
+          }
+        ],
+        "variadicInputs": [
+          {
+            "kwargsType": "denoiser_input_fields",
+            "type": "opaque",
+            "required": false,
+            "default": null,
+            "description": "The structural description of the packed sequence the transformer reads by name: `token_tags`, `position_ids` and the three row-index tensors."
+          }
+        ],
+        "requiredInputs": [
+          "audio_indices",
+          "audio_latents",
+          "audio_noise_pred",
+          "audio_timesteps",
+          "condition_latents",
+          "condition_rows",
+          "keyframes",
+          "latent_height",
+          "latent_width",
+          "latents",
+          "noise_pred",
+          "num_audio_latents",
+          "num_latent_frames",
+          "prompt",
+          "prompt_embeds",
+          "row_timestep_plan",
+          "text_indices",
+          "text_token_tags",
+          "timesteps",
+          "video_indices"
+        ],
+        "outputs": [
+          {
+            "name": "height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved height of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved width of the generated video in pixels.",
+            "kwargsType": null
+          },
+          {
+            "name": "keyframes",
+            "type": "builtins.list",
+            "required": false,
+            "default": null,
+            "description": "The keyframes put onto the target canvas, in packed order.",
+            "kwargsType": null
+          },
+          {
+            "name": "keyframe_anchors",
+            "type": "builtins.tuple",
+            "required": false,
+            "default": null,
+            "description": "Which end of the video every keyframe is anchored to, in packed order. Positional with `keyframes`, so both are resolved here.",
+            "kwargsType": null
+          },
+          {
+            "name": "prompt_embeds",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The hidden state MiniMax-H3 conditions on, of shape `(1, num_text_tokens, 5120)`, read after the 50th decoder layer of the Qwen3-VL conditioner.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "text_token_tags",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The per-row modality tag of every row of `prompt_embeds`; a vision block is tagged as video.",
+            "kwargsType": null
+          },
+          {
+            "name": "condition_latents",
+            "type": "list[torch.Tensor]",
+            "required": false,
+            "default": null,
+            "description": "The normalized video conditioning latents, one `(1, latent_channels, 1, latent_height, latent_width)` tensor per keyframe, in packed order. One entry per condition is what the prepare-latents step draws its noise against, so the list is the unit the request's generator is consumed in.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Resolved number of frames, of the form 17 * n + 5.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_latent_frames",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Number of generated video latent frames.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_height",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Height of the generated video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "latent_width",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Width of the generated video latents.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_audio_latents",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Number of generated audio latents per channel.",
+            "kwargsType": null
+          },
+          {
+            "name": "position_ids",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The `(t, h, w)` rotary coordinate of every row, in float64.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "token_tags",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The modality tag of every row.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "video_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the video rows, conditioning rows first.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "audio_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the audio rows, reference rows first.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "text_indices",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Sequence positions of the text rows.",
+            "kwargsType": "denoiser_input_fields"
+          },
+          {
+            "name": "num_condition_video_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "How many leading video rows are conditioning rows rather than generated rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "num_condition_audio_rows",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "How many leading audio rows are reference rows rather than generated rows.",
+            "kwargsType": null
+          },
+          {
+            "name": "condition_rows",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The noised conditioning, packed into the leading video rows of the sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated video rows of the packed sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_latents",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated audio rows of the packed sequence, channel-major.",
+            "kwargsType": null
+          },
+          {
+            "name": "timesteps",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Timesteps of the video schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_timesteps",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Timesteps of the audio schedule.",
+            "kwargsType": null
+          },
+          {
+            "name": "row_timestep_plan",
+            "type": "builtins.list",
+            "required": false,
+            "default": null,
+            "description": "One `(timestep, timestep_indices)` pair per step: the distinct timesteps of the sequence and the index of every row into them.",
+            "kwargsType": null
+          },
+          {
+            "name": "noise_pred",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Predicted velocity of the video rows of the sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio_noise_pred",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "Predicted velocity of the audio rows of the sequence.",
+            "kwargsType": null
+          },
+          {
+            "name": "videos",
+            "type": "list[PIL.Image.Image]",
+            "required": false,
+            "default": null,
+            "description": "The generated video.",
+            "kwargsType": null
+          },
+          {
+            "name": "audio",
+            "type": "torch.Tensor",
+            "required": false,
+            "default": null,
+            "description": "The generated soundtrack, of shape `(1, 2, num_samples)`, the video's duration long.",
+            "kwargsType": null
+          },
+          {
+            "name": "sampling_rate",
+            "type": "builtins.int",
+            "required": false,
+            "default": null,
+            "description": "Sample rate of the generated soundtrack in Hz.",
+            "kwargsType": null
+          }
+        ],
+        "components": [
+          {
+            "name": "text_encoder",
+            "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "tokenizer",
+            "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "processor",
+            "type": "transformers.models.qwen3_vl.processing_qwen3_vl.Qwen3VLProcessor",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "vae",
+            "type": "diffusers.models.autoencoders.autoencoder_kl_minimax_h3.AutoencoderKLMiniMaxH3",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "audio_scheduler",
+            "type": "diffusers.schedulers.scheduling_minimax_h3.MiniMaxH3Scheduler",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "transformer",
+            "type": "diffusers.models.transformers.transformer_minimax_h3.MiniMaxH3Transformer3DModel",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          },
+          {
+            "name": "video_processor",
+            "type": "diffusers.video_processor.VideoProcessor",
+            "description": "",
+            "creationMethod": "from_config",
+            "defaultConfig": {
+              "vae_scale_factor": 16,
+              "do_normalize": false
+            }
+          },
+          {
+            "name": "audio_vae",
+            "type": "diffusers.models.autoencoders.autoencoder_kl_minimax_h3_audio.AutoencoderKLMiniMaxH3Audio",
+            "description": "",
+            "creationMethod": "from_pretrained",
+            "defaultConfig": null
+          }
+        ],
+        "configs": [
+          {
+            "name": "canvas_short_edge",
+            "default": 768,
+            "description": ""
+          },
+          {
+            "name": "canvas_max_pixels",
+            "default": 1032192,
+            "description": ""
+          },
+          {
+            "name": "denoising_step_list",
+            "default": [1000, 750, 500, 250, 100, 40, 0],
+            "description": ""
+          }
+        ],
+        "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:8e099fade92b74524fa8ff1a3a0c25ed17c79f2147fd1267db6335698a165c4a",
+        "contentHash": "sha256:8e099fade92b74524fa8ff1a3a0c25ed17c79f2147fd1267db6335698a165c4a"
+      }
+    ],
+    "workflows": [
+      {
+        "schemaVersion": 1,
+        "pipelineClass": "PikaH3FlexModularPipeline",
+        "workflowId": "fl2va",
+        "workflowKind": "sequential",
+        "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:8e099fade92b74524fa8ff1a3a0c25ed17c79f2147fd1267db6335698a165c4a",
+        "placements": [
+          {
+            "path": ["before_encode"],
+            "legacyPath": "before_encode",
+            "order": 0,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexResizeStep:sha256:b9e3a0fa133533aa316b389bc848c19708e2f2bb81b72e2f8efaf5e4498bdb0e"
+          },
+          {
+            "path": ["text_encoder"],
+            "legacyPath": "text_encoder",
+            "order": 1,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexFL2VATextEncoderStep:sha256:1511f6a27c3991d4ec6cc724f90ed8a4f875f043804e92faf930ddea3f7aea52"
+          },
+          {
+            "path": ["vae_encoder"],
+            "legacyPath": "vae_encoder",
+            "order": 2,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexKeyframeVaeEncoderStep:sha256:c138228fb988d4db057bbe18728a483acbfc48b4ef846f7e0ee2db260f82cf85"
+          },
+          {
+            "path": ["denoise.prepare_layout"],
+            "legacyPath": "denoise.prepare_layout",
+            "order": 3,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexPrepareLayoutStep:sha256:bd4ef21ca53f1aee7a61c96096913f56ebeffa51edcaabf10bce1ae10c89c40c"
+          },
+          {
+            "path": ["denoise.prepare_condition_latents"],
+            "legacyPath": "denoise.prepare_condition_latents",
+            "order": 4,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexPrepareConditionLatentsStep:sha256:a49547df78f86d95aeb86135074a06deca0d81d01a98abff1bff147955bf8aef"
+          },
+          {
+            "path": ["denoise.prepare_latents"],
+            "legacyPath": "denoise.prepare_latents",
+            "order": 5,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexPrepareLatentsStep:sha256:08ea3d4cd1c08a2fc237d19ae9593d1386b85d6a0aac287657a258d30e7d7054"
+          },
+          {
+            "path": ["denoise.prepare_latents_fl2va"],
+            "legacyPath": "denoise.prepare_latents_fl2va",
+            "order": 6,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexFL2VAPrepareLatentsStep:sha256:e3758f3a4db40bad7f1a63f24a604a657ef5176ef2626b584d79a00ce07a5060"
+          },
+          {
+            "path": ["denoise.set_timesteps"],
+            "legacyPath": "denoise.set_timesteps",
+            "order": 7,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexSetTimestepsStep:sha256:8582195c875cede29735650c39773813c13360ded3f77cf0148f220bf95f5e76"
+          },
+          {
+            "path": ["denoise.denoise"],
+            "legacyPath": "denoise.denoise",
+            "order": 8,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexDenoiseStep:sha256:5ab72404ca81696eaa5dadac8387226afca53ef0342f45a23b87f7b4e5919f2c"
+          },
+          {
+            "path": ["denoise.denoise", "denoiser"],
+            "legacyPath": "denoise.denoise.denoiser",
+            "order": 0,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexLoopDenoiser:sha256:e861e6da5147e456627bd96ff251bea16914561ab0619ebec10a840a5ef9e7dc"
+          },
+          {
+            "path": ["denoise.denoise", "update"],
+            "legacyPath": "denoise.denoise.update",
+            "order": 1,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexLoopSchedulerStep:sha256:71810a578b61b441f212da6ee7f5f1f0d8c2fad85ae9236b13a41cac42a378c7"
+          },
+          {
+            "path": ["denoise.after_denoise"],
+            "legacyPath": "denoise.after_denoise",
+            "order": 9,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexAfterDenoiseStep:sha256:577b55f3cb80a588cba5bde8acc74573f8cc10578dc6dc6a62105c29a656a648"
+          },
+          {
+            "path": ["decode.video"],
+            "legacyPath": "decode.video",
+            "order": 10,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexVideoDecodeStep:sha256:d1e7dad91bf33c0f44b87c3c974451e7610285e0445898d09a0fbdaba3e1e34d"
+          },
+          {
+            "path": ["decode.audio"],
+            "legacyPath": "decode.audio",
+            "order": 11,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexAudioDecodeStep:sha256:b36188712033f10cfd01176a62393eb960b0705f2c352808e3fee3b5d4177ec8"
+          }
+        ],
+        "contentHash": "sha256:7d638adb11e76379ffacf4b5ce0d9405c6c98415c6a620cd5872359413f8e2a7"
+      },
+      {
+        "schemaVersion": 1,
+        "pipelineClass": "PikaH3FlexModularPipeline",
+        "workflowId": "ref2va",
+        "workflowKind": "sequential",
+        "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:73c60dfe83285c1c1bbfc7daf38f2350856325535dd19c20997320289a5764e1",
+        "placements": [
+          {
+            "path": ["before_encode"],
+            "legacyPath": "before_encode",
+            "order": 0,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexRef2VASetupStep:sha256:921eae679e8e6033fa0b533c0977895e27b1096586f5cbcfa675e9964f4d6cd5"
+          },
+          {
+            "path": ["text_encoder"],
+            "legacyPath": "text_encoder",
+            "order": 1,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexRef2VATextEncoderStep:sha256:ab30e73425a17313b83d18b51edcc0da0274d5b132aa65ad69a125c3d978e4f6"
+          },
+          {
+            "path": ["vae_encoder"],
+            "legacyPath": "vae_encoder",
+            "order": 2,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexRef2VAReferenceEncoderStep:sha256:77736bbaf64fd550c40df3a282d0c3c39bbfc4ee7f3ff07ad70074137cac412e"
+          },
+          {
+            "path": ["denoise.prepare_layout"],
+            "legacyPath": "denoise.prepare_layout",
+            "order": 3,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexRef2VAPrepareLayoutStep:sha256:f9b33454bb22cb7cf99a2347967193ddcde9e804e3fc9bfb548c61f7e06632d2"
+          },
+          {
+            "path": ["denoise.prepare_condition_latents"],
+            "legacyPath": "denoise.prepare_condition_latents",
+            "order": 4,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexPrepareConditionLatentsStep:sha256:a49547df78f86d95aeb86135074a06deca0d81d01a98abff1bff147955bf8aef"
+          },
+          {
+            "path": ["denoise.prepare_latents"],
+            "legacyPath": "denoise.prepare_latents",
+            "order": 5,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexPrepareLatentsStep:sha256:08ea3d4cd1c08a2fc237d19ae9593d1386b85d6a0aac287657a258d30e7d7054"
+          },
+          {
+            "path": ["denoise.prepare_latents_ref2va"],
+            "legacyPath": "denoise.prepare_latents_ref2va",
+            "order": 6,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexRef2VAPrepareLatentsStep:sha256:0df81523cf8cd6747338b2d7dbbfd9e32fd626b4bf19d3dd0db38337699fb067"
+          },
+          {
+            "path": ["denoise.set_timesteps"],
+            "legacyPath": "denoise.set_timesteps",
+            "order": 7,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexSetTimestepsStep:sha256:8582195c875cede29735650c39773813c13360ded3f77cf0148f220bf95f5e76"
+          },
+          {
+            "path": ["denoise.denoise"],
+            "legacyPath": "denoise.denoise",
+            "order": 8,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexRef2VADenoiseStep:sha256:767f28907aa6b5659fb444b1b59350ef0228da74b86e97fb501b695c9da6c580"
+          },
+          {
+            "path": ["denoise.denoise", "denoiser"],
+            "legacyPath": "denoise.denoise.denoiser",
+            "order": 0,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexRef2VALoopDenoiser:sha256:ffb6a5b86ceda7d783802206b49fcfe9e60bb8f42e70d4f6c558686f20fcc60a"
+          },
+          {
+            "path": ["denoise.denoise", "update"],
+            "legacyPath": "denoise.denoise.update",
+            "order": 1,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexLoopSchedulerStep:sha256:71810a578b61b441f212da6ee7f5f1f0d8c2fad85ae9236b13a41cac42a378c7"
+          },
+          {
+            "path": ["denoise.after_denoise"],
+            "legacyPath": "denoise.after_denoise",
+            "order": 9,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexAfterDenoiseStep:sha256:577b55f3cb80a588cba5bde8acc74573f8cc10578dc6dc6a62105c29a656a648"
+          },
+          {
+            "path": ["decode.video"],
+            "legacyPath": "decode.video",
+            "order": 10,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexVideoDecodeStep:sha256:d1e7dad91bf33c0f44b87c3c974451e7610285e0445898d09a0fbdaba3e1e34d"
+          },
+          {
+            "path": ["decode.audio"],
+            "legacyPath": "decode.audio",
+            "order": 11,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexAudioDecodeStep:sha256:b36188712033f10cfd01176a62393eb960b0705f2c352808e3fee3b5d4177ec8"
+          }
+        ],
+        "contentHash": "sha256:2d8310d88796644f51aaae6cbfb2b0d4f1f42520f389ad8ed6e102af92813ac0"
+      },
+      {
+        "schemaVersion": 1,
+        "pipelineClass": "PikaH3FlexModularPipeline",
+        "workflowId": "t2va",
+        "workflowKind": "sequential",
+        "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:36e5a33de8d45e9fbff38a978b8fc6f1e1aa302b0b82793725fe5f14ac145dcd",
+        "placements": [
+          {
+            "path": ["text_encoder"],
+            "legacyPath": "text_encoder",
+            "order": 0,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexTextEncoderStep:sha256:6c0d8e9835b1c9e3c0258635ef22a3f1e1c83a1392bdb4697ec14341cc332cc8"
+          },
+          {
+            "path": ["denoise.no_keyframe_anchors"],
+            "legacyPath": "denoise.no_keyframe_anchors",
+            "order": 1,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexNoKeyframeAnchorsStep:sha256:4064946ab739cab42c62c436157d0fcdcad4aaae65f42d1ec72d17d6aa12c9d1"
+          },
+          {
+            "path": ["denoise.prepare_layout"],
+            "legacyPath": "denoise.prepare_layout",
+            "order": 2,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexPrepareLayoutStep:sha256:bd4ef21ca53f1aee7a61c96096913f56ebeffa51edcaabf10bce1ae10c89c40c"
+          },
+          {
+            "path": ["denoise.prepare_latents"],
+            "legacyPath": "denoise.prepare_latents",
+            "order": 3,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexPrepareLatentsStep:sha256:08ea3d4cd1c08a2fc237d19ae9593d1386b85d6a0aac287657a258d30e7d7054"
+          },
+          {
+            "path": ["denoise.set_timesteps"],
+            "legacyPath": "denoise.set_timesteps",
+            "order": 4,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexSetTimestepsStep:sha256:8582195c875cede29735650c39773813c13360ded3f77cf0148f220bf95f5e76"
+          },
+          {
+            "path": ["denoise.denoise"],
+            "legacyPath": "denoise.denoise",
+            "order": 5,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexDenoiseStep:sha256:5ab72404ca81696eaa5dadac8387226afca53ef0342f45a23b87f7b4e5919f2c"
+          },
+          {
+            "path": ["denoise.denoise", "denoiser"],
+            "legacyPath": "denoise.denoise.denoiser",
+            "order": 0,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexLoopDenoiser:sha256:e861e6da5147e456627bd96ff251bea16914561ab0619ebec10a840a5ef9e7dc"
+          },
+          {
+            "path": ["denoise.denoise", "update"],
+            "legacyPath": "denoise.denoise.update",
+            "order": 1,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexLoopSchedulerStep:sha256:71810a578b61b441f212da6ee7f5f1f0d8c2fad85ae9236b13a41cac42a378c7"
+          },
+          {
+            "path": ["denoise.after_denoise"],
+            "legacyPath": "denoise.after_denoise",
+            "order": 6,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexAfterDenoiseStep:sha256:577b55f3cb80a588cba5bde8acc74573f8cc10578dc6dc6a62105c29a656a648"
+          },
+          {
+            "path": ["decode.video"],
+            "legacyPath": "decode.video",
+            "order": 7,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexVideoDecodeStep:sha256:d1e7dad91bf33c0f44b87c3c974451e7610285e0445898d09a0fbdaba3e1e34d"
+          },
+          {
+            "path": ["decode.audio"],
+            "legacyPath": "decode.audio",
+            "order": 8,
+            "blockDefinitionId": "diffusers.modular-block:PikaH3FlexAudioDecodeStep:sha256:b36188712033f10cfd01176a62393eb960b0705f2c352808e3fee3b5d4177ec8"
+          }
+        ],
+        "contentHash": "sha256:356095cc8e88efe7ab7f0d60d99e3256f5e9f4b6db7b9356ce50ccbd8d89d656"
+      }
+    ]
+  },
+  "scope": "Source-generated structural companion only; no execution or hardware qualification.",
+  "contentHash": "sha256:09de3a0664ddc575b50e21d59f77238e9247e7f7f416d08bb36b02ba0eef40ae"
+}

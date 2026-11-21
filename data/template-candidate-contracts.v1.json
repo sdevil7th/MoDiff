@@ -7,11 +7,12 @@
     "generatesMedia": false,
     "importsComfyGraphs": false,
     "maximumEvidenceClaim": "canonical_graph_binding_only",
+    "publicPreviewsQualifyCanonicalGraphs": false,
     "publicTemplate": false,
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:27df3a3e7b79a359a8333700983f334398a6317ee0427784204f5edc5682f331",
+  "contentHash": "sha256:53852132ab8a4b72bdb39a392aa94e3ff4d29f603c9285ce2c5c01d7e86d34f1",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -31,7 +32,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "cdfc32ad3b048e8d31f9f8b521fa4c4ce5ccaffc4a8344b28f1a5c974bc51ec8",
+      "graphHash": "acc05da225bf77e85d83e08dc07869ba6f0be3765ba3db69112f80279cb6d2d5",
       "graphPath": "studio/allegro-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -70,7 +71,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "c40e7cfc5cf39f435903714fb69e7edbf5bec9a76f26707ad8492a4981b6fbd8",
+      "graphHash": "6a28c8772ec7ddc6b46371415601fef5fb5e539288a108d7dee322cd6faecc5b",
       "graphPath": "studio/animate-diff-control-net-pipeline/control-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -86,7 +87,8 @@
       "qualifiedRuntimeProfiles": [],
       "requiredArtifacts": [
         "stable-diffusion-v1-5/stable-diffusion-v1-5",
-        "guoyww/animatediff-motion-adapter-v1-5-2"
+        "guoyww/animatediff-motion-adapter-v1-5-2",
+        "lllyasviel/control_v11p_sd15_canny"
       ],
       "requiredInputs": {
         "modelRequirements": [
@@ -149,7 +151,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "9805d228316d45a5ca880ce668ec2d4214a3e96d23036edef83ce6f78b2ae0c3",
+      "graphHash": "a290b2c3102a454787f0ccd1c299cc7e3bc7946f1d49565634ef0d4d2f99920a",
       "graphPath": "studio/animate-diff-pag-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -208,7 +210,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "831c3df4b164bfb7d639386ac03061739c062d1c4c14c5bc8374bba0027574f4",
+      "graphHash": "6a3fab2ac62dd396f35eefdad1226670edcca73a44dc4a7d0f29ad1f64a3a794",
       "graphPath": "studio/animate-diff-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -267,7 +269,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "8b6e7e0237c39de482c80cae6aaa2b2be0b2c9ea01ca4eb111c865a7d0b49e8d",
+      "graphHash": "5f1bee4be4569336f16c38aa23ac92d6b5d6be013e478bb7453de8a5373e0f5f",
       "graphPath": "studio/animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -283,7 +285,8 @@
       "qualifiedRuntimeProfiles": [],
       "requiredArtifacts": [
         "stable-diffusion-v1-5/stable-diffusion-v1-5",
-        "guoyww/animatediff-motion-adapter-v1-5-2"
+        "guoyww/animatediff-motion-adapter-v1-5-2",
+        "lllyasviel/control_v11p_sd15_canny"
       ],
       "requiredInputs": {
         "modelRequirements": [
@@ -347,7 +350,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "43bb3eb29e332feac0bf86590da49757d7df9a03c2a80b57d019feb268710f25",
+      "graphHash": "80ddf4fb49b6b0ff44503ca19d0dd55bf4c97217948c702dbad596b915f5664f",
       "graphPath": "studio/animate-diff-video-to-video-pipeline/video-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -409,7 +412,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "6ea55a2398afb88c617d489d433d6dcc88d574b9b1c252f5e23f4f27ed5392b2",
+      "graphHash": "0d4bebb4f41099ef2606de2ebad03124d30370c5ffb52198e8d24d0e105bb911",
       "graphPath": "studio/animate-lcm-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -469,7 +472,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "5b41671f28ed075faf05595ed10540187457e85fffec0a1a6ac8540918a5cb5a",
+      "graphHash": "cc9e3de4082c24e50d74e9e85cf5d7d371389fcb5f8a745cb351424926d9c5fe",
       "graphPath": "studio/audio-ldm2-pipeline/text-to-audio.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "audio",
@@ -543,7 +546,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "a6be35f97da3b7617e2dd0001db5947ad456a9cd776cbcf076debe503ba1a9d7",
+      "graphHash": "fa8adfa1e16c77b79342e884bd51a612df80b914b5e505716eee97159cec9abc",
       "graphPath": "studio/builtin-audio-operation/audio-join.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "audio",
@@ -586,7 +589,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "65e26126ba57bd17add8001a60e0bc8bcfbee8bdf2112c200be73569becf9f49",
+      "graphHash": "952fdb83b52479710b5ebfe9f8f143a45ab3d4b5fe113f7637baf900340f469d",
       "graphPath": "studio/builtin-audio-operation/audio-loudness-match.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "audio",
@@ -629,7 +632,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a",
+      "graphHash": "ae4928754d54e7c77fc81accd5bf3310830ed02c83052e835d9354c3bc627cc1",
       "graphPath": "studio/builtin-audio-operation/audio-trim.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "audio",
@@ -1547,7 +1550,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "8d7f75409e9cdcc215d19f8cbaa95a2f1a38f1d48f9cf13eb0ca4d9a4defda75",
+      "graphHash": "550c3e2dc74d9f20d868a07775c83dba61c7126baef0c240b85a61f01647bcd3",
       "graphPath": "studio/cog-video-x-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -1586,7 +1589,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "c28875202a2106122d5beb9cdb7d6374f5f0f3f83397f26d9a1223096a2f0194",
+      "graphHash": "1c7ecbbc85f354360673bc56f7cf59fa18cf53dea470477901ed6bced448b985",
       "graphPath": "studio/cog-video-x-video-to-video-pipeline/video-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -1702,7 +1705,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "908ea0ae4985dcfb36841e262ef7d6bed37d7c3667690d01f6e7cf7b384ef029",
+      "graphHash": "2933517a3c00bafa2dee276ae0f7fe3491c5645795415127519258fb52ada236",
       "graphPath": "studio/consistency-model-pipeline/unconditional-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1739,7 +1742,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "4245498fbf0418f391842d4e6c3a608bebf796a9c7846848f4e4af3d32ac9c5d",
+      "graphHash": "d831b1695bf5dec13209ed34f51487c738eaed845ea86737129a42bbb6136646",
       "graphPath": "studio/ddim-pipeline/unconditional-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1776,7 +1779,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "5ddd44044fe27763f8bf23e9a1b00d1aedcac6ee61965e218771b60f4cbf2267",
+      "graphHash": "8ff65a7f881bf80c55e141a4946e9d324882efbb05d9d26f26e83fd615c377f9",
       "graphPath": "studio/ddpm-pipeline/unconditional-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -1982,7 +1985,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "e7f7d3d7a1c5182405477202e9755373c2ae8615b0bd1227a5708c700f041686",
+      "graphHash": "a016aaa6322b6d3ce3f1c53e7313009249a9c2a65c7f2a84f97b9931708d4378",
       "graphPath": "studio/ernie-image-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2085,6 +2088,550 @@
           "referenceImages"
         ]
       },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "6caddb42548fc90517824b4fe5c4bd52cdaf18288930d9965a3ecfefff0c6a1b",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_multi_reference_edit",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "421ceaf85243cf2032e9aff24a815cfc173075208d36879767f70db2203218dc",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/edit-image--flux3-klein-fp8r512-multi-reference-edit.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_single_reference_edit",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "ff89d1f943168108f66e75bd70b761bdd806d0ad57e23d2aafc202371bf2a1a3",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/edit-image--flux3-klein-fp8r512-single-reference-edit.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "721b942535f54b5561742d14581b1c1ef05b7fe3933442100fe43fea13fbee7a",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "31a7a0a5ea0da7c692dcb1063eb3cb38eb405449d5fcfed716ddc564607a0af5",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-lora-style.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "kocabiyik/nsc7-style-lora",
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_raw_coordinate_prompt",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "6bffcb8a964c27ce32c3aad01543ca3bfea7a46f7b6b42d48f32844d1029277c",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-raw-coordinate-prompt.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "099763a4e3be64def724ff84637fa6fcb7f6cee3abcffd6746fef136bcd1e0e1",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "f89d49ce7200e92860d3d34ba2186a3dee13fe4ebaa0295d1f3844acb411e557",
+      "graphPath": "experimental/flux3-modular-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_multi_reference_edit",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "eecbaafc7c6e6e3ef20dd63cc3bfb3e293d07a4dc76df570786eac7e6e4b58db",
+      "graphPath": "experimental/flux3-modular-pipeline/edit-image--flux3-klein-base-fp8r512-multi-reference-edit.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_single_reference_edit",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "fd300c33b7dc6e6ef295022c146a95fcdbe2698aa403ca6f54d6667724fa1e4e",
+      "graphPath": "experimental/flux3-modular-pipeline/edit-image--flux3-klein-base-fp8r512-single-reference-edit.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "e87317043b0451cf1510acf8184ac43ae207e0f36e617f7ac236e48e1f4807f7",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "c93ea8bf093dd6aa36c2c3f44fcaec70c78aaec2cb18c2cbc2f94c60f1ea86db",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-lora-style.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "pjecuacion/flux3-klein-mnt-oil-monet-lora",
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_raw_coordinate_prompt",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "d9097def8b0ac618a907a243c7ac1684f03f0694188bf329ba2afd667de4cf23",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-raw-coordinate-prompt.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "5af1acbd2111c5a12e3ac064f3635b3dd52e7a59fdf8d94c224c1b68b0ff99c1",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": [],
       "runtimeQualificationStatus": "unqualified"
     },
     {
@@ -2460,7 +3007,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "c7504887fd3d6b93dd8f44054285a0f4d8e077586e6efdf67f0ffdfef0fc3a00",
+      "graphHash": "cc97f884c9308253035cd9c05596c89d3826daa9bcf54cdca080c9ef2470381a",
       "graphPath": "studio/glm-image-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2497,7 +3044,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "dfbbb92d9c11f7da5ec40f2588caa817d470bdfada4a5fb9ca3b65a6b1b20add",
+      "graphHash": "a23a0c447f0e5f31303db4aa11c576db58d01f260baaff9fceb04b6941c4f43c",
       "graphPath": "studio/hugging-face-any-to-any-model/image-to-text.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -2617,7 +3164,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "7eaed2db89f809328a6da1ffc2171c21abbf946b878b31a4bfa5c8a1c7ae3cf0",
+      "graphHash": "32fe79b7a89ec72f4d92b85f4bf4390d5e1c92208ee5b2e1fec5bedbd0fb4410",
       "graphPath": "studio/hugging-face-image-text-to-text-model/image-to-text.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -2651,48 +3198,6 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
-      "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_to_text",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "c5f3371c28f0940789b095c748803cb7c308757bb2273e5e16ac9c20a3d6ccce",
-      "graphPath": "studio/hugging-face-speech-recognition-model/speech-to-text.json",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "mediaKind": "json",
-      "mode": "speech_to_text",
-      "modelType": "HuggingFaceSpeechRecognitionModel",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "AutoModelForSpeechSeq2Seq"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "openai/whisper-tiny"
-      ],
-      "requiredInputs": {
-        "note": "Requires one bounded local audio source and returns a normalized transcript.",
-        "requiredAudio": [
-          "sourceAudio"
-        ]
-      },
-      "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
-        "inputExamples": "required",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
       "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_translation",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -2701,7 +3206,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "b78d645c5ff9d4f5fb6b38227ae6512b4c28c1ba8e803facb223e2a7d525f0e4",
+      "graphHash": "ceeda76f1c6b3e964676293ca3754adfade221b8cd5b832e1215c94b944d37a9",
       "graphPath": "studio/hugging-face-speech-recognition-model/speech-translation.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -2731,43 +3236,6 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
-        "inputExamples": "not_applicable",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
-      "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "37308672398e110f79c43c6dade31ccab5e4901491a844c8767e5c9ed286bc96",
-      "graphPath": "studio/hugging-face-text-generation-model/text-generation.json",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "mediaKind": "json",
-      "mode": "text_generation",
-      "modelType": "HuggingFaceTextGenerationModel",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "AutoModelForCausalLM"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "HuggingFaceTB/SmolLM2-135M-Instruct"
-      ],
-      "requiredInputs": [],
-      "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
         "inputExamples": "required",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -2780,7 +3248,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "5b57f7e9647531955e0e38047ae3bbb6dc4d28935f79acb2ea0b806fa59945cf",
+      "graphHash": "99ec6228e60ed6b41719fc5b779b46a146372f1f8eb325f5b97a8c000fc53ca7",
       "graphPath": "studio/hunyuan-di-t-control-net-pipeline/control-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2842,7 +3310,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "604fa5a3e2cb7e9649fbbefb66988929b58001a3e70cd8f1c77e14d4b7ba6c95",
+      "graphHash": "1579d55b3ab55bf93ee00db6ace2c7998b5b4d6a909e8685a8884e20b90453cc",
       "graphPath": "studio/hunyuan-di-tpag-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2879,7 +3347,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "8add16fe42e1586bfc36a62fdfea275bde66360ae0083d7cb83c3ce7f40061f7",
+      "graphHash": "c3c9669273117f629dcf348d711b740713329791b17c86a3bed3fb641ba326e8",
       "graphPath": "studio/hunyuan-di-t-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -2931,7 +3399,9 @@
       "qualificationStatus": "graph-qualified-execution-pending",
       "qualifiedRuntimeProfiles": [],
       "requiredArtifacts": [
-        "lllyasviel/FramePackI2V_HY"
+        "lllyasviel/FramePackI2V_HY",
+        "hunyuanvideo-community/HunyuanVideo",
+        "lllyasviel/flux_redux_bfl"
       ],
       "requiredInputs": {
         "modelRequirements": [
@@ -3018,7 +3488,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "000ba470f00cb4f8805243773dc497b7a7078a4bd86238de0ce017cd1de35ecd",
+      "graphHash": "96776d96db4ffcfbf9b766308aaaeeccd9991374c112627c06d548b703cb609d",
       "graphPath": "studio/joy-image-edit-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3060,7 +3530,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "0dc24e5c95b035ac23ea5279b3810f1750b6d0e6e3885ad2fbf008503a8e8bc3",
+      "graphHash": "ecd35257479b2eec2cbaad908fe9208ae8c22da8277107d019ca56f6322988d3",
       "graphPath": "studio/joy-image-edit-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3097,7 +3567,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "40e71f30b95057e199b771567d1dcb65f3e0f805f1e6c05b982256b2206d8f03",
+      "graphHash": "cf04b0f208a27a3b7b09cd9eb5d0f9201d8fe8fb202af73079af346e2e7244f3",
       "graphPath": "studio/joy-image-edit-plus-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3139,7 +3609,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "cc3c646913a21599fed82f412a3c00eaf8538e933f53d68625cbe0f30ef42423",
+      "graphHash": "06055f91953074293a9f2c54ae653a876deb2423f646c2b32235b3431c55d7e4",
       "graphPath": "studio/joy-image-edit-plus-pipeline/multi-image-reference-edit.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3181,7 +3651,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "96240a351d2a8933d09166917cefc987eda47d532f2824d21fd630d0465250d0",
+      "graphHash": "973a169726c69f4209babb3c9aeb53abf36b84db92f9ceaebf7d24f1902e3b76",
       "graphPath": "studio/kandinsky3-pipeline/edit-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3223,7 +3693,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "0e7b481bc0912757839a955bde03caa456c74f67d38444ed73bc820dbb153270",
+      "graphHash": "7d1ebe8cd3eae5ef4a38760b034d27d00a97af150435f213efedfeb2fa5ec44f",
       "graphPath": "studio/kandinsky3-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -3501,49 +3971,6 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
-        "inputExamples": "required",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
-      "canonicalWorkflowId": "LatentConsistencyModelPipeline:edit_image",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "68e60aa18f9117ecf934edaba51b9e822471bca6ef316d65d6bf438e5486d556",
-      "graphPath": "studio/latent-consistency-model-pipeline/edit-image.json",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "mediaKind": "image",
-      "mode": "edit_image",
-      "modelType": "LatentConsistencyModelPipeline",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "LatentConsistencyModelImg2ImgPipeline",
-        "LatentConsistencyModelPipeline"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "SimianLuo/LCM_Dreamshaper_v7"
-      ],
-      "requiredInputs": {
-        "note": "Requires one source image for latent-consistency image-to-image transformation.",
-        "requiredImages": [
-          "referenceImages"
-        ]
-      },
-      "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
         "inputExamples": "not_applicable",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -3594,7 +4021,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "f7ccecdc033c0469bdd98853c937b487373fd88c0f36ed5a02e64e55bc07bd87",
+      "graphHash": "e6d9dc9edddd4efe5186cf152749c17a37e7d668b05ad7aedd9cd9f7e3438cd3",
       "graphPath": "studio/latte-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -3633,7 +4060,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "5567eadc3dba7a50b9411ca2b91764d6edea102a49f8a98cd9fff2e7e6b4ab54",
+      "graphHash": "68e36a48139e32570f4ae111650c1ef8f170ae16ad0954cbbc46d42c7fb5cb13",
       "graphPath": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "audio",
@@ -3828,11 +4255,11 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
-        "inputExamples": "required",
+        "inputExamples": "not_applicable",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
-      "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
+      "canonicalWorkflowId": "MiniMaxH3ImageModularPipeline:text_to_image",
       "comfyResearchRecords": [],
       "evidenceState": {
         "execution": "not_claimed",
@@ -3840,29 +4267,61 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "e6cb9d127b49c86713ff98d74415fb86de845b545b511353dc4d42303b17ea44",
-      "graphPath": "studio/marigold-depth-pipeline/depth-estimation.json",
+      "graphHash": "0a4914ebe5958e8e0007952e0a68f6cc58a9bdd84f4408a1ec56dfc443fb5002",
+      "graphPath": "experimental/mini-max-h3-image-modular-pipeline/text-to-image.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
-      "mode": "depth_estimation",
-      "modelType": "MarigoldDepthPipeline",
+      "mode": "text_to_image",
+      "modelType": "MiniMaxH3ImageModularPipeline",
       "optimizationQualificationStatus": "unqualified",
       "pipelineClasses": [
-        "MarigoldDepthPipeline"
+        "MiniMaxH3ImageModularPipeline"
       ],
       "publicationState": "hidden_candidate",
       "qualificationScope": "exact-model-recipe-runtime-hardware",
       "qualificationStatus": "graph-qualified-execution-pending",
       "qualifiedRuntimeProfiles": [],
       "requiredArtifacts": [
-        "prs-eth/marigold-depth-lcm-v1-0"
+        "MiniMaxAI/MiniMax-H3-Image"
       ],
-      "requiredInputs": {
-        "note": "Requires exactly one source image; output is a normalized relative-depth map.",
-        "requiredImages": [
-          "referenceImages"
-        ]
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
       },
+      "canonicalWorkflowId": "MiniMaxH3ImageModularPipeline:text_to_image:minimax_h3_image_old_town_cat",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "9fd8878406fb7788b0c11e8020efa317a53fc7da60e112a3be923efa0aa9f72f",
+      "graphPath": "experimental/mini-max-h3-image-modular-pipeline/text-to-image--minimax-h3-image-old-town-cat.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "MiniMaxH3ImageModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "MiniMaxH3ImageModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "MiniMaxAI/MiniMax-H3-Image"
+      ],
+      "requiredInputs": [],
       "runtimeQualificationStatus": "unqualified"
     },
     {
@@ -3882,7 +4341,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "87aefb0a156179b01c43d042dbdb7bd0f6caa5ef41a88ee5671f016ececf0008",
+      "graphHash": "840a2cf21e3489c69bebdc2fdccab1e8a71848a491467f31e78c070f0ba56f1d",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -4554,7 +5013,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "3eebc15a62f325ec1449c74e14bb7e4721f67b58fc08acda9149ae564ab1214e",
+      "graphHash": "027ade4a9594743485b4176bc1a018871cd69ee69cf9ed029a00baee21c3ee46",
       "graphPath": "studio/sana-image-to-video-pipeline/image-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -4658,49 +5117,6 @@
       "assets": [],
       "authoringState": {
         "defaults": "required",
-        "inputExamples": "required",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
-      "canonicalWorkflowId": "SanaSprintPipeline:edit_image",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "c0e078e0300bd34b518432025afa7366c1c7179ae74a5b0168741cc6c91ea76c",
-      "graphPath": "studio/sana-sprint-pipeline/edit-image.json",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "mediaKind": "image",
-      "mode": "edit_image",
-      "modelType": "SanaSprintPipeline",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "SanaSprintImg2ImgPipeline",
-        "SanaSprintPipeline"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers"
-      ],
-      "requiredInputs": {
-        "note": "Requires one source image for the reviewed two-step Sprint transformation.",
-        "requiredImages": [
-          "referenceImages"
-        ]
-      },
-      "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
         "inputExamples": "not_applicable",
         "prompt": "required_if_applicable",
         "status": "authoring_required"
@@ -4751,7 +5167,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "ef446576e85b5d6d65a3055b120dd25fe369300e124ebaae147c2aea5586efaf",
+      "graphHash": "3376e7f17ab915ff845dcfe36498fb80d07dcfca423732bb768f4976ca5c5496",
       "graphPath": "studio/sana-video-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -4790,7 +5206,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "931b9b7b9c15512bd2b8cc7ad9f7fe2bdf60c6634d93c29f3d66de5e43e5014b",
+      "graphHash": "202eee9cfc1c2f18465c7e6eb1155ed56c3042bc14deadc339cb305cb4d70aba",
       "graphPath": "studio/shap-e-pipeline/text-to-3d.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -4809,48 +5225,6 @@
       ],
       "requiredInputs": [],
       "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
-        "inputExamples": "required",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
-      "canonicalWorkflowId": "SpandrelImageUpscale:image_upscale",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "f9506bdace33e875f26ed3af32119ef3d8c29a37dc5fb3e67f35fbc9e4a26b88",
-      "graphPath": "studio/spandrel-image-upscale/image-upscale.json",
-      "graphQualificationStatus": "execution-qualified-gallery-review-pending",
-      "mediaKind": "image",
-      "mode": "image_upscale",
-      "modelType": "SpandrelImageUpscale",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "SpandrelImageUpscaleV1"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "execution-qualified-gallery-review-pending",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "nateraw/real-esrgan"
-      ],
-      "requiredInputs": {
-        "note": "Requires one local source image and applies the exact cached Real-ESRGAN x2 model with bounded tiled inference.",
-        "requiredImages": [
-          "referenceImages"
-        ]
-      },
-      "runtimeQualificationStatus": "observed-on-recorded-platform"
     },
     {
       "assetState": "not_generated",
@@ -4917,7 +5291,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "6eac2cf6e052f16039824a0511e3aa659e90f9300300b0500be392d7283c9fd0",
+      "graphHash": "9077ee369a0039de9e98d860117fe2be2774348b9f794baf2e41ca54c80b18b2",
       "graphPath": "studio/stable-audio-pipeline/text-to-audio.json",
       "graphQualificationStatus": "graph-qualified",
       "mediaKind": "audio",
@@ -6306,7 +6680,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "996846e2afd38677bd72d7b063760925674c5c87fbfebc27308388e8e1283d34",
+      "graphHash": "9d7dcff585e2d46f200a5654331643b2f0447546242f14ce397d80366b6001b0",
       "graphPath": "studio/stable-video-diffusion-pipeline/image-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -6687,31 +7061,32 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:ed25c084c7fb0be603cc00e79e49d3b6dc53b053c88cd2bcd97711811eb239d1",
+      "contentHash": "sha256:309a5d5ed7d36af4d6e80e66fc2eefe421a481032ff68cb88508a8155c1eac3a",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:bfd3e3c6a565549bea2b7d545f78b89eda39129b14213f4323e73c94c8acfb83"
+      "sha256": "sha256:f961b6ee800250858653712e8b822f94e105c5ffc9d2f5becc664eb0a27946f9"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:e0770f481ed444f78e215ceb2055c11d0d26f7259653e63ae3cd327cd2833cf8"
+      "sha256": "sha256:fd5e51a2c1493e09a87fa7f2cccfc20da1e2c5f63827a049ffbbe653ab1dd788"
     }
   },
   "summary": {
-    "candidateContractCount": 148,
-    "canonicalWorkflowCount": 200,
-    "canonicalWorkflowsWithPublicTemplates": 52,
+    "candidateContractCount": 158,
+    "canonicalWorkflowCount": 225,
+    "canonicalWorkflowsWithExecutablePublicTemplates": 67,
+    "canonicalWorkflowsWithPublicTemplates": 78,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 93,
+    "contractsRequiringInputExamples": 94,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 6,
-      "image": 100,
-      "json": 9,
+      "image": 112,
+      "json": 7,
       "video": 33
     },
-    "publicTemplateCount": 78
+    "publicTemplateCount": 98
   }
 }

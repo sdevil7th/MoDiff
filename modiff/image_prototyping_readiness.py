@@ -24,6 +24,7 @@ from typing import Any, Mapping
 
 from modiff.diffusers_profiles import public_execution_profiles
 from modiff.image_native_variant_reviews import image_native_variant_review
+from modiff.image_stage_contract import declared_backend_image_stages as _declared_backend_image_stages
 from modiff.model_artifact_catalog import catalog_download_inventory, catalog_repository_pin
 from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS
 from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
@@ -35,7 +36,8 @@ from modiff.modular_workflow_contracts import (
 from modiff.modular_workflow_discovery import load_reviewed_modular_workflow_snapshot
 from modiff.operation_inventory import OPERATION_INVENTORY_PATH, load_operation_inventory
 from modiff.studio_execution_specs import (
-    reviewed_repository_download_files, studio_capability_definitions, studio_execution_spec_for_pair,
+    reviewed_repository_download_files, studio_capability_definition, studio_capability_definitions,
+    studio_execution_spec_for_pair,
 )
 
 
@@ -171,8 +173,10 @@ def _content_hash(value: Mapping[str, Any]) -> str:
     return "sha256:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
-def _file_hash(path: Path) -> str:
-    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+def _tracked_text_hash(path: Path) -> str:
+    # Match Git's LF form for tracked text even in a checkout with CRLF bytes.
+    source = path.read_bytes().replace(b"\r\n", b"\n")
+    return "sha256:" + hashlib.sha256(source).hexdigest()
 
 
 def _canonical_task(task: str) -> str:
@@ -285,9 +289,9 @@ def _display_name(profile: Mapping[str, Any], capability: Mapping[str, Any] | No
     )
 
 
-def _evidence(profile: Mapping[str, Any], *, native_integrated: bool) -> dict[str, str]:
+def _evidence(profile: Mapping[str, Any], *, stages_integrated: bool) -> dict[str, str]:
     return {
-        "structural": "implemented_awaiting_qualification" if native_integrated else "not_applicable_or_missing",
+        "structural": "implemented_awaiting_qualification" if stages_integrated else "not_applicable_or_missing",
         "browser": "pending_final_candidate",
         "nativeOutput": "historical_not_final_revision" if profile.get("live_proof") else "pending",
         "parameterConsumption": "pending",
@@ -365,7 +369,9 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
     routes = []
     seen_route_ids = set()
     for profile in sorted(advertised_profiles, key=lambda item: (item["id"], item.get("_artifact_variant", ""))):
-        capability = capabilities.get(profile["model_type"])
+        capability = studio_capability_definition(
+            profile["model_type"], repository=profile.get("default_repo"),
+        ) or capabilities.get(profile["model_type"])
         for mode in sorted(item for item in profile["modes"] if item in _IMAGE_TASKS):
             task = _canonical_task(mode)
             route_id = f"{profile['id']}/{mode}"
@@ -420,6 +426,8 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
                 or (model_workflow and profile["model_type"].endswith("ModularPipeline"))
             )
             artifact = _artifact_inventory(profile, capability)
+            spec = studio_execution_spec_for_pair(profile["model_type"], mode, execution_profile_id=profile["id"])
+            backend_stages_integrated = _declared_backend_image_stages(profile, mode, artifact, spec)
 
             if variant_review and variant_review["decision"] in {"artifact_blocked", "upstream_exception"}:
                 disposition = ("blocked" if variant_review["decision"] == "artifact_blocked"
@@ -434,6 +442,9 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
             elif native_integrated:
                 disposition = "native_integrated"
                 reason_code = "complete_native_stage_chain_declared"
+            elif backend_stages_integrated:
+                disposition = "backend_stages_integrated"
+                reason_code = "complete_backend_image_stage_chain_declared"
             elif profile["execution_path"] == "modular-diffusers":
                 disposition = "native_integration_missing"
                 reason_code = "public_modular_profile_lacks_complete_stage_chain"
@@ -453,7 +464,6 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
                 disposition = "blocked"
                 reason_code = "unclassified_execution_path"
 
-            spec = studio_execution_spec_for_pair(profile["model_type"], mode)
             advertisement_entry_points = [f"execution_profile:{profile['id']}"]
             if profile.get("_artifact_variant"):
                 advertisement_entry_points.append(f"execution_profile_artifact:{profile['_artifact_variant']}")
@@ -523,7 +533,7 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
                     }
                     if disposition == "documented_whole_pipeline_exception"
                     else None,
-                    "evidence": _evidence(profile, native_integrated=native_integrated),
+                    "evidence": _evidence(profile, stages_integrated=native_integrated or backend_stages_integrated),
                     "knownDefects": sorted(set(known_defects)),
                 }
             )
@@ -542,11 +552,11 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
             "customFirstPartyExamples": "requires_paired_custom_e2e",
         },
         "sources": {
-            "operationInventory": _file_hash(OPERATION_INVENTORY_PATH),
-            "modularWorkflowSnapshot": _file_hash(modular_snapshot_path),
-            "modelArtifactCatalog": _file_hash(root / "data" / "model-artifact-catalog.json"),
+            "operationInventory": _tracked_text_hash(OPERATION_INVENTORY_PATH),
+            "modularWorkflowSnapshot": _tracked_text_hash(modular_snapshot_path),
+            "modelArtifactCatalog": _tracked_text_hash(root / "data" / "model-artifact-catalog.json"),
             "publicExecutionProfiles": _content_hash({"profiles": image_profiles}),
-            "exactVariantReviews": _file_hash(root / "modiff" / "image_native_variant_reviews.py"),
+            "exactVariantReviews": _tracked_text_hash(root / "modiff" / "image_native_variant_reviews.py"),
         },
         "imageTasks": sorted(_IMAGE_TASKS),
         "routes": routes,
@@ -595,6 +605,7 @@ def validate_image_prototyping_readiness(value: Any) -> dict[str, Any]:
         raise ImagePrototypingReadinessError("Image readiness route IDs are invalid or duplicated.")
     allowed = {
         "native_integrated",
+        "backend_stages_integrated",
         "native_integration_missing",
         "preserved_standard_alternative",
         "documented_whole_pipeline_exception",

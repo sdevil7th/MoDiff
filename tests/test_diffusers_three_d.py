@@ -1,6 +1,8 @@
+import ast
 import importlib.util
-import hashlib
 import inspect
+import json
+from copy import deepcopy
 from pathlib import Path
 import unittest
 from contextlib import nullcontext
@@ -8,9 +10,12 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from PIL import Image
+from source_contract_helpers import source_sha256
 
+from modules import MODULE_MAP
 from modules.DiffusersThreeD.main import (
     DEFAULT_THREE_D_CONTRACT,
+    SHAP_E_ADAPTER,
     SHAP_E_MODE,
     SHAP_E_PIPELINE_CLASS,
     SHAP_E_IMG2IMG_ADAPTER,
@@ -25,6 +30,7 @@ from modules.DiffusersThreeD.main import (
     LoadPipeline,
     _load_safe_shap_e_components,
     _require_exact_selection,
+    _validate_connected_pipeline,
 )
 
 
@@ -64,7 +70,7 @@ class FakeShapEImg2ImgPipeline(FakeShapEPipeline):
 
 class DiffusersThreeDTests(unittest.TestCase):
     @requires_transformers
-    def test_exact_diffusers_pin_exports_the_bounded_image_signature(self):
+    def test_compatible_diffusers_exports_the_bounded_image_signature(self):
         from diffusers import ShapEImg2ImgPipeline
 
         signature = inspect.signature(ShapEImg2ImgPipeline.__call__)
@@ -83,11 +89,26 @@ class DiffusersThreeDTests(unittest.TestCase):
                 "return_dict",
             ],
         )
-        source = Path(inspect.getsourcefile(ShapEImg2ImgPipeline))
+        # Catalog bytes remain pinned historical evidence. The installed stable
+        # runtime may add type annotations without changing execution behavior.
+        from modiff.upstream_coverage import reviewed_diffusers_source
+        source = reviewed_diffusers_source() / "pipelines/shap_e/pipeline_shap_e_img2img.py"
         self.assertEqual(
-            hashlib.sha256(source.read_bytes()).hexdigest(),
-            "3636799e64fc57201e25c5d426c3f1c6f27ae1e27334c2adb3238f0139788d24",
+            source_sha256(source),
+            "017d195070aa7026c6cc8910745373cb616df977ad5d88ea9a48a148c760ad52",
         )
+        actual = Path(inspect.getsourcefile(ShapEImg2ImgPipeline))
+
+        def execution_tree(path):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    node.returns = None
+                elif isinstance(node, ast.arg):
+                    node.annotation = None
+            return ast.dump(tree, include_attributes=False)
+
+        self.assertEqual(execution_tree(actual), execution_tree(source))
 
     def test_exact_artifact_and_contract_are_fail_closed(self):
         self.assertEqual(
@@ -333,6 +354,74 @@ class DiffusersThreeDTests(unittest.TestCase):
                     three_d_contract=SHAP_E_IMG2IMG_ADAPTER.signal_value(),
                     reference_images=invalid,
                 )
+
+    def test_published_shap_e_text_graph_uses_the_current_task_contract(self):
+        root = Path(__file__).resolve().parents[1]
+        graph_path = root / "data" / "graphs" / "studio" / "shap-e-pipeline" / "text-to-3d.json"
+        graph = json.loads(graph_path.read_text(encoding="utf-8"))
+        actions = {"LoadPipeline", "GenerateRenderedArtifact"}
+        owners = [
+            node["data"] for node in graph["nodes"]
+            if node["data"]["module"] == "modules.DiffusersThreeD" and node["data"]["action"] in actions
+        ]
+        self.assertEqual(len(owners), len(actions))
+        self.assertEqual({owner["action"] for owner in owners}, actions)
+        pipeline = FakeShapEPipeline()
+        for owner in owners:
+            with self.subTest(action=owner["action"]):
+                declared = MODULE_MAP[owner["module"]][owner["action"]]["params"]["three_d_contract"]["default"]
+                saved = owner["params"]["three_d_contract"]
+                self.assertEqual(saved["default"], declared)
+                self.assertEqual(saved["value"], declared)
+                self.assertIs(_validate_connected_pipeline(pipeline, saved["value"]), SHAP_E_ADAPTER)
+
+    def test_saved_shap_e_text_contracts_preserve_execution_inputs(self):
+        before_actions = deepcopy(DEFAULT_THREE_D_CONTRACT)
+        del before_actions["actions"]
+        before_conditioning_fields = deepcopy(before_actions)
+        del before_conditioning_fields["inputContract"]
+        del before_conditioning_fields["fieldParams"]["prompt"]
+        del before_conditioning_fields["fieldParams"]["reference_images"]
+        for contract in (before_actions, before_conditioning_fields):
+            with self.subTest(fields=sorted(contract["fieldParams"])):
+                original = deepcopy(contract)
+                node = GenerateRenderedArtifact()
+                node.set_field_params = Mock()
+                node.update_three_d_contract({"three_d_contract": contract}, None)
+                for field, metadata in DEFAULT_THREE_D_CONTRACT["fieldParams"].items():
+                    node.set_field_params.assert_any_call(field, metadata)
+
+                pipeline = FakeShapEPipeline(frames=[Image.new("RGB", (128, 128))])
+                result = node(
+                    pipeline=pipeline, three_d_contract=contract, prompt="a small red sailboat",
+                    seed=17, num_inference_steps=19, guidance_scale=3.5, frame_size=128,
+                )
+                self.assertEqual((result["width_out"], result["height_out"]), (128, 128))
+                self.assertEqual(pipeline.call_kwargs["prompt"], "a small red sailboat")
+                self.assertEqual(pipeline.call_kwargs["generator"].initial_seed(), 17)
+                self.assertEqual(pipeline.call_kwargs["num_inference_steps"], 19)
+                self.assertEqual(pipeline.call_kwargs["guidance_scale"], 3.5)
+                self.assertEqual(pipeline.call_kwargs["frame_size"], 128)
+                self.assertEqual(contract, original)
+
+    def test_saved_shap_e_compatibility_rejects_partial_and_unreviewed_contracts(self):
+        partial = deepcopy(DEFAULT_THREE_D_CONTRACT)
+        del partial["actions"]
+        del partial["inputContract"]
+        changed_field = deepcopy(DEFAULT_THREE_D_CONTRACT)
+        del changed_field["actions"]
+        changed_field["fieldParams"]["frame_size"]["max"] = 512
+        wrong_repository = {**DEFAULT_THREE_D_CONTRACT, "repository": "other/shap-e"}
+        image = SHAP_E_IMG2IMG_ADAPTER.signal_value()
+        del image["actions"]
+        for pipeline, contract in (
+            (FakeShapEPipeline(), partial),
+            (FakeShapEPipeline(), changed_field),
+            (FakeShapEPipeline(), wrong_repository),
+            (FakeShapEImg2ImgPipeline(), image),
+        ):
+            with self.subTest(contract=contract), self.assertRaisesRegex(ValueError, "stale or mismatched task contract"):
+                _validate_connected_pipeline(pipeline, contract)
 
     def test_generation_rejects_stale_identity_and_unbounded_output(self):
         stale = FakeShapEPipeline()

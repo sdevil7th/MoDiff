@@ -3,6 +3,24 @@
 The existing graph executor and process supervisor remain the only execution
 owners. Recovery does not resume a partially completed denoising step.
 
+Completed native HunyuanVideo 1.5 sampling now automatically retains its latent
+tensor before the next node decodes it. Ordinary dispatch writes Safetensors and
+bounded JSON under `data/runtime/material-checkpoints/` (relative to the configured
+data directory). The capture accepts only the exact built-in sampler, its issued
+completed state, an immutable Hub revision, and a finite plain floating-point
+tensor. It never serializes models, process-local state tokens or Python objects.
+Failed-attempt cache cleanup leaves these files intact. A capture failure is
+logged without replacing the original generation result.
+
+This is material preservation, not automatic resume. The metadata explicitly
+withholds restoration authority; Run does not yet skip sampling after a failure
+or restart. A future recovery path must validate the original task, graph, inputs,
+model, runtime and tensor hash before issuing a new bound state through the same
+executor. Other samplers and whole-pipeline calls do not yet have this capture.
+Like generated media, these local files are unencrypted, may contain private
+content and have no automatic retention policy. Include them in private backups;
+they can be removed when their retained task no longer needs recovery.
+
 - Reserve all managed components in a dispatch before loading any of them.
   Proactive accelerator eviction and CPU-pressure eviction must skip these
   leases, including nested dispatches.
@@ -37,3 +55,30 @@ failure, queue recovery and restart exhaustion without exhausting host RAM or
 deliberately destabilizing the GPU driver. These are not Windows/ROCm/CUDA/MPS
 hardware-OOM qualification. No software can guarantee recovery from every OS,
 driver or hardware failure.
+
+Auto also rejects a dense native placement when the exact installed safetensors
+metadata proves that its parameter storage cannot fit the accelerator. Full
+residency requires all selected components; model CPU offload still requires one
+whole component at a time. Group offload uses a different residency contract.
+These read-only dtype-aware lower bounds execute no model code and never prove
+fit, activation demand, or hardware qualification. Unknown layouts retain the
+existing requirement checks; a cached success cannot override an impossible
+current placement.
+
+Forced math attention on a native Modular loader requires an explicit working
+memory budget when its Auto recipe otherwise declares only machine capacity.
+Automatic attention remains available through the ordinary Diffusers API.
+New Z-Image recipes select automatic attention; saved graphs retain their authored
+policy and can use Custom memory. An earlier forced-math failure and a successful
+automatic-attention run are different consumed recipes, not output parity proof.
+Native flash SDPA requires compiled support in the installed Torch build. A CUDA
+device alone does not establish that support. Capability discovery checks Torch's
+build API, and explicit unsupported flash recipes fail before standard pipeline
+loading. Fresh generic bindings use automatic attention unless the authored form
+or reviewed candidate specifies a backend; saved recipes retain their policy.
+
+For a reviewed image-conditioned Modular graph, inferred `edit_image` and
+`multi_image_reference_edit` task aliases use their declared image-conditioned
+resource mode, preferring the conservative multi-reference mode when offered.
+This does not rewrite the graph or input order,
+grant qualification, or admit explicitly conflicting task selections.

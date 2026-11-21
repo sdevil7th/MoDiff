@@ -9,6 +9,18 @@ The executable contract lives in `modiff/block_definition_v2.py`,
 `modiff/composite_migration.py`, and the client’s `blockSchemaV2.ts`,
 `blockRuntimeV2.ts`, `registeredBlockAdapterV2.ts` and persistence modules.
 Keep client/backend canonicalization, validators and shared fixtures aligned.
+Ordinary finite scalar/media union sockets retain a pipe-separated `valueType`,
+for example `video|str|image`. The paired validators compare its individual
+alternatives with the native field's type array, and the canvas projects that
+array for connections. Collection expressions remain opaque; `list[video|image]`
+is not an image socket. Unrelated media types remain incompatible. This is a
+presentation/interface representation, not permission to coerce runtime values.
+Graph-field bindings preserve native spawned item keys such as
+`item>>>shot-2`: one `>>>` followed by a nonempty ASCII letter/digit/underscore/
+hyphen item suffix, within the existing 384-character field bound. Internal edge
+endpoints use the same grammar. Public node/port/control identities and workflow
+selectors keep their existing stricter grammar. Bare, partial or repeated `>`
+qualifiers are rejected; grouping must never sanitize an executable field key.
 See the [API reference](api-reference.md) for HTTP persistence/migration and
 [workbench acceptance](workbench-acceptance.md) for qualification boundaries.
 
@@ -542,7 +554,7 @@ type BlockInstanceV2 = {
     size: { width: number; height: number };
     internalLayout: Record<
       string,
-      { x: number; y: number; width?: number; height?: number }
+      { x: number; y: number; width?: number; height?: number; sizeMode?: "compact" }
     >;
   };
 
@@ -771,6 +783,12 @@ connector, and edge padding. `presentation.size` remains the collapsed,
 user-resized size; expanding, measuring, or moving one child MUST NOT rewrite
 that size, values, effective interface, definition identity, preview state, or
 any sibling instance. Collapse MUST restore the exact prior collapsed size.
+An explicit internal-card resize records `sizeMode: "compact"` on its layout
+entry. Moves and automatic minimum-size measurements preserve an existing
+marker; measurements MUST NOT create it. Absent markers retain legacy expanded
+footprint migration. Both strict validators reject any other present value,
+including null. This presentation-only marker is retained in inactive route
+drafts and does not change semantic hashes, values, or execution authority.
 Any browser lifecycle that claims expansion support MUST assert containment
 before and after a child move and again after workflow Save plus browser
 refresh; execution/export parity alone is insufficient.

@@ -5,7 +5,6 @@
       "data": {
         "connectionType": "image"
       },
-      "edgeType": "default",
       "id": "edge-01",
       "markerEnd": {
         "color": "#60A5FA",
@@ -18,7 +17,7 @@
       "style": {
         "stroke": "#60A5FA"
       },
-      "target": "node-06",
+      "target": "node-07",
       "targetHandle": "image",
       "type": "default"
     },
@@ -27,7 +26,6 @@
       "data": {
         "connectionType": "latents"
       },
-      "edgeType": "default",
       "id": "edge-02",
       "markerEnd": {
         "color": "#6366F1",
@@ -41,23 +39,62 @@
         "stroke": "#6366F1"
       },
       "target": "node-01",
-      "targetHandle": "latents",
+      "targetHandle": "latents"
+    },
+    {
+      "className": "category-custom_guider",
+      "data": {
+        "connectionType": "custom_guider"
+      },
+      "id": "edge-03",
+      "markerEnd": {
+        "color": "#FDBA74",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "guider_out",
+      "style": {
+        "stroke": "#FDBA74"
+      },
+      "target": "node-02",
+      "targetHandle": "guider",
       "type": "default"
+    },
+    {
+      "className": "category-custom_guider",
+      "data": {
+        "connectionType": "custom_guider"
+      },
+      "id": "edge-04",
+      "markerEnd": {
+        "color": "#FDBA74",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "guider_out",
+      "style": {
+        "stroke": "#FDBA74"
+      },
+      "target": "node-08",
+      "targetHandle": "guider"
     },
     {
       "className": "category-latents",
       "data": {
         "connectionType": "latents"
       },
-      "edgeType": "default",
-      "id": "edge-03",
+      "id": "edge-05",
       "markerEnd": {
         "color": "#6366F1",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-03",
+      "source": "node-04",
       "sourceHandle": "image_latents",
       "style": {
         "stroke": "#6366F1"
@@ -71,20 +108,19 @@
       "data": {
         "connectionType": "image"
       },
-      "edgeType": "default",
-      "id": "edge-04",
+      "id": "edge-06",
       "markerEnd": {
         "color": "#60A5FA",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-04",
+      "source": "node-05",
       "sourceHandle": "image",
       "style": {
         "stroke": "#60A5FA"
       },
-      "target": "node-03",
+      "target": "node-04",
       "targetHandle": "image",
       "type": "default"
     },
@@ -93,20 +129,19 @@
       "data": {
         "connectionType": "image"
       },
-      "edgeType": "default",
-      "id": "edge-05",
+      "id": "edge-07",
       "markerEnd": {
         "color": "#60A5FA",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-04",
+      "source": "node-05",
       "sourceHandle": "image",
       "style": {
         "stroke": "#60A5FA"
       },
-      "target": "node-07",
+      "target": "node-08",
       "targetHandle": "image",
       "type": "default"
     },
@@ -115,15 +150,14 @@
       "data": {
         "connectionType": "diffusers_auto_model"
       },
-      "edgeType": "default",
-      "id": "edge-06",
+      "id": "edge-08",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-05",
+      "source": "node-06",
       "sourceHandle": "scheduler",
       "style": {
         "stroke": "#A78BFA"
@@ -137,20 +171,19 @@
       "data": {
         "connectionType": "diffusers_auto_models"
       },
-      "edgeType": "default",
-      "id": "edge-07",
+      "id": "edge-09",
       "markerEnd": {
         "color": "#8B5CF6",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-05",
+      "source": "node-06",
       "sourceHandle": "text_encoders",
       "style": {
         "stroke": "#8B5CF6"
       },
-      "target": "node-07",
+      "target": "node-08",
       "targetHandle": "text_encoders",
       "type": "default"
     },
@@ -159,15 +192,14 @@
       "data": {
         "connectionType": "diffusers_auto_model"
       },
-      "edgeType": "default",
-      "id": "edge-08",
+      "id": "edge-10",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-05",
+      "source": "node-06",
       "sourceHandle": "unet_out",
       "style": {
         "stroke": "#A78BFA"
@@ -181,15 +213,14 @@
       "data": {
         "connectionType": "diffusers_auto_model"
       },
-      "edgeType": "default",
-      "id": "edge-09",
+      "id": "edge-11",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-05",
+      "source": "node-06",
       "sourceHandle": "vae_out",
       "style": {
         "stroke": "#A78BFA"
@@ -203,20 +234,19 @@
       "data": {
         "connectionType": "diffusers_auto_model"
       },
-      "edgeType": "default",
-      "id": "edge-10",
+      "id": "edge-12",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-05",
+      "source": "node-06",
       "sourceHandle": "vae_out",
       "style": {
         "stroke": "#A78BFA"
       },
-      "target": "node-03",
+      "target": "node-04",
       "targetHandle": "vae",
       "type": "default"
     },
@@ -225,15 +255,14 @@
       "data": {
         "connectionType": "embeddings"
       },
-      "edgeType": "default",
-      "id": "edge-11",
+      "id": "edge-13",
       "markerEnd": {
         "color": "#FBBF24",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-07",
+      "source": "node-08",
       "sourceHandle": "embeddings",
       "style": {
         "stroke": "#FBBF24"
@@ -246,7 +275,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "40bb9dce6bdb472a9537b6bd5a63fe5e9cf5251772588b087296b6d8016dbe51",
+    "positionHash": "098c1a0a97cd03438ee72aa0625b54b9c9daa8453461a0c5c8076111adcad2ed",
     "verticalGap": 72
   },
   "nodes": [
@@ -263,39 +292,154 @@
           0
         ],
         "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "defaults": {},
+          "operation": {
+            "binding": {
+              "pipelineClass": "QwenImageLayeredModularPipeline",
+              "values": {}
+            },
+            "blockName": "decode",
+            "decomposition": "block",
+            "nodeKey": "modules.ModularDiffusers.DecodeLatents",
+            "nodeType": "decoder",
+            "operationId": "diffusion.decode_latents",
+            "pipelineClass": "QwenImageLayeredModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "latents",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "latents",
+                "semantics": {
+                  "kind": "latents",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "latents"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "vae",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "vae",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "vae",
+                      "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "images",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "images",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "doc",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "doc",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "layer_decomposition",
+            "workflowId": "default"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
           "doc": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Doc",
             "type": "string"
           },
           "images": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Images",
             "type": "image"
           },
           "latents": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Latents *",
             "type": "latents"
           },
           "vae": {
-            "disabled": true,
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE *",
-            "signal": {
-              "direction": "output"
+            "onSignal": "update_node",
+            "signalCompatibility": {
+              "role": "vae"
             },
             "type": "diffusers_auto_model"
           }
         },
         "resizable": true,
         "skipParamsCheck": true,
-        "studioOwned": true,
         "studioRole": "decode",
         "style": {},
         "time": [
@@ -303,12 +447,13 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "visualStageSourceIndex": 1
       },
       "id": "node-01",
       "position": {
         "x": 1320,
-        "y": 397
+        "y": 617
       },
       "type": "custom"
     },
@@ -325,51 +470,338 @@
           0
         ],
         "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "seed",
+            "num_inference_steps",
+            "layers"
+          ],
+          "defaults": {
+            "layers": 4,
+            "num_inference_steps": 50,
+            "seed": 0
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "QwenImageLayeredModularPipeline",
+              "values": {}
+            },
+            "blockName": "denoise",
+            "decomposition": "block",
+            "nodeKey": "modules.ModularDiffusers.Denoise",
+            "nodeType": "denoise",
+            "operationId": "diffusion.denoise",
+            "pipelineClass": "QwenImageLayeredModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "embeddings",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "embeddings",
+                "semantics": {
+                  "kind": "conditioning",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "embeddings"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "seed",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "seed",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "num_inference_steps",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "num_inference_steps",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guidance_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "guidance_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "layers",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "layers",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "image_latents",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "image_latents",
+                "semantics": {
+                  "kind": "latents",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "latents"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "unet",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "unet",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_qwenimage.QwenImageTransformer2DModel"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guider",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "guider",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "guider",
+                      "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "custom_guider"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "scheduler",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "scheduler",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "scheduler",
+                      "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "latents",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "latents",
+                "semantics": {
+                  "kind": "latents",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "latents"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "doc",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "doc",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "layer_decomposition",
+            "workflowId": "default"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
           "doc": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Doc",
             "type": "string"
           },
           "embeddings": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Text Embeddings *",
             "type": "embeddings"
           },
           "guidance_scale": {
             "default": 4,
             "display": "slider",
-            "hidden": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
             "label": "Guidance Scale",
             "max": 30,
             "min": 1,
             "step": 0.1,
-            "type": "float",
-            "value": 4
+            "type": "float"
           },
           "guider": {
             "display": "input",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Guider",
+            "onChange": {
+              "false": [
+                "guidance_scale"
+              ],
+              "true": []
+            },
             "type": "custom_guider"
           },
           "image_latents": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Image Latents *",
             "type": "latents"
           },
           "latents": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Latents",
             "type": "latents"
           },
           "layers": {
             "default": 4,
             "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layers",
             "max": 10,
             "min": 1,
@@ -379,6 +811,9 @@
           "num_inference_steps": {
             "default": 50,
             "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Steps",
             "max": 100,
             "min": 1,
@@ -387,16 +822,21 @@
           },
           "scheduler": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Scheduler *",
-            "signal": {
-              "direction": "output"
+            "signalCompatibility": {
+              "role": "scheduler"
             },
             "type": "diffusers_auto_model"
           },
           "seed": {
             "default": 0,
             "display": "random",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Seed",
             "max": 4294967295,
             "min": 0,
@@ -407,21 +847,795 @@
             }
           },
           "unet": {
-            "disabled": true,
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
+            },
             "label": "Denoise Model *",
+            "onSignal": [
+              "update_node",
+              {
+                "action": "signal",
+                "target": "guider"
+              },
+              {
+                "action": "signal",
+                "target": "controlnet_bundle"
+              }
+            ],
             "required": true,
-            "signal": {
-              "direction": "output"
+            "signalCompatibility": {
+              "role": "denoiser"
             },
             "type": "diffusers_auto_model"
           }
         },
         "resizable": true,
         "skipParamsCheck": true,
-        "studioOwned": true,
         "studioRole": "denoise",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom",
+        "visualStageSourceIndex": 0
+      },
+      "id": "node-02",
+      "position": {
+        "x": 880,
+        "y": 519
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "Guider",
+        "cache": false,
+        "category": "sampler",
+        "description": "",
+        "label": "Guidance",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "guidance_scale"
+          ],
+          "defaults": {
+            "enabled": true,
+            "guidance_rescale": 0,
+            "guidance_scale": 4,
+            "guider": "ClassifierFreeGuidance",
+            "start": 0,
+            "stop": 1,
+            "use_original_formulation": false
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "QwenImageLayeredModularPipeline",
+              "values": {
+                "model_type": "QwenImageLayeredModularPipeline"
+              }
+            },
+            "blockName": null,
+            "decomposition": "bundle",
+            "nodeKey": "modules.ModularDiffusers.Guider",
+            "nodeType": "guidance",
+            "operationId": "diffusion.guidance",
+            "pipelineClass": "QwenImageLayeredModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "model_type",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "model_type",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guider",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "guider",
+                "semantics": {
+                  "control": {
+                    "compatibilityScope": "diffusers.qwen.normalized_cfg.v1",
+                    "enabled": "boolean_field",
+                    "enabledField": "enabled",
+                    "formulation": "boolean_field",
+                    "formulationField": "use_original_formulation",
+                    "negativeConditioning": "pipeline_scoped_when_enabled",
+                    "negativeConditioningScope": "QwenImageLayeredModularPipeline",
+                    "parameter": "technique",
+                    "scaleMeaning": "cfg_prediction_mix",
+                    "selectorField": "guider",
+                    "selectorValue": "ClassifierFreeGuidance",
+                    "technique": "classifier_free"
+                  },
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guidance_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "guidance_scale",
+                "semantics": {
+                  "control": {
+                    "compatibilityScope": "diffusers.qwen.normalized_cfg.v1",
+                    "enabled": "boolean_field",
+                    "enabledField": "enabled",
+                    "formulation": "boolean_field",
+                    "formulationField": "use_original_formulation",
+                    "negativeConditioning": "pipeline_scoped_when_enabled",
+                    "negativeConditioningScope": "QwenImageLayeredModularPipeline",
+                    "parameter": "scale",
+                    "scaleMeaning": "cfg_prediction_mix",
+                    "selectorField": "guider",
+                    "selectorValue": "ClassifierFreeGuidance",
+                    "technique": "classifier_free"
+                  },
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guidance_rescale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "guidance_rescale",
+                "semantics": {
+                  "control": {
+                    "compatibilityScope": "diffusers.qwen.normalized_cfg.v1",
+                    "enabled": "boolean_field",
+                    "enabledField": "enabled",
+                    "formulation": "boolean_field",
+                    "formulationField": "use_original_formulation",
+                    "negativeConditioning": "pipeline_scoped_when_enabled",
+                    "negativeConditioningScope": "QwenImageLayeredModularPipeline",
+                    "parameter": "rescale",
+                    "scaleMeaning": "cfg_prediction_mix",
+                    "selectorField": "guider",
+                    "selectorValue": "ClassifierFreeGuidance",
+                    "technique": "classifier_free"
+                  },
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "use_original_formulation",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "use_original_formulation",
+                "semantics": {
+                  "control": {
+                    "compatibilityScope": "diffusers.qwen.normalized_cfg.v1",
+                    "enabled": "boolean_field",
+                    "enabledField": "enabled",
+                    "formulation": "boolean_field",
+                    "formulationField": "use_original_formulation",
+                    "negativeConditioning": "pipeline_scoped_when_enabled",
+                    "negativeConditioningScope": "QwenImageLayeredModularPipeline",
+                    "parameter": "formulation",
+                    "scaleMeaning": "cfg_prediction_mix",
+                    "selectorField": "guider",
+                    "selectorValue": "ClassifierFreeGuidance",
+                    "technique": "classifier_free"
+                  },
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "enabled",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "enabled",
+                "semantics": {
+                  "control": {
+                    "compatibilityScope": "diffusers.qwen.normalized_cfg.v1",
+                    "enabled": "boolean_field",
+                    "enabledField": "enabled",
+                    "formulation": "boolean_field",
+                    "formulationField": "use_original_formulation",
+                    "negativeConditioning": "pipeline_scoped_when_enabled",
+                    "negativeConditioningScope": "QwenImageLayeredModularPipeline",
+                    "parameter": "enabled",
+                    "scaleMeaning": "cfg_prediction_mix",
+                    "selectorField": "guider",
+                    "selectorValue": "ClassifierFreeGuidance",
+                    "technique": "classifier_free"
+                  },
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "start",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "start",
+                "semantics": {
+                  "control": {
+                    "compatibilityScope": "diffusers.qwen.normalized_cfg.v1",
+                    "enabled": "boolean_field",
+                    "enabledField": "enabled",
+                    "formulation": "boolean_field",
+                    "formulationField": "use_original_formulation",
+                    "negativeConditioning": "pipeline_scoped_when_enabled",
+                    "negativeConditioningScope": "QwenImageLayeredModularPipeline",
+                    "parameter": "start",
+                    "scaleMeaning": "cfg_prediction_mix",
+                    "selectorField": "guider",
+                    "selectorValue": "ClassifierFreeGuidance",
+                    "technique": "classifier_free"
+                  },
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "stop",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "stop",
+                "semantics": {
+                  "control": {
+                    "compatibilityScope": "diffusers.qwen.normalized_cfg.v1",
+                    "enabled": "boolean_field",
+                    "enabledField": "enabled",
+                    "formulation": "boolean_field",
+                    "formulationField": "use_original_formulation",
+                    "negativeConditioning": "pipeline_scoped_when_enabled",
+                    "negativeConditioningScope": "QwenImageLayeredModularPipeline",
+                    "parameter": "stop",
+                    "scaleMeaning": "cfg_prediction_mix",
+                    "selectorField": "guider",
+                    "selectorValue": "ClassifierFreeGuidance",
+                    "technique": "classifier_free"
+                  },
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "guider_out",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "guider_out",
+                "semantics": {
+                  "kind": "component",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "custom_guider"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "layers_config",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "layers_config",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "layers_config"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "layer_decomposition",
+            "workflowId": "default"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
+        "params": {
+          "enabled": {
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Enabled",
+            "type": "boolean",
+            "value": true
+          },
+          "guidance_rescale": {
+            "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Guidance Rescale",
+            "max": 10,
+            "min": 0,
+            "step": 0.1,
+            "type": "float",
+            "value": 0
+          },
+          "guidance_scale": {
+            "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Guidance Scale",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float",
+            "value": 4
+          },
+          "guider": {
+            "fieldOptions": {
+              "loading": true,
+              "suppressInitialFieldAction": true
+            },
+            "label": "Guider",
+            "onChange": [
+              "updateNode",
+              {
+                "AutoGuidance": [
+                  "layers_config"
+                ],
+                "PerturbedAttentionGuidance": [
+                  "layers_config"
+                ],
+                "SkipLayerGuidance": [
+                  "layers_config"
+                ],
+                "SmoothedEnergyGuidance": [
+                  "layers_config"
+                ]
+              }
+            ],
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ClassifierFreeGuidance",
+                "schemaVersion": 1,
+                "value": "ClassifierFreeGuidance"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AdaptiveProjectedGuidance",
+                "schemaVersion": 1,
+                "value": "AdaptiveProjectedGuidance"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "AdaptiveProjectedMixGuidance",
+                "schemaVersion": 1,
+                "value": "AdaptiveProjectedMixGuidance"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MagnitudeAwareGuidance",
+                "schemaVersion": 1,
+                "value": "MagnitudeAwareGuidance"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ClassifierFreeZeroStarGuidance",
+                "schemaVersion": 1,
+                "value": "ClassifierFreeZeroStarGuidance"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "TangentialClassifierFreeGuidance",
+                "schemaVersion": 1,
+                "value": "TangentialClassifierFreeGuidance"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FrequencyDecoupledGuidance",
+                "schemaVersion": 1,
+                "value": "FrequencyDecoupledGuidance"
+              }
+            ],
+            "type": "string",
+            "value": "ClassifierFreeGuidance"
+          },
+          "guider_out": {
+            "display": "output",
+            "fieldOptions": {
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
+            },
+            "label": "Guider",
+            "onSignal": [
+              {
+                "action": "value",
+                "target": "model_type"
+              },
+              {
+                "action": "value",
+                "data": {
+                  "Flux2KleinBaseModularPipeline": [
+                    "ClassifierFreeGuidance"
+                  ],
+                  "Flux3ModularPipeline": [
+                    "ClassifierFreeGuidance"
+                  ],
+                  "FluxKontextModularPipeline": [
+                    "ClassifierFreeGuidance"
+                  ],
+                  "FluxModularPipeline": [
+                    "ClassifierFreeGuidance"
+                  ],
+                  "QwenImageEditModularPipeline": [
+                    "ClassifierFreeGuidance",
+                    "SkipLayerGuidance",
+                    "AdaptiveProjectedGuidance",
+                    "AdaptiveProjectedMixGuidance",
+                    "MagnitudeAwareGuidance",
+                    "ClassifierFreeZeroStarGuidance",
+                    "AutoGuidance",
+                    "SmoothedEnergyGuidance",
+                    "PerturbedAttentionGuidance",
+                    "TangentialClassifierFreeGuidance",
+                    "FrequencyDecoupledGuidance"
+                  ],
+                  "QwenImageEditPlusModularPipeline": [
+                    "ClassifierFreeGuidance",
+                    "SkipLayerGuidance",
+                    "AdaptiveProjectedGuidance",
+                    "AdaptiveProjectedMixGuidance",
+                    "MagnitudeAwareGuidance",
+                    "ClassifierFreeZeroStarGuidance",
+                    "AutoGuidance",
+                    "SmoothedEnergyGuidance",
+                    "PerturbedAttentionGuidance",
+                    "TangentialClassifierFreeGuidance",
+                    "FrequencyDecoupledGuidance"
+                  ],
+                  "QwenImageLayeredModularPipeline": [
+                    "ClassifierFreeGuidance",
+                    "AdaptiveProjectedGuidance",
+                    "AdaptiveProjectedMixGuidance",
+                    "MagnitudeAwareGuidance",
+                    "ClassifierFreeZeroStarGuidance",
+                    "TangentialClassifierFreeGuidance",
+                    "FrequencyDecoupledGuidance"
+                  ],
+                  "QwenImageModularPipeline": [
+                    "ClassifierFreeGuidance",
+                    "SkipLayerGuidance",
+                    "AdaptiveProjectedGuidance",
+                    "AdaptiveProjectedMixGuidance",
+                    "MagnitudeAwareGuidance",
+                    "ClassifierFreeZeroStarGuidance",
+                    "AutoGuidance",
+                    "SmoothedEnergyGuidance",
+                    "PerturbedAttentionGuidance",
+                    "TangentialClassifierFreeGuidance",
+                    "FrequencyDecoupledGuidance"
+                  ],
+                  "StableDiffusionXLModularPipeline": [
+                    "ClassifierFreeGuidance",
+                    "SkipLayerGuidance",
+                    "AdaptiveProjectedGuidance",
+                    "AdaptiveProjectedMixGuidance",
+                    "MagnitudeAwareGuidance",
+                    "ClassifierFreeZeroStarGuidance",
+                    "AutoGuidance",
+                    "SmoothedEnergyGuidance",
+                    "PerturbedAttentionGuidance",
+                    "TangentialClassifierFreeGuidance",
+                    "FrequencyDecoupledGuidance"
+                  ],
+                  "WanImage2VideoModularPipeline": [
+                    "ClassifierFreeGuidance",
+                    "AdaptiveProjectedGuidance",
+                    "AdaptiveProjectedMixGuidance",
+                    "MagnitudeAwareGuidance",
+                    "ClassifierFreeZeroStarGuidance",
+                    "TangentialClassifierFreeGuidance",
+                    "FrequencyDecoupledGuidance"
+                  ],
+                  "WanModularPipeline": [
+                    "ClassifierFreeGuidance",
+                    "AdaptiveProjectedGuidance",
+                    "AdaptiveProjectedMixGuidance",
+                    "MagnitudeAwareGuidance",
+                    "ClassifierFreeZeroStarGuidance",
+                    "TangentialClassifierFreeGuidance",
+                    "FrequencyDecoupledGuidance"
+                  ],
+                  "ZImageModularPipeline": [
+                    "ClassifierFreeGuidance",
+                    "AdaptiveProjectedGuidance",
+                    "AdaptiveProjectedMixGuidance",
+                    "MagnitudeAwareGuidance",
+                    "ClassifierFreeZeroStarGuidance",
+                    "TangentialClassifierFreeGuidance",
+                    "FrequencyDecoupledGuidance"
+                  ]
+                },
+                "prop": "options",
+                "target": "guider"
+              },
+              {
+                "action": "signal",
+                "target": "layers_config"
+              }
+            ],
+            "signalCompatibility": {
+              "values": {
+                "Flux2KleinBaseModularPipeline": [
+                  "ClassifierFreeGuidance"
+                ],
+                "Flux3ModularPipeline": [
+                  "ClassifierFreeGuidance"
+                ],
+                "FluxKontextModularPipeline": [
+                  "ClassifierFreeGuidance"
+                ],
+                "FluxModularPipeline": [
+                  "ClassifierFreeGuidance"
+                ],
+                "QwenImageEditModularPipeline": [
+                  "ClassifierFreeGuidance",
+                  "SkipLayerGuidance",
+                  "AdaptiveProjectedGuidance",
+                  "AdaptiveProjectedMixGuidance",
+                  "MagnitudeAwareGuidance",
+                  "ClassifierFreeZeroStarGuidance",
+                  "AutoGuidance",
+                  "SmoothedEnergyGuidance",
+                  "PerturbedAttentionGuidance",
+                  "TangentialClassifierFreeGuidance",
+                  "FrequencyDecoupledGuidance"
+                ],
+                "QwenImageEditPlusModularPipeline": [
+                  "ClassifierFreeGuidance",
+                  "SkipLayerGuidance",
+                  "AdaptiveProjectedGuidance",
+                  "AdaptiveProjectedMixGuidance",
+                  "MagnitudeAwareGuidance",
+                  "ClassifierFreeZeroStarGuidance",
+                  "AutoGuidance",
+                  "SmoothedEnergyGuidance",
+                  "PerturbedAttentionGuidance",
+                  "TangentialClassifierFreeGuidance",
+                  "FrequencyDecoupledGuidance"
+                ],
+                "QwenImageLayeredModularPipeline": [
+                  "ClassifierFreeGuidance",
+                  "AdaptiveProjectedGuidance",
+                  "AdaptiveProjectedMixGuidance",
+                  "MagnitudeAwareGuidance",
+                  "ClassifierFreeZeroStarGuidance",
+                  "TangentialClassifierFreeGuidance",
+                  "FrequencyDecoupledGuidance"
+                ],
+                "QwenImageModularPipeline": [
+                  "ClassifierFreeGuidance",
+                  "SkipLayerGuidance",
+                  "AdaptiveProjectedGuidance",
+                  "AdaptiveProjectedMixGuidance",
+                  "MagnitudeAwareGuidance",
+                  "ClassifierFreeZeroStarGuidance",
+                  "AutoGuidance",
+                  "SmoothedEnergyGuidance",
+                  "PerturbedAttentionGuidance",
+                  "TangentialClassifierFreeGuidance",
+                  "FrequencyDecoupledGuidance"
+                ],
+                "StableDiffusionXLModularPipeline": [
+                  "ClassifierFreeGuidance",
+                  "SkipLayerGuidance",
+                  "AdaptiveProjectedGuidance",
+                  "AdaptiveProjectedMixGuidance",
+                  "MagnitudeAwareGuidance",
+                  "ClassifierFreeZeroStarGuidance",
+                  "AutoGuidance",
+                  "SmoothedEnergyGuidance",
+                  "PerturbedAttentionGuidance",
+                  "TangentialClassifierFreeGuidance",
+                  "FrequencyDecoupledGuidance"
+                ],
+                "WanImage2VideoModularPipeline": [
+                  "ClassifierFreeGuidance",
+                  "AdaptiveProjectedGuidance",
+                  "AdaptiveProjectedMixGuidance",
+                  "MagnitudeAwareGuidance",
+                  "ClassifierFreeZeroStarGuidance",
+                  "TangentialClassifierFreeGuidance",
+                  "FrequencyDecoupledGuidance"
+                ],
+                "WanModularPipeline": [
+                  "ClassifierFreeGuidance",
+                  "AdaptiveProjectedGuidance",
+                  "AdaptiveProjectedMixGuidance",
+                  "MagnitudeAwareGuidance",
+                  "ClassifierFreeZeroStarGuidance",
+                  "TangentialClassifierFreeGuidance",
+                  "FrequencyDecoupledGuidance"
+                ],
+                "ZImageModularPipeline": [
+                  "ClassifierFreeGuidance",
+                  "AdaptiveProjectedGuidance",
+                  "AdaptiveProjectedMixGuidance",
+                  "MagnitudeAwareGuidance",
+                  "ClassifierFreeZeroStarGuidance",
+                  "TangentialClassifierFreeGuidance",
+                  "FrequencyDecoupledGuidance"
+                ]
+              }
+            },
+            "type": "custom_guider"
+          },
+          "layers_config": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Layers",
+            "type": "layers_config"
+          },
+          "model_type": {
+            "default": "",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "type": "string",
+            "value": "QwenImageLayeredModularPipeline"
+          },
+          "start": {
+            "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Start",
+            "max": 1,
+            "min": 0,
+            "step": 0.01,
+            "type": "float",
+            "value": 0
+          },
+          "stop": {
+            "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Stop",
+            "max": 1,
+            "min": 0.01,
+            "step": 0.01,
+            "type": "float",
+            "value": 1
+          },
+          "use_original_formulation": {
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Original Formulation",
+            "type": "boolean",
+            "value": false
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": true,
+        "studioRole": "guider",
         "style": {},
         "time": [
           0,
@@ -430,10 +1644,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-02",
+      "id": "node-03",
       "position": {
-        "x": 880,
-        "y": 299
+        "x": 0,
+        "y": 0
       },
       "type": "custom"
     },
@@ -450,38 +1664,213 @@
           0
         ],
         "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "resolution",
+            "seed"
+          ],
+          "defaults": {
+            "resolution": 640,
+            "seed": 0
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "QwenImageLayeredModularPipeline",
+              "values": {}
+            },
+            "blockName": "vae_encoder",
+            "decomposition": "block",
+            "nodeKey": "modules.ModularDiffusers.ImageEncode",
+            "nodeType": "vae_encoder",
+            "operationId": "diffusion.encode_image",
+            "pipelineClass": "QwenImageLayeredModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "image",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "image",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "resolution",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "resolution",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "seed",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "seed",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "vae",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "vae",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "vae",
+                      "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "image_latents",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "image_latents",
+                "semantics": {
+                  "kind": "latents",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "latents"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "doc",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "doc",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "layer_decomposition",
+            "workflowId": "default"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
           "doc": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Doc",
             "type": "string"
           },
           "encode_summary": {
             "dataSource": "encode_summary_data",
             "display": "ui_text",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Encode summary",
             "type": "text"
           },
           "encode_summary_data": {
             "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
-            "isConnected": false,
             "label": "Encode summary",
             "type": "str"
           },
           "image": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Image *",
             "type": "image"
           },
           "image_latents": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Image Latents",
             "type": "latents"
+          },
+          "layout_reference_summary": {
+            "description": "Display-only ordered reference identities and actual preprocessing sizes from this image encoding cache.",
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Bound Reference Summary",
+            "type": "string"
           },
           "resolution": {
             "default": 640,
@@ -495,7 +1884,8 @@
                 "group": "source-resolution",
                 "schemaVersion": 1,
                 "transform": "nearest-option-to-long-edge"
-              }
+              },
+              "suppressInitialFieldAction": true
             },
             "label": "Source Resolution",
             "options": [
@@ -522,6 +1912,9 @@
           "seed": {
             "default": 0,
             "display": "random",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Seed",
             "max": 4294967295,
             "min": 0,
@@ -532,19 +1925,21 @@
             }
           },
           "vae": {
-            "disabled": true,
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE *",
-            "signal": {
-              "direction": "output"
+            "onSignal": "update_node",
+            "signalCompatibility": {
+              "role": "vae"
             },
             "type": "diffusers_auto_model"
           }
         },
         "resizable": true,
         "skipParamsCheck": true,
-        "studioOwned": true,
         "studioRole": "imageEncode",
         "style": {},
         "time": [
@@ -554,10 +1949,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-03",
+      "id": "node-04",
       "position": {
         "x": 440,
-        "y": 542
+        "y": 790
       },
       "type": "custom"
     },
@@ -656,7 +2051,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "loadImage",
         "style": {},
         "time": [
@@ -666,10 +2060,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-04",
+      "id": "node-05",
       "position": {
         "x": 0,
-        "y": 682
+        "y": 1122
       },
       "type": "custom"
     },
@@ -679,20 +2073,751 @@
         "cache": false,
         "category": "loader",
         "description": "",
-        "label": "Diffusers.LoadPipeline",
+        "label": "Load Models",
         "memory": [
           0,
           0,
           0
         ],
         "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "dtype",
+            "device",
+            "auto_offload",
+            "offload_mode"
+          ],
+          "defaults": {
+            "attention_backend": "inherit",
+            "auto_offload": true,
+            "device": "cuda:0",
+            "dtype": "bfloat16",
+            "model_type": "QwenImageLayeredModularPipeline",
+            "offload_mode": "model_cpu",
+            "repo_id": {
+              "source": "hub",
+              "value": "Qwen/Qwen-Image-Layered"
+            },
+            "revision": "8f0ca708dfff6ba1dd5f2d85d78f8c108a040bcf",
+            "trust_remote_code": false,
+            "weight_loading_mode": "cpu"
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "QwenImageLayeredModularPipeline",
+              "values": {
+                "model_type": "QwenImageLayeredModularPipeline",
+                "workflow_id": "default"
+              }
+            },
+            "blockName": null,
+            "decomposition": "loader",
+            "nodeKey": "modules.ModularDiffusers.ModelsLoader",
+            "nodeType": "loader",
+            "operationId": "diffusion.load_models",
+            "pipelineClass": "QwenImageLayeredModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "model_type",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "model_type",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "repo_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "repo_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "reviewed_variant",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "reviewed_variant",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "device",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "device",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "attention_backend",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "attention_backend",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "vae_slicing",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "vae_slicing",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "vae_tiling",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "vae_tiling",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "inpaint_compatibility",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "inpaint_compatibility",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "trust_remote_code",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "trust_remote_code",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "revision",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "revision",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "workflow_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "workflow_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "modiff_pipeline_identity",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "modiff_pipeline_identity",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "auto_offload",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "auto_offload",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "offload_mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "offload_mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "weight_loading_mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "weight_loading_mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "weight_format",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "weight_format",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "unet",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "unet",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_qwenimage.QwenImageTransformer2DModel"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "vae",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "vae",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "vae",
+                      "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "controlnet",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "controlnet",
+                "semantics": {
+                  "kind": "component",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "lora_list",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "lora_list",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "custom_lora"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "text_encoders",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "text_encoders",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "guider",
+                      "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+                    },
+                    {
+                      "name": "image_resize_processor",
+                      "type": "diffusers.image_processor.VaeImageProcessor"
+                    },
+                    {
+                      "name": "processor",
+                      "type": "transformers.models.qwen2_vl.processing_qwen2_vl.Qwen2VLProcessor"
+                    },
+                    {
+                      "name": "text_encoder",
+                      "type": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl.Qwen2_5_VLForConditionalGeneration"
+                    },
+                    {
+                      "name": "tokenizer",
+                      "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_models"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "unet_out",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "unet_out",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_qwenimage.QwenImageTransformer2DModel"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "vae_out",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "vae_out",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "vae",
+                      "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "scheduler",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "scheduler",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "scheduler",
+                      "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": true,
+                "name": "image_encoder",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "image_encoder",
+                "semantics": {
+                  "kind": "component",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "pipeline_components",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline_components",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "guider",
+                      "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+                    },
+                    {
+                      "name": "image_processor",
+                      "type": "diffusers.image_processor.VaeImageProcessor"
+                    },
+                    {
+                      "name": "image_resize_processor",
+                      "type": "diffusers.image_processor.VaeImageProcessor"
+                    },
+                    {
+                      "name": "pachifier",
+                      "type": "diffusers.modular_pipelines.qwenimage.modular_pipeline.QwenImageLayeredPachifier"
+                    },
+                    {
+                      "name": "processor",
+                      "type": "transformers.models.qwen2_vl.processing_qwen2_vl.Qwen2VLProcessor"
+                    },
+                    {
+                      "name": "scheduler",
+                      "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+                    },
+                    {
+                      "name": "text_encoder",
+                      "type": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl.Qwen2_5_VLForConditionalGeneration"
+                    },
+                    {
+                      "name": "tokenizer",
+                      "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+                    },
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_qwenimage.QwenImageTransformer2DModel"
+                    },
+                    {
+                      "name": "vae",
+                      "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_modular_pipeline_components"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "quant_config",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "quant_config",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "quant_config"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "layer_decomposition",
+            "workflowId": "default"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
+          "attention_backend": {
+            "default": "inherit",
+            "description": "Inherit preserves existing native component defaults; explicit choices use the ordinary Diffusers attention API.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Attention Backend",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "inherit",
+                "schemaVersion": 1,
+                "value": "inherit"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "auto",
+                "schemaVersion": 1,
+                "value": "auto"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "native",
+                "schemaVersion": 1,
+                "value": "native"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "_native_math",
+                "schemaVersion": 1,
+                "value": "_native_math"
+              }
+            ],
+            "type": "string",
+            "value": "inherit"
+          },
           "auto_offload": {
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Enable Auto Offload",
             "type": "boolean",
             "value": true
           },
+          "controlnet": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "ControlNet",
+            "type": "diffusers_auto_model"
+          },
           "device": {
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Device",
             "options": {
               "cpu": {
@@ -710,13 +2835,23 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
               }
             },
             "type": "string",
             "value": "cuda:0"
           },
           "dtype": {
-            "disabled": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "dtype",
             "options": [
               {
@@ -728,10 +2863,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -748,63 +2882,360 @@
             "value": "bfloat16"
           },
           "image_encoder": {
-            "disabled": false,
+            "connectionRole": "image_encoder",
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
             "label": "Image Encoder",
             "signal": {
               "direction": "output",
-              "origin": "modiff_pipeline_identity"
+              "origin": "modiff_pipeline_identity",
+              "value": "QwenImageLayeredModularPipeline"
             },
             "type": "diffusers_auto_model"
           },
+          "inpaint_compatibility": {
+            "default": "native",
+            "description": "Technical compatibility selection for the reviewed Qwen Edit inpainting candidate; existing nodes retain native policy.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Inpaint Compatibility",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "native",
+                "schemaVersion": 1,
+                "value": "native"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "whole_v1",
+                "schemaVersion": 1,
+                "value": "whole_v1"
+              }
+            ],
+            "type": "string"
+          },
           "lora_list": {
             "display": "input",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Lora",
             "type": "custom_lora"
           },
           "model_type": {
-            "disabled": false,
-            "label": "Model Type",
+            "description": "Selects the Modular Diffusers pipeline class. This filters compatible checkpoints and publishes the component contract used by connected nodes; it is not the model checkpoint itself.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Pipeline Type",
+            "onChange": "set_filters",
             "options": {
-              "": "",
-              "AnimaModularPipeline": "Anima (Contract only)",
-              "Cosmos3DistilledModularPipeline": "Cosmos 3 Distilled (Contract only)",
-              "Cosmos3OmniModularPipeline": "Cosmos 3 Omni (Contract only)",
-              "DummyCustomPipeline": "Custom",
-              "Flux2KleinBaseModularPipeline": "FLUX.2 Klein Base (Contract only)",
-              "Flux2KleinModularPipeline": "Flux 2 Klein Distilled",
-              "Flux2ModularPipeline": "FLUX.2 (Contract only)",
-              "FluxKontextModularPipeline": "Flux Kontext",
-              "FluxModularPipeline": "Flux",
-              "HeliosModularPipeline": "Helios (Contract only)",
-              "HeliosPyramidDistilledModularPipeline": "Helios Pyramid Distilled (Contract only)",
-              "HeliosPyramidModularPipeline": "Helios Pyramid (Contract only)",
-              "HunyuanVideo15ModularPipeline": "HunyuanVideo 1.5 (Contract only)",
-              "Ideogram4ModularPipeline": "Ideogram 4 (Contract only)",
-              "Krea2ModularPipeline": "Krea 2 (Contract only)",
-              "Krea2TurboModularPipeline": "Krea 2 Turbo (Contract only)",
-              "LTX25ModularPipeline": "LTX-2.5 (Contract only)",
-              "LTX2ModularPipeline": "LTX-2 (Contract only)",
-              "MiniMaxH3ModularPipeline": "MiniMax H3 (Contract only)",
-              "MiniMaxMusic3ModularPipeline": "MiniMax Music 3 (Contract only)",
-              "QwenImageEditModularPipeline": "Qwen-Image-Edit",
-              "QwenImageEditPlusModularPipeline": "Qwen-Image-Edit-2511",
-              "QwenImageLayeredModularPipeline": "Qwen-Image-Layered",
-              "QwenImageModularPipeline": "Qwen-Image-2512",
-              "StableDiffusion3ModularPipeline": "Stable Diffusion 3 (Contract only)",
-              "StableDiffusionXLModularPipeline": "Stable Diffusion XL",
-              "WanAnimate2DistilledModularPipeline": "Wan Animate 2 Distilled (Contract only)",
-              "WanAnimate2ModularPipeline": "Wan Animate 2 (Contract only)",
-              "WanImage2VideoModularPipeline": "WAN2 I2V",
-              "WanModularPipeline": "WAN2 T2V",
-              "ZImageModularPipeline": "Z-Image"
+              "": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "",
+                "schemaVersion": 1,
+                "value": ""
+              },
+              "AnimaModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Anima",
+                "schemaVersion": 1,
+                "value": "AnimaModularPipeline"
+              },
+              "Cosmos3DistilledModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Cosmos 3 Distilled",
+                "schemaVersion": 1,
+                "value": "Cosmos3DistilledModularPipeline"
+              },
+              "Cosmos3OmniModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Cosmos 3 Nano",
+                "schemaVersion": 1,
+                "value": "Cosmos3OmniModularPipeline"
+              },
+              "DummyCustomPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Custom",
+                "schemaVersion": 1,
+                "value": "DummyCustomPipeline"
+              },
+              "ErnieImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ERNIE Image Turbo",
+                "schemaVersion": 1,
+                "value": "ErnieImageModularPipeline"
+              },
+              "Flux2KleinBaseModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux 2 Klein Base",
+                "schemaVersion": 1,
+                "value": "Flux2KleinBaseModularPipeline"
+              },
+              "Flux2KleinModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux 2 Klein Distilled",
+                "schemaVersion": 1,
+                "value": "Flux2KleinModularPipeline"
+              },
+              "Flux2ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux 2",
+                "schemaVersion": 1,
+                "value": "Flux2ModularPipeline"
+              },
+              "Flux3DistilledModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FLUX 3 Image Klein",
+                "schemaVersion": 1,
+                "value": "Flux3DistilledModularPipeline"
+              },
+              "Flux3ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FLUX 3 Image Klein Base",
+                "schemaVersion": 1,
+                "value": "Flux3ModularPipeline"
+              },
+              "FluxKontextModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux Kontext",
+                "schemaVersion": 1,
+                "value": "FluxKontextModularPipeline"
+              },
+              "FluxModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux",
+                "schemaVersion": 1,
+                "value": "FluxModularPipeline"
+              },
+              "HeliosModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Helios",
+                "schemaVersion": 1,
+                "value": "HeliosModularPipeline"
+              },
+              "HeliosPyramidDistilledModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Helios Pyramid Distilled",
+                "schemaVersion": 1,
+                "value": "HeliosPyramidDistilledModularPipeline"
+              },
+              "HeliosPyramidModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Helios Pyramid",
+                "schemaVersion": 1,
+                "value": "HeliosPyramidModularPipeline"
+              },
+              "HunyuanVideo15ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "HunyuanVideo 1.5",
+                "schemaVersion": 1,
+                "value": "HunyuanVideo15ModularPipeline"
+              },
+              "Ideogram4ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Ideogram 4 (Contract only)",
+                "schemaVersion": 1,
+                "value": "Ideogram4ModularPipeline"
+              },
+              "Krea2ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Krea 2 (Contract only)",
+                "schemaVersion": 1,
+                "value": "Krea2ModularPipeline"
+              },
+              "Krea2TurboModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Krea 2 Turbo (Contract only)",
+                "schemaVersion": 1,
+                "value": "Krea2TurboModularPipeline"
+              },
+              "LTX25ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LTX-2.5 (Contract only)",
+                "schemaVersion": 1,
+                "value": "LTX25ModularPipeline"
+              },
+              "MiniMaxH3ImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MiniMax H3 Image",
+                "schemaVersion": 1,
+                "value": "MiniMaxH3ImageModularPipeline"
+              },
+              "MiniMaxH3ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MiniMax H3",
+                "schemaVersion": 1,
+                "value": "MiniMaxH3ModularPipeline"
+              },
+              "MiniMaxMusic3ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MiniMax Music 3",
+                "schemaVersion": 1,
+                "value": "MiniMaxMusic3ModularPipeline"
+              },
+              "PikaH3FlexModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Pika H3 Flex",
+                "schemaVersion": 1,
+                "value": "PikaH3FlexModularPipeline"
+              },
+              "QwenImageEditModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-Edit",
+                "schemaVersion": 1,
+                "value": "QwenImageEditModularPipeline"
+              },
+              "QwenImageEditPlusModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-Edit-2511",
+                "schemaVersion": 1,
+                "value": "QwenImageEditPlusModularPipeline"
+              },
+              "QwenImageLayeredModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-Layered",
+                "schemaVersion": 1,
+                "value": "QwenImageLayeredModularPipeline"
+              },
+              "QwenImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-2512",
+                "schemaVersion": 1,
+                "value": "QwenImageModularPipeline"
+              },
+              "StableDiffusion3ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Stable Diffusion 3 (Contract only)",
+                "schemaVersion": 1,
+                "value": "StableDiffusion3ModularPipeline"
+              },
+              "StableDiffusionXLModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Stable Diffusion XL",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLModularPipeline"
+              },
+              "WanAnimate2DistilledModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Wan Animate 2 Distilled",
+                "schemaVersion": 1,
+                "value": "WanAnimate2DistilledModularPipeline"
+              },
+              "WanAnimate2ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Wan Animate 2",
+                "schemaVersion": 1,
+                "value": "WanAnimate2ModularPipeline"
+              },
+              "WanImage2VideoModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "WAN2 I2V",
+                "schemaVersion": 1,
+                "value": "WanImage2VideoModularPipeline"
+              },
+              "WanModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "WAN2 T2V",
+                "schemaVersion": 1,
+                "value": "WanModularPipeline"
+              },
+              "ZImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Z-Image",
+                "schemaVersion": 1,
+                "value": "ZImageModularPipeline"
+              }
             },
             "type": "string",
             "value": "QwenImageLayeredModularPipeline"
           },
           "modiff_pipeline_identity": {
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Custom Pipeline Identity",
             "type": "object",
@@ -812,6 +3243,9 @@
           },
           "offload_mode": {
             "default": "model_cpu",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Offload Mode",
             "options": [
               {
@@ -858,20 +3292,40 @@
             "type": "string",
             "value": "model_cpu"
           },
+          "pipeline_components": {
+            "connectionRole": "pipeline_components",
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Pipeline Components",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity",
+              "value": "QwenImageLayeredModularPipeline"
+            },
+            "type": "diffusers_modular_pipeline_components"
+          },
           "quant_config": {
             "display": "input",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Quant Config",
             "type": "quant_config"
           },
           "refresh_pipeline_identity_button": {
             "display": "ui_button",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Review and Refresh Custom Contract",
+            "onChange": "refresh_pipeline_identity",
             "value": false
           },
           "repo_id": {
-            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "filter": {
@@ -885,89 +3339,219 @@
               "sources": [
                 "hub",
                 "local"
-              ]
+              ],
+              "suppressInitialFieldAction": true
             },
             "label": "Repository ID",
+            "onChange": "refresh_pipeline_identity",
             "type": "string",
             "value": {
               "source": "hub",
               "value": "Qwen/Qwen-Image-Layered"
             }
           },
+          "reviewed_variant": {
+            "description": "Select an immutable, reviewed checkpoint for this exact Modular Diffusers pipeline family. Changing it does not replace the workflow graph or reset its parameters.",
+            "fieldOptions": {
+              "controlTier": "essential",
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Model",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen/Qwen-Image-Layered",
+                "schemaVersion": 1,
+                "value": "Qwen/Qwen-Image-Layered"
+              }
+            ],
+            "type": "string",
+            "value": "Qwen/Qwen-Image-Layered"
+          },
           "revision": {
             "description": "Required exact 40-character commit hash for Hub custom contracts.",
-            "disabled": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Revision",
+            "onChange": "refresh_pipeline_identity",
             "type": "string",
             "value": "8f0ca708dfff6ba1dd5f2d85d78f8c108a040bcf"
           },
           "scheduler": {
-            "disabled": true,
+            "connectionRole": "scheduler",
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
             "label": "Scheduler",
             "signal": {
               "direction": "output",
-              "origin": "modiff_pipeline_identity"
+              "origin": "modiff_pipeline_identity",
+              "value": "QwenImageLayeredModularPipeline"
             },
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
-            "disabled": true,
+            "connectionRole": "text_encoders",
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
             "label": "Text Encoders",
             "signal": {
               "direction": "output",
-              "origin": "modiff_pipeline_identity"
+              "origin": "modiff_pipeline_identity",
+              "value": "QwenImageLayeredModularPipeline"
             },
             "type": "diffusers_auto_models"
           },
           "trust_remote_code": {
             "description": "Repository code execution is disabled; keep this off for contract preview.",
-            "disabled": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Trust Remote Code",
+            "onChange": "refresh_pipeline_identity",
             "type": "boolean",
             "value": false
           },
           "unet": {
             "display": "input",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
             "label": "Denoise Model",
             "type": "diffusers_auto_model"
           },
           "unet_out": {
-            "disabled": true,
+            "connectionRole": "denoiser",
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
             "label": "Denoise Model",
             "signal": {
               "direction": "output",
-              "origin": "modiff_pipeline_identity"
+              "origin": "modiff_pipeline_identity",
+              "value": "QwenImageLayeredModularPipeline"
             },
             "type": "diffusers_auto_model"
           },
           "vae": {
             "display": "input",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
             "label": "VAE",
             "type": "diffusers_auto_model"
           },
           "vae_out": {
-            "disabled": true,
+            "connectionRole": "vae",
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
             "label": "VAE",
             "signal": {
               "direction": "output",
-              "origin": "modiff_pipeline_identity"
+              "origin": "modiff_pipeline_identity",
+              "value": "QwenImageLayeredModularPipeline"
             },
             "type": "diffusers_auto_model"
+          },
+          "vae_slicing": {
+            "default": null,
+            "description": "An unset policy preserves the native VAE configuration; templates may bind an explicit boolean.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "VAE Slicing",
+            "type": "boolean"
+          },
+          "vae_tiling": {
+            "default": null,
+            "description": "An unset policy preserves the native VAE configuration; templates may bind an explicit boolean.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "VAE Tiling",
+            "type": "boolean"
+          },
+          "weight_format": {
+            "default": "native",
+            "description": "Select a backend-declared immutable component format. Missing reviewed files must be installed through Model Manager.",
+            "fieldOptions": {
+              "controlTier": "advanced",
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Weight Format",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "native",
+                "schemaVersion": 1,
+                "value": "native"
+              }
+            ],
+            "type": "string"
+          },
+          "weight_loading_mode": {
+            "default": "cpu",
+            "description": "Load weights on CPU or CUDA before disk offload. CUDA loading needs room for a complete component and is available only for supported models.",
+            "fieldOptions": {
+              "controlTier": "advanced",
+              "suppressInitialFieldAction": true
+            },
+            "label": "Weight Loading",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda",
+                "schemaVersion": 1,
+                "value": "cuda"
+              }
+            ],
+            "type": "string",
+            "value": "cpu"
+          },
+          "workflow_id": {
+            "description": "Exact reviewed component partition selected by a first-party Cluster Node.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Reviewed Workflow",
+            "type": "string",
+            "value": "default"
           }
         },
         "resizable": true,
         "skipParamsCheck": true,
-        "studioOwned": true,
         "studioRole": "models",
         "style": {},
         "time": [
@@ -975,13 +3559,12 @@
           0,
           0
         ],
-        "type": "custom",
-        "uiState": {}
+        "type": "custom"
       },
-      "id": "node-05",
+      "id": "node-06",
       "position": {
         "x": 0,
-        "y": 0
+        "y": 430
       },
       "type": "custom"
     },
@@ -1001,7 +3584,9 @@
         "params": {
           "device": {
             "default": "cpu:0",
-            "hidden": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "options": {
               "cpu": {
                 "availability": "installed",
@@ -1018,24 +3603,54 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
               }
             },
-            "type": "string"
+            "type": "string",
+            "value": "cuda:0"
           },
           "export": {
             "default": "0",
             "description": "Export the image at the given index. Leave empty to export all images.",
-            "type": "str"
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "type": "str",
+            "value": "0"
           },
           "filtered": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Selected image",
             "type": "image"
           },
           "image": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "onChange": {
+              "action": "show",
+              "condition": {
+                "type": "latent"
+              },
+              "data": {
+                "false": [],
+                "true": [
+                  "vae",
+                  "device"
+                ]
+              }
+            },
             "type": [
               "image",
               "latent"
@@ -1043,26 +3658,31 @@
           },
           "output": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "All images",
             "type": "image"
           },
           "preview": {
             "dataSource": "output",
             "display": "ui_image",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": "url"
           },
           "vae": {
             "display": "input",
-            "hidden": true,
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE",
             "type": "pipeline"
           }
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "preview",
         "style": {},
         "time": [
@@ -1072,10 +3692,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-06",
+      "id": "node-07",
       "position": {
         "x": 1760,
-        "y": 355
+        "y": 575
       },
       "type": "custom"
     },
@@ -1092,24 +3712,330 @@
           0
         ],
         "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "prompt",
+            "negative_prompt",
+            "resolution",
+            "max_sequence_length"
+          ],
+          "defaults": {
+            "max_sequence_length": 1024,
+            "negative_prompt": "",
+            "prompt": "",
+            "resolution": 640,
+            "use_en_prompt": false
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "QwenImageLayeredModularPipeline",
+              "values": {}
+            },
+            "blockName": "text_encoder",
+            "decomposition": "block",
+            "nodeKey": "modules.ModularDiffusers.EncodePrompt",
+            "nodeType": "text_encoder",
+            "operationId": "diffusion.encode_prompt",
+            "pipelineClass": "QwenImageLayeredModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prompt",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "negative_prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "image",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "image",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "resolution",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "resolution",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "use_en_prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "use_en_prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "max_sequence_length",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "max_sequence_length",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "text_encoders",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "text_encoders",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "guider",
+                      "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+                    },
+                    {
+                      "name": "image_resize_processor",
+                      "type": "diffusers.image_processor.VaeImageProcessor"
+                    },
+                    {
+                      "name": "processor",
+                      "type": "transformers.models.qwen2_vl.processing_qwen2_vl.Qwen2VLProcessor"
+                    },
+                    {
+                      "name": "text_encoder",
+                      "type": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl.Qwen2_5_VLForConditionalGeneration"
+                    },
+                    {
+                      "name": "tokenizer",
+                      "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_models"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guider",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "guider",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "guider",
+                      "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "custom_guider"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "embeddings",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "embeddings",
+                "semantics": {
+                  "kind": "conditioning",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "QwenImageLayeredModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "embeddings"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "doc",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "doc",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prompt_input",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "layer_decomposition",
+            "workflowId": "default"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
           "doc": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Doc",
             "type": "string"
           },
           "embeddings": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Text Embeddings",
             "type": "embeddings"
           },
+          "guider": {
+            "description": "Shared Diffusers guidance used by prompt encoding and denoising when the selected pipeline supports it.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Guider",
+            "type": "custom_guider"
+          },
           "image": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Image *",
             "type": "image"
+          },
+          "layout_reference_summary": {
+            "description": "Display-only ordered reference identities and actual preprocessing sizes from the current encoder cache.",
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Bound Reference Summary",
+            "type": "string"
           },
           "max_sequence_length": {
             "default": 1024,
@@ -1122,7 +4048,8 @@
                 "group": "maximum-sequence-length",
                 "schemaVersion": 1,
                 "transform": "identity"
-              }
+              },
+              "suppressInitialFieldAction": true
             },
             "label": "Maximum Sequence Length",
             "max": 1024,
@@ -1134,6 +4061,9 @@
           "negative_prompt": {
             "default": "",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Negative Prompt",
             "type": "string",
             "value": "merged layers, empty layer, jagged alpha, halos, detached telescope fragment, duplicated tripod, person-telescope overlap, wrong relative scale, broken background, flattened depth"
@@ -1141,9 +4071,21 @@
           "prompt": {
             "default": "",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Prompt *",
             "type": "string",
             "value": "Decompose the supplied image into three ordered editable RGBA layers while faithfully preserving the complete photographed content. Overall image description: at blue hour on an alpine observatory deck, one adult woman astronomer in a navy field jacket and charcoal trousers stands center-right with both empty hands relaxed beside her body. One physically separate brass-and-matte-black refractor telescope on a complete three-leg tripod occupies the lower-left foreground without touching or overlapping the woman. A white observatory dome, a standard-height open doorway, a metal safety rail, mountain silhouettes and a clear deep-blue sky form the background. Occluded-content description: reconstruct the uninterrupted deck, rail, observatory wall, mountains and sky behind the woman and telescope so hiding a layer does not reveal an obvious cutout hole. Keep the source identity, pose, scale, eye-level 50 mm perspective, blue-hour lighting and object placement. Preserve the measured source relationship: the complete telescope assembly is about ninety-four percent of the woman’s visible height, its tube length is about fifty-one percent of her visible height, and a clear gap of about three percent of the image width separates the telescope from her body. Keep the entire telescope and all three grounded tripod feet coherent in one place without a detached tube, mount or tripod fragment elsewhere. Produce useful alpha boundaries and a recomposition that matches the source without bright fringe, dark matte, duplicated feature, missing content or flattened depth."
+          },
+          "prompt_input": {
+            "description": "Optional connected prompt. When connected, this replaces the inline Prompt value.",
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Prompt Input",
+            "type": "string"
           },
           "resolution": {
             "default": 640,
@@ -1157,7 +4099,8 @@
                 "group": "source-resolution",
                 "schemaVersion": 1,
                 "transform": "nearest-option-to-long-edge"
-              }
+              },
+              "suppressInitialFieldAction": true
             },
             "label": "Source Resolution",
             "options": [
@@ -1182,28 +4125,31 @@
             "value": 640
           },
           "text_encoders": {
-            "disabled": true,
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
+            },
             "label": "Text Encoders *",
-            "signal": {
-              "direction": "output"
+            "onSignal": "update_node",
+            "required": true,
+            "signalCompatibility": {
+              "role": "text_encoders"
             },
             "type": "diffusers_auto_models"
           },
           "use_en_prompt": {
             "default": false,
             "fieldOptions": {
-              "controlTier": "advanced"
+              "controlTier": "advanced",
+              "suppressInitialFieldAction": true
             },
             "label": "Use English Prompt Template",
-            "type": "boolean",
-            "value": false
+            "type": "boolean"
           }
         },
         "resizable": true,
         "skipParamsCheck": true,
-        "studioOwned": true,
         "studioRole": "prompt",
         "style": {},
         "time": [
@@ -1213,10 +4159,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-07",
+      "id": "node-08",
       "position": {
         "x": 440,
-        "y": 140
+        "y": 304
       },
       "type": "custom"
     }

@@ -68,6 +68,8 @@ class FakeSourceConditionedAceStepPipeline:
     _modiff_audio_mode = "audio_variation"
     device = "cpu"
     sample_rate = 48000
+    audio_tokenizer = object()
+    audio_token_detokenizer = object()
 
     def __init__(self):
         self.call_kwargs = None
@@ -99,10 +101,59 @@ class FakeSourceConditionedAceStepPipeline:
             "repainting_start": repainting_start,
             "repainting_end": repainting_end,
         }
+        if task_type == "repaint" and src_audio is not None:
+            return SimpleNamespace(audios=np.zeros((1, 2, src_audio.shape[-1]), dtype=np.float32))
         return SimpleNamespace(audios=np.zeros((1, 480), dtype=np.float32))
 
 
 class DiffusersAudioGenerateTests(unittest.TestCase):
+    def test_cover_conditions_source_content_instead_of_only_reference_timbre(self):
+        source = {"samples": np.arange(960, dtype=np.float32).reshape(2, 480) / 960, "sample_rate": 48000}
+        pipeline = FakeSourceConditionedAceStepPipeline()
+        node = Generate("native-source-cover")
+        node.progress = lambda *args, **kwargs: None
+        node.execute(pipeline=pipeline, source_audio=source, audio_duration=0.01, audio_cover_strength=0.7)
+        self.assertIsNone(pipeline.call_kwargs["reference_audio"])
+        np.testing.assert_array_equal(pipeline.call_kwargs["src_audio"].cpu().numpy(), source["samples"])
+        self.assertEqual(pipeline.call_kwargs["task_type"], "cover")
+        self.assertEqual(pipeline.call_kwargs["audio_cover_strength"], 0.7)
+
+    def test_cover_requires_both_native_codecs_before_tensor_allocation_or_inference(self):
+        source = {"samples": np.zeros((2, 480), dtype=np.float32), "sample_rate": 48000}
+        for missing in (("audio_tokenizer",), ("audio_token_detokenizer",),
+                        ("audio_tokenizer", "audio_token_detokenizer")):
+            pipeline = FakeSourceConditionedAceStepPipeline()
+            for name in missing:
+                setattr(pipeline, name, None)
+            with self.subTest(missing=missing), patch.dict(sys.modules, {"torch": None}):
+                with self.assertRaisesRegex(ValueError, "source-audio cover requires.*audio_tokenizer.*audio_token_detokenizer"):
+                    Generate().execute(pipeline=pipeline, source_audio=source, audio_duration=0.01)
+            self.assertIsNone(pipeline.call_kwargs)
+
+    def test_cover_rejects_reference_only_pipeline_signature_before_tensor_allocation(self):
+        class ReferenceOnly(FakeSourceConditionedAceStepPipeline):
+            def __call__(self, reference_audio=None, **kwargs):
+                raise AssertionError("Reference-only inference must not replace source cover")
+
+        source = {"samples": np.zeros((2, 480), dtype=np.float32), "sample_rate": 48000}
+        with patch.dict(sys.modules, {"torch": None}):
+            with self.assertRaisesRegex(ValueError, "required source-audio cover input src_audio"):
+                Generate().execute(pipeline=ReferenceOnly(), source_audio=source, audio_duration=0.01)
+
+    def test_missing_cover_codecs_do_not_block_text_generation_or_repaint(self):
+        for mode in ("text_to_audio", "audio_repaint"):
+            pipeline = FakeSourceConditionedAceStepPipeline()
+            pipeline._modiff_audio_mode = mode
+            pipeline.audio_tokenizer = pipeline.audio_token_detokenizer = None
+            values = {"pipeline": pipeline, "audio_duration": 0.01}
+            if mode == "audio_repaint":
+                values.update(source_audio={"samples": np.zeros((2, 480), dtype=np.float32), "sample_rate": 48000},
+                              repainting_start=0, repainting_end=0.01)
+            node = Generate("codec-scope-" + mode)
+            node.progress = lambda *args, **kwargs: None
+            node.execute(**values)
+            self.assertIsNotNone(pipeline.call_kwargs)
+
     def test_audio_adapters_declare_ordered_mode_task_and_input_contracts(self):
         ace = AUDIO_PIPELINE_ADAPTERS["AceStepPipeline"]
         stable = AUDIO_PIPELINE_ADAPTERS["StableAudioPipeline"]
@@ -201,16 +252,15 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 )
 
     @requires_transformers
-    def test_audioldm2_generation_helper_accepts_only_the_reviewed_optional_runtime(self):
+    def test_audioldm2_generation_helper_accepts_only_reviewed_runtimes(self):
         import transformers
         from modules.DiffusersAudio.main import (
-            _AUDIO_LDM2_TRANSFORMERS_VERSION,
+            _AUDIO_LDM2_TRANSFORMERS_VERSIONS,
             _reviewed_audioldm2_generation_helper,
         )
 
-        # The macOS base may contain Transformers without the reviewed main
-        # overlay. Presence alone must not bypass this exact-version boundary.
-        if transformers.__version__ != _AUDIO_LDM2_TRANSFORMERS_VERSION:
+        # Package presence alone must not bypass the exact version/source review.
+        if transformers.__version__ not in _AUDIO_LDM2_TRANSFORMERS_VERSIONS:
             with self.assertRaisesRegex(RuntimeError, "has not been reviewed"):
                 _reviewed_audioldm2_generation_helper()
             return
@@ -1089,7 +1139,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
     def test_ace_source_channel_adapter_duplicates_mono_and_rejects_ambiguous_multichannel(self):
         mono = {"samples": np.zeros((1, 480), dtype=np.float32), "sample_rate": 48000}
         cases = (
-            ("audio_variation", "cover", "reference_audio", {"audio_duration": 0.01}),
+            ("audio_variation", "cover", "src_audio", {"audio_duration": 0.01}),
             ("audio_continuation", "continuation", "src_audio", {"extension_duration": 0.01}),
             (
                 "audio_repaint",
@@ -1257,7 +1307,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
 
             def __call__(self, src_audio=None, **kwargs):
                 self.call_kwargs = {**kwargs, "src_audio": src_audio}
-                return SimpleNamespace(audios=np.zeros((1, 1, src_audio.shape[-1]), dtype=np.float32))
+                return SimpleNamespace(audios=np.zeros((1, 2, src_audio.shape[-1]), dtype=np.float32))
 
         repaint = RepaintPipeline()
         repaint_node = Generate("audio-derived-repaint")
@@ -1307,7 +1357,8 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 if mode in {"audio_continuation", "audio_repaint"}:
                     self.assertIsNotNone(pipeline.call_kwargs["src_audio"])
                 if mode == "audio_variation":
-                    self.assertIsNotNone(pipeline.call_kwargs["reference_audio"])
+                    self.assertIsNotNone(pipeline.call_kwargs["src_audio"])
+                    self.assertIsNone(pipeline.call_kwargs["reference_audio"])
 
     def test_repaint_interval_is_validated_before_generation(self):
         source = {"samples": np.zeros((2, 480), dtype=np.float32), "sample_rate": 48000}
@@ -1336,6 +1387,137 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 repainting_end=1,
             )
         self.assertIsNone(pipeline.call_kwargs)
+
+    def test_repaint_preserves_source_outside_interval_at_delivery_rate(self):
+        from modules.DiffusersAudio.main import resample_audio_object
+
+        for source_rate, delivery_rate, start, end in (
+            (48000, 48000, 0.25, 0.75),
+            (44100, 96000, 0.0, 0.5),
+            (48000, 24000, 0.5, 1.0),
+        ):
+            with self.subTest(source_rate=source_rate, delivery_rate=delivery_rate, interval=(start, end)):
+                samples = np.stack((
+                    np.linspace(-0.2, 0.2, source_rate, dtype=np.float32),
+                    np.linspace(0.3, -0.3, source_rate, dtype=np.float32),
+                ))
+                original = samples.copy()
+                source = {"samples": samples, "sample_rate": source_rate, "sample_layout": "channels_first"}
+
+                class Pipeline(FakeSourceConditionedAceStepPipeline):
+                    _modiff_audio_mode = "audio_repaint"
+
+                    def __call__(self, src_audio=None, **kwargs):
+                        self.call_kwargs = {**kwargs, "src_audio": src_audio}
+                        return SimpleNamespace(audios=np.full((1, 2, 48512), 0.6, dtype=np.float32))
+
+                pipeline = Pipeline()
+                node = Generate("repaint-preservation")
+                node.progress = lambda *args, **kwargs: None
+                result = node.execute(
+                    pipeline=pipeline, source_audio=source, task_type="repaint",
+                    repainting_start=start, repainting_end=end, sample_rate=delivery_rate,
+                )
+                expected_source = resample_audio_object(source, delivery_rate)["samples"]
+                actual = result["audio"]["samples"]
+                first, last = int(start * delivery_rate), int(end * delivery_rate)
+                np.testing.assert_array_equal(actual[:, :first], expected_source[:, :first])
+                np.testing.assert_array_equal(actual[:, last:], expected_source[:, last:])
+                self.assertTrue(np.all(actual[:, first:last] > 0.5))
+                self.assertEqual(actual.shape, expected_source.shape)
+                self.assertEqual(result["sample_rate_out"], delivery_rate)
+                self.assertEqual(result["audio"]["channels"], 2)
+                self.assertAlmostEqual(result["duration_seconds"], 1.0)
+                np.testing.assert_array_equal(samples, original)
+                self.assertEqual(pipeline.call_kwargs["task_type"], "repaint")
+                self.assertEqual(tuple(pipeline.call_kwargs["src_audio"].shape), (2, 48000))
+
+    def test_ace_dispatch_receipt_identifies_actual_conditioning_tensor_and_interval(self):
+        from modiff.execution_input_provenance import bind_generation_input_origins
+
+        source = {"samples": np.arange(480, dtype=np.float32)[None, :] / 1000,
+                  "sample_rate": 24000}
+        original = source["samples"].copy()
+        for mode, task, port, controls in (
+            ("audio_variation", "cover", "src_audio", {"audio_duration": 0.02}),
+            ("audio_repaint", "repaint", "src_audio", {"repainting_start": 0.005, "repainting_end": 0.015}),
+            ("audio_continuation", "continuation", "src_audio", {"extension_duration": 0.01}),
+        ):
+            with self.subTest(mode=mode):
+                pipeline = FakeSourceConditionedAceStepPipeline()
+                pipeline._modiff_audio_mode = mode
+                node = Generate("dispatch")
+                node.progress = lambda *args, **kwargs: None
+                node.execute(pipeline=pipeline, source_audio=source, task_type=task,
+                             sample_rate=24000, **controls)
+                fields = node._execution_input_record["fields"]
+                tensor = pipeline.call_kwargs[port].detach().cpu().contiguous()
+                digest = hashlib.sha256(memoryview(tensor.numpy()).cast("B")).hexdigest()
+                self.assertEqual(fields["task_type"]["value"], pipeline.call_kwargs["task_type"])
+                self.assertEqual(fields[port + "_sha256"]["value"], digest)
+                self.assertEqual(fields[port + "_shape"]["value"], list(tensor.shape))
+                self.assertEqual(fields[port + "_sample_rate"]["value"], 48000)
+                self.assertEqual(fields[port + "_dtype"]["value"], "float32")
+                self.assertEqual(fields[port + "_device"]["value"], "cpu")
+                self.assertEqual(fields[port + "_bytes"]["value"], tensor.numel() * tensor.element_size())
+                self.assertEqual(fields[port + "_capture"]["value"], "contiguous-bytes-v1")
+                other = "src_audio" if port == "reference_audio" else "reference_audio"
+                self.assertFalse(any(key.startswith(other + "_") for key in fields))
+                if task in {"repaint", "continuation"}:
+                    for key in ("repainting_start", "repainting_end"):
+                        self.assertEqual(fields[key]["value"], pipeline.call_kwargs[key])
+                bound = bind_generation_input_origins("dispatch", {
+                    "module": "modules.DiffusersAudio", "action": "Generate", "params": {
+                        "source_audio": {"sourceId": "input", "sourceKey": "audio"},
+                    }}, node._execution_input_record, source_fields=node._execution_input_source_fields)
+                self.assertEqual(bound["fields"][port + "_sha256"]["source"], "connected")
+                self.assertEqual(bound["fields"][port + "_sha256"]["sourceNodeId"], "input")
+                np.testing.assert_array_equal(source["samples"], original)
+
+    def test_audio_tensor_identity_is_bounded_and_does_not_traverse_unknown_objects(self):
+        import torch
+        from modules.DiffusersAudio.main import _audio_dispatch_tensor_evidence
+
+        def capture(value):
+            return _audio_dispatch_tensor_evidence("src_audio", value, sample_rate=48000)
+
+        class Unknown:
+            def __getattribute__(self, name):
+                raise AssertionError("Unknown object must not be inspected")
+
+        self.assertEqual(capture(Unknown()), {"src_audio_capture": "unsupported-tensor"})
+        self.assertEqual(capture(torch.empty((2, 4), device="meta")),
+                         {"src_audio_capture": "unsupported-tensor"})
+        self.assertEqual(capture(torch.zeros((2, 4)).to_sparse()),
+                         {"src_audio_capture": "unsupported-tensor"})
+        with patch("modules.DiffusersAudio.main.AUDIO_DISPATCH_CAPTURE_MAX_BYTES", 15):
+            self.assertEqual(capture(torch.zeros((2, 2))), {"src_audio_capture": "byte-limit"})
+        value = torch.arange(12).reshape(3, 4).to(torch.bfloat16).T
+        before = value.clone()
+        identity = capture(value)
+        expected = value.contiguous().view(torch.uint8).numpy().tobytes()
+        self.assertEqual(identity["src_audio_sha256"], hashlib.sha256(expected).hexdigest())
+        self.assertEqual(identity["src_audio_dtype"], "bfloat16")
+        self.assertTrue(torch.equal(value, before))
+        self.assertFalse(value.is_contiguous())
+
+    def test_repaint_rejects_decoded_audio_that_cannot_fill_the_selected_interval(self):
+        source = {"samples": np.full((2, 48000), 0.2, dtype=np.float32), "sample_rate": 48000}
+        for shape, message in (((1, 1, 48000), "channels"), ((1, 2, 10000), "selected interval")):
+            with self.subTest(shape=shape):
+                class Pipeline(FakeSourceConditionedAceStepPipeline):
+                    _modiff_audio_mode = "audio_repaint"
+
+                    def __call__(self, src_audio=None, **kwargs):
+                        return SimpleNamespace(audios=np.zeros(shape, dtype=np.float32))
+
+                node = Generate("invalid-repaint-output")
+                node.progress = lambda *args, **kwargs: None
+                with self.assertRaisesRegex(ValueError, message):
+                    node.execute(
+                        pipeline=Pipeline(), source_audio=source, task_type="repaint",
+                        repainting_start=0.25, repainting_end=0.75, sample_rate=48000,
+                    )
 
     def test_invalid_contract_fails_before_torch_import_or_upstream_call(self):
         pipeline = FakeSourceConditionedAceStepPipeline()
@@ -2288,9 +2470,9 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertEqual(pipeline.call_kwargs["bpm"], 170)
         self.assertIsInstance(pipeline.call_kwargs["bpm"], int)
 
-    def test_cover_routes_source_track_to_reference_audio_without_optional_audio_code_modules(self):
+    def test_cover_routes_source_track_to_src_audio_without_implicit_timbre_reference(self):
         pipeline = FakeSourceConditionedAceStepPipeline()
-        node = Generate("ace-cover-reference-test")
+        node = Generate("ace-cover-source-test")
         node.progress = lambda *args, **kwargs: None
         source = {"samples": np.zeros((2, 480), dtype=np.float32), "sample_rate": 48000}
 
@@ -2302,8 +2484,8 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
             audio_duration=0.01,
         )
 
-        self.assertIsNone(pipeline.call_kwargs["src_audio"])
-        self.assertIsNotNone(pipeline.call_kwargs["reference_audio"])
+        self.assertIsNotNone(pipeline.call_kwargs["src_audio"])
+        self.assertIsNone(pipeline.call_kwargs["reference_audio"])
 
     def test_repaint_routes_source_track_to_src_audio_without_implicit_timbre_reference(self):
         pipeline = FakeSourceConditionedAceStepPipeline()

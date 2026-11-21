@@ -1,68 +1,26 @@
 {
   "edges": [
     {
-      "className": "category-quantization_config",
+      "className": "category-union-image-video",
       "data": {
-        "connectionType": "quantization_config"
+        "connectionType": [
+          "image",
+          "video"
+        ]
       },
-      "edgeType": "default",
       "id": "edge-01",
       "markerEnd": {
-        "color": "#FDE68A",
+        "color": "hsl(312 74% 67%)",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
       "source": "node-01",
-      "sourceHandle": "quantization_config",
+      "sourceHandle": "output",
       "style": {
-        "stroke": "#FDE68A"
-      },
-      "target": "node-02",
-      "targetHandle": "quantization_config",
-      "type": "default"
-    },
-    {
-      "className": "category-diffusers_execution_recipe",
-      "data": {
-        "connectionType": "diffusers_execution_recipe"
-      },
-      "edgeType": "default",
-      "id": "edge-02",
-      "markerEnd": {
-        "color": "#C4B5FD",
-        "height": 18,
-        "type": "arrowclosed",
-        "width": 18
-      },
-      "source": "node-02",
-      "sourceHandle": "execution_recipe",
-      "style": {
-        "stroke": "#C4B5FD"
+        "stroke": "hsl(312 74% 67%)"
       },
       "target": "node-08",
-      "targetHandle": "execution_recipe",
-      "type": "default"
-    },
-    {
-      "className": "category-video",
-      "data": {
-        "connectionType": "video"
-      },
-      "edgeType": "default",
-      "id": "edge-03",
-      "markerEnd": {
-        "color": "#06B6D4",
-        "height": 18,
-        "type": "arrowclosed",
-        "width": 18
-      },
-      "source": "node-03",
-      "sourceHandle": "video",
-      "style": {
-        "stroke": "#06B6D4"
-      },
-      "target": "node-04",
       "targetHandle": "video",
       "type": "default"
     },
@@ -71,15 +29,95 @@
       "data": {
         "connectionType": "video"
       },
-      "edgeType": "default",
-      "id": "edge-04",
+      "id": "edge-02",
       "markerEnd": {
         "color": "#06B6D4",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
+      "source": "node-02",
+      "sourceHandle": "video_out",
+      "style": {
+        "stroke": "#06B6D4"
+      },
+      "target": "node-01",
+      "targetHandle": "image",
+      "type": "default"
+    },
+    {
+      "className": "category-quantization_config",
+      "data": {
+        "connectionType": "quantization_config"
+      },
+      "id": "edge-03",
+      "markerEnd": {
+        "color": "#FDE68A",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "quantization_config",
+      "style": {
+        "stroke": "#FDE68A"
+      },
+      "target": "node-04",
+      "targetHandle": "quantization_config"
+    },
+    {
+      "className": "category-diffusers_execution_recipe",
+      "data": {
+        "connectionType": "diffusers_execution_recipe"
+      },
+      "id": "edge-04",
+      "markerEnd": {
+        "color": "#C4B5FD",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
       "source": "node-04",
+      "sourceHandle": "execution_recipe",
+      "style": {
+        "stroke": "#C4B5FD"
+      },
+      "target": "node-09",
+      "targetHandle": "execution_recipe"
+    },
+    {
+      "className": "category-video",
+      "data": {
+        "connectionType": "video"
+      },
+      "id": "edge-05",
+      "markerEnd": {
+        "color": "#06B6D4",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-05",
+      "sourceHandle": "video",
+      "style": {
+        "stroke": "#06B6D4"
+      },
+      "target": "node-06",
+      "targetHandle": "video"
+    },
+    {
+      "className": "category-video",
+      "data": {
+        "connectionType": "video"
+      },
+      "id": "edge-06",
+      "markerEnd": {
+        "color": "#06B6D4",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-06",
       "sourceHandle": "output",
       "style": {
         "stroke": "#06B6D4"
@@ -89,50 +127,24 @@
       "type": "default"
     },
     {
-      "className": "category-union-image-video",
+      "className": "category-video_conditioning",
       "data": {
-        "connectionType": [
-          "image",
-          "video"
-        ]
+        "connectionType": "video_conditioning"
       },
-      "edgeType": "default",
-      "id": "edge-05",
+      "id": "edge-07",
       "markerEnd": {
-        "color": "hsl(312 74% 67%)",
-        "height": 18,
-        "type": "arrowclosed",
-        "width": 18
-      },
-      "source": "node-05",
-      "sourceHandle": "output",
-      "style": {
-        "stroke": "hsl(312 74% 67%)"
-      },
-      "target": "node-06",
-      "targetHandle": "video",
-      "type": "default"
-    },
-    {
-      "className": "category-video",
-      "data": {
-        "connectionType": "video"
-      },
-      "edgeType": "default",
-      "id": "edge-06",
-      "markerEnd": {
-        "color": "#06B6D4",
+        "color": "hsl(6 75% 62%)",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
       "source": "node-07",
-      "sourceHandle": "video_out",
+      "sourceHandle": "encoded_inputs",
       "style": {
-        "stroke": "#06B6D4"
+        "stroke": "hsl(6 75% 62%)"
       },
-      "target": "node-05",
-      "targetHandle": "image",
+      "target": "node-02",
+      "targetHandle": "encoded_inputs",
       "type": "default"
     },
     {
@@ -140,15 +152,35 @@
       "data": {
         "connectionType": "video_diffusion_pipeline"
       },
-      "edgeType": "default",
-      "id": "edge-07",
+      "id": "edge-08",
       "markerEnd": {
         "color": "#F97316",
         "height": 18,
         "type": "arrowclosed",
         "width": 18
       },
-      "source": "node-08",
+      "source": "node-09",
+      "sourceHandle": "pipeline",
+      "style": {
+        "stroke": "#F97316"
+      },
+      "target": "node-02",
+      "targetHandle": "pipeline",
+      "type": "default"
+    },
+    {
+      "className": "category-video_diffusion_pipeline",
+      "data": {
+        "connectionType": "video_diffusion_pipeline"
+      },
+      "id": "edge-09",
+      "markerEnd": {
+        "color": "#F97316",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-09",
       "sourceHandle": "pipeline",
       "style": {
         "stroke": "#F97316"
@@ -161,10 +193,2283 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "54034ff943a6424d2144662827a08c7220aa9542d2f2365bbf081c4f1ea24b75",
+    "positionHash": "65eb5f2ec7d4c41f48e67234ebac12ca67e931e7d4748704e40e47f190a58d04",
     "verticalGap": 72
   },
   "nodes": [
+    {
+      "data": {
+        "action": "Upscaler",
+        "cache": false,
+        "category": "upscaler",
+        "description": "",
+        "label": "Upscale with model",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Spandrel",
+        "params": {
+          "device": {
+            "default": "cpu:0",
+            "label": "Device",
+            "options": {
+              "cpu": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
+              }
+            },
+            "type": "string",
+            "value": "cuda:0"
+          },
+          "downscale": {
+            "default": 1,
+            "description": "Post downscaling factor. After the image is upscaled, it is downscaled by this factor.",
+            "display": "slider",
+            "label": "Downscale",
+            "max": 1,
+            "min": 0.1,
+            "step": 0.01,
+            "type": "float",
+            "value": 1
+          },
+          "image": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Image or video frames",
+            "required": true,
+            "type": [
+              "image",
+              "video"
+            ]
+          },
+          "model_id": {
+            "default": {
+              "byteSize": 67061725,
+              "license": "bsd-3-clause",
+              "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
+              "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+              "source": "hub",
+              "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth"
+            },
+            "disabled": false,
+            "display": "modelselect",
+            "fieldOptions": {
+              "filter": {
+                "hub": {},
+                "local": {
+                  "id": "^upscalers/"
+                }
+              },
+              "noValidation": true,
+              "sources": [
+                "hub",
+                "local"
+              ]
+            },
+            "label": "Model",
+            "type": "string",
+            "value": {
+              "byteSize": 67061725,
+              "license": "bsd-3-clause",
+              "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
+              "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+              "source": "hub",
+              "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth"
+            }
+          },
+          "output": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Upscaled frames",
+            "type": [
+              "image",
+              "video"
+            ]
+          },
+          "tile_overlap": {
+            "default": 32,
+            "description": "Context overlap cropped from each tile boundary before CPU-side stitching.",
+            "label": "Tile overlap",
+            "max": 256,
+            "min": 0,
+            "step": 8,
+            "type": "int"
+          },
+          "tile_size": {
+            "default": 256,
+            "description": "Input tile size. Use 0 only when full-frame inference is known to fit.",
+            "label": "Tile size",
+            "max": 2048,
+            "min": 0,
+            "step": 32,
+            "type": "int"
+          }
+        },
+        "resizable": false,
+        "skipParamsCheck": false,
+        "style": "",
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 2200,
+        "y": 346
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "Generate",
+        "cache": false,
+        "category": "Diffusers Video",
+        "description": "Generate or condition video through the selected family adapter.",
+        "label": "Render Video",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.DiffusersVideo",
+        "operationAuthoring": {
+          "authored": [
+            "width",
+            "height",
+            "seed",
+            "num_frames",
+            "num_inference_steps",
+            "guidance_scale",
+            "scheduler_flow_shift",
+            "conditioning_scale",
+            "strength",
+            "denoise_strength",
+            "guidance_scale_2",
+            "use_guidance_scale_2",
+            "output_type",
+            "attention_kwargs_json"
+          ],
+          "defaults": {
+            "attention_kwargs_json": "",
+            "callback_on_step_end_tensor_inputs": "latents",
+            "conditioning_scale": 1,
+            "guidance_scale": 5,
+            "guidance_scale_2": 0,
+            "height": 480,
+            "mode": "control_to_video",
+            "num_frames": 81,
+            "num_inference_steps": 30,
+            "num_videos_per_prompt": 1,
+            "output_type": "pil",
+            "seed": 0,
+            "use_guidance_scale_2": false,
+            "width": 832
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "WanVACEPipeline",
+              "values": {
+                "mode": "control_to_video"
+              }
+            },
+            "blockName": null,
+            "decomposition": "bundle",
+            "nodeKey": "modules.DiffusersVideo.Generate",
+            "nodeType": "denoise",
+            "operationId": "diffusion.render_video",
+            "pipelineClass": "WanVACEPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline",
+                "semantics": {
+                  "kind": "pipeline",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "WanVACEPipeline",
+                  "state": null
+                },
+                "types": [
+                  "video_diffusion_pipeline"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "negative_prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "video",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "video",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "video"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "mask",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "mask",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "video"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "reference_images",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "reference_images",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "conditioning_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "conditioning_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "width",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "width",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "height",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "height",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "num_frames",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "num_frames",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "num_inference_steps",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "num_inference_steps",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guidance_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "guidance_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guidance_scale_2",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "guidance_scale_2",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "use_guidance_scale_2",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "use_guidance_scale_2",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "num_videos_per_prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "num_videos_per_prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "seed",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "seed",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "latents",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "latents",
+                "semantics": {
+                  "kind": "latents",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "WanVACEPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prompt_embeds",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt_embeds",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "WanVACEPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "negative_prompt_embeds",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_prompt_embeds",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "WanVACEPipeline",
+                  "state": null
+                },
+                "types": [
+                  "tensor"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "output_type",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "output_type",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "attention_kwargs_json",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "attention_kwargs_json",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "callback_on_step_end_tensor_inputs",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "callback_on_step_end_tensor_inputs",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "max_sequence_length",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "max_sequence_length",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "video_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "video_out",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "video"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "width_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "width_out",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "height_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "height_out",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "frames_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "frames_out",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "encoded_inputs",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "encoded_inputs",
+                "semantics": {
+                  "kind": "conditioning",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "WanVACEPipeline",
+                  "state": null
+                },
+                "types": [
+                  "video_conditioning"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "video_contract",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "video_contract",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "WanVACEPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "control_video",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "control_video",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "video"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "frame_rate",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "frame_rate",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "strength",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "strength",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "denoise_strength",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "denoise_strength",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "last_image",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "last_image",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "reference_video",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "reference_video",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "video"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "reference_strength",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "reference_strength",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "reference_downscale_factor",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "reference_downscale_factor",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "conditioning_attention_strength",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "conditioning_attention_strength",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "framepack_sampling",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "framepack_sampling",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "latent_window_size",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "latent_window_size",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "true_cfg_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "true_cfg_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "secondary_guidance_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "secondary_guidance_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "scheduler_flow_shift",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "scheduler_flow_shift",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "pose_video",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pose_video",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "str",
+                  "video"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "face_video",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "face_video",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "str",
+                  "video"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "background_video",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "background_video",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "str",
+                  "video"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "segment_frame_length",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "segment_frame_length",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "previous_conditioning_frames",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "previous_conditioning_frames",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "motion_encode_batch_size",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "motion_encode_batch_size",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "temporal_tile_size",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "temporal_tile_size",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "temporal_overlap",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "temporal_overlap",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "temporal_overlap_condition_strength",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "temporal_overlap_condition_strength",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "adain_factor",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "adain_factor",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "prompt_segments_json",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt_segments_json",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "pag_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pag_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "pag_adaptive_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pag_adaptive_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "control_to_video",
+            "workflowId": null
+          },
+          "retained": [],
+          "schemaVersion": 1,
+          "sharedInputs": [
+            {
+              "field": "guidance_scale",
+              "groupId": "diffusion.encode_video.guidance_scale|diffusion.render_video.guidance_scale",
+              "loaderId": "node-09",
+              "name": "guidance_scale"
+            }
+          ]
+        },
+        "params": {
+          "adain_factor": {
+            "default": 0.25,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Long Color Consistency",
+            "max": 1,
+            "min": 0,
+            "step": 0.05,
+            "type": "float"
+          },
+          "attention_kwargs_json": {
+            "default": "",
+            "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Attention kwargs JSON",
+            "type": "text",
+            "value": ""
+          },
+          "background_video": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Background Video",
+            "required": false,
+            "type": [
+              "video",
+              "str"
+            ]
+          },
+          "callback_on_step_end_tensor_inputs": {
+            "default": "latents",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Callback tensors",
+            "type": "string",
+            "value": "latents"
+          },
+          "conditioning_attention_strength": {
+            "default": 1,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "IC-LoRA Attention Strength",
+            "max": 1,
+            "min": 0,
+            "step": 0.05,
+            "type": "float"
+          },
+          "conditioning_scale": {
+            "default": 1,
+            "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Conditioning Scale",
+            "max": 2,
+            "min": 0,
+            "step": 0.05,
+            "type": "float",
+            "value": 1
+          },
+          "control_video": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Control Video",
+            "required": false,
+            "type": "video"
+          },
+          "denoise_strength": {
+            "default": 1,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Denoise strength",
+            "max": 1,
+            "min": 0,
+            "step": 0.05,
+            "type": "float",
+            "value": 0.8
+          },
+          "encoded_inputs": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Encoded inputs",
+            "required": true,
+            "type": "video_conditioning"
+          },
+          "face_video": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Face Video",
+            "required": false,
+            "type": [
+              "video",
+              "str"
+            ]
+          },
+          "frame_rate": {
+            "default": 25,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Frame rate",
+            "max": 60,
+            "min": 1,
+            "type": "int"
+          },
+          "framepack_sampling": {
+            "default": "inverted_anti_drifting",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "FramePack Sampling",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "inverted_anti_drifting",
+                "schemaVersion": 1,
+                "value": "inverted_anti_drifting"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "vanilla",
+                "schemaVersion": 1,
+                "value": "vanilla"
+              }
+            ],
+            "type": "string"
+          },
+          "frames_out": {
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Frames",
+            "type": "int"
+          },
+          "guidance_scale": {
+            "default": 5,
+            "description": "Shared guidance_scale for this connected stage graph. Editing either field updates all members.",
+            "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Guidance",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float",
+            "value": 5
+          },
+          "guidance_scale_2": {
+            "default": 0,
+            "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Guidance 2",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float",
+            "value": 0
+          },
+          "height": {
+            "default": 480,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Height",
+            "max": 2048,
+            "min": 16,
+            "step": 16,
+            "type": "int",
+            "value": 480
+          },
+          "height_out": {
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Height",
+            "type": "int"
+          },
+          "last_image": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Optional Last Image",
+            "required": false,
+            "type": "image"
+          },
+          "latent_window_size": {
+            "default": 9,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "FramePack Window",
+            "max": 32,
+            "min": 1,
+            "type": "int"
+          },
+          "latents": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Latents",
+            "required": false,
+            "type": "tensor"
+          },
+          "mask": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Mask video",
+            "required": false,
+            "type": "video"
+          },
+          "max_sequence_length": {
+            "default": 512,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Max sequence length",
+            "max": 2048,
+            "min": 1,
+            "required": false,
+            "type": "int"
+          },
+          "mode": {
+            "default": "text_to_video",
+            "fieldOptions": {
+              "noValidation": true,
+              "suppressInitialFieldAction": true
+            },
+            "label": "Mode",
+            "onChange": "update_adapter_modes",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "character_animate",
+                "schemaVersion": 1,
+                "value": "character_animate"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "character_replace",
+                "schemaVersion": 1,
+                "value": "character_replace"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "control_to_video",
+                "schemaVersion": 1,
+                "value": "control_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "control_video_to_video",
+                "schemaVersion": 1,
+                "value": "control_video_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "image_to_video",
+                "schemaVersion": 1,
+                "value": "image_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "in_context_to_video",
+                "schemaVersion": 1,
+                "value": "in_context_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "reference_to_video",
+                "schemaVersion": 1,
+                "value": "reference_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text_to_video",
+                "schemaVersion": 1,
+                "value": "text_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_color_edit",
+                "schemaVersion": 1,
+                "value": "video_color_edit"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_inpaint",
+                "schemaVersion": 1,
+                "value": "video_inpaint"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_outpaint",
+                "schemaVersion": 1,
+                "value": "video_outpaint"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_to_video",
+                "schemaVersion": 1,
+                "value": "video_to_video"
+              }
+            ],
+            "type": "string",
+            "value": "control_to_video"
+          },
+          "motion_encode_batch_size": {
+            "default": 1,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Motion Batch",
+            "max": 32,
+            "min": 1,
+            "type": "int"
+          },
+          "negative_prompt": {
+            "default": "",
+            "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Negative Prompt",
+            "required": false,
+            "type": "text"
+          },
+          "negative_prompt_embeds": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Negative prompt embeds",
+            "required": false,
+            "type": "tensor"
+          },
+          "num_frames": {
+            "default": 81,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Frames",
+            "max": 241,
+            "min": 1,
+            "step": 4,
+            "type": "int",
+            "value": 81
+          },
+          "num_inference_steps": {
+            "default": 30,
+            "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Steps",
+            "max": 100,
+            "min": 1,
+            "type": "int",
+            "value": 30
+          },
+          "num_videos_per_prompt": {
+            "default": 1,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Videos per prompt",
+            "max": 1,
+            "min": 1,
+            "type": "int",
+            "value": 1
+          },
+          "output_type": {
+            "default": "pil",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Output type",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "pil",
+                "schemaVersion": 1,
+                "value": "pil"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "np",
+                "schemaVersion": 1,
+                "value": "np"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "pt",
+                "schemaVersion": 1,
+                "value": "pt"
+              }
+            ],
+            "type": "string",
+            "value": "pil"
+          },
+          "pag_adaptive_scale": {
+            "default": 0,
+            "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "PAG Adaptive Scale",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float"
+          },
+          "pag_scale": {
+            "default": 3,
+            "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "PAG Scale",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float"
+          },
+          "pipeline": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
+            },
+            "label": "Pipeline",
+            "onSignal": [
+              {
+                "action": "value",
+                "target": "video_contract"
+              },
+              {
+                "action": "exec",
+                "data": "update_adapter_modes"
+              }
+            ],
+            "required": true,
+            "signalCompatibility": {
+              "action": "$node",
+              "required": true
+            },
+            "type": "video_diffusion_pipeline"
+          },
+          "pose_video": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Pose Video",
+            "required": false,
+            "type": [
+              "video",
+              "str"
+            ]
+          },
+          "previous_conditioning_frames": {
+            "default": 1,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Previous Frames",
+            "max": 16,
+            "min": 1,
+            "type": "int"
+          },
+          "prompt": {
+            "default": "",
+            "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Prompt",
+            "required": false,
+            "type": "text"
+          },
+          "prompt_embeds": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Prompt embeds",
+            "required": false,
+            "type": "tensor"
+          },
+          "prompt_segments_json": {
+            "default": "",
+            "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Timed Prompt Segments",
+            "type": "text"
+          },
+          "reference_downscale_factor": {
+            "default": 1,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "IC-LoRA Reference Downscale",
+            "max": 8,
+            "min": 1,
+            "type": "int"
+          },
+          "reference_images": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Reference images",
+            "required": false,
+            "type": "image"
+          },
+          "reference_strength": {
+            "default": 1,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "IC-LoRA Reference Strength",
+            "max": 1,
+            "min": 0,
+            "step": 0.05,
+            "type": "float"
+          },
+          "reference_video": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "IC-LoRA Reference Video",
+            "required": false,
+            "type": "video"
+          },
+          "scheduler_flow_shift": {
+            "default": 0,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Flow Shift",
+            "max": 32,
+            "min": 0,
+            "step": 0.1,
+            "type": "float",
+            "value": 3
+          },
+          "secondary_guidance_scale": {
+            "default": 3.5,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Low-noise Guidance",
+            "max": 20,
+            "min": 0,
+            "step": 0.1,
+            "type": "float"
+          },
+          "seed": {
+            "default": 0,
+            "display": "random",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Seed",
+            "max": 9007199254740991,
+            "min": 0,
+            "type": "int",
+            "value": {
+              "isRandom": false,
+              "value": 8207
+            }
+          },
+          "segment_frame_length": {
+            "default": 77,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Segment Frames",
+            "max": 241,
+            "min": 5,
+            "type": "int"
+          },
+          "strength": {
+            "default": 1,
+            "fieldOptions": {
+              "studioBinding": {
+                "formFields": [
+                  "strength"
+                ],
+                "group": "video-strength",
+                "schemaVersion": 1,
+                "transform": "identity"
+              },
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Condition strength",
+            "max": 1,
+            "min": 0,
+            "step": 0.05,
+            "type": "float",
+            "value": 0.8
+          },
+          "temporal_overlap": {
+            "default": 24,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Temporal Overlap",
+            "max": 128,
+            "min": 1,
+            "type": "int"
+          },
+          "temporal_overlap_condition_strength": {
+            "default": 0.5,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Overlap Preservation",
+            "max": 1,
+            "min": 0,
+            "step": 0.05,
+            "type": "float"
+          },
+          "temporal_tile_size": {
+            "default": 80,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Temporal Window",
+            "max": 257,
+            "min": 17,
+            "type": "int"
+          },
+          "true_cfg_scale": {
+            "default": 1,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "True CFG",
+            "max": 20,
+            "min": 0,
+            "type": "float"
+          },
+          "use_guidance_scale_2": {
+            "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Use guidance 2",
+            "type": "bool",
+            "value": false
+          },
+          "video": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Source/control video",
+            "required": false,
+            "type": "video"
+          },
+          "video_contract": {
+            "default": {
+              "actions": {
+                "EncodeInputs": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ],
+                "Generate": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ],
+                "GenerateSequence": [
+                  "text_to_video"
+                ],
+                "GenerateShotJob": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ]
+              },
+              "library": "diffusers",
+              "mediaKind": "video",
+              "modes": [
+                "text_to_video",
+                "video_to_video",
+                "video_inpaint",
+                "video_outpaint",
+                "reference_to_video",
+                "control_to_video",
+                "video_color_edit"
+              ],
+              "pipelineClass": "WanVACEPipeline",
+              "schemaVersion": 1
+            },
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Video Contract",
+            "type": "object",
+            "value": {
+              "actions": {
+                "EncodeInputs": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ],
+                "Generate": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ],
+                "GenerateSequence": [
+                  "text_to_video"
+                ],
+                "GenerateShotJob": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ]
+              },
+              "library": "diffusers",
+              "mediaKind": "video",
+              "modes": [
+                "text_to_video",
+                "video_to_video",
+                "video_inpaint",
+                "video_outpaint",
+                "reference_to_video",
+                "control_to_video",
+                "video_color_edit"
+              ],
+              "pipelineClass": "WanVACEPipeline",
+              "schemaVersion": 1
+            }
+          },
+          "video_out": {
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Video frames",
+            "type": "video"
+          },
+          "width": {
+            "default": 832,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Width",
+            "max": 2048,
+            "min": 16,
+            "step": 16,
+            "type": "int",
+            "value": 832
+          },
+          "width_out": {
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Width",
+            "type": "int"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioRole": "denoise",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom",
+        "visualStageSourceIndex": 0
+      },
+      "id": "node-02",
+      "position": {
+        "x": 1760,
+        "y": 173
+      },
+      "type": "custom"
+    },
     {
       "data": {
         "action": "PipelineQuantizationConfigV2",
@@ -181,6 +2486,9 @@
         "params": {
           "backend": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Backend",
             "options": [
               {
@@ -194,7 +2502,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
                 "installationState": "unavailable",
                 "label": "bnb_4bit",
                 "schemaVersion": 1,
@@ -203,7 +2511,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
                 "installationState": "unavailable",
                 "label": "bnb_8bit",
                 "schemaVersion": 1,
@@ -230,7 +2538,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires TorchAO and a qualified NVIDIA compute capability of at least 8.9",
+                "disabledReason": "TorchAO detected on an FP8-capable NVIDIA device",
                 "installationState": "unavailable",
                 "label": "torchao_float8",
                 "schemaVersion": 1,
@@ -252,8 +2560,12 @@
           "component_overrides": {
             "default": "{}",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Per-component Overrides (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "components": {
             "default": [
@@ -261,7 +2573,8 @@
             ],
             "display": "select",
             "fieldOptions": {
-              "multiple": true
+              "multiple": true,
+              "suppressInitialFieldAction": true
             },
             "label": "Components",
             "options": [
@@ -313,6 +2626,9 @@
           },
           "dtype": {
             "default": "bfloat16",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compute DType",
             "options": [
               {
@@ -324,10 +2640,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -348,25 +2663,32 @@
             "default": "",
             "description": "Comma-separated module paths or patterns to keep in their original precision.",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Preserve Modules",
-            "type": "text"
+            "type": "text",
+            "value": ""
           },
           "quantization_config": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Quant Config",
             "type": "quantization_config"
           },
           "summary": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Summary",
             "type": "string"
           }
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "diffusersQuantization",
         "style": {},
         "time": [
@@ -376,7 +2698,7 @@
         ],
         "type": "custom"
       },
-      "id": "node-01",
+      "id": "node-03",
       "position": {
         "x": 0,
         "y": 159
@@ -399,6 +2721,9 @@
         "params": {
           "attention_backend": {
             "default": "auto",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Attention Backend",
             "options": [
               {
@@ -420,17 +2745,16 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "Native flash SDPA is unavailable in this Torch build. Select auto attention.",
                 "installationState": "unavailable",
                 "label": "_native_flash",
                 "schemaVersion": 1,
                 "value": "_native_flash"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_efficient",
                 "schemaVersion": 1,
                 "value": "_native_efficient"
@@ -444,10 +2768,9 @@
                 "value": "_native_math"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires NVIDIA CUDA",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_cudnn",
                 "schemaVersion": 1,
                 "value": "_native_cudnn"
@@ -455,7 +2778,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a PyTorch accelerator build with FlexAttention",
+                "disabledReason": "Requires a successful compiled FlexAttention probe on this accelerator",
                 "installationState": "unavailable",
                 "label": "flex",
                 "schemaVersion": 1,
@@ -464,7 +2787,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "flash-attn package is not installed",
                 "installationState": "unavailable",
                 "label": "flash",
                 "schemaVersion": 1,
@@ -545,7 +2868,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "SageAttention package is not installed",
                 "installationState": "unavailable",
                 "label": "sage",
                 "schemaVersion": 1,
@@ -572,7 +2895,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff only enables xFormers on NVIDIA CUDA",
+                "disabledReason": "xFormers package is not installed",
                 "installationState": "unavailable",
                 "label": "xformers",
                 "schemaVersion": 1,
@@ -580,59 +2903,96 @@
               }
             ],
             "type": "string",
-            "value": "_native_flash"
+            "value": "auto"
           },
           "attention_components": {
             "default": "",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Attention Components",
             "type": "string",
-            "value": "transformer"
+            "value": ""
           },
           "cache_options": {
             "default": "{}",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Cache Options (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "cache_threshold": {
             "default": 0.05,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Cache Threshold",
             "min": 0,
-            "type": "float"
+            "type": "float",
+            "value": 0.05
           },
           "channels_last": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Channels Last",
             "type": "bool",
             "value": false
           },
           "channels_last_components": {
             "default": "unet,vae",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Channels Last Components",
-            "type": "string"
+            "type": "string",
+            "value": "unet,vae"
           },
           "compile_backend": {
             "default": "inductor",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Backend",
-            "type": "string"
+            "type": "string",
+            "value": "inductor"
           },
           "compile_components": {
             "default": "transformer",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Components",
-            "type": "string"
+            "type": "string",
+            "value": "transformer"
           },
           "compile_dynamic": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Dynamic Shapes",
-            "type": "bool"
+            "type": "bool",
+            "value": false
           },
           "compile_fullgraph": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Full Graph",
-            "type": "bool"
+            "type": "bool",
+            "value": false
           },
           "compile_mode": {
             "default": "default",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Mode",
             "options": [
               {
@@ -660,10 +3020,14 @@
                 "value": "max-autotune"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "default"
           },
           "denoiser_cache": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Denoiser Cache",
             "options": [
               {
@@ -728,12 +3092,18 @@
           },
           "device": {
             "default": "cuda:0",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Execution Device",
             "type": "string",
             "value": "cuda:0"
           },
           "device_map": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Device Placement",
             "options": [
               {
@@ -800,28 +3170,44 @@
             "default": "{}",
             "description": "Used only with manual placement, for example {\"transformer\": 0, \"text_encoder_2\": \"cpu\"}.",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Manual Device Map (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "execution_recipe": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Execution Recipe",
             "type": "diffusers_execution_recipe"
           },
           "layerwise_casting": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Casting",
             "type": "bool",
             "value": false
           },
           "layerwise_casting_components": {
             "default": "transformer",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Casting Components",
-            "type": "string"
+            "type": "string",
+            "value": "transformer"
           },
           "layerwise_compute_dtype": {
             "default": "bfloat16",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Compute DType",
             "options": [
               {
@@ -849,10 +3235,14 @@
                 "value": "float32"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "bfloat16"
           },
           "layerwise_storage_dtype": {
             "default": "float8_e4m3fn",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Storage DType",
             "options": [
               {
@@ -872,17 +3262,25 @@
                 "value": "float8_e5m2"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "float8_e4m3fn"
           },
           "max_memory": {
             "default": "{}",
             "description": "Optional device limits, for example {\"0\": \"16GiB\", \"cpu\": \"48GiB\"}.",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Max Memory (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "offload_mode": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Runtime Offload",
             "options": [
               {
@@ -931,30 +3329,43 @@
           },
           "quantization_config": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Quant Config",
             "type": "quantization_config"
           },
           "regional_compile": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Regional Compile",
             "type": "bool",
             "value": false
           },
           "summary": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Summary",
             "type": "string"
           },
           "vae_slicing": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE Slicing",
             "type": "bool",
             "value": true
           },
           "vae_tiling": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE Tiling",
             "type": "bool",
             "value": true
@@ -962,7 +3373,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "diffusersRecipe",
         "style": {},
         "time": [
@@ -972,7 +3382,7 @@
         ],
         "type": "custom"
       },
-      "id": "node-02",
+      "id": "node-04",
       "position": {
         "x": 440,
         "y": 0
@@ -999,7 +3409,8 @@
               "fileTypes": [
                 "video"
               ],
-              "multiple": false
+              "multiple": false,
+              "suppressInitialFieldAction": true
             },
             "label": false,
             "type": "str",
@@ -1007,45 +3418,59 @@
           },
           "filename": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "File Name",
             "type": "str"
           },
           "fps": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "FPS",
             "type": "float"
           },
           "frames": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": "int"
           },
           "height": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": "int"
           },
           "label": {
             "display": "ui_label",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "value": "Load Video"
           },
           "video": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Video",
             "type": "video"
           },
           "width": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": "int"
           }
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "loadControlVideo",
         "style": {},
         "time": [
@@ -1053,9 +3478,10 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "visualStageSourceIndex": 2
       },
-      "id": "node-03",
+      "id": "node-05",
       "position": {
         "x": 0,
         "y": 505
@@ -1078,6 +3504,9 @@
         "params": {
           "fit": {
             "default": "cover",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Fit",
             "options": [
               {
@@ -1105,16 +3534,22 @@
                 "value": "stretch"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "cover"
           },
           "frames_out": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Frames",
             "type": "int"
           },
           "height": {
             "default": 480,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Height",
             "max": 2048,
             "min": 16,
@@ -1124,6 +3559,9 @@
           },
           "num_frames": {
             "default": 81,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Frames",
             "max": 241,
             "min": 1,
@@ -1132,13 +3570,17 @@
           },
           "output": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Video",
             "type": "video"
           },
           "video": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Video",
             "type": [
               "video",
@@ -1147,6 +3589,9 @@
           },
           "width": {
             "default": 832,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Width",
             "max": 2048,
             "min": 16,
@@ -1157,7 +3602,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "normalizeVideo",
         "style": {},
         "time": [
@@ -1165,9 +3609,10 @@
           0,
           0
         ],
-        "type": "custom"
+        "type": "custom",
+        "visualStageSourceIndex": 3
       },
-      "id": "node-04",
+      "id": "node-06",
       "position": {
         "x": 440,
         "y": 692
@@ -1176,126 +3621,635 @@
     },
     {
       "data": {
-        "action": "Upscaler",
+        "action": "EncodeInputs",
         "cache": false,
-        "category": "upscaler",
-        "description": "",
-        "label": "Upscale with model",
+        "category": "Diffusers Video",
+        "description": "Encode text and retain owned source media for the official video call.",
+        "label": "Encode Video",
         "memory": [
           0,
           0,
           0
         ],
-        "module": "modules.Spandrel",
-        "params": {
-          "device": {
-            "default": "cpu:0",
-            "label": "Device",
-            "options": {
-              "cpu": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cpu",
-                "schemaVersion": 1,
-                "value": "cpu"
-              },
-              "cpu:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cpu:0",
-                "schemaVersion": 1,
-                "value": "cpu:0"
+        "module": "modules.DiffusersVideo",
+        "operationAuthoring": {
+          "authored": [
+            "prompt",
+            "negative_prompt",
+            "guidance_scale",
+            "max_sequence_length"
+          ],
+          "defaults": {
+            "guidance_scale": 5,
+            "max_sequence_length": 512,
+            "mode": "control_to_video",
+            "negative_prompt": "",
+            "prompt": ""
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "WanVACEPipeline",
+              "values": {
+                "mode": "control_to_video"
               }
             },
-            "type": "string",
-            "value": "cuda:0"
-          },
-          "downscale": {
-            "default": 1,
-            "description": "Post downscaling factor. After the image is upscaled, it is downscaled by this factor.",
-            "display": "slider",
-            "label": "Downscale",
-            "max": 1,
-            "min": 0.1,
-            "step": 0.01,
-            "type": "float",
-            "value": 1
-          },
-          "image": {
-            "display": "input",
-            "isConnected": true,
-            "label": "Image or video frames",
-            "required": true,
-            "type": [
-              "image",
-              "video"
-            ]
-          },
-          "model_id": {
-            "default": {
-              "source": "local",
-              "value": ""
-            },
-            "display": "modelselect",
-            "fieldOptions": {
-              "filter": {
-                "hub": {},
-                "local": {
-                  "id": "^upscalers/"
-                }
+            "blockName": null,
+            "decomposition": "bundle",
+            "nodeKey": "modules.DiffusersVideo.EncodeInputs",
+            "nodeType": "video_encoder",
+            "operationId": "diffusion.encode_video",
+            "pipelineClass": "WanVACEPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline",
+                "semantics": {
+                  "kind": "pipeline",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "WanVACEPipeline",
+                  "state": null
+                },
+                "types": [
+                  "video_diffusion_pipeline"
+                ]
               },
-              "noValidation": true,
-              "sources": [
-                "hub",
-                "local"
-              ]
-            },
-            "label": "Model",
-            "type": "string",
-            "value": {
-              "byteSize": 67061725,
-              "license": "bsd-3-clause",
-              "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
-              "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
-              "source": "hub",
-              "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth"
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "negative_prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "video",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "video",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "video"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "mask",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "mask",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "video"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "reference_images",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "reference_images",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guidance_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "guidance_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "max_sequence_length",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "max_sequence_length",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "video_contract",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "video_contract",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "WanVACEPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "last_image",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "last_image",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "encoded_inputs",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "encoded_inputs",
+                "semantics": {
+                  "kind": "conditioning",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "WanVACEPipeline",
+                  "state": null
+                },
+                "types": [
+                  "video_conditioning"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "control_to_video",
+            "workflowId": null
+          },
+          "retained": [],
+          "schemaVersion": 1,
+          "sharedInputs": [
+            {
+              "field": "guidance_scale",
+              "groupId": "diffusion.encode_video.guidance_scale|diffusion.render_video.guidance_scale",
+              "loaderId": "node-09",
+              "name": "guidance_scale"
             }
-          },
-          "output": {
+          ]
+        },
+        "params": {
+          "encoded_inputs": {
             "display": "output",
-            "isConnected": true,
-            "label": "Upscaled frames",
-            "type": [
-              "image",
-              "video"
-            ]
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Encoded inputs",
+            "type": "video_conditioning"
           },
-          "tile_overlap": {
-            "default": 32,
-            "description": "Context overlap cropped from each tile boundary before CPU-side stitching.",
-            "label": "Tile overlap",
-            "max": 256,
+          "guidance_scale": {
+            "default": 5,
+            "description": "Shared guidance_scale for this connected stage graph. Editing either field updates all members.",
+            "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Guidance",
+            "max": 20,
             "min": 0,
-            "step": 8,
-            "type": "int"
+            "step": 0.1,
+            "type": "float",
+            "value": 5
           },
-          "tile_size": {
-            "default": 256,
-            "description": "Input tile size. Use 0 only when full-frame inference is known to fit.",
-            "label": "Tile size",
+          "last_image": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Optional Last Image",
+            "required": false,
+            "type": "image"
+          },
+          "mask": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Mask video",
+            "required": false,
+            "type": "video"
+          },
+          "max_sequence_length": {
+            "default": 512,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Max sequence length",
             "max": 2048,
-            "min": 0,
-            "step": 32,
-            "type": "int"
+            "min": 1,
+            "type": "int",
+            "value": 512
+          },
+          "mode": {
+            "default": "text_to_video",
+            "fieldOptions": {
+              "noValidation": true,
+              "suppressInitialFieldAction": true
+            },
+            "label": "Mode",
+            "onChange": "update_stage_contract",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "character_animate",
+                "schemaVersion": 1,
+                "value": "character_animate"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "character_replace",
+                "schemaVersion": 1,
+                "value": "character_replace"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "control_to_video",
+                "schemaVersion": 1,
+                "value": "control_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "control_video_to_video",
+                "schemaVersion": 1,
+                "value": "control_video_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "image_to_video",
+                "schemaVersion": 1,
+                "value": "image_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "in_context_to_video",
+                "schemaVersion": 1,
+                "value": "in_context_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "reference_to_video",
+                "schemaVersion": 1,
+                "value": "reference_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text_to_video",
+                "schemaVersion": 1,
+                "value": "text_to_video"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_color_edit",
+                "schemaVersion": 1,
+                "value": "video_color_edit"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_inpaint",
+                "schemaVersion": 1,
+                "value": "video_inpaint"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_outpaint",
+                "schemaVersion": 1,
+                "value": "video_outpaint"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_to_video",
+                "schemaVersion": 1,
+                "value": "video_to_video"
+              }
+            ],
+            "type": "string",
+            "value": "control_to_video"
+          },
+          "negative_prompt": {
+            "default": "",
+            "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Negative Prompt",
+            "type": "text",
+            "value": "deformity, deformed anatomy, deformed limbs, deformed wheels, deformed rigid-body geometry, identity drift, ignored control video, motion drift, camera-path deviation, broken rail, unstable silhouette, changing track count, frozen mist, reversed travel, shrinking tunnel, flicker, jitter, frame tear, illustration, animation, synthetic render, text, low detail, watermark"
+          },
+          "pipeline": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressAutomaticSignalAction": true,
+              "suppressInitialFieldAction": true
+            },
+            "label": "Pipeline",
+            "onSignal": [
+              {
+                "action": "value",
+                "target": "video_contract"
+              },
+              {
+                "action": "exec",
+                "data": "update_stage_contract"
+              }
+            ],
+            "required": true,
+            "signalCompatibility": {
+              "action": "$node",
+              "required": true
+            },
+            "type": "video_diffusion_pipeline"
+          },
+          "prompt": {
+            "default": "",
+            "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Prompt",
+            "type": "text",
+            "value": "Control task: reconstruct the supplied moving grayscale street segmentation clip as a photoreal protected urban cycle-lane point-of-view while following every curb, paving boundary, parked scooter silhouette, tree, façade, timing and camera movement frame for frame. Control roles: let the grayscale clip determine geometry, scale, forward travel and occlusion. Use text only for real materials and light: pale concrete cycle lane, red-brown brick sidewalk, dark asphalt, a parked black scooter at the right curb, leafy street trees and warm clear-morning sunlight. Camera and motion: preserve the exact low forward point of view. Near paving seams and curb edges move beneath the camera while the distant street grows continuously; the parked scooter passes the right edge according to the control sequence. Lighting and continuity: keep natural exposure, stable horizon, crisp lane boundaries and layered parallax across the full ride. Shadows remain attached to their objects and move only with the source camera. Output contract: one believable real city cycling-lane inspection with obvious forward travel; no static hold, moving parked scooter, changing curb layout, flicker, camera reversal, lettering, illustration or synthetic render."
+          },
+          "reference_images": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Reference images",
+            "required": false,
+            "type": "image"
+          },
+          "video": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": false,
+            "label": "Source/control video",
+            "required": true,
+            "type": "video"
+          },
+          "video_contract": {
+            "default": {
+              "actions": {
+                "EncodeInputs": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ],
+                "Generate": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ],
+                "GenerateSequence": [
+                  "text_to_video"
+                ],
+                "GenerateShotJob": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ]
+              },
+              "library": "diffusers",
+              "mediaKind": "video",
+              "modes": [
+                "text_to_video",
+                "video_to_video",
+                "video_inpaint",
+                "video_outpaint",
+                "reference_to_video",
+                "control_to_video",
+                "video_color_edit"
+              ],
+              "pipelineClass": "WanVACEPipeline",
+              "schemaVersion": 1
+            },
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Video Contract",
+            "type": "object",
+            "value": {
+              "actions": {
+                "EncodeInputs": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ],
+                "Generate": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ],
+                "GenerateSequence": [
+                  "text_to_video"
+                ],
+                "GenerateShotJob": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ]
+              },
+              "library": "diffusers",
+              "mediaKind": "video",
+              "modes": [
+                "text_to_video",
+                "video_to_video",
+                "video_inpaint",
+                "video_outpaint",
+                "reference_to_video",
+                "control_to_video",
+                "video_color_edit"
+              ],
+              "pipelineClass": "WanVACEPipeline",
+              "schemaVersion": 1
+            }
           }
         },
-        "resizable": false,
+        "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
-        "studioRole": "upscaler",
-        "style": "",
+        "studioRole": "videoEncode",
+        "style": {},
         "time": [
           0,
           0,
@@ -1303,10 +4257,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-05",
+      "id": "node-07",
       "position": {
-        "x": 1760,
-        "y": 346
+        "x": 1320,
+        "y": 276
       },
       "type": "custom"
     },
@@ -1326,16 +4280,25 @@
         "params": {
           "file": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": "video"
           },
           "filename": {
             "default": "{PATH:videos}/MoDiff_{HASH:6}.mp4",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "File",
-            "type": "str"
+            "type": "str",
+            "value": "{PATH:videos}/MoDiff_{HASH:6}.mp4"
           },
           "fps": {
             "default": 24,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "FPS",
             "max": 240,
             "min": 1,
@@ -1345,29 +4308,42 @@
           },
           "frames": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": "int"
           },
           "height": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": "int"
           },
           "preview": {
             "dataSource": "file",
             "display": "ui_video",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": "url"
           },
           "quality": {
-            "default": 5,
+            "default": 8,
             "display": "slider",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "max": 10,
             "min": 1,
-            "type": "int"
+            "type": "int",
+            "value": 8
           },
           "video": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": [
               "video",
               "str",
@@ -1376,13 +4352,14 @@
           },
           "width": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": "int"
           }
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "videoExport",
         "style": {},
         "time": [
@@ -1392,600 +4369,10 @@
         ],
         "type": "custom"
       },
-      "id": "node-06",
+      "id": "node-08",
       "position": {
-        "x": 2200,
+        "x": 2640,
         "y": 318
-      },
-      "type": "custom"
-    },
-    {
-      "data": {
-        "action": "Generate",
-        "cache": false,
-        "category": "Diffusers Video",
-        "description": "Generate or condition video through the selected family adapter.",
-        "label": "Diffusers.Generate",
-        "memory": [
-          0,
-          0,
-          0
-        ],
-        "module": "modules.DiffusersVideo",
-        "params": {
-          "adain_factor": {
-            "default": 0.25,
-            "disabled": false,
-            "hidden": true,
-            "label": "Long Color Consistency",
-            "max": 1,
-            "min": 0,
-            "step": 0.05,
-            "type": "float"
-          },
-          "attention_kwargs_json": {
-            "default": "",
-            "display": "textarea",
-            "label": "Attention kwargs JSON",
-            "type": "text",
-            "value": ""
-          },
-          "background_video": {
-            "disabled": false,
-            "display": "input",
-            "hidden": true,
-            "isConnected": false,
-            "label": "Background Video",
-            "required": false,
-            "type": [
-              "video",
-              "str"
-            ]
-          },
-          "callback_on_step_end_tensor_inputs": {
-            "default": "latents",
-            "label": "Callback tensors",
-            "type": "string"
-          },
-          "conditioning_scale": {
-            "default": 1,
-            "disabled": false,
-            "display": "slider",
-            "hidden": false,
-            "label": "Conditioning Scale",
-            "max": 2,
-            "min": 0,
-            "step": 0.05,
-            "type": "float",
-            "value": 1
-          },
-          "control_video": {
-            "disabled": false,
-            "display": "input",
-            "hidden": true,
-            "isConnected": false,
-            "label": "Control Video",
-            "required": false,
-            "type": "video"
-          },
-          "denoise_strength": {
-            "default": 1,
-            "disabled": false,
-            "hidden": true,
-            "label": "Denoise strength",
-            "max": 1,
-            "min": 0,
-            "step": 0.05,
-            "type": "float",
-            "value": 0.8
-          },
-          "face_video": {
-            "disabled": false,
-            "display": "input",
-            "hidden": true,
-            "isConnected": false,
-            "label": "Face Video",
-            "required": false,
-            "type": [
-              "video",
-              "str"
-            ]
-          },
-          "frame_rate": {
-            "default": 25,
-            "disabled": false,
-            "hidden": true,
-            "label": "Frame rate",
-            "max": 60,
-            "min": 1,
-            "type": "int",
-            "value": 16
-          },
-          "framepack_sampling": {
-            "default": "inverted_anti_drifting",
-            "disabled": false,
-            "hidden": true,
-            "label": "FramePack Sampling",
-            "options": [
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "inverted_anti_drifting",
-                "schemaVersion": 1,
-                "value": "inverted_anti_drifting"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "vanilla",
-                "schemaVersion": 1,
-                "value": "vanilla"
-              }
-            ],
-            "type": "string"
-          },
-          "frames_out": {
-            "display": "output",
-            "isConnected": false,
-            "label": "Frames",
-            "type": "int"
-          },
-          "guidance_scale": {
-            "default": 5,
-            "display": "slider",
-            "label": "Guidance",
-            "max": 20,
-            "min": 0,
-            "step": 0.1,
-            "type": "float",
-            "value": 5
-          },
-          "guidance_scale_2": {
-            "default": 0,
-            "disabled": false,
-            "display": "slider",
-            "hidden": false,
-            "label": "Guidance 2",
-            "max": 20,
-            "min": 0,
-            "step": 0.1,
-            "type": "float",
-            "value": 0
-          },
-          "height": {
-            "default": 480,
-            "label": "Height",
-            "max": 2048,
-            "min": 16,
-            "step": 16,
-            "type": "int",
-            "value": 480
-          },
-          "height_out": {
-            "display": "output",
-            "isConnected": false,
-            "label": "Height",
-            "type": "int"
-          },
-          "last_image": {
-            "disabled": false,
-            "display": "input",
-            "hidden": true,
-            "isConnected": false,
-            "label": "Optional Last Image",
-            "required": false,
-            "type": "image"
-          },
-          "latent_window_size": {
-            "default": 9,
-            "disabled": false,
-            "hidden": true,
-            "label": "FramePack Window",
-            "max": 32,
-            "min": 1,
-            "type": "int"
-          },
-          "latents": {
-            "display": "input",
-            "isConnected": false,
-            "label": "Latents",
-            "required": false,
-            "type": "tensor"
-          },
-          "mask": {
-            "disabled": false,
-            "display": "input",
-            "hidden": true,
-            "isConnected": false,
-            "label": "Mask video",
-            "required": false,
-            "type": "video"
-          },
-          "max_sequence_length": {
-            "default": 512,
-            "label": "Max sequence length",
-            "max": 2048,
-            "min": 1,
-            "type": "int",
-            "value": 512
-          },
-          "mode": {
-            "default": "text_to_video",
-            "disabled": false,
-            "fieldOptions": {
-              "noValidation": true
-            },
-            "label": "Mode",
-            "options": [
-              "text_to_video",
-              "video_to_video",
-              "video_inpaint",
-              "video_outpaint",
-              "reference_to_video",
-              "control_to_video",
-              "video_color_edit"
-            ],
-            "type": "string",
-            "value": "control_to_video"
-          },
-          "motion_encode_batch_size": {
-            "default": 1,
-            "disabled": false,
-            "hidden": true,
-            "label": "Motion Batch",
-            "max": 32,
-            "min": 1,
-            "type": "int"
-          },
-          "negative_prompt": {
-            "default": "",
-            "display": "textarea",
-            "label": "Negative Prompt",
-            "type": "text",
-            "value": "deformity, deformed anatomy, deformed limbs, deformed wheels, deformed rigid-body geometry, identity drift, ignored control video, motion drift, camera-path deviation, broken rail, unstable silhouette, changing track count, frozen mist, reversed travel, shrinking tunnel, flicker, jitter, frame tear, illustration, animation, synthetic render, text, low detail, watermark"
-          },
-          "negative_prompt_embeds": {
-            "display": "input",
-            "isConnected": false,
-            "label": "Negative prompt embeds",
-            "required": false,
-            "type": "tensor"
-          },
-          "num_frames": {
-            "default": 81,
-            "label": "Frames",
-            "max": 241,
-            "min": 1,
-            "step": 4,
-            "type": "int",
-            "value": 81
-          },
-          "num_inference_steps": {
-            "default": 30,
-            "display": "slider",
-            "label": "Steps",
-            "max": 100,
-            "min": 1,
-            "type": "int",
-            "value": 30
-          },
-          "num_videos_per_prompt": {
-            "default": 1,
-            "label": "Videos per prompt",
-            "max": 1,
-            "min": 1,
-            "type": "int"
-          },
-          "output_type": {
-            "default": "pil",
-            "label": "Output type",
-            "options": [
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "pil",
-                "schemaVersion": 1,
-                "value": "pil"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "np",
-                "schemaVersion": 1,
-                "value": "np"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "pt",
-                "schemaVersion": 1,
-                "value": "pt"
-              }
-            ],
-            "type": "string",
-            "value": "pil"
-          },
-          "pag_adaptive_scale": {
-            "default": 0,
-            "disabled": false,
-            "display": "slider",
-            "hidden": true,
-            "label": "PAG Adaptive Scale",
-            "max": 20,
-            "min": 0,
-            "step": 0.1,
-            "type": "float"
-          },
-          "pag_scale": {
-            "default": 3,
-            "disabled": false,
-            "display": "slider",
-            "hidden": true,
-            "label": "PAG Scale",
-            "max": 20,
-            "min": 0,
-            "step": 0.1,
-            "type": "float"
-          },
-          "pipeline": {
-            "disabled": true,
-            "display": "input",
-            "isConnected": true,
-            "label": "Pipeline",
-            "required": true,
-            "signal": {
-              "direction": "input"
-            },
-            "type": "video_diffusion_pipeline"
-          },
-          "pose_video": {
-            "disabled": false,
-            "display": "input",
-            "hidden": true,
-            "isConnected": false,
-            "label": "Pose Video",
-            "required": false,
-            "type": [
-              "video",
-              "str"
-            ]
-          },
-          "previous_conditioning_frames": {
-            "default": 1,
-            "disabled": false,
-            "hidden": true,
-            "label": "Previous Frames",
-            "max": 16,
-            "min": 1,
-            "type": "int"
-          },
-          "prompt": {
-            "default": "",
-            "display": "textarea",
-            "label": "Prompt",
-            "type": "text",
-            "value": "Control task: reconstruct the supplied moving grayscale street segmentation clip as a photoreal protected urban cycle-lane point-of-view while following every curb, paving boundary, parked scooter silhouette, tree, façade, timing and camera movement frame for frame. Control roles: let the grayscale clip determine geometry, scale, forward travel and occlusion. Use text only for real materials and light: pale concrete cycle lane, red-brown brick sidewalk, dark asphalt, a parked black scooter at the right curb, leafy street trees and warm clear-morning sunlight. Camera and motion: preserve the exact low forward point of view. Near paving seams and curb edges move beneath the camera while the distant street grows continuously; the parked scooter passes the right edge according to the control sequence. Lighting and continuity: keep natural exposure, stable horizon, crisp lane boundaries and layered parallax across the full ride. Shadows remain attached to their objects and move only with the source camera. Output contract: one believable real city cycling-lane inspection with obvious forward travel; no static hold, moving parked scooter, changing curb layout, flicker, camera reversal, lettering, illustration or synthetic render."
-          },
-          "prompt_embeds": {
-            "display": "input",
-            "isConnected": false,
-            "label": "Prompt embeds",
-            "required": false,
-            "type": "tensor"
-          },
-          "prompt_segments_json": {
-            "default": "",
-            "disabled": false,
-            "display": "textarea",
-            "hidden": true,
-            "label": "Timed Prompt Segments",
-            "type": "text"
-          },
-          "reference_images": {
-            "disabled": false,
-            "display": "input",
-            "hidden": false,
-            "isConnected": false,
-            "label": "Reference images",
-            "required": false,
-            "type": "image"
-          },
-          "scheduler_flow_shift": {
-            "default": 0,
-            "disabled": false,
-            "hidden": true,
-            "label": "Flow Shift",
-            "max": 32,
-            "min": 0,
-            "step": 0.1,
-            "type": "float",
-            "value": 3
-          },
-          "secondary_guidance_scale": {
-            "default": 3.5,
-            "disabled": false,
-            "hidden": true,
-            "label": "Low-noise Guidance",
-            "max": 20,
-            "min": 0,
-            "step": 0.1,
-            "type": "float"
-          },
-          "seed": {
-            "default": 0,
-            "display": "random",
-            "label": "Seed",
-            "max": 9007199254740991,
-            "min": 0,
-            "type": "int",
-            "value": {
-              "isRandom": false,
-              "value": 8207
-            }
-          },
-          "segment_frame_length": {
-            "default": 77,
-            "disabled": false,
-            "hidden": true,
-            "label": "Segment Frames",
-            "max": 241,
-            "min": 5,
-            "type": "int"
-          },
-          "strength": {
-            "default": 1,
-            "disabled": false,
-            "fieldOptions": {
-              "studioBinding": {
-                "formFields": [
-                  "strength"
-                ],
-                "group": "video-strength",
-                "schemaVersion": 1,
-                "transform": "identity"
-              }
-            },
-            "hidden": true,
-            "label": "Condition strength",
-            "max": 1,
-            "min": 0,
-            "step": 0.05,
-            "type": "float",
-            "value": 0.8
-          },
-          "temporal_overlap": {
-            "default": 24,
-            "disabled": false,
-            "hidden": true,
-            "label": "Temporal Overlap",
-            "max": 128,
-            "min": 1,
-            "type": "int"
-          },
-          "temporal_overlap_condition_strength": {
-            "default": 0.5,
-            "disabled": false,
-            "hidden": true,
-            "label": "Overlap Preservation",
-            "max": 1,
-            "min": 0,
-            "step": 0.05,
-            "type": "float"
-          },
-          "temporal_tile_size": {
-            "default": 80,
-            "disabled": false,
-            "hidden": true,
-            "label": "Temporal Window",
-            "max": 257,
-            "min": 17,
-            "type": "int"
-          },
-          "true_cfg_scale": {
-            "default": 1,
-            "disabled": false,
-            "hidden": true,
-            "label": "True CFG",
-            "max": 20,
-            "min": 0,
-            "type": "float"
-          },
-          "use_guidance_scale_2": {
-            "default": false,
-            "disabled": false,
-            "hidden": false,
-            "label": "Use guidance 2",
-            "type": "bool",
-            "value": false
-          },
-          "video": {
-            "disabled": true,
-            "display": "input",
-            "hidden": false,
-            "isConnected": true,
-            "label": "Source/control video",
-            "required": true,
-            "type": "video"
-          },
-          "video_contract": {
-            "default": {
-              "library": "diffusers",
-              "mediaKind": "video",
-              "modes": [
-                "text_to_video",
-                "video_to_video",
-                "video_inpaint",
-                "video_outpaint",
-                "reference_to_video",
-                "control_to_video",
-                "video_color_edit"
-              ],
-              "pipelineClass": "WanVACEPipeline",
-              "schemaVersion": 1
-            },
-            "hidden": true,
-            "label": "Video Contract",
-            "type": "object",
-            "value": {
-              "library": "diffusers",
-              "mediaKind": "video",
-              "modes": [
-                "text_to_video",
-                "video_to_video",
-                "video_inpaint",
-                "video_outpaint",
-                "reference_to_video",
-                "control_to_video",
-                "video_color_edit"
-              ],
-              "pipelineClass": "WanVACEPipeline",
-              "schemaVersion": 1
-            }
-          },
-          "video_out": {
-            "display": "output",
-            "isConnected": true,
-            "label": "Video frames",
-            "type": "video"
-          },
-          "width": {
-            "default": 832,
-            "label": "Width",
-            "max": 2048,
-            "min": 16,
-            "step": 16,
-            "type": "int",
-            "value": 832
-          },
-          "width_out": {
-            "display": "output",
-            "isConnected": false,
-            "label": "Width",
-            "type": "int"
-          }
-        },
-        "resizable": true,
-        "skipParamsCheck": false,
-        "studioOwned": true,
-        "studioRole": "wanGenerate",
-        "style": {},
-        "time": [
-          0,
-          0,
-          0
-        ],
-        "type": "custom",
-        "uiState": {}
-      },
-      "id": "node-07",
-      "position": {
-        "x": 1320,
-        "y": 173
       },
       "type": "custom"
     },
@@ -1995,24 +4382,420 @@
         "cache": false,
         "category": "Diffusers Video",
         "description": "Load a registered Diffusers video pipeline through a stable facade.",
-        "label": "Diffusers.LoadPipeline",
+        "label": "Load Models",
         "memory": [
           0,
           0,
           0
         ],
         "module": "modules.DiffusersVideo",
+        "operationAuthoring": {
+          "authored": [
+            "dtype",
+            "device",
+            "auto_offload",
+            "offload_mode"
+          ],
+          "defaults": {
+            "auto_offload": true,
+            "device": "cuda:0",
+            "dtype": "bfloat16",
+            "low_cpu_mem_usage": true,
+            "model_id": {
+              "source": "hub",
+              "value": "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
+            },
+            "offload_mode": "model_cpu",
+            "pipeline_class": "WanVACEPipeline",
+            "revision": "ec4d2cb062b548996b179d493fdd05340de702a1"
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "WanVACEPipeline",
+              "values": {
+                "pipeline_class": "WanVACEPipeline"
+              }
+            },
+            "blockName": null,
+            "decomposition": "loader",
+            "nodeKey": "modules.DiffusersVideo.LoadPipeline",
+            "nodeType": "loader",
+            "operationId": "diffusion.load_models",
+            "pipelineClass": "WanVACEPipeline",
+            "ports": [
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "pipeline",
+                "required": false,
+                "roles": [
+                  "pipeline"
+                ],
+                "semanticName": "pipeline",
+                "semantics": {
+                  "kind": "pipeline",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "WanVACEPipeline",
+                  "state": null
+                },
+                "types": [
+                  "video_diffusion_pipeline"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "model_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "model_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "revision",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "revision",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "dtype",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "dtype",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "device",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "device",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "auto_offload",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "auto_offload",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "offload_mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "offload_mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "execution_recipe",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "execution_recipe",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "WanVACEPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_execution_recipe"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "low_cpu_mem_usage",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "low_cpu_mem_usage",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline_class",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pipeline_class",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "execution_profile_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "execution_profile_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "motion_adapter_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "motion_adapter_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "motion_adapter_revision",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "motion_adapter_revision",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "ic_lora_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "ic_lora_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "ic_lora_revision",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "ic_lora_revision",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "ic_lora_weight_name",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "ic_lora_weight_name",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "resolved_artifact",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "resolved_artifact",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "control_to_video",
+            "workflowId": null
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
           "auto_offload": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Auto offload",
             "type": "bool",
             "value": true
           },
           "device": {
-            "default": "cpu:0",
+            "default": "cuda:0",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Device",
             "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
+              },
               {
                 "availability": "installed",
                 "compatibility": "compatible",
@@ -2035,6 +4818,9 @@
           },
           "dtype": {
             "default": "bfloat16",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "DType",
             "options": [
               {
@@ -2046,10 +4832,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -2066,28 +4851,79 @@
             "type": "string",
             "value": "bfloat16"
           },
+          "execution_profile_id": {
+            "default": "",
+            "fieldOptions": {
+              "noValidation": true,
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Execution Profile",
+            "type": "string",
+            "value": "wan-vace:direct"
+          },
           "execution_recipe": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Execution Recipe",
+            "required": false,
             "type": "diffusers_execution_recipe"
+          },
+          "ic_lora_id": {
+            "display": "modelselect",
+            "fieldOptions": {
+              "noValidation": true,
+              "sources": [
+                "hub"
+              ],
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "IC-LoRA",
+            "type": "string",
+            "value": ""
+          },
+          "ic_lora_revision": {
+            "default": "",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "IC-LoRA Revision",
+            "type": "string"
+          },
+          "ic_lora_weight_name": {
+            "default": "",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "IC-LoRA Weight",
+            "type": "string"
           },
           "low_cpu_mem_usage": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Low CPU memory",
-            "type": "bool"
+            "type": "bool",
+            "value": true
           },
           "model_id": {
-            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "noValidation": true,
               "sources": [
                 "hub",
                 "local"
-              ]
+              ],
+              "suppressInitialFieldAction": true
             },
             "label": "Model",
+            "onChange": "select_adapter",
             "type": "string",
             "value": {
               "source": "hub",
@@ -2100,7 +4936,8 @@
               "noValidation": true,
               "sources": [
                 "hub"
-              ]
+              ],
+              "suppressInitialFieldAction": true
             },
             "hidden": true,
             "label": "Motion Adapter",
@@ -2109,12 +4946,18 @@
           },
           "motion_adapter_revision": {
             "default": "",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Motion Adapter Revision",
             "type": "string"
           },
           "offload_mode": {
             "default": "model_cpu",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Offload Mode",
             "options": [
               {
@@ -2170,23 +5013,72 @@
             "value": "model_cpu"
           },
           "pipeline": {
-            "disabled": true,
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Pipeline",
             "signal": {
               "direction": "output",
-              "origin": "pipeline_class"
+              "origin": "pipeline_class",
+              "value": {
+                "actions": {
+                  "EncodeInputs": [
+                    "text_to_video",
+                    "video_to_video",
+                    "video_inpaint",
+                    "video_outpaint",
+                    "reference_to_video",
+                    "control_to_video",
+                    "video_color_edit"
+                  ],
+                  "Generate": [
+                    "text_to_video",
+                    "video_to_video",
+                    "video_inpaint",
+                    "video_outpaint",
+                    "reference_to_video",
+                    "control_to_video",
+                    "video_color_edit"
+                  ],
+                  "GenerateSequence": [
+                    "text_to_video"
+                  ],
+                  "GenerateShotJob": [
+                    "text_to_video",
+                    "video_to_video",
+                    "video_inpaint",
+                    "video_outpaint",
+                    "reference_to_video",
+                    "control_to_video",
+                    "video_color_edit"
+                  ]
+                },
+                "library": "diffusers",
+                "mediaKind": "video",
+                "modes": [
+                  "text_to_video",
+                  "video_to_video",
+                  "video_inpaint",
+                  "video_outpaint",
+                  "reference_to_video",
+                  "control_to_video",
+                  "video_color_edit"
+                ],
+                "pipelineClass": "WanVACEPipeline",
+                "schemaVersion": 1
+              }
             },
             "type": "video_diffusion_pipeline"
           },
           "pipeline_class": {
             "default": "WanVACEPipeline",
-            "disabled": false,
             "fieldOptions": {
-              "noValidation": true
+              "noValidation": true,
+              "suppressInitialFieldAction": true
             },
             "label": "Pipeline Class",
+            "onChange": "select_adapter",
             "options": [
               {
                 "availability": "installed",
@@ -2240,6 +5132,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "WanTI2VImageToVideoPipeline",
+                "schemaVersion": 1,
+                "value": "WanTI2VImageToVideoPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "WanAnimatePipeline",
                 "schemaVersion": 1,
                 "value": "WanAnimatePipeline"
@@ -2267,6 +5167,14 @@
                 "label": "LTX2ConditionPipeline",
                 "schemaVersion": 1,
                 "value": "LTX2ConditionPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LTX2InContextPipeline",
+                "schemaVersion": 1,
+                "value": "LTX2InContextPipeline"
               },
               {
                 "availability": "installed",
@@ -2402,12 +5310,17 @@
           },
           "resolved_artifact": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Resolved Artifact",
             "type": "string"
           },
           "revision": {
             "default": "",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Revision",
             "type": "string",
             "value": "ec4d2cb062b548996b179d493fdd05340de702a1"
@@ -2415,7 +5328,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "wanPipeline",
         "style": {},
         "time": [
@@ -2423,13 +5335,12 @@
           0,
           0
         ],
-        "type": "custom",
-        "uiState": {}
+        "type": "custom"
       },
-      "id": "node-08",
+      "id": "node-09",
       "position": {
         "x": 880,
-        "y": 262
+        "y": 206
       },
       "type": "custom"
     }

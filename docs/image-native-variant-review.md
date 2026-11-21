@@ -1,6 +1,12 @@
 # Exact image variant review
 
-Reviewed against Diffusers `fbf49e7f35857f76bc57b177e26f12b03687c668`.
+Reviewed against Diffusers `7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941`.
+The earlier `fbf49e7f35857f76bc57b177e26f12b03687c668` review was renewed
+after comparing all eight referenced upstream implementations: executable
+behavior is unchanged; differences are confined to return annotations. All
+existing variant decisions, artifact blockers and Klein KV exceptions remain.
+This catalog-source review does not change the installed release pin or grant
+live execution, memory or image-quality qualification.
 These are implementation decisions, not live-image or resource qualification.
 The source-bound machine-readable decisions are in
 `modiff/image_native_variant_reviews.py` and the generated readiness ledger.

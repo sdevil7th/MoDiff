@@ -25,6 +25,9 @@ PACKAGE_CHECKS = {
         ("huggingface_hub", "huggingface-hub"),
         ("accelerate", "accelerate"),
         ("safetensors", "safetensors"),
+        ("transformers", "transformers"),
+        ("peft", "peft"),
+        ("av", "av"),
     ],
     "recommended": [
         ("torchvision", "torchvision"),
@@ -41,17 +44,9 @@ PACKAGE_CHECKS = {
     "optional": [
         ("bitsandbytes", "bitsandbytes"),
         ("xformers", "xformers"),
-        ("av", "av"),
         ("spandrel", "spandrel"),
         ("nunchaku", "nunchaku"),
         ("torchao", "torchao"),
-    ],
-    # Optional-runtime packages are metadata observations only. Even --full
-    # must not import an unqualified base copy before the overlay boundary has
-    # validated its exact version, symbols, origin, and host binding.
-    "optional_runtime": [
-        ("transformers", "transformers"),
-        ("peft", "peft"),
     ],
 }
 
@@ -59,22 +54,18 @@ CANONICAL_ENTRYPOINT = "python -m modiff.preflight"
 
 def setup_guidance(root):
     return {
-        "preferredCommand": "./install.sh",
-        "macosCommand": "./install.sh --accelerator mps",
-        "cudaCommand": "./install.sh --accelerator nvidia",
-        "intelCommand": "./install.sh --accelerator intel",
-        "windowsCommand": r".\install.ps1 -Accelerator auto",
-        "repairCommand": (
-            r".\install.ps1 -Accelerator auto -Repair"
-            if os.name == "nt"
-            else "./install.sh --accelerator auto --repair"
-        ),
+        "preferredCommand": "uv sync --locked --extra cpu",
+        "macosCommand": "uv sync --locked",
+        "cudaCommand": "uv sync --locked --extra cuda",
+        "intelCommand": "uv sync --locked --extra xpu",
+        "windowsCommand": "uv sync --locked --extra cpu",
+        "repairCommand": "uv sync --locked --extra cpu",
         "projectRoot": str(root),
         "notes": [
             "Run commands from the project root.",
-            "Use the managed installer so PyTorch matches the selected accelerator profile.",
-            "Do not run a generic dependency sync inside a managed accelerator environment.",
-            "Use ./install.sh --repair (or install.ps1 --repair on Windows) when the installed profile no longer matches the host.",
+            "Select the extra matching your accelerator and use the same extra with uv run --locked.",
+            "CPU, CUDA and XPU extras are mutually exclusive; macOS uses the PyPI MPS-capable wheel.",
+            "AMD SDK profiles retain their explicit requirements-file installation commands.",
         ],
     }
 
@@ -149,6 +140,14 @@ def default_hf_cache():
     return str((Path.home() / ".cache" / "huggingface" / "hub").resolve())
 
 
+def validate_package_capabilities(module_name, module):
+    if module_name == "av":
+        # LTX image conditioning uses PyAV's bundled codecs even when a system
+        # FFmpeg is available. Resolve descriptors without opening media.
+        module.codec.Codec("libx264", "w")
+        module.codec.Codec("h264", "r")
+
+
 def package_status(module_name, distribution_name, import_check=True):
     status = {
         "module": module_name,
@@ -169,6 +168,7 @@ def package_status(module_name, distribution_name, import_check=True):
     try:
         started = time.perf_counter()
         module = importlib.import_module(module_name)
+        validate_package_capabilities(module_name, module)
         status["available"] = True
         status["import_ms"] = round((time.perf_counter() - started) * 1000)
         status["version"] = getattr(module, "__version__", status.get("version"))
@@ -177,6 +177,10 @@ def package_status(module_name, distribution_name, import_check=True):
         status["error"] = str(error)
 
     return status
+
+
+def required_package_statuses():
+    return [package_status(module, distribution) for module, distribution in PACKAGE_CHECKS["required"]]
 
 
 def build_report(args):
@@ -191,21 +195,17 @@ def build_report(args):
     models_dir = resolve_path(root, config_value(cfg, "paths", "models"), str(Path(data_dir) / "models"))
     configured_hf_cache = config_value(cfg, "huggingface", "cache_dir")
 
-    packages = {}
-    missing_required = []
-    missing_required_distributions = []
+    required_packages = required_package_statuses()
+    packages = {"required": required_packages}
     for group, checks in PACKAGE_CHECKS.items():
-        packages[group] = []
-        for module_name, distribution_name in checks:
-            status = package_status(
-                module_name,
-                distribution_name,
-                import_check=(group == "required" or args.full) and group != "optional_runtime",
-            )
-            packages[group].append(status)
-            if group == "required" and not status["available"]:
-                missing_required.append(module_name)
-                missing_required_distributions.append(distribution_name)
+        if group != "required":
+            packages[group] = [
+                package_status(module, distribution, import_check=args.full and group != "optional_runtime")
+                for module, distribution in checks
+            ]
+    unavailable = [package for package in required_packages if not package["available"]]
+    missing_required = [package["module"] for package in unavailable]
+    missing_required_distributions = [package["distribution"] for package in unavailable]
 
     hardware = get_hardware_snapshot(data_dir, refresh=True)
     profile = runtime_profile(hardware, venv=Path(sys.prefix))
@@ -229,7 +229,8 @@ def build_report(args):
     if not python_ok:
         issues.append("MoDiff requires Python 3.12 or newer.")
     if missing_required:
-        issues.append(f"Missing required packages: {', '.join(missing_required)}")
+        issues.extend(f"Required package {package['distribution']} is unavailable: {package['error']}"
+                      for package in unavailable)
     issues.extend(
         issue["message"]
         for issue in profile.get("issues", [])

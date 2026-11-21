@@ -238,7 +238,7 @@
               }
             ],
             "type": "string",
-            "value": ""
+            "value": []
           },
           "dtype": {
             "default": "bfloat16",
@@ -653,7 +653,7 @@
               }
             ],
             "type": "string",
-            "value": false
+            "value": "none"
           },
           "device": {
             "default": "cuda:0",

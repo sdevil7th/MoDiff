@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "kind": "pika-h3-flex-catalog-only-gate-review",
+  "pipelineClasses": [
+    "PikaH3FlexModularPipeline"
+  ],
+  "source": {
+    "repository": "https://github.com/huggingface/diffusers.git",
+    "revision": "d0b9b1b5a540e5f9df2f8ec236347bf9c5aa7d1f",
+    "sourceTree": "bf0c806c8af9af94867b1e8069e6230b71feb3d8",
+    "license": "Apache-2.0",
+    "files": {
+      "src/diffusers/modular_pipelines/pika_h3_flex/__init__.py": "ac158f354630572f69f6fc51d571ceadad961961dbcf91d9716b17bc76b7652d",
+      "src/diffusers/modular_pipelines/pika_h3_flex/before_denoise.py": "f089eb0b3aafb484934de5855950b16d72649a9c866050e37369769ba7d9f45a",
+      "src/diffusers/modular_pipelines/pika_h3_flex/before_encoder.py": "db88da4b0d5620aa9bb8837e9dc348b3fa81b9b7f72661d8c15975b626056a51",
+      "src/diffusers/modular_pipelines/pika_h3_flex/decoders.py": "e4072f883f8ad8d72237b49219219210c942f51e2ef2cc8ea722f2210564f289",
+      "src/diffusers/modular_pipelines/pika_h3_flex/denoise.py": "bbaa5766a7fd74f1b6972e0b78a8dcb6e450d28219f6ca988aac55d0931a2183",
+      "src/diffusers/modular_pipelines/pika_h3_flex/encoders.py": "2573c5c42e3973c80f1ed65b7b1f43d128ef78f5ca6cbb706cd6b8b9de58994e",
+      "src/diffusers/modular_pipelines/pika_h3_flex/modular_blocks_pika_h3_flex.py": "205d5dbafa5b74b5cef611ab71bb6a6e08d36bb7eec551ef8f3d6770a981fd4c",
+      "src/diffusers/modular_pipelines/pika_h3_flex/modular_pipeline.py": "1e431dd4a668571b2ca1cf39d4a588f6d8586e4250c1d8e1de8bbb328bf392e8",
+      "src/diffusers/modular_pipelines/pika_h3_flex/references.py": "6d21a6c0a6b76825551d1f4e8cd78466824b5b33f011e315b69b205232807907",
+      "src/diffusers/schedulers/scheduling_minimax_h3.py": "1b3dc1f0f43e3b11ee71bf540201b3fd8e3c4dfab33b19335200c362b48a139a",
+      "src/diffusers/loaders/lora_pipeline.py": "44d65463bd3c970856a91952008e66017add7b9e1410aa986ac0706e4566c74d"
+    }
+  },
+  "artifactReview": {
+    "path": "data/joint-av-artifact-closures.v1.json",
+    "sha256": "13cf9d466291317810eb8be76b58818305f1bcd530c8a6e35db4bee625461060"
+  },
+  "admission": {
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "unresolvedGates": [
+      "exact_cluster_execution_admission",
+      "explicit_reviewed_optional_runtime_activation",
+      "task_scoped_artifact_acquisition",
+      "license_and_territory_acknowledgement",
+      "native_resource_lifecycle_and_output_qualification",
+      "template_media_and_publication_approval"
+    ],
+    "reason": "Supplemental library Blocks are structural discovery only. Separate Expert operation starters and private campaign outputs do not admit these library definitions or grant Auto, templates, or publication."
+  }
+}

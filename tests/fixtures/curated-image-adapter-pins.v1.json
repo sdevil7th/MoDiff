@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "meaning": "Exact reviewed image adapter identities preserved across generic facade and modular stage representations; model weights are not included.",
+  "adapters": [
+    {
+      "repository": "kocabiyik/nsc7-style-lora",
+      "revision": "9b998d3bdc3b4aeb2113ab4e8cbd9fe2ebfa1cae",
+      "filename": "nsc7-style-lora.safetensors",
+      "sha256": "ae6c417cb3bb8ee6f5272a8115d7720587319c6099fffa80f8d39bbbf307daf7",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-lora-style.json"
+    },
+    {
+      "repository": "pjecuacion/flux3-klein-mnt-oil-monet-lora",
+      "revision": "0d94b6a4601892499defd8c5d89c24f78e78043b",
+      "filename": "mnt_oil_klein3.safetensors",
+      "sha256": "a25e926d8e5fd0069ed5ee3db67be8ac191df4d713bc807e2abfe61a8f885047",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-lora-style.json"
+    },
+    {
+      "repository": "prithivMLmods/3D-Render-Flux-LoRA",
+      "revision": "6b32a1624d3fdfab4d518223e8311731dd432cd8",
+      "filename": "3D_Portrait.safetensors",
+      "sha256": "64e2788c9d236a3e5f62323baa8853116e2a9c7df41cd2a048141eb22cd46d89",
+      "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-cinematic-octane-3d.json"
+    },
+    {
+      "repository": "aixonlab/FLUX.1-dev-LoRA-Cinematic-Octane",
+      "revision": "3ab70503ba8df37565d0212e2876ec48e35e7cb4",
+      "filename": "cinematic-octane.safetensors",
+      "sha256": "cad317378978ba03438c9f00a4fa5ef0628c4a65937c69b8420feaee5e780f81",
+      "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-cinematic-octane-3d.json"
+    },
+    {
+      "repository": "dvyio/flux-lora-film-noir",
+      "revision": "7a7ff13bbae807a2db6c2e4918f3e13bb1265e60",
+      "filename": "5ee2c3c6409f4618a134b883da64d04e_pytorch_lora_weights.safetensors",
+      "sha256": "2970393ce5376e982a594808c1ff0a87f9cec5ddc0da2c094d2a4305d4079324",
+      "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-film-noir.json"
+    },
+    {
+      "repository": "alvarobartt/ghibli-characters-flux-lora",
+      "revision": "ed846114c71efc525e7f5a51e274dc976bb970a8",
+      "filename": "ghibli-characters-flux-lora.safetensors",
+      "sha256": "5216bd7eeb12bf6f18cd5d40cb090831796b28aca7446577d08c5a7e4a09dc63",
+      "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-ghibli-story.json"
+    },
+    {
+      "repository": "dtthanh/flux_oil_painting_lora",
+      "revision": "1118ed195c7304ffc52a6cd42b41a520ef749cd9",
+      "filename": "flux-oilpainting1.3-00001.safetensors",
+      "sha256": "6de4e6d451ad7690db7185cf84235bf9c15c80aaeb69793fb6647fab62bdd704",
+      "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-oil-painting.json"
+    },
+    {
+      "repository": "Norod78/Flux_1_Dev_LoRA_Paper-Cutout-Style",
+      "revision": "5cdd7ac47ad1b99f705ac2a03a39d480d34abb5d",
+      "filename": "Flux_1_Dev_LoRA_Paper-Cutout-Style.safetensors",
+      "sha256": "1863f382199698b8b756d98ecd8060698d5928ed30009cd16f0531f142e4057b",
+      "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-paper-cutout.json"
+    },
+    {
+      "repository": "XLabs-AI/flux-RealismLora",
+      "revision": "1965e17d2e745fcbf8f4004bdbdf603421ef37a8",
+      "filename": "lora.safetensors",
+      "sha256": "0a83a924b822b70b5e458d27935ebfa7713edaee04ff9f194209525354031eca",
+      "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-photoreal-documentary.json"
+    },
+    {
+      "repository": "renderartist/retrocomicflux",
+      "revision": "46f73222df6c97c9f56c3bef42a11979ba5d5aeb",
+      "filename": "Retro_Comic_Flux_v2_renderartist.safetensors",
+      "sha256": "af31beee9ea67955d36425f25624d2585fa31271680013e5c9731690aeb78f9d",
+      "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-retro-comic.json"
+    },
+    {
+      "repository": "SebastianBodza/Flux_Aquarell_Watercolor_v2",
+      "revision": "a565b2140a05f1eece244514f90d2e29b3b1d45d",
+      "filename": "lora.safetensors",
+      "sha256": "e63e44417df35456f425329ad4334143a8bc9fd10316345730ade434106b050e",
+      "graphPath": "studio/flux-dev-pipeline/text-to-image--flux-lora-watercolor.json"
+    },
+    {
+      "repository": "lightx2v/Qwen-Image-Edit-2511-Lightning",
+      "revision": "d74eba145674fd7e31b949324e148e21e7118abd",
+      "filename": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+      "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+      "graphPath": "studio/qwen-image-edit-plus-modular-pipeline/edit-image.json"
+    },
+    {
+      "repository": "lightx2v/Qwen-Image-Edit-2511-Lightning",
+      "revision": "d74eba145674fd7e31b949324e148e21e7118abd",
+      "filename": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+      "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+      "graphPath": "studio/qwen-image-edit-plus-modular-pipeline/multi-image-reference-edit.json"
+    },
+    {
+      "repository": "youknownothing/v1-realism-v1-adapter-ZIT-lora",
+      "revision": "fd6d52d1199ad47f73c18db58339ad01ef766fa7",
+      "filename": "v1-realism.safetensors",
+      "sha256": "1fe0487cfe69b31f6d93ec1a1a6e49f75e9ff77adc8d845380ba7352a3931190",
+      "graphPath": "studio/z-image-modular-pipeline/text-to-image--fast-lora.json"
+    },
+    {
+      "repository": "youknownothing/v1-realism-v1-adapter-ZIT-lora",
+      "revision": "fd6d52d1199ad47f73c18db58339ad01ef766fa7",
+      "filename": "v1-realism.safetensors",
+      "sha256": "1fe0487cfe69b31f6d93ec1a1a6e49f75e9ff77adc8d845380ba7352a3931190",
+      "graphPath": "studio/z-image-modular-pipeline/text-to-image--z-image-lora-style.json"
+    }
+  ]
+}

@@ -1,0 +1,238 @@
+{
+  "fill": {
+    "schemaVersion": 1,
+    "library": "diffusers",
+    "mediaKind": "image",
+    "pipelineClass": "FluxFillPipeline",
+    "mode": "inpaint",
+    "modes": [
+      "inpaint",
+      "outpaint"
+    ],
+    "actions": {
+      "Inpaint": [
+        "inpaint",
+        "outpaint"
+      ]
+    },
+    "fieldParams": {
+      "negative_prompt": {
+        "hidden": true
+      },
+      "width": {
+        "hidden": false
+      },
+      "height": {
+        "hidden": false
+      },
+      "guidance_scale": {
+        "hidden": false,
+        "max": 30.0
+      },
+      "strength": {
+        "hidden": false
+      },
+      "padding_mask_crop": {
+        "hidden": true
+      },
+      "max_sequence_length": {
+        "hidden": false
+      },
+      "reference_strength": {
+        "hidden": true
+      },
+      "image_guidance_scale": {
+        "hidden": true
+      },
+      "pag_scale": {
+        "hidden": true
+      },
+      "pag_adaptive_scale": {
+        "hidden": true
+      },
+      "conditioning_scale": {
+        "hidden": true
+      },
+      "control_guidance_start": {
+        "hidden": true
+      },
+      "control_guidance_end": {
+        "hidden": true
+      },
+      "layers": {
+        "hidden": true
+      },
+      "resolution": {
+        "hidden": true
+      },
+      "cfg_normalize": {
+        "hidden": true
+      },
+      "use_en_prompt": {
+        "hidden": true
+      },
+      "num_images_per_prompt": {
+        "hidden": false
+      },
+      "sigmas": {
+        "hidden": false
+      },
+      "generator": {
+        "hidden": false
+      },
+      "latents": {
+        "hidden": false
+      },
+      "prompt_embeds": {
+        "hidden": false
+      },
+      "prompt_2": {
+        "hidden": false
+      },
+      "pooled_prompt_embeds": {
+        "hidden": false
+      },
+      "joint_attention_kwargs": {
+        "hidden": false
+      },
+      "masked_image_latents": {
+        "hidden": false
+      },
+      "output_type": {
+        "options": [
+          "pil",
+          "np",
+          "pt",
+          "latent"
+        ]
+      },
+      "latents_out": {
+        "hidden": false
+      }
+    },
+    "connectionActions": {
+      "Inpaint": [
+        "inpaint",
+        "outpaint"
+      ],
+      "DecodeLatents": [
+        "inpaint"
+      ]
+    }
+  },
+  "control": {
+    "schemaVersion": 1,
+    "library": "diffusers",
+    "mediaKind": "image",
+    "pipelineClass": "FluxControlPipeline",
+    "mode": "control_image",
+    "modes": [
+      "control_image"
+    ],
+    "actions": {
+      "ControlGenerate": [
+        "control_image"
+      ]
+    },
+    "fieldParams": {
+      "negative_prompt": {
+        "hidden": true
+      },
+      "width": {
+        "hidden": false
+      },
+      "height": {
+        "hidden": false
+      },
+      "guidance_scale": {
+        "hidden": false,
+        "max": 30.0
+      },
+      "strength": {
+        "hidden": true
+      },
+      "padding_mask_crop": {
+        "hidden": true
+      },
+      "max_sequence_length": {
+        "hidden": false
+      },
+      "reference_strength": {
+        "hidden": true
+      },
+      "image_guidance_scale": {
+        "hidden": true
+      },
+      "pag_scale": {
+        "hidden": true
+      },
+      "pag_adaptive_scale": {
+        "hidden": true
+      },
+      "conditioning_scale": {
+        "hidden": true
+      },
+      "control_guidance_start": {
+        "hidden": true
+      },
+      "control_guidance_end": {
+        "hidden": true
+      },
+      "layers": {
+        "hidden": true
+      },
+      "resolution": {
+        "hidden": true
+      },
+      "cfg_normalize": {
+        "hidden": true
+      },
+      "use_en_prompt": {
+        "hidden": true
+      },
+      "num_images_per_prompt": {
+        "hidden": false
+      },
+      "sigmas": {
+        "hidden": false
+      },
+      "generator": {
+        "hidden": false
+      },
+      "latents": {
+        "hidden": false
+      },
+      "prompt_embeds": {
+        "hidden": false
+      },
+      "prompt_2": {
+        "hidden": false
+      },
+      "pooled_prompt_embeds": {
+        "hidden": false
+      },
+      "joint_attention_kwargs": {
+        "hidden": false
+      },
+      "output_type": {
+        "options": [
+          "pil",
+          "np",
+          "pt",
+          "latent"
+        ]
+      },
+      "latents_out": {
+        "hidden": false
+      }
+    },
+    "connectionActions": {
+      "ControlGenerate": [
+        "control_image"
+      ],
+      "DecodeLatents": [
+        "control_image"
+      ]
+    }
+  }
+}

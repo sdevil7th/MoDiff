@@ -11,6 +11,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 from modiff.optimization_packages import qualified_auto_overrides, workload_key_for_form
+from modiff.artifact_weight_memory import artifact_parameter_lower_bound, artifact_parameter_conversion_reserve, impossible_parameter_residency, native_cpu_parameter_residency
+from modiff.native_image_auto_placement import declared_image_owner
+from modiff.flux3_auto_resource import BOUNDED_RECIPE_IDS
 
 from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_GROUP_CPU,
@@ -32,6 +35,7 @@ from modiff.diffusers_profiles import (
     LTX_VIDEO_REPO,
     QWEN_IMAGE_2512_PREQUANTIZED_REPO,
     QWEN_IMAGE_2512_REPO,
+    DIFFUSERS_EXECUTION_PROFILES,
     execution_profiles_for_execution,
     optional_runtime_profile_ids_for_execution,
 )
@@ -44,7 +48,7 @@ from modiff.model_artifact_catalog import (
     community_artifact_is_discoverable,
 )
 from modiff.optional_runtimes import public_optional_runtime_profiles
-from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution
+from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution, optional_runtime_requirement_for_profiles
 from modiff.studio_execution_specs import (
     studio_auto_model_requirements,
     studio_execution_spec_for_pair,
@@ -344,9 +348,15 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
 }
 
 AUTO_MODEL_REQUIREMENTS.update(studio_auto_model_requirements())
+for _declared_requirement in AUTO_MODEL_REQUIREMENTS.values():
+    # These tiers are checked against advertised machine totals by
+    # _requirements_missing, not additive free memory for a model load.
+    _declared_requirement.setdefault("memorySemantics", "machine_capacity")
 
 
-def _auto_requirements_for_pair(model_type: str, mode: str) -> dict[str, Any] | None:
+def _auto_requirements_for_pair(
+    model_type: str, mode: str, execution_profile_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return the exact effective Auto specification for one declared pair.
 
     Resource requirements may be shared by several modes, but their loader
@@ -376,10 +386,25 @@ def _auto_requirements_for_pair(model_type: str, mode: str) -> dict[str, Any] | 
     if normalized_mode not in supported_tasks:
         return None
 
-    profiles = execution_profiles_for_execution(normalized_model, normalized_mode)
+    if execution_profile_id is not None:
+        # A native operation recipe can reuse the same model's declared
+        # capacity class without executing its historical whole-pipeline
+        # loader. Exact profile selection changes the executable target only;
+        # it neither grants a new task/model nor upgrades resource evidence.
+        if not isinstance(execution_profile_id, str) or execution_profile_id != execution_profile_id.strip():
+            return None
+        selected = DIFFUSERS_EXECUTION_PROFILES.get(execution_profile_id)
+        profiles = (selected,) if (
+            selected is not None and selected.model_type == normalized_model
+            and normalized_mode in selected.modes
+        ) else ()
+    else:
+        profiles = execution_profiles_for_execution(normalized_model, normalized_mode)
     if len(profiles) != 1:
         return None
     profile = profiles[0]
+    if requirements.get('declaredExecutionProfileIds') is not None and profile.id not in requirements['declaredExecutionProfileIds']:
+        return None
     effective = {
         **requirements,
         "supportedTasks": [normalized_mode],
@@ -393,6 +418,8 @@ def _auto_requirements_for_pair(model_type: str, mode: str) -> dict[str, Any] | 
         "compatibleRepos": list(profile.compatible_repos),
         "modelDependencies": studio_model_dependencies_for_pair(normalized_model, normalized_mode),
     }
+    if profile.operation_recipe:
+        effective["supportedOffloadModes"] = list(profile.supported_offload_modes)
     allowed_lower_memory_repos = {
         repo
         for repo in (profile.fallback_repo, *profile.compatible_repos)
@@ -479,9 +506,12 @@ def _cache_dirs_for_record(record: dict[str, Any]) -> list[str]:
         cache_dirs.append(str(record["cache_dir"]))
 
     seen_cache_dirs = []
+    seen_keys = set()
     for cache_dir in cache_dirs:
-        normalized = str(Path(cache_dir).expanduser()).lower()
-        if normalized not in seen_cache_dirs:
+        normalized = str(Path(cache_dir).expanduser())
+        key = os.path.normcase(normalized)
+        if key not in seen_keys:
+            seen_keys.add(key)
             seen_cache_dirs.append(normalized)
     return seen_cache_dirs
 
@@ -855,7 +885,13 @@ def artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | Non
     endpoints must use the same shard/plan validation as Auto readiness instead
     of treating every scanned revision as installed.
     """
-    return _artifact_cache_status(repo_id, local_models)
+    status = _artifact_cache_status(repo_id, local_models)
+    if isinstance(_local_model_record(local_models, repo_id), dict):
+        from utils.huggingface import observed_catalog_cache_selections
+        observations = observed_catalog_cache_selections(repo_id)
+        if observations is not None:
+            status["observedSelections"] = observations
+    return status
 
 
 def artifact_revision_cache_status(
@@ -958,6 +994,10 @@ def _candidate_history_signature(
         "artifact": str(candidate.get("resolvedArtifact") or candidate.get("artifact") or candidate.get("modelRepo") or ""),
         "artifactRevision": str(resolved.get("revision") or candidate.get("artifactRevision") or "unversioned"),
         "dtype": str(candidate.get("dtype") or ""),
+        **({'weightFormat': str(candidate['weightFormat'])}
+           if candidate.get('weightFormat') not in (None, '', 'native') else {}),
+        **({'textEncoderQuantization': deepcopy(candidate['textEncoderQuantization'])}
+           if candidate.get('textEncoderQuantization') is not None else {}),
         "quantizationMode": str(candidate.get("quantizationMode") or "none"),
         "quantizedComponents": [str(item) for item in candidate.get("quantizedComponents") or []],
         "offloadMode": str(candidate.get("offloadMode") or ""),
@@ -1267,7 +1307,11 @@ def _candidate_workload_signature(candidate: dict[str, Any]) -> dict[str, Any]:
         keys = ("width", "height", "numFrames", "batchSize", "steps")
     else:
         keys = ("width", "height", "batchSize", "steps")
-    return {key: generation.get(key) for key in keys if generation.get(key) is not None}
+    result = {key: generation.get(key) for key in keys if generation.get(key) is not None}
+    if candidate.get('weightFormat') in {'fp8r', 'nvfp4'}:
+        result.update(referenceWorkload=generation.get('referenceWorkload', []),
+                      maxSequenceLength=generation.get('maxSequenceLength'))
+    return result
 
 
 def auto_resource_history_key(
@@ -1301,6 +1345,9 @@ def _runtime_candidate_from_hints(runtime_hints: dict[str, Any] | None) -> dict[
         "modelRepo": runtime_hints.get("modelRepo"),
         "resolvedArtifact": runtime_hints.get("resolvedArtifact") or runtime_hints.get("resolvedModelRepo"),
         "dtype": runtime_hints.get("dtype"),
+        "weightFormat": runtime_hints.get('weightFormat', 'native'),
+        **({'textEncoderQuantization': deepcopy(runtime_hints['textEncoderQuantization'])}
+           if runtime_hints.get('textEncoderQuantization') is not None else {}),
         "quantizationMode": runtime_hints.get("quantizationMode"),
         "quantizedComponents": runtime_hints.get("quantizedComponents") if isinstance(runtime_hints.get("quantizedComponents"), list) else [],
         "offloadMode": runtime_hints.get("offloadMode"),
@@ -1333,6 +1380,9 @@ def _history_candidate_summary(candidate: dict[str, Any]) -> dict[str, Any]:
         "artifact": candidate.get("resolvedArtifact") or candidate.get("artifact") or candidate.get("modelRepo"),
         "artifactRevision": resolved.get("revision") or candidate.get("artifactRevision"),
         "dtype": candidate.get("dtype"),
+        "weightFormat": candidate.get('weightFormat', 'native'),
+        **({'textEncoderQuantization': deepcopy(candidate['textEncoderQuantization'])}
+           if candidate.get('textEncoderQuantization') is not None else {}),
         "quantizationMode": candidate.get("quantizationMode"),
         "quantizedComponents": candidate.get("quantizedComponents") if isinstance(candidate.get("quantizedComponents"), list) else [],
         "offloadMode": candidate.get("offloadMode"),
@@ -1554,7 +1604,7 @@ def _disk_snapshot(
 def _mps_accelerator(name: Any = None, device: dict[str, Any] | None = None) -> dict[str, Any]:
     device = device if isinstance(device, dict) else {}
     total = _safe_int(device.get("planning_memory_total") or device.get("vram_total"))
-    free = _safe_int(device.get("planning_memory_free") or device.get("vram_free"))
+    free = _first_known_int(device.get("planning_memory_free"), device.get("vram_free"))
     return {
         "kind": "mps",
         "backend": "mps",
@@ -1598,7 +1648,7 @@ def _normalized_accelerator_snapshot(normalized_hardware: dict[str, Any] | None)
         total = _safe_int(device.get("planning_memory_total") or device.get("vram_total"))
         if total is None:
             total = _safe_int(device.get("torch_vram_total"))
-        free = _safe_int(device.get("planning_memory_free") or device.get("vram_free"))
+        free = _first_known_int(device.get("planning_memory_free"), device.get("vram_free"))
         if free is None:
             free = _safe_int(device.get("torch_vram_free"))
         return {
@@ -1632,7 +1682,7 @@ def _normalized_accelerator_snapshot(normalized_hardware: dict[str, Any] | None)
     device = device_by_kind["xpu"]
     if device is not None:
         total = _safe_int(device.get("planning_memory_total") or device.get("vram_total") or device.get("torch_vram_total"))
-        free = _safe_int(device.get("planning_memory_free") or device.get("vram_free") or device.get("torch_vram_free"))
+        free = _first_known_int(device.get("planning_memory_free"), device.get("vram_free"), device.get("torch_vram_free"))
         return {
             "kind": "xpu",
             "backend": "xpu",
@@ -1883,6 +1933,15 @@ def _safe_int(value: Any) -> int | None:
         return None
 
 
+def _first_known_int(*values: Any) -> int | None:
+    # Zero free bytes is a known exhausted pool, not a missing measurement.
+    for value in values:
+        parsed = _safe_int(value)
+        if parsed is not None:
+            return parsed
+    return None
+
+
 def _vram_band(total_bytes: int | None) -> str:
     if not total_bytes:
         return "unknown"
@@ -2101,6 +2160,11 @@ def _candidate(
     device_map: str | None = None,
     reviewed_native_artifact: bool = False,
 ) -> dict[str, Any]:
+    requirements = deepcopy(requirements or {})
+    if requirements:
+        # Every built-in candidate constructor receives the same static
+        # capacity tiers that _requirements_missing checked against totals.
+        requirements.setdefault("memorySemantics", "machine_capacity")
     missing = list(requirements_missing or [])
     known_bad = list(known_bad_reasons or [])
     if manual_only_reason:
@@ -2239,7 +2303,16 @@ def _candidate(
             "actionLabel": action_label,
             "repair": repair_required,
         },
-        "requirements": requirements or {},
+        "requirements": requirements,
+        "memorySemantics": requirements.get("memorySemantics"),
+        "workingMemoryRequirements": requirements.get("workingMemoryRequirements"),
+        "workingMemoryPolicy": (
+            "explicit_working_demand" if (
+                isinstance(requirements.get("workingMemoryRequirements"), dict)
+                or requirements and requirements.get("memorySemantics") != "machine_capacity"
+            )
+            else "runtime_headroom_policy"
+        ),
         "requiredPackages": list(required_packages or []),
         "readiness": "ready" if status in READY_PROOF_STATUSES else status,
         "requiresLocalProbe": False,
@@ -2346,7 +2419,7 @@ def _qwen_text_to_image_candidates(
     prequantized_installed = bool(prequantized_cache_status.get("installed")) or _has_installed(QWEN_IMAGE_2512_PREQUANTIZED_REPO, installed)
     model_type = str(form.get("modelType") or "QwenImageModularPipeline")
     mode = str(form.get("mode") or "text_to_image")
-    specification = _auto_requirements_for_pair(model_type, mode)
+    specification = _auto_requirements_for_pair(model_type, mode, form.get("executionProfileId"))
     if specification is None:
         return _undeclared_pair_candidates(form)
     loader_module = str(specification["loaderModule"])
@@ -2540,6 +2613,26 @@ def _requirements_for_offload(
     return value if isinstance(value, dict) else fallback
 
 
+def _parameter_floor_hardware(hardware: dict[str, Any], offload_mode: str) -> dict[str, Any]:
+    """Use the existing shared offload pool for the ordinary native census.
+
+    This is only a parameter-capacity comparison, not a free-memory allowance.
+    Full residency and separately bounded recipes retain their own policy.
+    """
+    accelerator = hardware.get("accelerator")
+    system = hardware.get("systemMemory")
+    if (offload_mode != OFFLOAD_MODE_MODEL_CPU or not isinstance(accelerator, dict)
+            or not isinstance(system, dict) or accelerator.get("kind") not in {"cuda", "xpu", "mps"}
+            or accelerator.get("memoryKind") not in {"shared", "unified"}):
+        return hardware
+    capacities = (accelerator.get("accessibleTotalBytes"), accelerator.get("sharedTotalBytes"), system.get("totalBytes"))
+    if any(type(value) is not int or not 0 < value <= 2**63 for value in capacities):
+        return hardware
+    # One pool, bounded by every measured limit. Never add borrowed RAM to
+    # dedicated VRAM or alter the hardware report and live free readings.
+    return {**hardware, "accelerator": {**accelerator, "totalBytes": min(capacities)}}
+
+
 def _requirements_missing_for_dict(
     hardware: dict[str, Any],
     requirement: dict[str, Any],
@@ -2613,9 +2706,11 @@ def _declared_profile_candidates(
     model_type = str(form.get("modelType") or "")
     mode = str(form.get("mode") or "")
     installed = _repo_id_set(local_models)
-    requirements = _auto_requirements_for_pair(model_type, mode)
+    requirements = _auto_requirements_for_pair(model_type, mode, form.get("executionProfileId"))
     if requirements is None:
         return _undeclared_pair_candidates(form)
+    if requirements.get('boundedWeightFormatRecipe') == 'flux3-fp8r-windows-model-cpu:v1':
+        return _bounded_fp8r_candidates(form, hardware, requirements)
     declared_default_repo = str(requirements.get("defaultRepo") or form.get("defaultRepo") or "")
     requested_repo = str(form.get("modelRepo") or "").strip()
     admitted_repositories = {
@@ -2688,6 +2783,13 @@ def _declared_profile_candidates(
     )
     if full_residency_ready:
         preferred_offload = OFFLOAD_MODE_NONE
+    from modiff.direct_video_auto_resource import shared_video_policy
+    if shared_video_policy(form, hardware):
+        # The shared-pool video policy is separately declared, not an ordering
+        # change to the shared capability list. Exact header/storage validation
+        # below must still succeed before this candidate can be ready.
+        preferred_offload = OFFLOAD_MODE_GROUP_CPU
+        full_residency_ready = False
     candidates: list[dict[str, Any]] = []
 
     lower_memory = requirements.get("lowerMemory") if isinstance(requirements.get("lowerMemory"), dict) else None
@@ -2723,16 +2825,21 @@ def _declared_profile_candidates(
                 "lowerMemory": requirements.get("lowerMemory"),
                 "supportedOffloadModes": requirements.get("supportedOffloadModes"),
                 "coldLoadTarget": requirements.get("coldLoadTarget"),
+                "workingMemoryRequirements": requirements.get("workingMemoryRequirements"),
             },
             required_packages=required_packages,
             install_action_label="Install quantized artifact",
         ))
 
     if default_repo:
-        native_req = _requirements_for_offload(requirements, preferred_offload, minimum)
+        # Check the tier that actually admitted full residency. Falling back
+        # to the constrained minimum would require unused SSD offload space
+        # even when these installed weights remain entirely on the device.
+        native_fallback = on_device_requirements if full_residency_ready else minimum
+        native_req = _requirements_for_offload(requirements, preferred_offload, native_fallback)
         native_missing = _requirements_missing_for_dict(hardware, native_req, offload_mode=preferred_offload)
         default_cache_status = _artifact_cache_status(default_repo, local_models)
-        candidates.append(_candidate(
+        native_kwargs = dict(
             candidate_id=f"{model_type or 'studio'}-{mode or 'mode'}-native-bf16",
             rank=5 if full_residency_ready else 30,
             model_type=model_type,
@@ -2761,10 +2868,40 @@ def _declared_profile_candidates(
                 "supportedOffloadModes": requirements.get("supportedOffloadModes"),
                 "offloadRequirements": requirements.get("offloadRequirements"),
                 "coldLoadTarget": requirements.get("coldLoadTarget"),
+                "workingMemoryRequirements": requirements.get("workingMemoryRequirements"),
             },
             required_packages=required_packages,
             reviewed_native_artifact=bool(requested_repo),
-        ))
+        )
+        native_candidate = _candidate(**native_kwargs)
+        candidates.append(native_candidate)
+        profile = DIFFUSERS_EXECUTION_PROFILES.get(requirements.get("executionProfileId"))
+        if (profile is not None and execution_path == "modular-diffusers"
+                and accelerator_kind == "cuda" and declared_image_owner(profile, default_repo, mode)):
+            # Enumerate only existing declared native image placements. The
+            # original candidate identity/preference stays intact. Dense header
+            # evidence and complete graph admission decide whether an alternative
+            # may actually replace it; capability alone is not model-fit proof.
+            for alternative_mode in dict.fromkeys(supported_offload):
+                if alternative_mode == preferred_offload or alternative_mode not in {
+                    OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK,
+                }:
+                    continue
+                alternative_requirements = _requirements_for_offload(requirements, alternative_mode, minimum)
+                missing = _requirements_missing_for_dict(hardware, alternative_requirements, offload_mode=alternative_mode)
+                missing += _cache_missing_for_status(default_cache_status, "default")
+                # Reuse the existing candidate boundary rather than promoting
+                # a skipped hardware tier by changing placement metadata alone.
+                alternative = _candidate(**{
+                    **native_kwargs,
+                    "candidate_id": f"{native_candidate['id']}-placement-{alternative_mode}",
+                    "rank": native_candidate["rank"] + 1,
+                    "offload_mode": alternative_mode,
+                    "device_map": "cuda" if alternative_mode == OFFLOAD_MODE_NONE else None,
+                    "requirements_missing": missing,
+                })
+                alternative["placementAlternativeOf"] = native_candidate["id"]
+                candidates.append(alternative)
 
     existing_artifacts = {
         str(candidate.get("resolvedArtifact") or candidate.get("artifact") or "").lower()
@@ -2819,6 +2956,66 @@ def _declared_profile_candidates(
     return candidates
 
 
+def _bounded_fp8r_candidates(form, hardware, requirements):
+    from modiff.flux3_auto_resource import LINUX_RECIPE_ID, NF4_RECIPE_ID, linux_shared_hardware, selected_artifacts, workload_missing
+    linux = (LINUX_RECIPE_ID in requirements.get('additionalBoundedWeightFormatRecipes', [])
+             and linux_shared_hardware(hardware) and form.get('textEncoderQuantization') is None)
+    model_type, mode = form['modelType'], form['mode']
+    repository = requirements['defaultRepo']
+    revision = catalog_revision(repository, model_type=model_type)
+    missing = workload_missing(form, hardware, requirements['executionProfileId'])
+    if linux_shared_hardware(hardware) and not linux:
+        missing.append('No exact Linux shared-memory recipe is declared for this selection.')
+    if (form.get('textEncoderQuantization') is not None
+            and requirements.get('explicitComponentQuantizationRecipe') != NF4_RECIPE_ID):
+        missing.append('No exact component quantization recipe is declared.')
+    if form.get('modelRepo', repository) != repository or form.get('revision', revision) != revision:
+        missing.append('The FP8r Auto recipe requires its exact declared model and immutable revision.')
+    try:
+        status = (selected_artifacts(model_type, repository, revision, 'nvfp4')
+                  if form.get('textEncoderQuantization') is not None
+                  else selected_artifacts(model_type, repository, revision))
+    except (OSError, RuntimeError, ValueError, TypeError) as error:
+        status = {'installed': False, 'complete': False, 'reason': str(error)}
+    if not status.get('complete'):
+        missing.append(status['reason'])
+    generation = _generation_for_requirements(model_type, form, requirements['qualityDefaults'])
+    generation.update(batchSize=1, referenceWorkload=deepcopy(form.get('referenceWorkload', [])))
+    candidate = _candidate(
+        candidate_id=f"{requirements['executionProfileId']}:{mode}:"
+                     + ('nvfp4-text-nf4-model-cpu-512' if form.get('textEncoderQuantization') is not None
+                        else 'fp8r-model-cpu-512'), rank=5,
+        model_type=model_type, mode=mode, loader_module=requirements['loaderModule'],
+        loader_action=requirements['loaderAction'], execution_path=requirements['executionPath'],
+        pipeline_class=requirements['pipelineClass'], artifact=repository,
+        dtype=str(form.get('dtype') or ''), quantization_mode='none', quantized_components=[],
+        offload_mode='model_cpu', quality_tier='bounded-fp8r-512',
+        reason='Exact FP8r parameter/loading declarations and ordinary headroom policy; native output qualification is separate.',
+        generation=generation, installed=status.get('complete') is True,
+        requirements_missing=missing, artifact_status=status, requirements=requirements,
+    )
+    candidate.update(weightFormat=form.get('weightFormat'), boundedWeightFormatRecipe=requirements['boundedWeightFormatRecipe'])
+    if linux:
+        candidate['id'] += '-linux-gfx1151'
+        candidate['boundedWeightFormatRecipe'] = LINUX_RECIPE_ID
+        candidate['requirements'] = {**candidate['requirements'],
+            'boundedWeightFormatRecipe': LINUX_RECIPE_ID,
+            'supportedOffloadModes': ['model_cpu', 'none']}
+        candidate['reason'] = 'Separate gfx1151 shared-memory FP8r recipe with exact architecture, parameter/loading and working reservations; native qualification remains separate.'
+    if form.get('textEncoderQuantization') is not None:
+        candidate.update(boundedWeightFormatRecipe=NF4_RECIPE_ID,
+                         textEncoderQuantization=deepcopy(form['textEncoderQuantization']),
+                         quantizedComponents=['transformer', 'text_encoder'])
+    if not linux:
+        return [candidate]
+    # Shared CPU/device copies occupy the same physical pool. Resident is an
+    # explicit alternative, not a claim that offload makes the UMA model smaller.
+    resident = deepcopy(candidate)
+    resident.update(id=candidate['id']+'-resident', offloadMode='none', autoOffload=False,
+                    placementAlternativeOf=candidate['id'])
+    return [candidate, resident]
+
+
 def _clone_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
     return json.loads(json.dumps(candidate))
 
@@ -2837,6 +3034,8 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
         "artifact",
         "artifactRevision",
         "dtype",
+        "weightFormat",
+        "textEncoderQuantization",
         "quantizationMode",
         "quantizedComponents",
         "offloadMode",
@@ -3290,7 +3489,7 @@ def build_auto_resource_plan(
     hardware_override = payload.get("hardwareOverride") if isinstance(payload.get("hardwareOverride"), dict) else None
     hardware = hardware_override or _hardware_snapshot(runtime_fingerprint, data_dir)
 
-    exact_pair_requirements = _auto_requirements_for_pair(model_type, mode)
+    exact_pair_requirements = _auto_requirements_for_pair(model_type, mode, form.get("executionProfileId"))
     if exact_pair_requirements is None:
         candidates = _undeclared_pair_candidates(form)
     elif model_type == "QwenImageModularPipeline" and mode == "text_to_image":
@@ -3299,19 +3498,27 @@ def build_auto_resource_plan(
         candidates = _declared_profile_candidates(form, local_models, hardware)
 
     exact_pair_declared = exact_pair_requirements is not None
-    optional_runtime_profile_ids = optional_runtime_profile_ids_for_execution(
-        model_type,
-        mode,
+    exact_profile = (
+        DIFFUSERS_EXECUTION_PROFILES[exact_pair_requirements["executionProfileId"]]
+        if exact_pair_requirements is not None and form.get("executionProfileId") is not None else None
+    )
+    optional_runtime_profile_ids = (
+        exact_profile.optional_runtime_profile_ids_for_target()
+        if exact_profile is not None else optional_runtime_profile_ids_for_execution(model_type, mode)
     )
     optional_runtime_profiles = public_optional_runtime_profiles(
         optional_runtime_profile_ids
     )
-    optional_runtime_requirement = optional_runtime_requirement_for_execution(
-        model_type,
-        mode,
-        catalog_resolver=optional_runtime_catalog_resolver,
+    optional_runtime_requirement = (
+        optional_runtime_requirement_for_profiles((exact_profile,), catalog_resolver=optional_runtime_catalog_resolver)
+        if exact_profile is not None else optional_runtime_requirement_for_execution(
+            model_type, mode, catalog_resolver=optional_runtime_catalog_resolver)
     )
-    studio_execution_spec = studio_execution_spec_for_pair(model_type, mode)
+    studio_execution_spec = studio_execution_spec_for_pair(model_type, mode, execution_profile_id=exact_profile.id if exact_profile else None)
+    if exact_profile is not None and studio_execution_spec is not None and (
+        studio_execution_spec["executionProfileId"] != exact_profile.id
+    ):
+        studio_execution_spec = None  # A standard graph spec cannot describe this native recipe.
     studio_execution_spec_contract = (
         {
             "schemaVersion": studio_execution_spec["schemaVersion"],
@@ -3335,6 +3542,9 @@ def build_auto_resource_plan(
             candidate["studioExecutionSpecContract"] = dict(studio_execution_spec_contract)
 
     candidates = _apply_catalog_hardware_support(candidates, hardware)
+    catalog_blocked = {candidate["id"] for candidate in candidates
+                       if candidate.get("proof", {}).get("source") == "model_artifact_catalog"
+                       and candidate.get("proof", {}).get("status") == "known_bad"}
     candidates = _apply_community_confirmation(candidates, form)
     candidates = _apply_history_to_candidates(candidates, history=history or read_auto_resource_history(data_dir), hardware=hardware)
     candidates = _rank_candidates_for_preference(candidates, preference)
@@ -3345,7 +3555,11 @@ def build_auto_resource_plan(
     )
     workload_key = workload_key_for_form(form)
     for candidate in candidates:
-        if candidate.get("exactPairDeclared") is False:
+        if candidate.get("exactPairDeclared") is False or candidate["id"] in catalog_blocked:
+            continue
+        if candidate.get('boundedWeightFormatRecipe') in BOUNDED_RECIPE_IDS:
+            # Bounded recipes permit only their source-declared placements.
+            # An optimization receipt cannot widen its source-selected boundary.
             continue
         artifact = str(
             candidate.get("resolvedArtifact")
@@ -3368,6 +3582,122 @@ def build_auto_resource_plan(
                 "selection": overrides,
             }
 
+    # Stored optimization selections cannot override declared artifact support.
+    candidates = _apply_catalog_hardware_support(candidates, hardware)
+
+    # An exact qualified mode is a sealed placement choice, not permission to
+    # fan it out into alternative candidate identities.
+    pinned_originals = {candidate["id"] for candidate in candidates
+                        if not candidate.get("placementAlternativeOf")
+                        and "offloadMode" in candidate.get("optimizationQualification", {}).get("selection", {})}
+    candidates = [candidate for candidate in candidates if candidate.get("placementAlternativeOf") not in pinned_originals]
+
+    # History and qualified overrides cannot make an impossible dense native
+    # placement fit. Apply this lower-bound check to every candidate builder,
+    # after its final artifact, dtype and placement have been selected.
+    parameter_census = {}
+    for candidate in candidates:
+        candidate.pop("parameterStorageLowerBound", None)
+        candidate.pop("parameterConversionReserve", None)
+        if candidate.get('boundedWeightFormatRecipe') in BOUNDED_RECIPE_IDS:
+            from modiff.flux3_auto_resource import LINUX_RECIPE_ID, NF4_RECIPE_ID, linux_shared_hardware, linux_working_reserve, nf4_parameter_census, parameter_census as fp8r_census, workload_missing
+            linux = candidate.get('boundedWeightFormatRecipe') == LINUX_RECIPE_ID
+            missing = workload_missing(form, hardware, candidate.get('executionProfileId'))
+            placement = candidate.get('offloadMode')
+            if (placement not in ({'model_cpu', 'none'} if linux else {'model_cpu'})
+                    or candidate.get('autoOffload') is not (placement != 'none')):
+                missing.append('The bounded FP8r Auto recipe requires its source-declared placement and matching Auto offload control.')
+            if optional_runtime_requirement.get('state') not in {'active', 'base_satisfied'}:
+                missing.append('Activate the exact reviewed optional Diffusers provider before FP8r Automatic execution.')
+            resolved = (candidate.get('artifactResolution') or {}).get('resolved') or {}
+            try:
+                arguments = (candidate.get('artifactValidation') or {}, candidate['modelType'], candidate['modelRepo'],
+                             resolved.get('revision'), candidate['dtype'])
+                if candidate.get('boundedWeightFormatRecipe') == NF4_RECIPE_ID:
+                    bound, conversion, dequantization, phases = nf4_parameter_census(*arguments)
+                    candidate['parameterLoadingPhases'] = phases
+                else:
+                    bound, conversion, dequantization = fp8r_census(*arguments)
+                if not bound or not conversion:
+                    missing.append('Complete exact FP8r parameter and cold-loading census is required before Auto admission.')
+                else:
+                    candidate.update(parameterStorageLowerBound=bound, parameterConversionReserve=conversion,
+                                     parameterDequantizationRequirements=dequantization)
+                    capacity_hardware = hardware
+                    if linux:
+                        if not linux_shared_hardware(hardware):
+                            raise ValueError('Linux shared-memory candidate no longer matches its observed hardware.')
+                        candidate['workingMemoryAdditionalRequirements'] = linux_working_reserve(arguments[0], arguments[3], form)
+                        device = next(d for d in hardware['runtime']['hardware']['devices'] if d.get('type') == 'cuda')
+                        # This copy belongs to this recipe only. Preserve the
+                        # ordinary report's 2 GiB dedicated total unchanged.
+                        capacity = min(device['torch_vram_total'], device['shared_memory_total'], hardware['systemMemory']['totalBytes'])
+                        capacity_hardware = {**hardware, 'accelerator': {**hardware['accelerator'], 'totalBytes': capacity}}
+                    missing += impossible_parameter_residency(capacity_hardware, bound, placement)
+            except (OSError, RuntimeError, ValueError, KeyError, TypeError) as error:
+                missing.append(str(error))
+            if missing:
+                candidate['requirementsMissing'] = list(dict.fromkeys([*(candidate.get('requirementsMissing') or []), *missing]))
+                reason = '; '.join(candidate['requirementsMissing'])
+                candidate.update(canAutoRun=False, readiness='skipped', skipReason=reason)
+                candidate['proof'] = {**candidate['proof'], 'status': 'skipped', 'message': reason}
+            continue
+        if (candidate.get("artifactFormat") != "native"
+                or candidate.get("quantizationMode", "none") != "none"
+                or candidate.get("loadedQuantization", "none") != "none"):
+            continue
+        resolved = (candidate.get("artifactResolution") or {}).get("resolved") or {}
+        validation = candidate.get("artifactValidation") or {}
+        dtype = str(candidate.get("dtype") or "bfloat16")
+        census_key = (candidate.get("modelRepo"), resolved.get("revision"), dtype,
+                      json.dumps(validation, sort_keys=True, separators=(",", ":")))
+        if census_key not in parameter_census:
+            parameter_census[census_key] = (
+                artifact_parameter_lower_bound(validation, resolved.get("revision"), dtype),
+                artifact_parameter_conversion_reserve(validation, resolved.get("revision"), dtype),
+            )
+        bound, conversion = deepcopy(parameter_census[census_key])
+        if bound is not None:
+            # Storage evidence travels to owner-aware graph admission. Checking
+            # cold host bytes here would incorrectly reject compatible warm
+            # owners, whose live CPU weights are already outside available RAM.
+            candidate["parameterStorageLowerBound"] = bound
+            if conversion is not None:
+                candidate["parameterConversionReserve"] = conversion
+        placement = str(candidate.get("offloadMode") or "none")
+        capacity_hardware = _parameter_floor_hardware(hardware, placement)
+        missing = impossible_parameter_residency(capacity_hardware, bound, placement)
+        if not missing:
+            continue
+        candidate["requirementsMissing"] = list(dict.fromkeys([*(candidate.get("requirementsMissing") or []), *missing]))
+        reason = "; ".join(candidate["requirementsMissing"])
+        candidate.update(canAutoRun=False, readiness="skipped", healthBadge="Not suitable locally", skipReason=reason)
+        candidate["proof"] = {**(candidate.get("proof") or {}), "status": "skipped", "message": reason}
+
+    from modiff.direct_video_auto_resource import shared_video_policy, shared_video_storage
+    if shared_video_policy(form, hardware):
+        # Revalidate after history/qualification and every census path. Neither
+        # stored quantization nor an early non-native path may waive this scope.
+        for candidate in candidates:
+            candidate.pop('directVideoStorage', None)
+            try:
+                candidate['directVideoStorage'] = shared_video_storage(candidate, form, hardware)
+            except ValueError as error:
+                candidate['requirementsMissing'] = list(dict.fromkeys([*(candidate.get('requirementsMissing') or []), str(error)]))
+                reason = '; '.join(candidate['requirementsMissing'])
+                candidate.update(canAutoRun=False, readiness='skipped', skipReason=reason)
+                candidate['proof'] = {**candidate['proof'], 'status': 'skipped', 'message': reason}
+
+    # Unknown layouts retain the historical original candidate and proof level.
+    # Publishing ready alternatives without the dense census would also let
+    # non-workflow consumers mistake capability for a bounded placement choice.
+    candidates = [candidate for candidate in candidates if not candidate.get("placementAlternativeOf")
+                  or native_cpu_parameter_residency(
+                      candidate.get("parameterStorageLowerBound"),
+                      execution_path=candidate.get("executionPath", ""),
+                      offload_mode=candidate.get("offloadMode", "none"),
+                      device=str(form.get("device") or "cpu"), dtype=candidate.get("dtype", ""),
+                  )]
     ready = [
         candidate for candidate in candidates
         if candidate.get("exactPairDeclared") is not False

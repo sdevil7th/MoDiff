@@ -8,6 +8,29 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.mark.parametrize("directory", ["consistency-model-pipeline", "ddpm-pipeline"])
+def test_published_legacy_unet_preset_uses_automatic_attention(directory):
+    path = ROOT / "data/graphs/studio" / directory / "unconditional-image.json"
+    graph = json.loads(path.read_text(encoding="utf-8"))
+    recipe = next(node["data"] for node in graph["nodes"] if node["data"]["action"] == "DiffusersExecutionRecipe")
+    assert recipe["params"]["attention_backend"]["value"] == "auto"
+
+
+def test_published_ernie_size_bounds_match_the_native_generation_contract():
+    from modules.DiffusersImage.main import get_image_pipeline_adapter, image_pipeline_contract
+
+    path = ROOT / "data/graphs/studio/ernie-image-pipeline/text-to-image.json"
+    graph = json.loads(path.read_text(encoding="utf-8"))
+    generate = next(node["data"] for node in graph["nodes"] if node["data"]["action"] == "Generate")
+    params = generate["params"]
+    native = image_pipeline_contract(get_image_pipeline_adapter("ErnieImagePipeline"), "text_to_image")
+    for field in ("width", "height"):
+        archived_bounds = params["image_contract"]["value"]["fieldParams"][field]
+        assert archived_bounds == native["fieldParams"][field]
+        for bound in ("min", "max", "step"):
+            assert params[field][bound] == archived_bounds[bound]
+
+
 def test_image_readiness_ledger_reproduces_without_registry_or_network(monkeypatch):
     from modiff.image_prototyping_readiness import (
         build_image_prototyping_readiness,
@@ -20,6 +43,33 @@ def test_image_readiness_ledger_reproduces_without_registry_or_network(monkeypat
     assert generated["summary"]["routeCount"] == len(generated["routes"])
     assert generated["summary"]["denominatorFrozen"] is False
     assert generated["coverageBoundary"]["clientTemplatesAndTaskChoosers"] == "requires_paired_client_gate"
+
+
+def test_image_readiness_source_hash_ignores_checkout_newlines_and_detects_content_changes(tmp_path):
+    from modiff.image_prototyping_readiness import build_image_prototyping_readiness
+
+    for relative in (
+        "data/modular-workflow-contracts.json",
+        "data/model-artifact-catalog.json",
+        "modiff/image_native_variant_reviews.py",
+    ):
+        fixture = tmp_path / relative
+        fixture.parent.mkdir(exist_ok=True)
+        fixture.write_bytes((ROOT / relative).read_bytes().replace(b"\r\n", b"\n"))
+
+    catalog = tmp_path / "data" / "model-artifact-catalog.json"
+    lf = catalog.read_bytes()
+    canonical = build_image_prototyping_readiness(tmp_path)
+
+    catalog.write_bytes(lf.replace(b"\n", b"\r\n"))
+    assert build_image_prototyping_readiness(tmp_path) == canonical
+
+    changed = lf.replace(b'"apache-2.0"', b'"mit"', 1)
+    assert changed != lf
+    catalog.write_bytes(changed)
+    updated = build_image_prototyping_readiness(tmp_path)
+    assert updated["sources"]["modelArtifactCatalog"] != canonical["sources"]["modelArtifactCatalog"]
+    assert updated["contentHash"] != canonical["contentHash"]
 
 
 @pytest.mark.parametrize("host", [("linux", "x86_64"), ("windows", "x86_64"), ("macos", "arm64")])
@@ -178,3 +228,21 @@ def test_workflow_scoped_native_variants_are_not_omitted_or_leaked_to_other_task
     assert alternate["disposition"] == "native_integrated"
     assert f"qwen-image:modular/modular_image_to_image@{repository}" not in rows
     assert rows[f"qwen-image:t2i-direct/text_to_image@{repository}"]["disposition"] == "preserved_standard_alternative"
+
+
+def test_cosmos_super_readiness_names_the_exact_artifact_and_keeps_evidence_pending():
+    from modiff.image_prototyping_readiness import build_image_prototyping_readiness
+
+    rows = build_image_prototyping_readiness(ROOT)["routes"]
+    selected = [row for row in rows if row["artifact"]["repository"] == "nvidia/Cosmos3-Super-Text2Image"]
+    assert len(selected) == 2
+    assert {row["task"] for row in selected} == {"text_to_image"}
+    for row in selected:
+        assert row["displayName"] == "Cosmos3-Super-Text2Image"
+        assert row["artifact"]["revision"] == "daf3d374804be4c512c2135568a7cb95d4341d79"
+        assert row["evidence"]["nativeOutput"] == "pending"
+        assert row["evidence"]["platform"] == "pending"
+        assert row["evidence"]["browser"] == "pending_final_candidate"
+        assert row["optionalRuntime"]["profileIds"] == ["cosmos-guardrail-0.3.1"]
+        assert row["optionalRuntime"]["requiredNow"] is True
+        assert row["optionalRuntime"]["state"] == "unavailable"

@@ -1,0 +1,1823 @@
+{
+  "schemaVersion": 1,
+  "kind": "reviewed-joint-av-artifact-closures",
+  "scope": "Immutable file selection only; no pretrained model, memory, output or publication qualification.",
+  "repositories": [
+    {
+      "pipelineClass": "MiniMaxH3ModularPipeline",
+      "repository": "MiniMaxAI/MiniMax-H3",
+      "revision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+      "license": {
+        "path": "LICENSE",
+        "sha256": "59b99642b95ea21630e311198ddbfffbfe05aadba0c2f5d884cbdf4efcc90f44"
+      },
+      "workflows": [
+        {
+          "workflowId": "t2va",
+          "transformerPartition": "transformer",
+          "requiredAdapter": null,
+          "files": [
+            {
+              "path": "LICENSE",
+              "byteSize": 17604,
+              "sha256": null,
+              "gitBlobId": "c389b45855337ccec8ddeb389f4fe902abcd0b19"
+            },
+            {
+              "path": "audio_scheduler/scheduler_config.json",
+              "byteSize": 96,
+              "sha256": null,
+              "gitBlobId": "28a3d4ed602d925031c7e5d6eeb07df8958ff0f1"
+            },
+            {
+              "path": "audio_vae/config.json",
+              "byteSize": 2271,
+              "sha256": null,
+              "gitBlobId": "15df6fe0b288b260dca0f2aebf1cd81334d77e96"
+            },
+            {
+              "path": "audio_vae/diffusion_pytorch_model.safetensors",
+              "byteSize": 605429340,
+              "sha256": "52c59e67ba8de5477c81bfbced0327aabf500f1bfdeefd5ee754529241cb26cb",
+              "gitBlobId": "4a381c6f4b9a67db97c25d250f9d00942d17a49e"
+            },
+            {
+              "path": "modular_model_index.json",
+              "byteSize": 2935,
+              "sha256": null,
+              "gitBlobId": "5b69f1e801bd0a7e9733c48704c732339f2002fe"
+            },
+            {
+              "path": "processor/chat_template.json",
+              "byteSize": 5499,
+              "sha256": null,
+              "gitBlobId": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da"
+            },
+            {
+              "path": "processor/merges.txt",
+              "byteSize": 1671839,
+              "sha256": null,
+              "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0"
+            },
+            {
+              "path": "processor/preprocessor_config.json",
+              "byteSize": 390,
+              "sha256": null,
+              "gitBlobId": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64"
+            },
+            {
+              "path": "processor/tokenizer.json",
+              "byteSize": 7032403,
+              "sha256": null,
+              "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421"
+            },
+            {
+              "path": "processor/tokenizer_config.json",
+              "byteSize": 11003,
+              "sha256": null,
+              "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21"
+            },
+            {
+              "path": "processor/video_preprocessor_config.json",
+              "byteSize": 385,
+              "sha256": null,
+              "gitBlobId": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe"
+            },
+            {
+              "path": "processor/vocab.json",
+              "byteSize": 2776833,
+              "sha256": null,
+              "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569"
+            },
+            {
+              "path": "scheduler/scheduler_config.json",
+              "byteSize": 97,
+              "sha256": null,
+              "gitBlobId": "1d44f95b955a648ad4fab455e4fe11053888c30b"
+            },
+            {
+              "path": "text_encoder/chat_template.json",
+              "byteSize": 5499,
+              "sha256": null,
+              "gitBlobId": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da"
+            },
+            {
+              "path": "text_encoder/config.json",
+              "byteSize": 1474,
+              "sha256": null,
+              "gitBlobId": "29e925092dee9f14278c53e7e7d876cea8a997bc"
+            },
+            {
+              "path": "text_encoder/merges.txt",
+              "byteSize": 1671839,
+              "sha256": null,
+              "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0"
+            },
+            {
+              "path": "text_encoder/model-00001-of-00014.safetensors",
+              "byteSize": 4932328944,
+              "sha256": "6b9dfbc930e505402ae9d7e5091a9d7d656cda5f34614f01cfe70bfb0cca27cb",
+              "gitBlobId": "614247ef75d01ea40af9ef31e07103221340214d"
+            },
+            {
+              "path": "text_encoder/model-00002-of-00014.safetensors",
+              "byteSize": 4875990528,
+              "sha256": "d8bb44b4ff303fe76fe9e894022fb3dc71b15a2e716592790fe0e3c3e60478fa",
+              "gitBlobId": "0ee7c24d1c85e72bc46fd07821a1cfb4af8efd76"
+            },
+            {
+              "path": "text_encoder/model-00003-of-00014.safetensors",
+              "byteSize": 4875990552,
+              "sha256": "54f22e8b3168f8dc962fac0d313607ebf52a12b433d4cf3098a0d82d9f042940",
+              "gitBlobId": "cabcc450fe74db21934f8d99d1bc103942f721ba"
+            },
+            {
+              "path": "text_encoder/model-00004-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "ad09c74d3c13ee29b5d0d84548fd8a3424a651564eaccd519946c296e59c557f",
+              "gitBlobId": "da3ca77f0ee7d9bdbe0696750c094f0dc6ad3c68"
+            },
+            {
+              "path": "text_encoder/model-00005-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "fc993c8a0e2a5b0570f383e1a95dc3a1281d1b224b6f3ee908f4827941e1dfc2",
+              "gitBlobId": "abb15edfb6d8c352e87914ce6a0d96a98e927e04"
+            },
+            {
+              "path": "text_encoder/model-00006-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "82f05620d1f718a90c362b221d6a184ff1a0f53301d706882d3df49695fa1974",
+              "gitBlobId": "66ace514a9c58011ac2bd4c796c21654b49443b2"
+            },
+            {
+              "path": "text_encoder/model-00007-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "fb91da8cb01ff4de3eef0eab1c3e769a734b3a1aafc61734068638a0d6c86934",
+              "gitBlobId": "71e871eb7cda8e711788e283e0fb512998a952be"
+            },
+            {
+              "path": "text_encoder/model-00008-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "431ca56535c8781944ce3801f5eb61c45531e853ecc5846d936ebaf4761b764f",
+              "gitBlobId": "bf1d7c575e6d7cb1117cb8fe06c102193ced09a8"
+            },
+            {
+              "path": "text_encoder/model-00009-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "3825e3f4302f4d2f7d76aa7430d2ce0864fde6b9e540a5806bf0d8e38e4d9f47",
+              "gitBlobId": "9dfb35899c209de09e18aa4bf8346efed8269d76"
+            },
+            {
+              "path": "text_encoder/model-00010-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "aded5a4d1d5e22dbd8b6f79266b6eb88c840411b09527c53917a1419ace22e2f",
+              "gitBlobId": "4d94038272e1f5c0368639babad1f7b595a3690b"
+            },
+            {
+              "path": "text_encoder/model-00011-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "3820ffe8d8d6477f6fe8d614ef3c87abb264ee39accebf43a1507b970d80946f",
+              "gitBlobId": "826ba879b38cc6566b5aea1c3c04741a3087ba20"
+            },
+            {
+              "path": "text_encoder/model-00012-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "05ad2d08ce71963121c9b03f1d9ec5d7641052f4b23c6c12b80d71065eb8e98e",
+              "gitBlobId": "c19df94cbd35798336f17365b1115200f1eec91f"
+            },
+            {
+              "path": "text_encoder/model-00013-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "b64f2289871261fdd1abbd3b78bcd66011b341de3dc8eeb2ed1a473ee7c8d95c",
+              "gitBlobId": "39fab9be2b33a5527cbb5131e13c387544a695a9"
+            },
+            {
+              "path": "text_encoder/model-00014-of-00014.safetensors",
+              "byteSize": 3270697008,
+              "sha256": "e45b6c9998c77ee5a6577f9f47bc76416c1d4d387169e50c4c9d3134ea51b13b",
+              "gitBlobId": "055162e6edd9914d2652ccf99f2371c000b613fe"
+            },
+            {
+              "path": "text_encoder/model.safetensors.index.json",
+              "byteSize": 97831,
+              "sha256": null,
+              "gitBlobId": "b7f68f12031a25c81d72d46a284fe9e1daa448b8"
+            },
+            {
+              "path": "text_encoder/preprocessor_config.json",
+              "byteSize": 390,
+              "sha256": null,
+              "gitBlobId": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64"
+            },
+            {
+              "path": "text_encoder/tokenizer.json",
+              "byteSize": 7032403,
+              "sha256": null,
+              "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421"
+            },
+            {
+              "path": "text_encoder/tokenizer_config.json",
+              "byteSize": 11003,
+              "sha256": null,
+              "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21"
+            },
+            {
+              "path": "text_encoder/video_preprocessor_config.json",
+              "byteSize": 385,
+              "sha256": null,
+              "gitBlobId": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe"
+            },
+            {
+              "path": "text_encoder/vocab.json",
+              "byteSize": 2776833,
+              "sha256": null,
+              "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569"
+            },
+            {
+              "path": "tokenizer/merges.txt",
+              "byteSize": 1671839,
+              "sha256": null,
+              "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0"
+            },
+            {
+              "path": "tokenizer/tokenizer.json",
+              "byteSize": 7032403,
+              "sha256": null,
+              "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421"
+            },
+            {
+              "path": "tokenizer/tokenizer_config.json",
+              "byteSize": 11003,
+              "sha256": null,
+              "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21"
+            },
+            {
+              "path": "tokenizer/vocab.json",
+              "byteSize": 2776833,
+              "sha256": null,
+              "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569"
+            },
+            {
+              "path": "transformer/config.json",
+              "byteSize": 546,
+              "sha256": null,
+              "gitBlobId": "c251a4133c81852a150c6668a570e142dc776b6e"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00001-of-00014.safetensors",
+              "byteSize": 4825958704,
+              "sha256": "2d847200c45c09dd7f973c1b096663068408ef851ee0b3711d059b6dc5dcd028",
+              "gitBlobId": "78e7c04f1246f7fd29127ba802f4c1fd65776404"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00002-of-00014.safetensors",
+              "byteSize": 4702158032,
+              "sha256": "2c4d362eddd2802180ac9c744849eb9ba8d9c8b984bdf9822cb02ed004b29184",
+              "gitBlobId": "4a79d68cef731db07fafbe78d9d5c6d5ddf9f395"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00003-of-00014.safetensors",
+              "byteSize": 4933368192,
+              "sha256": "949c5aafbbfa5654da730a6a7fafd75adb164d0857b095a30e8bb6d390887d69",
+              "gitBlobId": "f69102656be6332afea3376b76a81a2190b2aa89"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00004-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "eef7616790105ee839766bb2027203bf2c0d87c6aa038dca84145a8675f5ce28",
+              "gitBlobId": "663bd8d4ca0dfa722c99ca01d54049dd7efa0515"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00005-of-00014.safetensors",
+              "byteSize": 4702158080,
+              "sha256": "43fdf42d638e8bc6745f713fae80c93bb301807a1a5ae7249344ce28e202a494",
+              "gitBlobId": "338b0e9ce0fadd8aa27a253e50a3dbd565ded8ec"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00006-of-00014.safetensors",
+              "byteSize": 4933368232,
+              "sha256": "6442510b34d173653f0cce5c964b935395a8f7accf0b9cc0aa31aec59805239d",
+              "gitBlobId": "aff5d426da7d9972f3adb29f02cffaf62f94f9c1"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00007-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "29f48f535c91dac76496ca821eeb16ca24bc4caf3f0cae8b920a89b1f966da6d",
+              "gitBlobId": "e23672b7490bcd26fcb50976b89903acd85fc6ff"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00008-of-00014.safetensors",
+              "byteSize": 4702158080,
+              "sha256": "c711b096c764bd60f0b8b6ad49518bfab6d614fb788c725add8741c0674a4cd8",
+              "gitBlobId": "a7c89c8303ae2cace7518f9d995522e00872788e"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00009-of-00014.safetensors",
+              "byteSize": 4933368232,
+              "sha256": "44428defe3976cbb87635ad200b958199e739986697cd29fdf27aeb7294b5944",
+              "gitBlobId": "a63bcdf9be4d78b32124fcc032fbc1245f39ec05"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00010-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "3d44939c374c9da382e9c6877e1946adf7b84e08c7a881c068f228d6849411c9",
+              "gitBlobId": "e3b94e045a76f7cc87b17add5983165a800214a5"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00011-of-00014.safetensors",
+              "byteSize": 4702158080,
+              "sha256": "224d24430b58127a5577721084e0e704a0e74ec96dd7c35bc6fc0994ebd87c33",
+              "gitBlobId": "72a25189806a418d770b37ae8efc9b0d53fc312b"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00012-of-00014.safetensors",
+              "byteSize": 4933368232,
+              "sha256": "48fa2bd8fe134eef565ab2464f1c2589a6657cba0d14283dfc06b532f8961f3c",
+              "gitBlobId": "9545750c42b012ae13089df388d1569d10ad2a72"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00013-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "be5b4b1809f9d546ffd4b3fcf41e5c1e02b819125caa6bc105c109b04c051bd3",
+              "gitBlobId": "5827d7644a1ebc1ce9fcf40607857257f14f5659"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00014-of-00014.safetensors",
+              "byteSize": 4644161920,
+              "sha256": "8fbd5e6c1fb1df7ce988ca90f3d59e7610e465c7517e4b344eda4a214ba4b97d",
+              "gitBlobId": "5c97657ddfa2a1cf31bb6460a25c1caeccfe5a0c"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 64488,
+              "sha256": null,
+              "gitBlobId": "da038def25abb5a5e4be509816ee55a0b7105e09"
+            },
+            {
+              "path": "vae/config.json",
+              "byteSize": 2011,
+              "sha256": null,
+              "gitBlobId": "ed4874a5886972f4029fcd99cbbe72de0177b2c9"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00001-of-00003.safetensors",
+              "byteSize": 5061033024,
+              "sha256": "72f4c6be84ac0674f27398cde991dd9d719762f3952c4921aa66b2ce542f6374",
+              "gitBlobId": "73f63f98715bce2897a36685ee6e3338f1a43416"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00002-of-00003.safetensors",
+              "byteSize": 4955986528,
+              "sha256": "2e05e8bc23fa4071043e17fd242be8acd0685e781a43987432b2eae925be4198",
+              "gitBlobId": "d8083e40d1b26ed6ed02afd3bd4390fff32f6af5"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00003-of-00003.safetensors",
+              "byteSize": 398539336,
+              "sha256": "c05d6ac4b1a33de372799d708531da6320f6a3ce6d1ce6d895e770988e004a39",
+              "gitBlobId": "1c31fd275aa880a3fb6ac88ae62ac02e79d9a61f"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 74228,
+              "sha256": null,
+              "gitBlobId": "05dfb255c44daa4f1ac487f57f18210fa5c19439"
+            }
+          ],
+          "selectedByteSize": 144051157679
+        },
+        {
+          "workflowId": "fl2va",
+          "transformerPartition": "transformer",
+          "requiredAdapter": null,
+          "files": [
+            {
+              "path": "LICENSE",
+              "byteSize": 17604,
+              "sha256": null,
+              "gitBlobId": "c389b45855337ccec8ddeb389f4fe902abcd0b19"
+            },
+            {
+              "path": "audio_scheduler/scheduler_config.json",
+              "byteSize": 96,
+              "sha256": null,
+              "gitBlobId": "28a3d4ed602d925031c7e5d6eeb07df8958ff0f1"
+            },
+            {
+              "path": "audio_vae/config.json",
+              "byteSize": 2271,
+              "sha256": null,
+              "gitBlobId": "15df6fe0b288b260dca0f2aebf1cd81334d77e96"
+            },
+            {
+              "path": "audio_vae/diffusion_pytorch_model.safetensors",
+              "byteSize": 605429340,
+              "sha256": "52c59e67ba8de5477c81bfbced0327aabf500f1bfdeefd5ee754529241cb26cb",
+              "gitBlobId": "4a381c6f4b9a67db97c25d250f9d00942d17a49e"
+            },
+            {
+              "path": "modular_model_index.json",
+              "byteSize": 2935,
+              "sha256": null,
+              "gitBlobId": "5b69f1e801bd0a7e9733c48704c732339f2002fe"
+            },
+            {
+              "path": "processor/chat_template.json",
+              "byteSize": 5499,
+              "sha256": null,
+              "gitBlobId": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da"
+            },
+            {
+              "path": "processor/merges.txt",
+              "byteSize": 1671839,
+              "sha256": null,
+              "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0"
+            },
+            {
+              "path": "processor/preprocessor_config.json",
+              "byteSize": 390,
+              "sha256": null,
+              "gitBlobId": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64"
+            },
+            {
+              "path": "processor/tokenizer.json",
+              "byteSize": 7032403,
+              "sha256": null,
+              "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421"
+            },
+            {
+              "path": "processor/tokenizer_config.json",
+              "byteSize": 11003,
+              "sha256": null,
+              "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21"
+            },
+            {
+              "path": "processor/video_preprocessor_config.json",
+              "byteSize": 385,
+              "sha256": null,
+              "gitBlobId": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe"
+            },
+            {
+              "path": "processor/vocab.json",
+              "byteSize": 2776833,
+              "sha256": null,
+              "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569"
+            },
+            {
+              "path": "scheduler/scheduler_config.json",
+              "byteSize": 97,
+              "sha256": null,
+              "gitBlobId": "1d44f95b955a648ad4fab455e4fe11053888c30b"
+            },
+            {
+              "path": "text_encoder/chat_template.json",
+              "byteSize": 5499,
+              "sha256": null,
+              "gitBlobId": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da"
+            },
+            {
+              "path": "text_encoder/config.json",
+              "byteSize": 1474,
+              "sha256": null,
+              "gitBlobId": "29e925092dee9f14278c53e7e7d876cea8a997bc"
+            },
+            {
+              "path": "text_encoder/merges.txt",
+              "byteSize": 1671839,
+              "sha256": null,
+              "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0"
+            },
+            {
+              "path": "text_encoder/model-00001-of-00014.safetensors",
+              "byteSize": 4932328944,
+              "sha256": "6b9dfbc930e505402ae9d7e5091a9d7d656cda5f34614f01cfe70bfb0cca27cb",
+              "gitBlobId": "614247ef75d01ea40af9ef31e07103221340214d"
+            },
+            {
+              "path": "text_encoder/model-00002-of-00014.safetensors",
+              "byteSize": 4875990528,
+              "sha256": "d8bb44b4ff303fe76fe9e894022fb3dc71b15a2e716592790fe0e3c3e60478fa",
+              "gitBlobId": "0ee7c24d1c85e72bc46fd07821a1cfb4af8efd76"
+            },
+            {
+              "path": "text_encoder/model-00003-of-00014.safetensors",
+              "byteSize": 4875990552,
+              "sha256": "54f22e8b3168f8dc962fac0d313607ebf52a12b433d4cf3098a0d82d9f042940",
+              "gitBlobId": "cabcc450fe74db21934f8d99d1bc103942f721ba"
+            },
+            {
+              "path": "text_encoder/model-00004-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "ad09c74d3c13ee29b5d0d84548fd8a3424a651564eaccd519946c296e59c557f",
+              "gitBlobId": "da3ca77f0ee7d9bdbe0696750c094f0dc6ad3c68"
+            },
+            {
+              "path": "text_encoder/model-00005-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "fc993c8a0e2a5b0570f383e1a95dc3a1281d1b224b6f3ee908f4827941e1dfc2",
+              "gitBlobId": "abb15edfb6d8c352e87914ce6a0d96a98e927e04"
+            },
+            {
+              "path": "text_encoder/model-00006-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "82f05620d1f718a90c362b221d6a184ff1a0f53301d706882d3df49695fa1974",
+              "gitBlobId": "66ace514a9c58011ac2bd4c796c21654b49443b2"
+            },
+            {
+              "path": "text_encoder/model-00007-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "fb91da8cb01ff4de3eef0eab1c3e769a734b3a1aafc61734068638a0d6c86934",
+              "gitBlobId": "71e871eb7cda8e711788e283e0fb512998a952be"
+            },
+            {
+              "path": "text_encoder/model-00008-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "431ca56535c8781944ce3801f5eb61c45531e853ecc5846d936ebaf4761b764f",
+              "gitBlobId": "bf1d7c575e6d7cb1117cb8fe06c102193ced09a8"
+            },
+            {
+              "path": "text_encoder/model-00009-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "3825e3f4302f4d2f7d76aa7430d2ce0864fde6b9e540a5806bf0d8e38e4d9f47",
+              "gitBlobId": "9dfb35899c209de09e18aa4bf8346efed8269d76"
+            },
+            {
+              "path": "text_encoder/model-00010-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "aded5a4d1d5e22dbd8b6f79266b6eb88c840411b09527c53917a1419ace22e2f",
+              "gitBlobId": "4d94038272e1f5c0368639babad1f7b595a3690b"
+            },
+            {
+              "path": "text_encoder/model-00011-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "3820ffe8d8d6477f6fe8d614ef3c87abb264ee39accebf43a1507b970d80946f",
+              "gitBlobId": "826ba879b38cc6566b5aea1c3c04741a3087ba20"
+            },
+            {
+              "path": "text_encoder/model-00012-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "05ad2d08ce71963121c9b03f1d9ec5d7641052f4b23c6c12b80d71065eb8e98e",
+              "gitBlobId": "c19df94cbd35798336f17365b1115200f1eec91f"
+            },
+            {
+              "path": "text_encoder/model-00013-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "b64f2289871261fdd1abbd3b78bcd66011b341de3dc8eeb2ed1a473ee7c8d95c",
+              "gitBlobId": "39fab9be2b33a5527cbb5131e13c387544a695a9"
+            },
+            {
+              "path": "text_encoder/model-00014-of-00014.safetensors",
+              "byteSize": 3270697008,
+              "sha256": "e45b6c9998c77ee5a6577f9f47bc76416c1d4d387169e50c4c9d3134ea51b13b",
+              "gitBlobId": "055162e6edd9914d2652ccf99f2371c000b613fe"
+            },
+            {
+              "path": "text_encoder/model.safetensors.index.json",
+              "byteSize": 97831,
+              "sha256": null,
+              "gitBlobId": "b7f68f12031a25c81d72d46a284fe9e1daa448b8"
+            },
+            {
+              "path": "text_encoder/preprocessor_config.json",
+              "byteSize": 390,
+              "sha256": null,
+              "gitBlobId": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64"
+            },
+            {
+              "path": "text_encoder/tokenizer.json",
+              "byteSize": 7032403,
+              "sha256": null,
+              "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421"
+            },
+            {
+              "path": "text_encoder/tokenizer_config.json",
+              "byteSize": 11003,
+              "sha256": null,
+              "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21"
+            },
+            {
+              "path": "text_encoder/video_preprocessor_config.json",
+              "byteSize": 385,
+              "sha256": null,
+              "gitBlobId": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe"
+            },
+            {
+              "path": "text_encoder/vocab.json",
+              "byteSize": 2776833,
+              "sha256": null,
+              "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569"
+            },
+            {
+              "path": "tokenizer/merges.txt",
+              "byteSize": 1671839,
+              "sha256": null,
+              "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0"
+            },
+            {
+              "path": "tokenizer/tokenizer.json",
+              "byteSize": 7032403,
+              "sha256": null,
+              "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421"
+            },
+            {
+              "path": "tokenizer/tokenizer_config.json",
+              "byteSize": 11003,
+              "sha256": null,
+              "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21"
+            },
+            {
+              "path": "tokenizer/vocab.json",
+              "byteSize": 2776833,
+              "sha256": null,
+              "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569"
+            },
+            {
+              "path": "transformer/config.json",
+              "byteSize": 546,
+              "sha256": null,
+              "gitBlobId": "c251a4133c81852a150c6668a570e142dc776b6e"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00001-of-00014.safetensors",
+              "byteSize": 4825958704,
+              "sha256": "2d847200c45c09dd7f973c1b096663068408ef851ee0b3711d059b6dc5dcd028",
+              "gitBlobId": "78e7c04f1246f7fd29127ba802f4c1fd65776404"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00002-of-00014.safetensors",
+              "byteSize": 4702158032,
+              "sha256": "2c4d362eddd2802180ac9c744849eb9ba8d9c8b984bdf9822cb02ed004b29184",
+              "gitBlobId": "4a79d68cef731db07fafbe78d9d5c6d5ddf9f395"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00003-of-00014.safetensors",
+              "byteSize": 4933368192,
+              "sha256": "949c5aafbbfa5654da730a6a7fafd75adb164d0857b095a30e8bb6d390887d69",
+              "gitBlobId": "f69102656be6332afea3376b76a81a2190b2aa89"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00004-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "eef7616790105ee839766bb2027203bf2c0d87c6aa038dca84145a8675f5ce28",
+              "gitBlobId": "663bd8d4ca0dfa722c99ca01d54049dd7efa0515"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00005-of-00014.safetensors",
+              "byteSize": 4702158080,
+              "sha256": "43fdf42d638e8bc6745f713fae80c93bb301807a1a5ae7249344ce28e202a494",
+              "gitBlobId": "338b0e9ce0fadd8aa27a253e50a3dbd565ded8ec"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00006-of-00014.safetensors",
+              "byteSize": 4933368232,
+              "sha256": "6442510b34d173653f0cce5c964b935395a8f7accf0b9cc0aa31aec59805239d",
+              "gitBlobId": "aff5d426da7d9972f3adb29f02cffaf62f94f9c1"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00007-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "29f48f535c91dac76496ca821eeb16ca24bc4caf3f0cae8b920a89b1f966da6d",
+              "gitBlobId": "e23672b7490bcd26fcb50976b89903acd85fc6ff"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00008-of-00014.safetensors",
+              "byteSize": 4702158080,
+              "sha256": "c711b096c764bd60f0b8b6ad49518bfab6d614fb788c725add8741c0674a4cd8",
+              "gitBlobId": "a7c89c8303ae2cace7518f9d995522e00872788e"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00009-of-00014.safetensors",
+              "byteSize": 4933368232,
+              "sha256": "44428defe3976cbb87635ad200b958199e739986697cd29fdf27aeb7294b5944",
+              "gitBlobId": "a63bcdf9be4d78b32124fcc032fbc1245f39ec05"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00010-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "3d44939c374c9da382e9c6877e1946adf7b84e08c7a881c068f228d6849411c9",
+              "gitBlobId": "e3b94e045a76f7cc87b17add5983165a800214a5"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00011-of-00014.safetensors",
+              "byteSize": 4702158080,
+              "sha256": "224d24430b58127a5577721084e0e704a0e74ec96dd7c35bc6fc0994ebd87c33",
+              "gitBlobId": "72a25189806a418d770b37ae8efc9b0d53fc312b"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00012-of-00014.safetensors",
+              "byteSize": 4933368232,
+              "sha256": "48fa2bd8fe134eef565ab2464f1c2589a6657cba0d14283dfc06b532f8961f3c",
+              "gitBlobId": "9545750c42b012ae13089df388d1569d10ad2a72"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00013-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "be5b4b1809f9d546ffd4b3fcf41e5c1e02b819125caa6bc105c109b04c051bd3",
+              "gitBlobId": "5827d7644a1ebc1ce9fcf40607857257f14f5659"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00014-of-00014.safetensors",
+              "byteSize": 4644161920,
+              "sha256": "8fbd5e6c1fb1df7ce988ca90f3d59e7610e465c7517e4b344eda4a214ba4b97d",
+              "gitBlobId": "5c97657ddfa2a1cf31bb6460a25c1caeccfe5a0c"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 64488,
+              "sha256": null,
+              "gitBlobId": "da038def25abb5a5e4be509816ee55a0b7105e09"
+            },
+            {
+              "path": "vae/config.json",
+              "byteSize": 2011,
+              "sha256": null,
+              "gitBlobId": "ed4874a5886972f4029fcd99cbbe72de0177b2c9"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00001-of-00003.safetensors",
+              "byteSize": 5061033024,
+              "sha256": "72f4c6be84ac0674f27398cde991dd9d719762f3952c4921aa66b2ce542f6374",
+              "gitBlobId": "73f63f98715bce2897a36685ee6e3338f1a43416"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00002-of-00003.safetensors",
+              "byteSize": 4955986528,
+              "sha256": "2e05e8bc23fa4071043e17fd242be8acd0685e781a43987432b2eae925be4198",
+              "gitBlobId": "d8083e40d1b26ed6ed02afd3bd4390fff32f6af5"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00003-of-00003.safetensors",
+              "byteSize": 398539336,
+              "sha256": "c05d6ac4b1a33de372799d708531da6320f6a3ce6d1ce6d895e770988e004a39",
+              "gitBlobId": "1c31fd275aa880a3fb6ac88ae62ac02e79d9a61f"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 74228,
+              "sha256": null,
+              "gitBlobId": "05dfb255c44daa4f1ac487f57f18210fa5c19439"
+            }
+          ],
+          "selectedByteSize": 144051157679
+        },
+        {
+          "workflowId": "ref2va",
+          "transformerPartition": "transformer_ref",
+          "requiredAdapter": null,
+          "files": [
+            {
+              "path": "LICENSE",
+              "byteSize": 17604,
+              "sha256": null,
+              "gitBlobId": "c389b45855337ccec8ddeb389f4fe902abcd0b19"
+            },
+            {
+              "path": "audio_scheduler/scheduler_config.json",
+              "byteSize": 96,
+              "sha256": null,
+              "gitBlobId": "28a3d4ed602d925031c7e5d6eeb07df8958ff0f1"
+            },
+            {
+              "path": "audio_vae/config.json",
+              "byteSize": 2271,
+              "sha256": null,
+              "gitBlobId": "15df6fe0b288b260dca0f2aebf1cd81334d77e96"
+            },
+            {
+              "path": "audio_vae/diffusion_pytorch_model.safetensors",
+              "byteSize": 605429340,
+              "sha256": "52c59e67ba8de5477c81bfbced0327aabf500f1bfdeefd5ee754529241cb26cb",
+              "gitBlobId": "4a381c6f4b9a67db97c25d250f9d00942d17a49e"
+            },
+            {
+              "path": "modular_model_index.json",
+              "byteSize": 2935,
+              "sha256": null,
+              "gitBlobId": "5b69f1e801bd0a7e9733c48704c732339f2002fe"
+            },
+            {
+              "path": "processor/chat_template.json",
+              "byteSize": 5499,
+              "sha256": null,
+              "gitBlobId": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da"
+            },
+            {
+              "path": "processor/merges.txt",
+              "byteSize": 1671839,
+              "sha256": null,
+              "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0"
+            },
+            {
+              "path": "processor/preprocessor_config.json",
+              "byteSize": 390,
+              "sha256": null,
+              "gitBlobId": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64"
+            },
+            {
+              "path": "processor/tokenizer.json",
+              "byteSize": 7032403,
+              "sha256": null,
+              "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421"
+            },
+            {
+              "path": "processor/tokenizer_config.json",
+              "byteSize": 11003,
+              "sha256": null,
+              "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21"
+            },
+            {
+              "path": "processor/video_preprocessor_config.json",
+              "byteSize": 385,
+              "sha256": null,
+              "gitBlobId": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe"
+            },
+            {
+              "path": "processor/vocab.json",
+              "byteSize": 2776833,
+              "sha256": null,
+              "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569"
+            },
+            {
+              "path": "scheduler/scheduler_config.json",
+              "byteSize": 97,
+              "sha256": null,
+              "gitBlobId": "1d44f95b955a648ad4fab455e4fe11053888c30b"
+            },
+            {
+              "path": "text_encoder/chat_template.json",
+              "byteSize": 5499,
+              "sha256": null,
+              "gitBlobId": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da"
+            },
+            {
+              "path": "text_encoder/config.json",
+              "byteSize": 1474,
+              "sha256": null,
+              "gitBlobId": "29e925092dee9f14278c53e7e7d876cea8a997bc"
+            },
+            {
+              "path": "text_encoder/merges.txt",
+              "byteSize": 1671839,
+              "sha256": null,
+              "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0"
+            },
+            {
+              "path": "text_encoder/model-00001-of-00014.safetensors",
+              "byteSize": 4932328944,
+              "sha256": "6b9dfbc930e505402ae9d7e5091a9d7d656cda5f34614f01cfe70bfb0cca27cb",
+              "gitBlobId": "614247ef75d01ea40af9ef31e07103221340214d"
+            },
+            {
+              "path": "text_encoder/model-00002-of-00014.safetensors",
+              "byteSize": 4875990528,
+              "sha256": "d8bb44b4ff303fe76fe9e894022fb3dc71b15a2e716592790fe0e3c3e60478fa",
+              "gitBlobId": "0ee7c24d1c85e72bc46fd07821a1cfb4af8efd76"
+            },
+            {
+              "path": "text_encoder/model-00003-of-00014.safetensors",
+              "byteSize": 4875990552,
+              "sha256": "54f22e8b3168f8dc962fac0d313607ebf52a12b433d4cf3098a0d82d9f042940",
+              "gitBlobId": "cabcc450fe74db21934f8d99d1bc103942f721ba"
+            },
+            {
+              "path": "text_encoder/model-00004-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "ad09c74d3c13ee29b5d0d84548fd8a3424a651564eaccd519946c296e59c557f",
+              "gitBlobId": "da3ca77f0ee7d9bdbe0696750c094f0dc6ad3c68"
+            },
+            {
+              "path": "text_encoder/model-00005-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "fc993c8a0e2a5b0570f383e1a95dc3a1281d1b224b6f3ee908f4827941e1dfc2",
+              "gitBlobId": "abb15edfb6d8c352e87914ce6a0d96a98e927e04"
+            },
+            {
+              "path": "text_encoder/model-00006-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "82f05620d1f718a90c362b221d6a184ff1a0f53301d706882d3df49695fa1974",
+              "gitBlobId": "66ace514a9c58011ac2bd4c796c21654b49443b2"
+            },
+            {
+              "path": "text_encoder/model-00007-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "fb91da8cb01ff4de3eef0eab1c3e769a734b3a1aafc61734068638a0d6c86934",
+              "gitBlobId": "71e871eb7cda8e711788e283e0fb512998a952be"
+            },
+            {
+              "path": "text_encoder/model-00008-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "431ca56535c8781944ce3801f5eb61c45531e853ecc5846d936ebaf4761b764f",
+              "gitBlobId": "bf1d7c575e6d7cb1117cb8fe06c102193ced09a8"
+            },
+            {
+              "path": "text_encoder/model-00009-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "3825e3f4302f4d2f7d76aa7430d2ce0864fde6b9e540a5806bf0d8e38e4d9f47",
+              "gitBlobId": "9dfb35899c209de09e18aa4bf8346efed8269d76"
+            },
+            {
+              "path": "text_encoder/model-00010-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "aded5a4d1d5e22dbd8b6f79266b6eb88c840411b09527c53917a1419ace22e2f",
+              "gitBlobId": "4d94038272e1f5c0368639babad1f7b595a3690b"
+            },
+            {
+              "path": "text_encoder/model-00011-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "3820ffe8d8d6477f6fe8d614ef3c87abb264ee39accebf43a1507b970d80946f",
+              "gitBlobId": "826ba879b38cc6566b5aea1c3c04741a3087ba20"
+            },
+            {
+              "path": "text_encoder/model-00012-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "05ad2d08ce71963121c9b03f1d9ec5d7641052f4b23c6c12b80d71065eb8e98e",
+              "gitBlobId": "c19df94cbd35798336f17365b1115200f1eec91f"
+            },
+            {
+              "path": "text_encoder/model-00013-of-00014.safetensors",
+              "byteSize": 4875990584,
+              "sha256": "b64f2289871261fdd1abbd3b78bcd66011b341de3dc8eeb2ed1a473ee7c8d95c",
+              "gitBlobId": "39fab9be2b33a5527cbb5131e13c387544a695a9"
+            },
+            {
+              "path": "text_encoder/model-00014-of-00014.safetensors",
+              "byteSize": 3270697008,
+              "sha256": "e45b6c9998c77ee5a6577f9f47bc76416c1d4d387169e50c4c9d3134ea51b13b",
+              "gitBlobId": "055162e6edd9914d2652ccf99f2371c000b613fe"
+            },
+            {
+              "path": "text_encoder/model.safetensors.index.json",
+              "byteSize": 97831,
+              "sha256": null,
+              "gitBlobId": "b7f68f12031a25c81d72d46a284fe9e1daa448b8"
+            },
+            {
+              "path": "text_encoder/preprocessor_config.json",
+              "byteSize": 390,
+              "sha256": null,
+              "gitBlobId": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64"
+            },
+            {
+              "path": "text_encoder/tokenizer.json",
+              "byteSize": 7032403,
+              "sha256": null,
+              "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421"
+            },
+            {
+              "path": "text_encoder/tokenizer_config.json",
+              "byteSize": 11003,
+              "sha256": null,
+              "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21"
+            },
+            {
+              "path": "text_encoder/video_preprocessor_config.json",
+              "byteSize": 385,
+              "sha256": null,
+              "gitBlobId": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe"
+            },
+            {
+              "path": "text_encoder/vocab.json",
+              "byteSize": 2776833,
+              "sha256": null,
+              "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569"
+            },
+            {
+              "path": "tokenizer/merges.txt",
+              "byteSize": 1671839,
+              "sha256": null,
+              "gitBlobId": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0"
+            },
+            {
+              "path": "tokenizer/tokenizer.json",
+              "byteSize": 7032403,
+              "sha256": null,
+              "gitBlobId": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421"
+            },
+            {
+              "path": "tokenizer/tokenizer_config.json",
+              "byteSize": 11003,
+              "sha256": null,
+              "gitBlobId": "204d76f78dac6dedc820418c30bf01145de78a21"
+            },
+            {
+              "path": "tokenizer/vocab.json",
+              "byteSize": 2776833,
+              "sha256": null,
+              "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569"
+            },
+            {
+              "path": "transformer_ref/config.json",
+              "byteSize": 546,
+              "sha256": null,
+              "gitBlobId": "c251a4133c81852a150c6668a570e142dc776b6e"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00001-of-00014.safetensors",
+              "byteSize": 4825958704,
+              "sha256": "7a3fcad885f51560e550b2e84c9a8d8b35e62996cfd9076937e992bd23478df9",
+              "gitBlobId": "9b0c05d22cf4683ecb0d959abf91b0ecd8cd1e4c"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00002-of-00014.safetensors",
+              "byteSize": 4702158032,
+              "sha256": "1638ae1dc8ae26c4ba43ad28a6d851ad8983847324bb2b468719c7c81f219706",
+              "gitBlobId": "51e0598afcf143178f49a45b326de0947588d51d"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00003-of-00014.safetensors",
+              "byteSize": 4933368192,
+              "sha256": "1ef3c4954ffe5a664c2e3028e2a3241190d9c159dce6ba1136002c6af1db5353",
+              "gitBlobId": "b30b53bc2e884978e8aa857dc3f941c3ea7ac816"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00004-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "12d92f2975cfd5c5b786126385c52e5bf64884d4b4d6e60c3ef5d857c3f7469f",
+              "gitBlobId": "0d13668925c5f8d8441b6d10db7cf868dcb4598d"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00005-of-00014.safetensors",
+              "byteSize": 4702158080,
+              "sha256": "304d41ce03d59ac94bceb055935bf4e034df0badf8b0df4ded327c08a288a4cc",
+              "gitBlobId": "aa394e3cfcf04c26e949cfb3db37de989ea71a79"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00006-of-00014.safetensors",
+              "byteSize": 4933368232,
+              "sha256": "12a134b7c76d86edbe8fa2dc315f6cdaf4e1aca1b6ea4dfe4cad92df03d42eeb",
+              "gitBlobId": "7f8fcc49f1b389332e3171e3f6aad4a6feb2d768"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00007-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "b96395261359937c00fb42f4eb29306dc59b1a3368eeba52af4fb66e3e142c69",
+              "gitBlobId": "94bb031935b29cb39e5831635b46e1c1191e7668"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00008-of-00014.safetensors",
+              "byteSize": 4702158080,
+              "sha256": "1897a6bf3b4fc834bb82d73ca02a7afc7d38c07f50ec5382cd54cd2f91b604d1",
+              "gitBlobId": "0bb15268c4dee8a62b7c15ece7f0ded6aaff7654"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00009-of-00014.safetensors",
+              "byteSize": 4933368232,
+              "sha256": "edfb38235adc96b99f55a401849befce59075a745e99c2d8c63ff358dd36443d",
+              "gitBlobId": "2f6e04bfeba92b1916c5b960c125cd0d55c85801"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00010-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "f8710775cf3413670edd7e23861b650a3431a71a6cc14cb1080623ab6b052385",
+              "gitBlobId": "23aa8735c6a03426bd681a44ae0704f5c8a81d08"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00011-of-00014.safetensors",
+              "byteSize": 4702158080,
+              "sha256": "9e18acc09f84edb5b34df9628efa15cfcab8bb76e8e20c1c2e979a107a0f7215",
+              "gitBlobId": "0082cfd7c050bf55c405d67d026514012dd259a6"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00012-of-00014.safetensors",
+              "byteSize": 4933368232,
+              "sha256": "ea2e18228f8bdba1a4e0f32b155e4586df055997c45356213d05b971ba13e2f4",
+              "gitBlobId": "f60fcc3c5e79e132ffadf06e5e98dcbf9c7b6401"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00013-of-00014.safetensors",
+              "byteSize": 4567069608,
+              "sha256": "1e12083b1875678f7414ff55b09cd8bb1c30b861243f9bb7ff1e75b6ad3f1bdc",
+              "gitBlobId": "d9ac20a69b58fcd4dabe8bfef78d29640bc291a2"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00014-of-00014.safetensors",
+              "byteSize": 4644161920,
+              "sha256": "b340f44b5690cc745d48ae399381ec15b26a4fe25d483f677ccb4960dadb50d4",
+              "gitBlobId": "b1dfd11195ff1b5cd520cb7e83730f092d4ea0ff"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 64488,
+              "sha256": null,
+              "gitBlobId": "da038def25abb5a5e4be509816ee55a0b7105e09"
+            },
+            {
+              "path": "vae/config.json",
+              "byteSize": 2011,
+              "sha256": null,
+              "gitBlobId": "ed4874a5886972f4029fcd99cbbe72de0177b2c9"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00001-of-00003.safetensors",
+              "byteSize": 5061033024,
+              "sha256": "72f4c6be84ac0674f27398cde991dd9d719762f3952c4921aa66b2ce542f6374",
+              "gitBlobId": "73f63f98715bce2897a36685ee6e3338f1a43416"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00002-of-00003.safetensors",
+              "byteSize": 4955986528,
+              "sha256": "2e05e8bc23fa4071043e17fd242be8acd0685e781a43987432b2eae925be4198",
+              "gitBlobId": "d8083e40d1b26ed6ed02afd3bd4390fff32f6af5"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00003-of-00003.safetensors",
+              "byteSize": 398539336,
+              "sha256": "c05d6ac4b1a33de372799d708531da6320f6a3ce6d1ce6d895e770988e004a39",
+              "gitBlobId": "1c31fd275aa880a3fb6ac88ae62ac02e79d9a61f"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 74228,
+              "sha256": null,
+              "gitBlobId": "05dfb255c44daa4f1ac487f57f18210fa5c19439"
+            }
+          ],
+          "selectedByteSize": 144051157679
+        }
+      ]
+    },
+    {
+      "pipelineClass": "PikaH3FlexModularPipeline",
+      "repository": "Pika-Labs/Pika-H3-Flex",
+      "revision": "3ff166447d5edb1406107ab8370c42000ce173e4",
+      "license": {
+        "path": "LICENSE",
+        "sha256": "59b99642b95ea21630e311198ddbfffbfe05aadba0c2f5d884cbdf4efcc90f44"
+      },
+      "workflows": [
+        {
+          "workflowId": "t2va",
+          "transformerPartition": "transformer",
+          "requiredAdapter": {
+            "repository": "Pika-Labs/Pika-H3-Flex",
+            "revision": "3ff166447d5edb1406107ab8370c42000ce173e4",
+            "path": "fl2va/adapter.safetensors",
+            "byteSize": 2767274120,
+            "sha256": "8ed6115d647ab11c1b38d04e63c4c6e1594128ae312f7b5635cd50563b7b9327"
+          },
+          "files": [
+            {
+              "path": "LICENSE",
+              "byteSize": 17604,
+              "sha256": null,
+              "gitBlobId": "c389b45855337ccec8ddeb389f4fe902abcd0b19"
+            },
+            {
+              "path": "NOTICE",
+              "byteSize": 397,
+              "sha256": null,
+              "gitBlobId": "fddfceb3ced89c6bb573a0ff564dab38ea2b0fb7"
+            },
+            {
+              "path": "audio_scheduler/scheduler_config.json",
+              "byteSize": 354,
+              "sha256": null,
+              "gitBlobId": "418c818fb267e3552fdfde984b027426db57b4db"
+            },
+            {
+              "path": "audio_vae/config.json",
+              "byteSize": 2508,
+              "sha256": null,
+              "gitBlobId": "c93d1a6c038bdd96becd7665686503e5c8484223"
+            },
+            {
+              "path": "audio_vae/diffusion_pytorch_model.safetensors",
+              "byteSize": 605429340,
+              "sha256": "52c59e67ba8de5477c81bfbced0327aabf500f1bfdeefd5ee754529241cb26cb",
+              "gitBlobId": "4a381c6f4b9a67db97c25d250f9d00942d17a49e"
+            },
+            {
+              "path": "fl2va/adapter.safetensors",
+              "byteSize": 2767274120,
+              "sha256": "8ed6115d647ab11c1b38d04e63c4c6e1594128ae312f7b5635cd50563b7b9327",
+              "gitBlobId": "d5af6445cb7deccd52c63c33b2c8ca15848bb676"
+            },
+            {
+              "path": "licenses/MiniMax-H3-LICENSE.txt",
+              "byteSize": 17604,
+              "sha256": null,
+              "gitBlobId": "c389b45855337ccec8ddeb389f4fe902abcd0b19"
+            },
+            {
+              "path": "licenses/Qwen3-VL-LICENSE.txt",
+              "byteSize": 11357,
+              "sha256": null,
+              "gitBlobId": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64"
+            },
+            {
+              "path": "modular_model_index.json",
+              "byteSize": 3085,
+              "sha256": null,
+              "gitBlobId": "c193043a9fa852241a7bc7bc8dd92d57e1a1c632"
+            },
+            {
+              "path": "processor/chat_template.jinja",
+              "byteSize": 5537,
+              "sha256": null,
+              "gitBlobId": "bdb4dd8c25fdef31d3c66423bd4449ba755d27eb"
+            },
+            {
+              "path": "processor/processor_config.json",
+              "byteSize": 1460,
+              "sha256": null,
+              "gitBlobId": "3796d68df3380c74d7cfa5484963e393e4c6f15f"
+            },
+            {
+              "path": "processor/tokenizer.json",
+              "byteSize": 11424240,
+              "sha256": "2177fd24d449d3032c8cb20644c7bd133146f67b005a04cf1af00b648d0036bb",
+              "gitBlobId": "5be20263e0c40c5c168ba99b6adef9b3ede3fea5"
+            },
+            {
+              "path": "processor/tokenizer_config.json",
+              "byteSize": 1139,
+              "sha256": null,
+              "gitBlobId": "457bca68940e02e20dc8535a3b03e22d7c928df6"
+            },
+            {
+              "path": "scheduler/scheduler_config.json",
+              "byteSize": 355,
+              "sha256": null,
+              "gitBlobId": "59d0cdc1fa262d51f148fe4d02944b988a15f5b1"
+            },
+            {
+              "path": "text_encoder/config.json",
+              "byteSize": 1768,
+              "sha256": null,
+              "gitBlobId": "e3e6ca009970bfdffc1c176422d62a5f3b4b18ae"
+            },
+            {
+              "path": "text_encoder/generation_config.json",
+              "byteSize": 355,
+              "sha256": null,
+              "gitBlobId": "c9087f9d613161971db385499747abbb4bdabd25"
+            },
+            {
+              "path": "text_encoder/model-00001-of-00002.safetensors",
+              "byteSize": 49921170552,
+              "sha256": "9f40e560d61d94338dcdacd1a1ad13bd9cb12c69db5a77c8fd36846bd4c73dc4",
+              "gitBlobId": "0f96dce3317d41fd30ef7da2b0dc3b63efac0ed9"
+            },
+            {
+              "path": "text_encoder/model-00002-of-00002.safetensors",
+              "byteSize": 16793744744,
+              "sha256": "eee04a35418c2e1cfd5f3211cb44897e710c2b62b189d5dee78560dd186ab6ee",
+              "gitBlobId": "3404b7d2b03f3c68fb8e895ee87a982775b551f4"
+            },
+            {
+              "path": "text_encoder/model.safetensors.index.json",
+              "byteSize": 98082,
+              "sha256": null,
+              "gitBlobId": "8d283ebf131d131fd37999fc332caeb5bbe17a01"
+            },
+            {
+              "path": "tokenizer/chat_template.jinja",
+              "byteSize": 5537,
+              "sha256": null,
+              "gitBlobId": "bdb4dd8c25fdef31d3c66423bd4449ba755d27eb"
+            },
+            {
+              "path": "tokenizer/tokenizer.json",
+              "byteSize": 11424240,
+              "sha256": "2177fd24d449d3032c8cb20644c7bd133146f67b005a04cf1af00b648d0036bb",
+              "gitBlobId": "5be20263e0c40c5c168ba99b6adef9b3ede3fea5"
+            },
+            {
+              "path": "tokenizer/tokenizer_config.json",
+              "byteSize": 1098,
+              "sha256": null,
+              "gitBlobId": "12b2c96b0a25c8de5adf2ffacfcccc1ee621dafb"
+            },
+            {
+              "path": "transformer/config.json",
+              "byteSize": 783,
+              "sha256": null,
+              "gitBlobId": "fcdc87a1c99eaae9c83e97149b3b03b188d47b8d"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+              "byteSize": 9717836712,
+              "sha256": "62ebf6d1085fd59f99c868c46b0c891bc5744edcf61ee42b044770054c44736c",
+              "gitBlobId": "1ca7f514794ef22ade8170cfc1abed546750ec0e"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+              "byteSize": 9500438264,
+              "sha256": "44171cf0aae319f360718fe3fb1ae2f9b0f8423c8bae79634bf23fc720c121ff",
+              "gitBlobId": "4a4839e382b0baef2138f10d4405170ed71d0381"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+              "byteSize": 9866738880,
+              "sha256": "1453b39bcd7387381e65557a972caf73dd1e6bca03ec4bb1c209e4c1369794a0",
+              "gitBlobId": "753421488449763228a98d0dedb3a88e73b5333e"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+              "byteSize": 9500438312,
+              "sha256": "11be2d8e71213254556d3d0170b7e963e05ce76748d0ba3cb2de7e7f9f85c1a9",
+              "gitBlobId": "ce0970fe9c5e5ac0596a48c71f61176885fe0be7"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+              "byteSize": 9866738880,
+              "sha256": "52dbbf14da75ede2d2bb2898da163290f48fd072fcfe06bdd166878a7ba20f73",
+              "gitBlobId": "6311a3db67b01c813c2c2249f784f8221c1e8840"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+              "byteSize": 9500438312,
+              "sha256": "11a53fbd223583a6e9ad89e69d58bd54a1dc5c5c21cc7db4a9c3736dfb5cfb18",
+              "gitBlobId": "05e64335da92b8c6c7746c50c78efc731f8a8cdf"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+              "byteSize": 8327878168,
+              "sha256": "bab5624bbcd76913eb78a4f2fb4fa4a67ffb5da6ff727a3c377d690b2029af3e",
+              "gitBlobId": "71d108ac252a8d97dec95b4e523807c499270537"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 64683,
+              "sha256": null,
+              "gitBlobId": "01f7ff4e01ee3c35c4df884086572e2c09980ba6"
+            },
+            {
+              "path": "vae/config.json",
+              "byteSize": 2248,
+              "sha256": null,
+              "gitBlobId": "c6585c33aa97b316bca82d62bba0cfe8dabfd048"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00001-of-00002.safetensors",
+              "byteSize": 9920387264,
+              "sha256": "83ad0db531f960c4f53787a8e018c20d1754734c0c640abc34d43b4189af3f91",
+              "gitBlobId": "f53492bf056847fc467c4e7c381e214ae12d1d65"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00002-of-00002.safetensors",
+              "byteSize": 495172768,
+              "sha256": "6eea7bd36b5a1d7d7868df6bb82a394056b0f7b431d71fb008ce37bbada41ce2",
+              "gitBlobId": "fa3ed8dde6ef283cb8eda6e96f2fbe5a76870340"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 74423,
+              "sha256": null,
+              "gitBlobId": "5a4c55e0f5318c14b7f6310ad05ef772bce1eea7"
+            }
+          ],
+          "selectedByteSize": 146806845173
+        },
+        {
+          "workflowId": "fl2va",
+          "transformerPartition": "transformer",
+          "requiredAdapter": {
+            "repository": "Pika-Labs/Pika-H3-Flex",
+            "revision": "3ff166447d5edb1406107ab8370c42000ce173e4",
+            "path": "fl2va/adapter.safetensors",
+            "byteSize": 2767274120,
+            "sha256": "8ed6115d647ab11c1b38d04e63c4c6e1594128ae312f7b5635cd50563b7b9327"
+          },
+          "files": [
+            {
+              "path": "LICENSE",
+              "byteSize": 17604,
+              "sha256": null,
+              "gitBlobId": "c389b45855337ccec8ddeb389f4fe902abcd0b19"
+            },
+            {
+              "path": "NOTICE",
+              "byteSize": 397,
+              "sha256": null,
+              "gitBlobId": "fddfceb3ced89c6bb573a0ff564dab38ea2b0fb7"
+            },
+            {
+              "path": "audio_scheduler/scheduler_config.json",
+              "byteSize": 354,
+              "sha256": null,
+              "gitBlobId": "418c818fb267e3552fdfde984b027426db57b4db"
+            },
+            {
+              "path": "audio_vae/config.json",
+              "byteSize": 2508,
+              "sha256": null,
+              "gitBlobId": "c93d1a6c038bdd96becd7665686503e5c8484223"
+            },
+            {
+              "path": "audio_vae/diffusion_pytorch_model.safetensors",
+              "byteSize": 605429340,
+              "sha256": "52c59e67ba8de5477c81bfbced0327aabf500f1bfdeefd5ee754529241cb26cb",
+              "gitBlobId": "4a381c6f4b9a67db97c25d250f9d00942d17a49e"
+            },
+            {
+              "path": "fl2va/adapter.safetensors",
+              "byteSize": 2767274120,
+              "sha256": "8ed6115d647ab11c1b38d04e63c4c6e1594128ae312f7b5635cd50563b7b9327",
+              "gitBlobId": "d5af6445cb7deccd52c63c33b2c8ca15848bb676"
+            },
+            {
+              "path": "licenses/MiniMax-H3-LICENSE.txt",
+              "byteSize": 17604,
+              "sha256": null,
+              "gitBlobId": "c389b45855337ccec8ddeb389f4fe902abcd0b19"
+            },
+            {
+              "path": "licenses/Qwen3-VL-LICENSE.txt",
+              "byteSize": 11357,
+              "sha256": null,
+              "gitBlobId": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64"
+            },
+            {
+              "path": "modular_model_index.json",
+              "byteSize": 3085,
+              "sha256": null,
+              "gitBlobId": "c193043a9fa852241a7bc7bc8dd92d57e1a1c632"
+            },
+            {
+              "path": "processor/chat_template.jinja",
+              "byteSize": 5537,
+              "sha256": null,
+              "gitBlobId": "bdb4dd8c25fdef31d3c66423bd4449ba755d27eb"
+            },
+            {
+              "path": "processor/processor_config.json",
+              "byteSize": 1460,
+              "sha256": null,
+              "gitBlobId": "3796d68df3380c74d7cfa5484963e393e4c6f15f"
+            },
+            {
+              "path": "processor/tokenizer.json",
+              "byteSize": 11424240,
+              "sha256": "2177fd24d449d3032c8cb20644c7bd133146f67b005a04cf1af00b648d0036bb",
+              "gitBlobId": "5be20263e0c40c5c168ba99b6adef9b3ede3fea5"
+            },
+            {
+              "path": "processor/tokenizer_config.json",
+              "byteSize": 1139,
+              "sha256": null,
+              "gitBlobId": "457bca68940e02e20dc8535a3b03e22d7c928df6"
+            },
+            {
+              "path": "scheduler/scheduler_config.json",
+              "byteSize": 355,
+              "sha256": null,
+              "gitBlobId": "59d0cdc1fa262d51f148fe4d02944b988a15f5b1"
+            },
+            {
+              "path": "text_encoder/config.json",
+              "byteSize": 1768,
+              "sha256": null,
+              "gitBlobId": "e3e6ca009970bfdffc1c176422d62a5f3b4b18ae"
+            },
+            {
+              "path": "text_encoder/generation_config.json",
+              "byteSize": 355,
+              "sha256": null,
+              "gitBlobId": "c9087f9d613161971db385499747abbb4bdabd25"
+            },
+            {
+              "path": "text_encoder/model-00001-of-00002.safetensors",
+              "byteSize": 49921170552,
+              "sha256": "9f40e560d61d94338dcdacd1a1ad13bd9cb12c69db5a77c8fd36846bd4c73dc4",
+              "gitBlobId": "0f96dce3317d41fd30ef7da2b0dc3b63efac0ed9"
+            },
+            {
+              "path": "text_encoder/model-00002-of-00002.safetensors",
+              "byteSize": 16793744744,
+              "sha256": "eee04a35418c2e1cfd5f3211cb44897e710c2b62b189d5dee78560dd186ab6ee",
+              "gitBlobId": "3404b7d2b03f3c68fb8e895ee87a982775b551f4"
+            },
+            {
+              "path": "text_encoder/model.safetensors.index.json",
+              "byteSize": 98082,
+              "sha256": null,
+              "gitBlobId": "8d283ebf131d131fd37999fc332caeb5bbe17a01"
+            },
+            {
+              "path": "tokenizer/chat_template.jinja",
+              "byteSize": 5537,
+              "sha256": null,
+              "gitBlobId": "bdb4dd8c25fdef31d3c66423bd4449ba755d27eb"
+            },
+            {
+              "path": "tokenizer/tokenizer.json",
+              "byteSize": 11424240,
+              "sha256": "2177fd24d449d3032c8cb20644c7bd133146f67b005a04cf1af00b648d0036bb",
+              "gitBlobId": "5be20263e0c40c5c168ba99b6adef9b3ede3fea5"
+            },
+            {
+              "path": "tokenizer/tokenizer_config.json",
+              "byteSize": 1098,
+              "sha256": null,
+              "gitBlobId": "12b2c96b0a25c8de5adf2ffacfcccc1ee621dafb"
+            },
+            {
+              "path": "transformer/config.json",
+              "byteSize": 783,
+              "sha256": null,
+              "gitBlobId": "fcdc87a1c99eaae9c83e97149b3b03b188d47b8d"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+              "byteSize": 9717836712,
+              "sha256": "62ebf6d1085fd59f99c868c46b0c891bc5744edcf61ee42b044770054c44736c",
+              "gitBlobId": "1ca7f514794ef22ade8170cfc1abed546750ec0e"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+              "byteSize": 9500438264,
+              "sha256": "44171cf0aae319f360718fe3fb1ae2f9b0f8423c8bae79634bf23fc720c121ff",
+              "gitBlobId": "4a4839e382b0baef2138f10d4405170ed71d0381"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+              "byteSize": 9866738880,
+              "sha256": "1453b39bcd7387381e65557a972caf73dd1e6bca03ec4bb1c209e4c1369794a0",
+              "gitBlobId": "753421488449763228a98d0dedb3a88e73b5333e"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+              "byteSize": 9500438312,
+              "sha256": "11be2d8e71213254556d3d0170b7e963e05ce76748d0ba3cb2de7e7f9f85c1a9",
+              "gitBlobId": "ce0970fe9c5e5ac0596a48c71f61176885fe0be7"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+              "byteSize": 9866738880,
+              "sha256": "52dbbf14da75ede2d2bb2898da163290f48fd072fcfe06bdd166878a7ba20f73",
+              "gitBlobId": "6311a3db67b01c813c2c2249f784f8221c1e8840"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+              "byteSize": 9500438312,
+              "sha256": "11a53fbd223583a6e9ad89e69d58bd54a1dc5c5c21cc7db4a9c3736dfb5cfb18",
+              "gitBlobId": "05e64335da92b8c6c7746c50c78efc731f8a8cdf"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+              "byteSize": 8327878168,
+              "sha256": "bab5624bbcd76913eb78a4f2fb4fa4a67ffb5da6ff727a3c377d690b2029af3e",
+              "gitBlobId": "71d108ac252a8d97dec95b4e523807c499270537"
+            },
+            {
+              "path": "transformer/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 64683,
+              "sha256": null,
+              "gitBlobId": "01f7ff4e01ee3c35c4df884086572e2c09980ba6"
+            },
+            {
+              "path": "vae/config.json",
+              "byteSize": 2248,
+              "sha256": null,
+              "gitBlobId": "c6585c33aa97b316bca82d62bba0cfe8dabfd048"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00001-of-00002.safetensors",
+              "byteSize": 9920387264,
+              "sha256": "83ad0db531f960c4f53787a8e018c20d1754734c0c640abc34d43b4189af3f91",
+              "gitBlobId": "f53492bf056847fc467c4e7c381e214ae12d1d65"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00002-of-00002.safetensors",
+              "byteSize": 495172768,
+              "sha256": "6eea7bd36b5a1d7d7868df6bb82a394056b0f7b431d71fb008ce37bbada41ce2",
+              "gitBlobId": "fa3ed8dde6ef283cb8eda6e96f2fbe5a76870340"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 74423,
+              "sha256": null,
+              "gitBlobId": "5a4c55e0f5318c14b7f6310ad05ef772bce1eea7"
+            }
+          ],
+          "selectedByteSize": 146806845173
+        },
+        {
+          "workflowId": "ref2va",
+          "transformerPartition": "transformer_ref",
+          "requiredAdapter": {
+            "repository": "Pika-Labs/Pika-H3-Flex",
+            "revision": "3ff166447d5edb1406107ab8370c42000ce173e4",
+            "path": "ref2va/adapter.safetensors",
+            "byteSize": 2767274120,
+            "sha256": "eef684ba1258f0cdbbbda6128188ad2688417f2eb17ff875375e74a32b6d61b5"
+          },
+          "files": [
+            {
+              "path": "LICENSE",
+              "byteSize": 17604,
+              "sha256": null,
+              "gitBlobId": "c389b45855337ccec8ddeb389f4fe902abcd0b19"
+            },
+            {
+              "path": "NOTICE",
+              "byteSize": 397,
+              "sha256": null,
+              "gitBlobId": "fddfceb3ced89c6bb573a0ff564dab38ea2b0fb7"
+            },
+            {
+              "path": "audio_scheduler/scheduler_config.json",
+              "byteSize": 354,
+              "sha256": null,
+              "gitBlobId": "418c818fb267e3552fdfde984b027426db57b4db"
+            },
+            {
+              "path": "audio_vae/config.json",
+              "byteSize": 2508,
+              "sha256": null,
+              "gitBlobId": "c93d1a6c038bdd96becd7665686503e5c8484223"
+            },
+            {
+              "path": "audio_vae/diffusion_pytorch_model.safetensors",
+              "byteSize": 605429340,
+              "sha256": "52c59e67ba8de5477c81bfbced0327aabf500f1bfdeefd5ee754529241cb26cb",
+              "gitBlobId": "4a381c6f4b9a67db97c25d250f9d00942d17a49e"
+            },
+            {
+              "path": "licenses/MiniMax-H3-LICENSE.txt",
+              "byteSize": 17604,
+              "sha256": null,
+              "gitBlobId": "c389b45855337ccec8ddeb389f4fe902abcd0b19"
+            },
+            {
+              "path": "licenses/Qwen3-VL-LICENSE.txt",
+              "byteSize": 11357,
+              "sha256": null,
+              "gitBlobId": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64"
+            },
+            {
+              "path": "modular_model_index.json",
+              "byteSize": 3085,
+              "sha256": null,
+              "gitBlobId": "c193043a9fa852241a7bc7bc8dd92d57e1a1c632"
+            },
+            {
+              "path": "processor/chat_template.jinja",
+              "byteSize": 5537,
+              "sha256": null,
+              "gitBlobId": "bdb4dd8c25fdef31d3c66423bd4449ba755d27eb"
+            },
+            {
+              "path": "processor/processor_config.json",
+              "byteSize": 1460,
+              "sha256": null,
+              "gitBlobId": "3796d68df3380c74d7cfa5484963e393e4c6f15f"
+            },
+            {
+              "path": "processor/tokenizer.json",
+              "byteSize": 11424240,
+              "sha256": "2177fd24d449d3032c8cb20644c7bd133146f67b005a04cf1af00b648d0036bb",
+              "gitBlobId": "5be20263e0c40c5c168ba99b6adef9b3ede3fea5"
+            },
+            {
+              "path": "processor/tokenizer_config.json",
+              "byteSize": 1139,
+              "sha256": null,
+              "gitBlobId": "457bca68940e02e20dc8535a3b03e22d7c928df6"
+            },
+            {
+              "path": "ref2va/adapter.safetensors",
+              "byteSize": 2767274120,
+              "sha256": "eef684ba1258f0cdbbbda6128188ad2688417f2eb17ff875375e74a32b6d61b5",
+              "gitBlobId": "2ea6a185bb20b46dfe469ccd05128d47049266f4"
+            },
+            {
+              "path": "scheduler/scheduler_config.json",
+              "byteSize": 355,
+              "sha256": null,
+              "gitBlobId": "59d0cdc1fa262d51f148fe4d02944b988a15f5b1"
+            },
+            {
+              "path": "text_encoder/config.json",
+              "byteSize": 1768,
+              "sha256": null,
+              "gitBlobId": "e3e6ca009970bfdffc1c176422d62a5f3b4b18ae"
+            },
+            {
+              "path": "text_encoder/generation_config.json",
+              "byteSize": 355,
+              "sha256": null,
+              "gitBlobId": "c9087f9d613161971db385499747abbb4bdabd25"
+            },
+            {
+              "path": "text_encoder/model-00001-of-00002.safetensors",
+              "byteSize": 49921170552,
+              "sha256": "9f40e560d61d94338dcdacd1a1ad13bd9cb12c69db5a77c8fd36846bd4c73dc4",
+              "gitBlobId": "0f96dce3317d41fd30ef7da2b0dc3b63efac0ed9"
+            },
+            {
+              "path": "text_encoder/model-00002-of-00002.safetensors",
+              "byteSize": 16793744744,
+              "sha256": "eee04a35418c2e1cfd5f3211cb44897e710c2b62b189d5dee78560dd186ab6ee",
+              "gitBlobId": "3404b7d2b03f3c68fb8e895ee87a982775b551f4"
+            },
+            {
+              "path": "text_encoder/model.safetensors.index.json",
+              "byteSize": 98082,
+              "sha256": null,
+              "gitBlobId": "8d283ebf131d131fd37999fc332caeb5bbe17a01"
+            },
+            {
+              "path": "tokenizer/chat_template.jinja",
+              "byteSize": 5537,
+              "sha256": null,
+              "gitBlobId": "bdb4dd8c25fdef31d3c66423bd4449ba755d27eb"
+            },
+            {
+              "path": "tokenizer/tokenizer.json",
+              "byteSize": 11424240,
+              "sha256": "2177fd24d449d3032c8cb20644c7bd133146f67b005a04cf1af00b648d0036bb",
+              "gitBlobId": "5be20263e0c40c5c168ba99b6adef9b3ede3fea5"
+            },
+            {
+              "path": "tokenizer/tokenizer_config.json",
+              "byteSize": 1098,
+              "sha256": null,
+              "gitBlobId": "12b2c96b0a25c8de5adf2ffacfcccc1ee621dafb"
+            },
+            {
+              "path": "transformer_ref/config.json",
+              "byteSize": 783,
+              "sha256": null,
+              "gitBlobId": "fcdc87a1c99eaae9c83e97149b3b03b188d47b8d"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00001-of-00007.safetensors",
+              "byteSize": 9717836712,
+              "sha256": "4c405f54ec130746fc2e61247ffdbbcdcc14c0325f6226130634be77a230e35e",
+              "gitBlobId": "d555db0fa7066c8577d28516b638f7d2e0891f4b"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00002-of-00007.safetensors",
+              "byteSize": 9500438264,
+              "sha256": "a9fcf24cf8ef8123a4d3fa2db0827464fd3e5aac91233e05d28e97788c506221",
+              "gitBlobId": "123129ccda9cdc4b427412f3a20a06e939ef1bee"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00003-of-00007.safetensors",
+              "byteSize": 9866738880,
+              "sha256": "dee033d26442a8e44d0e6ef32a21615fa455a84eaa36817579ad62e244a53641",
+              "gitBlobId": "9415086382da365d889a14f5048f86fb68c4b762"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00004-of-00007.safetensors",
+              "byteSize": 9500438312,
+              "sha256": "aa448be8aba078c469c752348cfbb72a602612eeb9933751232e187add257c4d",
+              "gitBlobId": "e4d44aee4405b0a78e3e8475ca0acd6b0fbadeee"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00005-of-00007.safetensors",
+              "byteSize": 9866738880,
+              "sha256": "7db520f89d9a96f935ee717cf781501b67f5f9af5c79260804d591db64d9a634",
+              "gitBlobId": "773c4e1013c4d51799dc6d7dec1af04a5c6fe4fd"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00006-of-00007.safetensors",
+              "byteSize": 9500438312,
+              "sha256": "8d9405911f66a420b387a3a16e00695a989ae01e48a22c69b6cbd03ca55ef5d4",
+              "gitBlobId": "fdd70b675f26ffc81bc41c3c78e2e3c1875efebb"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model-00007-of-00007.safetensors",
+              "byteSize": 8327878168,
+              "sha256": "882a5785bc17831af075521cf6e41b3f1644aa26f3bda73d15609ccfadf55772",
+              "gitBlobId": "d531b92a4ac894dc39386fbcd11bef71c482a102"
+            },
+            {
+              "path": "transformer_ref/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 64683,
+              "sha256": null,
+              "gitBlobId": "01f7ff4e01ee3c35c4df884086572e2c09980ba6"
+            },
+            {
+              "path": "vae/config.json",
+              "byteSize": 2248,
+              "sha256": null,
+              "gitBlobId": "c6585c33aa97b316bca82d62bba0cfe8dabfd048"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00001-of-00002.safetensors",
+              "byteSize": 9920387264,
+              "sha256": "83ad0db531f960c4f53787a8e018c20d1754734c0c640abc34d43b4189af3f91",
+              "gitBlobId": "f53492bf056847fc467c4e7c381e214ae12d1d65"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model-00002-of-00002.safetensors",
+              "byteSize": 495172768,
+              "sha256": "6eea7bd36b5a1d7d7868df6bb82a394056b0f7b431d71fb008ce37bbada41ce2",
+              "gitBlobId": "fa3ed8dde6ef283cb8eda6e96f2fbe5a76870340"
+            },
+            {
+              "path": "vae/diffusion_pytorch_model.safetensors.index.json",
+              "byteSize": 74423,
+              "sha256": null,
+              "gitBlobId": "5a4c55e0f5318c14b7f6310ad05ef772bce1eea7"
+            }
+          ],
+          "selectedByteSize": 146806845173
+        }
+      ]
+    }
+  ]
+}

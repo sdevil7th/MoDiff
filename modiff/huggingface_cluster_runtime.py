@@ -104,6 +104,8 @@ def _effective_reviewed_artifact(
     revision = str((pin or {}).get("revision") or "")
     if not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise _invalid("the selected model variant has no immutable catalog revision.")
+    from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+    require_reviewed_modular_repository_workflow(str(profile.model_type), selected, revision, workflow_id)
     return {"repo": selected, "revision": revision}
 _DIRECT_LOADER_CONTRACTS = {
     "direct-diffusers-image": ("modules.DiffusersImage", "LoadPipeline"),
@@ -530,6 +532,38 @@ REGISTERED_BLOCK_V2_DEFINITION_PINS: Mapping[str, tuple[str, str]] = (
 )
 
 
+# The prior six Helios definitions differ from current definitions only in the
+# public movie output. Their immutable graph, inputs, controls and previews
+# remain valid for saved workflows. Keep prior authority scoped to exact pins
+# for these routes and validate the rest of the receipt as usual.
+_HELIOS_SAVED_DEFINITION_PINS: Mapping[str, tuple[str, str]] = {
+    "diffusers.cluster-admission:HeliosModularPipeline:image2video:workflow:official_top_level_blocks": (
+        "block-definition-v2-adfac216",
+        "sha256:b657d30a3b13bb1122e3077569bf162a8e312d4df5bc1f8612da745cc7f9f02d",
+    ),
+    "diffusers.cluster-admission:HeliosModularPipeline:video2video:workflow:official_top_level_blocks": (
+        "block-definition-v2-f4239c5e",
+        "sha256:92e2a3cc4eed10f22208a75382380cf041d0dd8b40e53eab3f6ecc276ad01f5f",
+    ),
+    "diffusers.cluster-admission:HeliosPyramidDistilledModularPipeline:image2video:workflow:official_top_level_blocks": (
+        "block-definition-v2-cc90157b",
+        "sha256:c0ba64dd152981981fb47a8b00669731f6f30d0ae17a986bb4adfe364f780118",
+    ),
+    "diffusers.cluster-admission:HeliosPyramidDistilledModularPipeline:video2video:workflow:official_top_level_blocks": (
+        "block-definition-v2-436870d8",
+        "sha256:db5d77e9c4bbd905d0075d19c10b1ef9f62c77e235d8ead409d1e167e54ea0db",
+    ),
+    "diffusers.cluster-admission:HeliosPyramidModularPipeline:image2video:workflow:official_top_level_blocks": (
+        "block-definition-v2-29db419c",
+        "sha256:fe384ffc7ae3aa84c4e5bd89ceea31e5f824cbd407c0933b04c65790cd40e6a6",
+    ),
+    "diffusers.cluster-admission:HeliosPyramidModularPipeline:video2video:workflow:official_top_level_blocks": (
+        "block-definition-v2-96feb2c3",
+        "sha256:15ade38e8eac9ae3a386867fb0a835ceb307d5a8a4b8729d6af5167371b5702a",
+    ),
+}
+
+
 def _invalid(message: str) -> ValueError:
     return ValueError(f"Cannot qualify Hugging Face Cluster Node Expert execution: {message}")
 
@@ -730,7 +764,7 @@ def qualify_huggingface_cluster_expert_runtime(
         if profile.id == sealed_profile_id
     ]
     profile = _single(profiles, "the exact backend execution profile is unavailable.")
-    public_spec = studio_execution_spec_for_pair(model_type, mode)
+    public_spec = studio_execution_spec_for_pair(model_type, mode, execution_profile_id=profile.id)
     if (
         not isinstance(spec, Mapping)
         or spec.get("executionProfileId") != profile.id
@@ -911,9 +945,20 @@ def _auto_recipe(candidate: Mapping[str, Any], form: Mapping[str, Any]) -> dict[
     }
 
 
-def _project_instance_value_to_form(value: Any, current: Any) -> Any:
+_SINGLE_MEDIA_FORM_FIELDS = frozenset({
+    "sourceAudio", "referenceAudio", "sourceVideo", "controlVideo", "maskVideo",
+    "controlImage", "maskImage", "ipAdapterImage",
+})
+
+
+def _project_instance_value_to_form(value: Any, current: Any, *, form_key: str = "") -> Any:
     """Mirror the client's narrow scalar projection into a Studio form."""
 
+    if (
+        form_key in _SINGLE_MEDIA_FORM_FIELDS and isinstance(current, str)
+        and isinstance(value, list) and len(value) == 1 and isinstance(value[0], str)
+    ):
+        return value[0]
     if isinstance(current, (int, float)) and not isinstance(current, bool) and isinstance(value, str):
         try:
             number = float(value)
@@ -987,6 +1032,12 @@ def qualify_huggingface_cluster_auto_authority(
         else registered_definition_pins
     )
     expected_definition_pin = pinned_definitions.get(admission_id)
+    if (
+        registered_definition_pins is None
+        and expected_definition_pin is not None
+        and snapshot["contentHash"] != expected_definition_pin[0]
+    ):
+        expected_definition_pin = _HELIOS_SAVED_DEFINITION_PINS.get(admission_id)
     if expected_definition_pin is None or snapshot["contentHash"] != expected_definition_pin[0]:
         raise _auto_invalid("the V2 Block definition does not match the backend-pinned compiler output.")
     if block_definition_canonical_sha256_v2(snapshot) != expected_definition_pin[1]:
@@ -1088,7 +1139,7 @@ def qualify_huggingface_cluster_auto_authority(
         form_key = source_by_input.get(control_id, control_id)
         if form_key not in form:
             continue
-        projected = _project_instance_value_to_form(value, form[form_key])
+        projected = _project_instance_value_to_form(value, form[form_key], form_key=form_key)
         if not _same_json_value(projected, form[form_key]):
             raise _auto_invalid(
                 f"the planner form field {form_key} does not match the validated V2 instance value."

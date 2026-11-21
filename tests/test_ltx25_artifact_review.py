@@ -16,7 +16,7 @@ class LTX25ArtifactReviewTests(unittest.TestCase):
     def setUp(self):
         self.review = json.loads(REVIEW_PATH.read_text(encoding="utf-8"))
 
-    def test_gated_artifact_stays_out_of_runtime_and_download_catalogs(self):
+    def test_historical_diffusion_decoder_hold_is_distinct_from_the_new_full_facade(self):
         self.assertEqual(self.review["schemaVersion"], 1)
         self.assertRegex(self.review["revision"], r"^[0-9a-f]{40}$")
         self.assertEqual(self.review["format"], "safetensors")
@@ -28,7 +28,12 @@ class LTX25ArtifactReviewTests(unittest.TestCase):
         self.assertFalse(self.review["admission"]["runtimeCatalogExposed"])
         self.assertFalse(self.review["admission"]["downloadCatalogExposed"])
         self.assertEqual(self.review["admission"]["executableModes"], [])
-        self.assertIsNone(catalog_repository_pin(self.review["repository"]))
+        # The historical diffusion-decoder review remains contract-only. The
+        # separately admitted Full facade selects the ordinary convolutional VAE.
+        current = catalog_repository_pin(self.review["repository"])
+        self.assertEqual(current['modelType'], 'LTX25FullPipeline')
+        self.assertEqual(current['revision'], '4791a1100e0cf97f7ed5c55c12dd71dce13f9dd3')
+        self.assertEqual(current['kind'], 'base')
 
     def test_public_weight_metadata_is_exact_but_gated_partition_selection_remains_pending(self):
         inventory = self.review["artifactInventory"]

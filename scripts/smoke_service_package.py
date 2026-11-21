@@ -1,11 +1,13 @@
 """No-model HTTP smoke in temporary storage; suitable for clean CPU CI installs."""
 
 import asyncio
+from contextlib import ExitStack
 import json
 import os
 from pathlib import Path
 import sys
 import tempfile
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -13,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 
 async def smoke():
     # Redirect every path before importing the singleton/queue reconciliation.
-    with tempfile.TemporaryDirectory(prefix="modiff-service-smoke-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="modiff-service-smoke-") as temporary, ExitStack() as isolation:
         from modiff.config import CONFIG
 
         for key in CONFIG.paths:
@@ -24,10 +26,19 @@ async def smoke():
         CONFIG.server["host"] = "127.0.0.1"
         CONFIG.server["port"] = 0
         os.environ["HF_HUB_OFFLINE"] = "1"
+        from modiff.custom_extensions import ExtensionStore
+
+        original_init = ExtensionStore.__init__
+
+        def isolated_extension_store(self, root=None):
+            original_init(self, root if root is not None else Path(temporary) / "custom")
+
+        # Registry construction occurs during server import, before an API
+        # store can be replaced. Never discover the operator's extensions here.
+        isolation.enter_context(patch.object(ExtensionStore, "__init__", isolated_extension_store))
         from modiff.server import server
         from modiff.service import request, run
-
-        from modiff.custom_extensions import ExtensionStore
+        from aiohttp import ClientSession
 
         store = ExtensionStore(Path(temporary) / "custom")
         server._extension_store = lambda: store
@@ -40,6 +51,16 @@ async def smoke():
         try:
             health = await http("/health")
             assert health.get("error") is not True
+            async with ClientSession() as client:
+                for path, expected_type in (
+                    ("/", "text/html"),
+                    ("/assets/index.js", "javascript"),
+                    ("/favicon.ico", "image/"),
+                ):
+                    async with client.get(origin + path) as response:
+                        assert response.status == 200, (path, response.status)
+                        assert expected_type in response.headers.get("Content-Type", ""), path
+                        assert await response.content.read(128), f"Empty bundled asset: {path}"
             graph = json.loads((ROOT / "examples/service/text-api.json").read_text())
             interface = json.loads((ROOT / "examples/service/interface.json").read_text())
             values = json.loads((ROOT / "examples/service/inputs.json").read_text())
@@ -102,6 +123,7 @@ async def smoke():
                 json.dumps(
                     {
                         "health": "passed",
+                        "bundledAssets": "passed",
                         "savedGraph": "passed",
                         "serviceManual": "passed",
                         "serviceAuto": "passed",

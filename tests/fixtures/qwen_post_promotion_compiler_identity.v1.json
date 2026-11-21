@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "proofScope": "Actual maintained client compiler with fixed contract probes; no live generation or promotion approval",
+  "generatedBy": "scripts/registered-block-v2-route-audit.test.mjs",
+  "sourceReportSha256": "50cc089d0f344e36a62aff2f492d28d50c121a285433f434a183c4ac2de47001",
+  "admissionId": "diffusers.cluster-admission:QwenImageModularPipeline:text2image:mode:text_to_image",
+  "currentManifestContentHash": "sha256:9425b62f99dbcdce2b152052acbe093c2a45eb9ef4b0424041de644cacf79a29",
+  "postPromotionBlockDefinition": {
+    "definitionId": "diffusers.cluster-admission:QwenImageModularPipeline:text2image:mode:text_to_image",
+    "contentHash": "block-definition-v2-c03f994e",
+    "canonicalSha256": "sha256:d6c33b2fdffe9352fca4a08e455c0fb3f435bcfe0b1f59aaa6800efa34982449"
+  },
+  "postPromotionManifestContentHash": "sha256:9c36160b78a026146c6ed7fee241d4fdc0eb0d8dad87308da12ef4f2af712890",
+  "executionGraphHash": "block-graph-v2-ace7e7d3",
+  "interfaceHash": "block-interface-v2-23f89654",
+  "compilerCounts": {
+    "existing": 122,
+    "candidateSuccesses": 0,
+    "blocked": 0,
+    "total": 122
+  }
+}

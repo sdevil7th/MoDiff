@@ -1,0 +1,86 @@
+{
+  "valid": [
+    {
+      "name": "placement",
+      "layout": {
+        "schemaVersion": 2,
+        "coordinateSpace": "normalized_xyxy",
+        "regions": [
+          { "id": "subject", "action": "place", "description": "  Keep exact text  ", "targetBox": [0, 0, 1, 1] }
+        ]
+      },
+      "prompt": "Raw <subject>",
+      "expectedPrompt": "Raw <subject>\n[{\"id\":\"subject\",\"bbox\":[0,0,1000,1000],\"desc\":\"  Keep exact text  \"}]"
+    },
+    {
+      "name": "remove-tenth-reference",
+      "layout": {
+        "schemaVersion": 2,
+        "coordinateSpace": "normalized_xyxy",
+        "regions": [
+          {
+            "id": "subject",
+            "action": "remove",
+            "description": "Remove subject",
+            "targetBox": null,
+            "source": {
+              "referenceIndex": 9,
+              "expectedReferenceId": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "box": [0.1, 0.2, 0.7, 0.8]
+            }
+          }
+        ]
+      },
+      "prompt": "Remove <subject>",
+      "expectedPrompt": "Remove <subject>\n[{\"id\":\"subject\",\"from\":\"ref_image_9\",\"src_bbox\":[200,100,800,700],\"tgt_bbox\":null,\"desc\":\"Remove subject\"}]"
+    },
+    {
+      "name": "relocate",
+      "layout": {
+        "schemaVersion": 2,
+        "coordinateSpace": "normalized_xyxy",
+        "regions": [
+          {
+            "id": "subject",
+            "action": "relocate",
+            "description": "Move subject",
+            "targetBox": [0.2, 0.3, 0.8, 0.9],
+            "source": {
+              "referenceIndex": 0,
+              "expectedReferenceId": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "box": [0, 0, 1, 1]
+            }
+          }
+        ]
+      },
+      "prompt": "Move <subject>",
+      "expectedPrompt": "Move <subject>\n[{\"id\":\"subject\",\"from\":\"ref_image_0\",\"src_bbox\":[0,0,1000,1000],\"tgt_bbox\":[300,200,900,800],\"desc\":\"Move subject\"}]"
+    }
+  ],
+  "invalid": [
+    {
+      "name": "remove-without-source",
+      "layout": {
+        "schemaVersion": 2,
+        "coordinateSpace": "normalized_xyxy",
+        "regions": [{ "id": "subject", "action": "remove", "description": "Remove", "targetBox": null }]
+      }
+    },
+    {
+      "name": "place-null",
+      "layout": {
+        "schemaVersion": 2,
+        "coordinateSpace": "normalized_xyxy",
+        "regions": [{ "id": "subject", "action": "place", "description": "Place", "targetBox": null }]
+      }
+    },
+    {
+      "name": "unknown-action",
+      "layout": {
+        "schemaVersion": 2,
+        "coordinateSpace": "normalized_xyxy",
+        "regions": [{ "id": "subject", "action": "paint", "description": "Place", "targetBox": [0, 0, 1, 1] }]
+      }
+    }
+  ]
+}

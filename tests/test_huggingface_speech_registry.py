@@ -4,11 +4,13 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 import inspect
+import os
 import tempfile
 import unittest
 
 import numpy as np
 
+from modiff.execution_input_provenance import bind_generation_input_origins
 from modiff.model_artifact_catalog import catalog_revision
 from modules.HuggingFaceSpeech.main import (
     LoadCTCSpeechRecognitionModel,
@@ -261,6 +263,136 @@ class HuggingFaceSpeechRegistryTests(unittest.TestCase):
                     "channels": 1,
                 },
             )
+
+    def test_speech_receipts_observe_actual_controls_and_bound_audio(self):
+        from scipy.io import wavfile
+        from modules.Audio.main import Load
+
+        calls = []
+
+        def recognize(audio, **kwargs):
+            calls.append((audio, kwargs))
+            return {"text": "example"}
+
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"MODIFF_CAPTURE_BUILTIN_MEDIA": "1"}):
+            path = Path(directory, "synthetic.wav")
+            wavfile.write(path, 16000, np.array([[4000, -2000], [8000, 4000]], dtype=np.int16))
+            loader = Load("source")
+            source = loader(file=str(path))["audio"]
+            upstream = loader._execution_input_record["mediaEvidence"]["outputs"]["audio"]
+            for action, family, controls, expected_call, inactive in (
+                (
+                    TranscribeAudio, SPEECH_MODEL_FAMILY_SEQ2SEQ,
+                    {"task": "transcribe", "language": "", "timestamps": "segment",
+                     "chunk_length_seconds": 30, "stride_length_seconds": 5},
+                    {"generate_kwargs": {"task": "transcribe"}, "return_timestamps": True,
+                     "chunk_length_s": 30.0, "stride_length_s": 5.0},
+                    {"language"},
+                ),
+                (
+                    TranscribeCTCAudio, SPEECH_MODEL_FAMILY_CTC,
+                    {"timestamps": "word", "chunk_length_seconds": 0, "stride_length_seconds": 0},
+                    {"return_timestamps": "word"},
+                    {"chunk_length_seconds", "stride_length_seconds"},
+                ),
+            ):
+                with self.subTest(action=action.__name__):
+                    node = action("speech")
+                    model = {"schemaVersion": 1, "family": family, "pipeline": recognize}
+                    outputs = node(model=model, audio=source, **controls)
+                    self.assertEqual(outputs["text"], "example")
+                    recognizer_input, called = calls[-1]
+                    self.assertEqual(called, expected_call)
+                    self.assertEqual(recognizer_input["sampling_rate"], 16000)
+                    np.testing.assert_array_equal(recognizer_input["raw"], [1000 / 32768, 6000 / 32768])
+
+                    params = {key: {"value": value} for key, value in controls.items()}
+                    params["model"] = {"sourceId": "loader", "sourceKey": "model"}
+                    params["audio"] = {"sourceId": "source", "sourceKey": "audio"}
+                    receipt = bind_generation_input_origins("speech", {
+                        "module": "modules.HuggingFaceSpeech", "action": action.__name__, "params": params,
+                    }, node._execution_input_record)
+                    accounting = receipt["fieldAccounting"]
+                    self.assertTrue(accounting["complete"])
+                    self.assertEqual(set(accounting["fields"]), set(controls))
+                    self.assertEqual(accounting["inputProjections"], {})
+                    self.assertEqual(accounting["outputProjections"], {})
+                    self.assertEqual(receipt["fields"], {})
+                    self.assertEqual(receipt["mediaEvidence"], {
+                        "schemaVersion": 1, "source": "native-builtin-media-v1", "status": "complete",
+                        "controls": {}, "inputs": {"audio": upstream}, "outputs": {}, "files": {},
+                    })
+                    self.assertEqual(upstream[0]["shape"], [2, 2])
+                    effective = {
+                        "task": expected_call.get("generate_kwargs", {}).get("task"),
+                        "timestamps": expected_call["return_timestamps"],
+                        "chunk_length_seconds": expected_call.get("chunk_length_s"),
+                        "stride_length_seconds": expected_call.get("stride_length_s"),
+                    }
+                    for key, value in controls.items():
+                        self.assertEqual(accounting["fields"][key], {
+                            "source": "literal", "inputValue": value,
+                            **({"disposition": "inactive", "value": value, "reason": "feature-disabled"}
+                               if key in inactive else {"disposition": "consumed", "value": effective[key]}),
+                        })
+                    count = len(calls)
+                    node(model=model, audio=source, **controls)
+                    self.assertEqual(len(calls), count)
+                    self.assertEqual(node._execution_input_record["mediaEvidence"], receipt["mediaEvidence"])
+
+    def test_speech_direct_file_keeps_existing_path_and_accounting_without_file_claim(self):
+        from scipy.io import wavfile
+
+        recognizer = Mock(return_value={"text": "example"})
+        model = {"schemaVersion": 1, "family": SPEECH_MODEL_FAMILY_SEQ2SEQ, "pipeline": recognizer}
+        node = TranscribeAudio("speech")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "source.wav")
+            wavfile.write(path, 16000, np.zeros((4, 2), dtype=np.int16))
+            with (
+                patch.dict(os.environ, {"MODIFF_CAPTURE_BUILTIN_MEDIA": "1"}),
+                patch("modules.DiffusersAudio.main._resolve_audio_source_path", return_value=path),
+                patch("modiff.builtin_media_evidence.file_identity") as evidence_file,
+            ):
+                output = node(model=model, audio="source.wav", task="translate", language=" French ",
+                              timestamps="none", chunk_length_seconds=0, stride_length_seconds=0)
+                evidence_file.assert_not_called()
+        self.assertEqual(output["transcript"]["task"], "translate")
+        self.assertEqual(recognizer.call_args.kwargs, {
+            "generate_kwargs": {"task": "translate", "language": "French"}, "return_timestamps": False,
+        })
+        self.assertEqual(node._execution_input_record["fieldAccounting"]["fields"]["language"], {
+            "disposition": "consumed", "inputValue": " French ", "value": "French",
+        })
+        self.assertEqual(node._execution_input_record["mediaEvidence"], {
+            "schemaVersion": 1, "status": "unavailable", "reason": "unsupported-or-bounded-input",
+        })
+
+    def test_speech_accounting_uses_successful_retry_dispatch(self):
+        fail = False
+
+        def recognize(_audio, **_kwargs):
+            if fail:
+                raise ValueError("test recognizer failure")
+            return {"text": "example"}
+
+        node = TranscribeCTCAudio("speech")
+        model = {"schemaVersion": 1, "family": SPEECH_MODEL_FAMILY_CTC, "pipeline": recognize}
+        audio = {"samples": np.zeros((12, 1), dtype=np.float32), "sample_layout": "frames_first",
+                 "sample_rate": 16000, "channels": 1}
+        with patch.dict(os.environ, {"MODIFF_CAPTURE_BUILTIN_MEDIA": "0"}):
+            node(model=model, audio=audio, timestamps="word")
+            fail = True
+            with self.assertRaisesRegex(RuntimeError, "test recognizer failure"):
+                node(model=model, audio=audio, timestamps="none")
+            self.assertFalse(node._cache_valid)
+            fail = False
+            node(model=model, audio=audio, timestamps="none")
+
+        self.assertEqual(node._execution_input_record["fieldAccounting"]["fields"]["timestamps"], {
+            "disposition": "consumed", "inputValue": "none", "value": False,
+        })
+        self.assertNotIn("mediaEvidence", node._execution_input_record)
 
     def test_transcribe_rejects_malformed_requests_and_outputs(self):
         valid_model = {

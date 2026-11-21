@@ -24,7 +24,9 @@ from typing import Any, TypedDict
 SCHEMA_VERSION = 2
 SNAPSHOT_CACHE_TTL_SECONDS = 1.0
 RELEVANT_ENV_VARS = (
+    "PYTORCH_ALLOC_CONF",
     "PYTORCH_CUDA_ALLOC_CONF",
+    "PYTORCH_HIP_ALLOC_CONF",
     "CUDA_VISIBLE_DEVICES",
     "ZE_AFFINITY_MASK",
     "ONEAPI_DEVICE_SELECTOR",
@@ -49,6 +51,7 @@ class SystemStats(TypedDict):
     ram_total: int | None
     ram_free: int | None
     ram_available: int | None
+    pytorch_alloc_conf: str | None
     pytorch_cuda_alloc_conf: str | None
     environment: dict[str, str | None]
 
@@ -798,6 +801,7 @@ def _build_hardware_snapshot(
         "ram_total": _safe_int(memory.get("total_bytes")),
         "ram_free": _safe_int(memory.get("free_bytes")),
         "ram_available": _safe_int(memory.get("available_bytes")),
+        "pytorch_alloc_conf": os.environ.get("PYTORCH_ALLOC_CONF"),
         "pytorch_cuda_alloc_conf": os.environ.get("PYTORCH_CUDA_ALLOC_CONF"),
         "environment": environment,
     }
@@ -1017,7 +1021,12 @@ def format_hardware_summary(snapshot: HardwareSnapshot) -> str:
     mps_summary = "available" if torch_state.get("mps_available") else "unavailable"
     if torch_state.get("mps_built") and not torch_state.get("mps_available"):
         mps_summary = "built, unavailable"
-    allocator = system.get("pytorch_cuda_alloc_conf") or "unset"
+    allocator = (
+        system.get("pytorch_alloc_conf")
+        or system.get("pytorch_cuda_alloc_conf")
+        or system.get("environment", {}).get("PYTORCH_HIP_ALLOC_CONF")
+        or "unset"
+    )
     return (
         f"Hardware: PyTorch {system.get('pytorch_version') or 'unavailable'}; allocator {allocator}; "
         f"CUDA {cuda_summary}; XPU {xpu_summary}; MPS {mps_summary}; RAM {_format_bytes(system.get('ram_total'))} total, "

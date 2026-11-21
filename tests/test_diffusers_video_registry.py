@@ -761,8 +761,10 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
         executing = LoadPipeline("video-replacement-execution")
         executing.mm_add = MagicMock()
+        snapshot = Path("/managed/replacement-video") / replacement_revision
         with (
             patch("diffusers.LTXConditionPipeline", FakePipelineClass),
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=snapshot) as resolve_snapshot,
             patch("modules.DiffusersVideo.main.local_files_only", return_value=True),
             patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
             patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
@@ -773,7 +775,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                 revision=replacement_revision,
             )
 
-        self.assertEqual(upstream_calls, [(replacement["value"], replacement_revision)])
+        resolve_snapshot.assert_called_once_with(replacement["value"], replacement_revision)
+        self.assertEqual(upstream_calls, [(snapshot, replacement_revision)])
         self.assertEqual(result["pipeline"]._modiff_video_repo, replacement["value"])
         self.assertEqual(result["pipeline"]._modiff_video_revision, replacement_revision)
 
@@ -1487,6 +1490,36 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertEqual(execute.call_args_list[0].kwargs["seed"], 101)
         self.assertEqual(execute.call_args_list[1].kwargs["seed"], 100)
 
+    def test_sequence_callbacks_emit_one_aggregate_update_and_keep_eta_across_shot_boundaries(self):
+        pipeline = SimpleNamespace(_modiff_video_pipeline_class="LTXConditionPipeline", _num_timesteps=2)
+        node = GenerateSequence("aggregate-sequence-progress")
+        node._sid = "sequence-session"
+        payload = {"latents": object()}
+
+        def fake_execute(worker, **kwargs):
+            for index in range(2):
+                self.assertIs(worker.pipe_callback(pipeline, index, None, payload), payload)
+            return {"video_out": [kwargs["prompt"]], "frames_out": 1}
+
+        with (
+            patch.object(Generate, "execute", fake_execute),
+            patch("modiff.NodeBase._server", return_value=SimpleNamespace(current_task={})),
+            patch("modiff.NodeBase.time.time", side_effect=[100.0, 110.0, 140.0, 150.0]),
+            patch.object(node, "progress") as progress,
+        ):
+            result = node.execute(pipeline=pipeline, prompts_json='["First shot", "Second shot"]')
+
+        updates = [call.kwargs for call in progress.call_args_list if call.kwargs.get("phase") == "denoising"]
+        self.assertEqual(len(updates), 4, "One completed model step must emit one aggregate progress event")
+        self.assertEqual([item["current_step"] for item in updates], [1, 2, 3, 4])
+        self.assertEqual([item["total_steps"] for item in updates], [4, 4, 4, 4])
+        self.assertIsNone(updates[0]["average_step_seconds"])
+        self.assertEqual(updates[1]["eta_seconds"], 20.0)
+        self.assertEqual(updates[2]["average_step_seconds"], 20.0)
+        self.assertEqual(updates[2]["eta_seconds"], 20.0)
+        self.assertEqual(updates[3]["eta_seconds"], 0.0)
+        self.assertEqual(result["clips"], [["First shot"], ["Second shot"]])
+
     def test_wan_vace_legacy_adapter_covers_all_studio_modes(self):
         adapter = get_video_pipeline_adapter("WanVACEPipeline")
         self.assertEqual(adapter.default_repo, "Wan-AI/Wan2.1-VACE-1.3B-diffusers")
@@ -1582,6 +1615,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         node = LoadPipeline()
 
         with (
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=Path("installed-wan-5b")),
             patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
             patch("diffusers.WanPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch(
@@ -1661,6 +1695,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             patch.object(node, "progress"),
             patch.object(node, "mm_add"),
             patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=Path("fixture-installed-wan")) as snapshot,
         ):
             loaded = node._load_wan_text_to_video(
                 adapter,
@@ -1671,6 +1706,9 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                     "execution_recipe": {"offload_mode": "none", "device": "cpu"},
                 },
             )
+
+        snapshot.assert_called_once()
+        self.assertEqual(load_pipeline.call_args.args[0], Path("fixture-installed-wan"))
 
         self.assertIs(loaded.scheduler, replacement_scheduler)
         self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
@@ -1705,6 +1743,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         node = LoadPipeline()
 
         with (
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=Path("installed-wan-i2v")),
             patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
             patch("diffusers.WanImageToVideoPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
@@ -1726,7 +1765,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             )
 
         self.assertIs(loaded, pipeline)
-        self.assertEqual(load_vae.call_args.args[0], adapter.default_repo)
+        self.assertEqual(load_vae.call_args.args[0], Path("installed-wan-i2v"))
         self.assertEqual(str(load_vae.call_args.kwargs["torch_dtype"]), "torch.float32")
         self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
         self.assertIs(load_pipeline.call_args.kwargs["vae"], vae)
@@ -1751,6 +1790,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         node.progress = lambda *args, **kwargs: None
         node.mm_add = lambda *args, **kwargs: None
         with (
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=Path("/managed/ltx-snapshot")),
             patch("diffusers.LTXConditionPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
             patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
@@ -2507,6 +2547,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             patch.object(node, "progress"),
             patch.object(node, "mm_add"),
             patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=Path("fixture-installed-wan")) as snapshot,
         ):
             loaded = node._load_wan_video_to_video(
                 adapter,
@@ -2517,6 +2558,9 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                     "execution_recipe": {"offload_mode": "none", "device": "cpu"},
                 },
             )
+
+        snapshot.assert_called_once()
+        self.assertEqual(load_pipeline.call_args.args[0], Path("fixture-installed-wan"))
 
         self.assertIs(loaded, pipeline)
         self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])

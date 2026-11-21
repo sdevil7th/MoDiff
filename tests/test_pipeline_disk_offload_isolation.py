@@ -1,6 +1,5 @@
 """Disk hook filenames must never identify weights across owners or loads."""
 import os
-from unittest.mock import patch
 
 import pytest
 import torch
@@ -9,9 +8,10 @@ import torch
 @pytest.mark.skipif(os.environ.get('MODIFF_TEST_FLUX_VAE_ACCELERATOR') != '1',
                     reason='Explicit accelerator regression; no downloads')
 @pytest.mark.parametrize('different_shapes', [False, True])
-def test_pipeline_disk_weights_survive_components_reloads_and_repeats(tmp_path, different_shapes):
+def test_pipeline_disk_weights_survive_components_reloads_and_repeats(tmp_path, different_shapes, monkeypatch):
     from diffusers import DiffusionPipeline
     from modiff.diffusers_offload import apply_pipeline_offload
+    monkeypatch.chdir(tmp_path)
 
     class Pipeline(DiffusionPipeline):
         def __init__(self, transformer, controlnet, image_encoder):
@@ -31,9 +31,8 @@ def test_pipeline_disk_weights_survive_components_reloads_and_repeats(tmp_path, 
         for module in components:
             module.to('cpu')
         pipeline = Pipeline(*components)
-        with patch('modiff.diffusers_offload._disk_path', return_value=tmp_path):
-            result = apply_pipeline_offload(pipeline, mode='group_disk', device='cuda:0',
-                                            node_id='same-workflow-node')
+        result = apply_pipeline_offload(pipeline, mode='group_disk', device='cuda:0',
+                                        node_id='same-workflow-node')
         assert result.applied
         with torch.no_grad():
             for _ in range(2):
@@ -41,7 +40,6 @@ def test_pipeline_disk_weights_survive_components_reloads_and_repeats(tmp_path, 
                     torch.testing.assert_close(module(inputs), reference, rtol=0, atol=0)
         files_before = set(tmp_path.rglob('*.safetensors'))
         # Re-applying to the SAME owner keeps its valid existing hook storage.
-        with patch('modiff.diffusers_offload._disk_path', return_value=tmp_path):
-            apply_pipeline_offload(pipeline, mode='group_disk', device='cuda:0',
-                                   node_id='same-workflow-node')
+        apply_pipeline_offload(pipeline, mode='group_disk', device='cuda:0',
+                               node_id='same-workflow-node')
         assert set(tmp_path.rglob('*.safetensors')) == files_before

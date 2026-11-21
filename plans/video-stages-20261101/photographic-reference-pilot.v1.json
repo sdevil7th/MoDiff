@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "status": "human_visual_accepted",
+  "scope": "Photographic image-reference pilot accepted visually; user authorized keyframe and mixed-reference replacements and reusable templates from good outputs. Listening/publication and hardware qualification remain separate.",
+  "task": "reference_to_video_with_audio",
+  "pipelineClass": "PikaH3FlexModularPipeline",
+  "model": {
+    "repository": "Pika-Labs/Pika-H3-Flex",
+    "revision": "3ff166447d5edb1406107ab8370c42000ce173e4",
+    "requiredAdapter": {
+      "weightName": "ref2va/adapter.safetensors",
+      "sha256": "eef684ba1258f0cdbbbda6128188ad2688417f2eb17ff875375e74a32b6d61b5",
+      "component": "transformer_ref",
+      "scale": 1
+    }
+  },
+  "reference": {
+    "kind": "image",
+    "selection": "Operator-supplied photographic cyclist; local pilot used frame zero from a previously human-accepted cycling clip",
+    "mediaIncluded": false,
+    "preprocessing": "Official trained 1024-pixel short edge"
+  },
+  "prompt": "subject_definitions: <Subject 1> is the adult cyclist in <Picture 1>, wearing a red jacket, dark trousers and a black bicycle helmet, riding the blue road bicycle. The reference supplies the cyclist's appearance, clothing and the bicycle's construction and proportions.\n\nsummary: [reference generation] A photorealistic live-action tracking shot of <Subject 1> pedalling along a sunlit coastal promenade, with clear leg and wheel movement and smooth camera travel.\n\nretention_analysis: Preserve the same cyclist, red jacket, black helmet and blue bicycle from <Picture 1>. Retain natural human anatomy, realistic bicycle frame geometry and both complete wheels. Use the picture as an identity reference while creating a new moving shot.\n\ndetailed_description: [Shot 1] One continuous five-second shot in warm natural daylight. <Subject 1> rides steadily from left to right beside the sea. Both feet make repeated full pedal rotations, the wheels spin, the rider's body sways slightly with each stroke and the red jacket moves in the breeze. A low moving camera tracks alongside the cyclist at the same speed, then gently advances to a front three-quarter view. Railings and nearby promenade posts pass across the foreground with strong parallax while the distant sea moves more slowly. Keep the entire cyclist and both bicycle wheels visible throughout in a medium-wide composition with room ahead. The rider continues forward at the ending. Real materials, natural shadows and stable identity throughout.\n\noverall_soundscape: Bicycle tyre hum on paving, a rhythmic chain and pedal sound, light wind and distant waves. Match the sounds to the moving bicycle and seaside location. No dialogue.\n\nnon_diegetic_music: N/A",
+  "settings": {
+    "width": 832,
+    "height": 480,
+    "numFrames": 124,
+    "fps": 24,
+    "seed": 20261102,
+    "randomSeed": false,
+    "officialFixedModelEvaluations": 6,
+    "dtype": "bfloat16",
+    "offloadMode": "group_disk"
+  },
+  "observedLimits": [
+    "Camera mostly stays side-on rather than reaching a clear front three-quarter view",
+    "Ending tightens and crops the bicycle wheels"
+  ],
+  "humanVisualAccepted": true,
+  "humanListeningAccepted": false,
+  "publicationApproved": false,
+  "moreVariantsAuthorized": true
+}

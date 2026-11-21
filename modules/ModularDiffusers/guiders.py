@@ -279,7 +279,13 @@ class Guider(NodeBase):
         return guider
 
     def updateNode(self, values, ref):
-        value = self._selected_guider(values.get("guider"), values.get("model_type"))
+        model_type = values.get("model_type")
+        if model_type in (None, ""):
+            model_type = self.get_signal_value("guider_out")
+            if model_type in (None, ""):
+                # A palette node can mount before any reviewed model is wired.
+                return None
+        value = self._selected_guider(values.get("guider"), model_type)
 
         params = GUIDER_CONFIGS.get(value, {})
         self.send_node_definition(params)

@@ -111,6 +111,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "QwenImageControlNetPipeline",
             "QwenImageLayeredPipeline",
             "QwenImage21Pipeline",
+            "QwenImage21TurboPipeline",
             "QwenImageEditPipeline",
             "QwenImageEditPlusPipeline",
             "ZImageInpaintPipeline",
@@ -120,7 +121,11 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "WanVideoPipeline",
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
+            "PikaH3FlexModularPipeline",
+            "MiniMaxH3ImageModularPipeline",
             "Wan22Pipeline",
+            "Kandinsky6TI2VAPipeline",
+            "Kandinsky6DistilledTI2VAPipeline",
             "WanAnimatePipeline",
             "WanImage2VideoModularPipeline",
             "WanModularPipeline",
@@ -157,6 +162,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "FluxKontextModularPipeline",
             "Flux2KleinModularPipeline",
             "Flux2KleinBaseModularPipeline",
+            "Flux3ModularPipeline",
+            "Flux3DistilledModularPipeline",
             "Flux2ModularPipeline",
             "Flux2Pipeline",
             "FluxKreaPipeline",
@@ -236,6 +243,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "Cosmos3DistilledModularPipeline",
             "Cosmos3OmniModularPipeline",
             "HunyuanVideo15ModularPipeline",
+            "LTX25FullPipeline",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)
@@ -364,6 +372,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "wan-vace:direct",
             "wan-22-image-to-video:direct",
             "wan-22-ti2v-5b:direct",
+            "wan-22-ti2v-5b:image-direct:v1",
             "wan-text-to-video:direct",
             "wan-video-to-video:direct",
             "ltx-video:direct",
@@ -400,7 +409,12 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
         }
         for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
             expected = (
-                ("bnb_4bit",)
+                ()
+                if profile_id in {
+                    "flux3-klein-base:modular", "flux3-klein:modular",
+                    "flux3-klein-base:official-provider:v1", "flux3-klein:official-provider:v1",
+                }
+                else ("bnb_4bit",)
                 if profile_id in qwen_ids
                 else flux_modes
                 if profile.model_type.startswith("Flux") and profile.model_type not in {
@@ -489,7 +503,17 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
     def test_ace_lora_template_base_is_an_exact_reviewed_compatible_artifact(self):
         profile = DIFFUSERS_EXECUTION_PROFILES["ace-step-audio:direct"]
 
-        self.assertEqual(profile.compatible_repos, (ACE_STEP_LORA_BASE_REPO,))
+        self.assertEqual(profile.compatible_repos, (
+            ACE_STEP_LORA_BASE_REPO, "ACE-Step/acestep-v15-xl-base-diffusers",
+        ))
+        self.assertEqual(
+            catalog_revision("ACE-Step/acestep-v15-xl-base-diffusers"),
+            "8f40447d21ee59ad4dcee6c99ce248027410bfec",
+        )
+        self.assertNotIn(
+            "ACE-Step/acestep-v15-xl-base-diffusers",
+            {repo for repo, _ in profile.adapter_authoring.repository_revisions},
+        )
         self.assertEqual(
             catalog_revision(ACE_STEP_LORA_BASE_REPO),
             "be23effe449c5957947f3020fd63bee23c64abe4",

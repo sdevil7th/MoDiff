@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -14,7 +15,7 @@ from modules.DiffusersVideo.wan_vace import (
 
 
 class WanVaceLoaderTests(unittest.TestCase):
-    def test_loader_uses_the_app_configured_hugging_face_cache(self):
+    def test_loader_uses_the_exact_discovered_hugging_face_snapshot(self):
         node = object.__new__(LoadPipeline)
         node.node_id = "wan-loader-test"
         node.params = {}
@@ -24,10 +25,12 @@ class WanVaceLoaderTests(unittest.TestCase):
         vae = Mock()
         pipeline = Mock()
         pipeline.components = {"vae": vae}
+        snapshot = Path("C:/model-cache/hub/selected-snapshot")
 
         with (
-            patch.dict(CONFIG.hf, {"cache_dir": "E:/MoDiff/huggingface/hub", "online_status": "Auto"}),
+            patch.dict(CONFIG.hf, {"cache_dir": "C:/model-cache/hub", "online_status": "Auto"}),
             patch("modules.DiffusersVideo.wan_vace.local_files_only", return_value=True),
+            patch("modules.DiffusersVideo.wan_vace.exact_cached_snapshot_path", return_value=snapshot) as resolve_snapshot,
             patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as vae_from_pretrained,
             patch("diffusers.WanVACEPipeline.from_pretrained", return_value=pipeline) as from_pretrained,
             patch("modules.DiffusersVideo.wan_vace.apply_pipeline_offload"),
@@ -44,22 +47,22 @@ class WanVaceLoaderTests(unittest.TestCase):
             )
 
         self.assertIs(result["pipeline"], pipeline)
+        resolve_snapshot.assert_called_once_with(WAN_VACE_DEFAULT_REPO, "ec4d2cb062b548996b179d493fdd05340de702a1")
         vae_from_pretrained.assert_called_once_with(
-            WAN_VACE_DEFAULT_REPO,
+            snapshot,
             subfolder="vae",
             torch_dtype=torch.float32,
             revision="ec4d2cb062b548996b179d493fdd05340de702a1",
             local_files_only=True,
             use_safetensors=True,
-            cache_dir="E:/MoDiff/huggingface/hub",
         )
         from_pretrained.assert_called_once()
         load_args, load_kwargs = from_pretrained.call_args
-        self.assertEqual(load_args, (WAN_VACE_DEFAULT_REPO,))
+        self.assertEqual(load_args, (snapshot,))
         self.assertEqual(load_kwargs["torch_dtype"], torch.bfloat16)
         self.assertIs(load_kwargs["vae"], vae)
         self.assertEqual(load_kwargs["revision"], "ec4d2cb062b548996b179d493fdd05340de702a1")
-        self.assertEqual(load_kwargs["cache_dir"], "E:/MoDiff/huggingface/hub")
+        self.assertNotIn("cache_dir", load_kwargs)
         self.assertTrue(load_kwargs["local_files_only"])
         self.assertTrue(load_kwargs["use_safetensors"])
         self.assertTrue(load_kwargs["low_cpu_mem_usage"])

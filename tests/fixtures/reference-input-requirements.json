@@ -1,0 +1,15 @@
+{
+  "references_in": { "required": false },
+  "image": {
+    "required": false,
+    "requiredWhen": { "field": "reference_kind", "equals": "image" }
+  },
+  "video": {
+    "required": false,
+    "requiredWhen": { "field": "reference_kind", "equals": "video" }
+  },
+  "audio": {
+    "required": false,
+    "requiredWhen": { "field": "reference_kind", "equals": "audio" }
+  }
+}

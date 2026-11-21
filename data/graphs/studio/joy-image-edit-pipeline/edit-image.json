@@ -313,7 +313,7 @@
                 "max_sequence_length": {
                   "default": 256,
                   "hidden": false,
-                  "max": 2048
+                  "max": 4096
                 },
                 "negative_prompt": {
                   "hidden": false
@@ -389,7 +389,7 @@
             "disabled": false,
             "hidden": false,
             "label": "Max Sequence Length",
-            "max": 2048,
+            "max": 4096,
             "min": 1,
             "type": "int",
             "value": 2048

@@ -2,7 +2,6 @@ from source_contract_helpers import source_sha256
 
 import ast
 from contextlib import nullcontext
-from pathlib import Path
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -32,8 +31,8 @@ from modules.DiffusersImage.main import (
 )
 
 
-LAYERED_SOURCE_SHA256 = "d857259e9d1ed65de4a27dfb20f2689f307ae81e792d8976f7394bbb2a2a90d8"
-CONTROLNET_SOURCE_SHA256 = "df355aa553805f5ce87b1717a23b31985dffaaa742cfbc4fa4993663b69c94ba"
+LAYERED_SOURCE_SHA256 = "1acc518f7b0c0d3263996a38164386abe6552af6ce7d4367b0e652c6d275e16f"
+CONTROLNET_SOURCE_SHA256 = "73c5632bad1b4d6305d028541311351d9de1faf3d3591954fcdd113ef2674731"
 QWEN_2512_REVISION = "25468b98e3276ca6700de15c6628e51b7de54a26"
 QWEN_LAYERED_REVISION = "8f0ca708dfff6ba1dd5f2d85d78f8c108a040bcf"
 QWEN_CONTROLNET_REVISION = "b13036f066d6dee7c20513e263d3d673055e9de8"
@@ -122,8 +121,10 @@ class QwenImageControlNetPipeline:
 class QwenStandardSafeWaveTests(unittest.TestCase):
     def test_exact_pinned_upstream_sources_and_call_signatures_are_preserved(self):
         import diffusers
+        import inspect
+        from modiff.upstream_coverage import reviewed_diffusers_source
 
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941")
         cases = (
             (
                 "pipeline_qwenimage_layered.py",
@@ -167,7 +168,7 @@ class QwenStandardSafeWaveTests(unittest.TestCase):
                 },
             ),
         )
-        diffusers_root = Path(diffusers.__file__).resolve().parent
+        diffusers_root = reviewed_diffusers_source()
         for filename, class_name, expected_digest, required_parameters in cases:
             with self.subTest(pipeline=class_name):
                 source_path = diffusers_root / "pipelines" / "qwenimage" / filename
@@ -191,6 +192,8 @@ class QwenStandardSafeWaveTests(unittest.TestCase):
                     )
                 }
                 self.assertTrue(required_parameters.issubset(parameters))
+                installed = getattr(diffusers, class_name)
+                self.assertTrue(required_parameters.issubset(inspect.signature(installed.__call__).parameters))
 
     def test_exact_adapters_are_separate_and_reuse_only_admitted_artifacts(self):
         control = IMAGE_PIPELINE_ADAPTERS["QwenImageControlNetPipeline"]

@@ -35,10 +35,13 @@ def test_pipeline_group_offload_keeps_vae_on_its_leaf_hook_path(mode, tmp_path):
                     reason='Explicit accelerator regression; no downloads')
 @pytest.mark.parametrize('mode', ['group_cpu', 'group_disk'])
 @pytest.mark.parametrize('vae_class_name', ['AutoencoderKL', 'AutoencoderKLFlux2'])
-def test_actual_flux_vae_encode_decode_under_pipeline_group_offload(mode, vae_class_name, tmp_path):
+def test_actual_flux_vae_encode_decode_under_pipeline_group_offload(mode, vae_class_name, tmp_path, monkeypatch):
     import diffusers
     from diffusers import DiffusionPipeline
     from modiff.diffusers_offload import apply_pipeline_offload
+    # Exercise real owned storage under an isolated application root. Replacing
+    # only _disk_path violates the lease root's containment/identity contract.
+    monkeypatch.chdir(tmp_path)
     class Pipeline(DiffusionPipeline):
         def __init__(self, vae):
             super().__init__()
@@ -58,8 +61,7 @@ def test_actual_flux_vae_encode_decode_under_pipeline_group_offload(mode, vae_cl
         vae.to('cpu')
         buffers_before = {name: value.clone() for name, value in vae.named_buffers()}
         pipeline = Pipeline(vae)
-        with patch('modiff.diffusers_offload._disk_path', return_value=tmp_path), \
-             patch('modiff.diffusers_offload._streaming_offload_allowed', return_value=False):
+        with patch('modiff.diffusers_offload._streaming_offload_allowed', return_value=False):
             apply_pipeline_offload(pipeline, mode=mode, device='cuda:0', node_id='test')
         # FLUX.2 reads BatchNorm statistics directly outside VAE.forward before
         # both encode/decode. Disk hooks must not replace them with empty data.

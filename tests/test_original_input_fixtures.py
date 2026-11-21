@@ -1,4 +1,5 @@
 import hashlib
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -89,6 +90,25 @@ class OriginalInputFixtureTests(unittest.TestCase):
         self.assertEqual(mapping["items"][0]["rightsState"], "review_required")
         self.assertFalse(mapping["items"][0]["authoringLedgerSelected"])
 
+    def test_pending_ctc_transcription_maps_to_original_audio(self):
+        authoring = _authoring(
+            {"field": "sourceAudio", "mediaKind": "audio", "minimumCount": 1},
+            workflow="HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+        )
+        authoring["specifications"][0].update(mode="speech_to_text", mediaKind="json")
+        ledger = build_original_input_fixture_ledger(
+            Path("."), authoring=authoring, assets={"tone_a.wav": _asset("tone_a.wav", "audio")},
+        )
+        ctc = ledger["workflows"][0]
+        self.assertEqual((ctc["mode"], ctc["mediaKind"]), ("speech_to_text", "json"))
+        self.assertEqual(len(ctc["items"]), 1)
+        item = ctc["items"][0]
+        self.assertEqual((item["field"], item["mediaKind"], item["minimumCount"]), ("sourceAudio", "audio", 1))
+        self.assertEqual([fixture["fileName"] for fixture in item["fixtures"]], ["tone_a.wav"])
+        self.assertEqual(item["rightsState"], "review_required")
+        self.assertFalse(item["authoringLedgerSelected"])
+        self.assertTrue(all(value is False for value in ctc["claims"].values()))
+
     def test_unknown_field_is_fail_closed(self):
         with self.assertRaisesRegex(OriginalInputFixtureError, "No original fixture mapping"):
             build_original_input_fixture_ledger(
@@ -122,12 +142,29 @@ class OriginalInputFixtureLiveLedgerTests(unittest.TestCase):
             ledger = write_original_input_fixtures(ROOT, destination=Path(directory))
         after = hashlib.sha256(path.read_bytes()).hexdigest()
         self.assertEqual(before, after)
-        self.assertEqual(ledger["summary"]["workflowCount"], 93)
+        authoring = json.loads(path.read_text(encoding="utf-8"))
+        pending = {
+            row["canonicalWorkflowId"] for row in authoring["specifications"]
+            if row["authoringState"] == "draft_complete_input_selection_pending"
+        }
         self.assertTrue(ledger["policy"]["doesNotMutateAuthoringLedger"])
         self.assertTrue(ledger["policy"]["doesNotSelectInputs"])
         mapped = {item["canonicalWorkflowId"] for item in ledger["workflows"]}
+        self.assertEqual(mapped, pending)
+        self.assertEqual(ledger["summary"]["workflowCount"], len(pending))
+        self.assertEqual(len(ledger["workflows"]), len(pending))
+        self.assertNotIn("MarigoldDepthPipeline:depth_estimation", mapped)
+        self.assertNotIn("SpandrelImageUpscale:image_upscale", mapped)
+        self.assertNotIn("HuggingFaceSpeechRecognitionModel:speech_to_text", mapped)
+        self.assertNotIn("LatentConsistencyModelPipeline:edit_image", mapped)
+        self.assertNotIn("SanaSprintPipeline:edit_image", mapped)
         self.assertIn("AnimateDiffControlNetPipeline:control_to_video", mapped)
+        self.assertTrue({
+            "Flux3DistilledModularPipeline:edit_image",
+            "Flux3ModularPipeline:edit_image",
+        }.issubset(mapped))
         self.assertEqual(ledger["boundary"]["authoringSpecMutated"], False)
+        self.assertNotIn("HuggingFaceCTCSpeechRecognitionModel:speech_to_text", mapped)
 
 
 if __name__ == "__main__":

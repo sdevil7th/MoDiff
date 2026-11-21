@@ -7,7 +7,9 @@ from copy import deepcopy
 
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
 
-_REVIEWED_REVISION = "fbf49e7f35857f76bc57b177e26f12b03687c668"
+# The targeted PAG/FLUX/SDXL/FLUX2/Klein-KV review found only return-annotation
+# changes at this renewal. Artifact blockers and live qualification stay intact.
+_REVIEWED_REVISION = "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941"
 
 def _native(profile, task, source, limitations=()):
     return {"decision": "native_recipe", "nativeProfileId": profile, "nativeTask": task,

@@ -1,11 +1,11 @@
 # Service prototyping with an API graph
 
-In the Developer workspace, choose **Export → Service package**. MoDiff lowers the same graph
+Choose **Export → Service package**. MoDiff lowers the same graph
 used by API graph export, including expanded Blocks and Modular composition.
 Name the controls and file inputs callers should supply and the preview outputs they
 should receive. Leave a field blank to keep it internal. Named inputs have no
 exported default: supply every value on every invocation. At least one preview
-output is required. The Creator workspace keeps its compact Export menu.
+output is required.
 
 The resulting `modiff-service-v1` file contains the existing API graph, a named
 interface, and an observed execution manifest. It runs through the local MoDiff
@@ -102,6 +102,9 @@ references and immutable revisions, and enabled custom-node code/dependency
 identities. Cataloged repositories reuse the reviewed pin. Unknown repositories
 require an explicit 40-character revision. Model selectors connected to other
 nodes require a literal pinned selection before this version can be exported.
+Custom component suppliers retain each component's own selected revision;
+every component needs a literal immutable pin, even for cataloged repositories.
+Component weight variants remain fixed package identity fields.
 
 This is a strict observed-environment snapshot, not an automatic environment
 installer or a claim of bit-identical images across devices. Recreate the same
