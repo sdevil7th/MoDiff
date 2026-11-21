@@ -90,6 +90,14 @@ def test_registry_publishes_the_actual_canvas_and_mask_outputs():
         assert fields[name]['display'] == 'output'
 
 
+def test_registry_only_requires_the_file_in_prepared_mode():
+    from modules import MODULE_MAP
+    fields = MODULE_MAP['modules.VideoConditioning']['OutpaintCanvas']['params']
+    assert fields['preparation']['default'] == 'expand'
+    assert fields['prepared_mask_file']['required'] is False
+    assert fields['prepared_mask_file']['requiredWhen'] == {'field': 'preparation', 'equals': 'prepared'}
+
+
 @pytest.mark.parametrize('available', [None, 4 * 1024**3], ids=['unavailable', 'insufficient'])
 def test_memory_pressure_rejects_before_allocating_a_canvas(monkeypatch, available):
     frame = Image.new('RGB', (4, 3))
