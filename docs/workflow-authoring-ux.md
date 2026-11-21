@@ -89,8 +89,8 @@ share Generate when the latent stays within that stage. An external latent or
 source connection keeps that endpoint available. Show the effective connected
 parameter once and preserve its editable fallback for use after disconnect.
 
-Show the conditioning model picker when the selected image route uses it
-or a typed input supplies that selection. An inactive saved choice stays
+Show the conditioning model picker and revision when the selected image
+route uses them or a typed input supplies that selection. An inactive saved choice stays
 available when the workflow returns to a conditioning route.
 
 Use Blocks for reusable graphs, repeated shots and real nested control flow.
