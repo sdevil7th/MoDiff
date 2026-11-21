@@ -93,6 +93,18 @@ Show the conditioning model picker and revision when the selected image
 route uses them or a typed input supplies that selection. An inactive saved choice stays
 available when the workflow returns to a conditioning route.
 
+Label each socket by what it supplies or returns. For example, image composition
+has separately named overlay and base inputs, and generation reports actual
+dimensions separately from requested width and height. Use the same role names in
+the canvas and inspector. Keep the field identities and connector types stable so
+saved workflows and custom nodes can still wire to them.
+
+An action that requires compiled placement metadata belongs to its registered
+Block authoring route. Its execution identity stays resolvable for existing
+workflows. When reviewing an operation selector, inspect each mode's applicable
+fields and retain the values of inactive editors. A connected field still needs a
+visible socket so it can be inspected and disconnected.
+
 Use Blocks for reusable graphs, repeated shots and real nested control flow.
 Keep saved definitions and their original interfaces. Verify both the intended
 fresh Creator flow and a saved workflow, with the same ordered actions,
@@ -241,7 +253,7 @@ and approval; opening a picker or choosing Developer does not enable code.
 Raw loaders use distinct names: **Load Image Pipeline**, **Load Audio Pipeline**,
 **Load Modular Components**, and **Load Model Component**. Canonical workflows use
 **Load Models**. Other corrected names include **Prepare Outpaint Canvas**,
-**Generate Image with Control**, **Preview Latents**, and **Export Video Asset**.
+**Generate Image with Control**, **Preview 4-Channel Latent**, and **Export Video Asset**.
 Names are selected by execution identity, not guessed from class-name substrings.
 Serialized identities and custom titles are preserved; previous built-in labels
 remain searchable.
