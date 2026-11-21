@@ -90,6 +90,25 @@ class OriginalInputFixtureTests(unittest.TestCase):
         self.assertEqual(mapping["items"][0]["rightsState"], "review_required")
         self.assertFalse(mapping["items"][0]["authoringLedgerSelected"])
 
+    def test_pending_ctc_transcription_maps_to_original_audio(self):
+        authoring = _authoring(
+            {"field": "sourceAudio", "mediaKind": "audio", "minimumCount": 1},
+            workflow="HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+        )
+        authoring["specifications"][0].update(mode="speech_to_text", mediaKind="json")
+        ledger = build_original_input_fixture_ledger(
+            Path("."), authoring=authoring, assets={"tone_a.wav": _asset("tone_a.wav", "audio")},
+        )
+        ctc = ledger["workflows"][0]
+        self.assertEqual((ctc["mode"], ctc["mediaKind"]), ("speech_to_text", "json"))
+        self.assertEqual(len(ctc["items"]), 1)
+        item = ctc["items"][0]
+        self.assertEqual((item["field"], item["mediaKind"], item["minimumCount"]), ("sourceAudio", "audio", 1))
+        self.assertEqual([fixture["fileName"] for fixture in item["fixtures"]], ["tone_a.wav"])
+        self.assertEqual(item["rightsState"], "review_required")
+        self.assertFalse(item["authoringLedgerSelected"])
+        self.assertTrue(all(value is False for value in ctc["claims"].values()))
+
     def test_unknown_field_is_fail_closed(self):
         with self.assertRaisesRegex(OriginalInputFixtureError, "No original fixture mapping"):
             build_original_input_fixture_ledger(
@@ -145,18 +164,7 @@ class OriginalInputFixtureLiveLedgerTests(unittest.TestCase):
             "Flux3ModularPipeline:edit_image",
         }.issubset(mapped))
         self.assertEqual(ledger["boundary"]["authoringSpecMutated"], False)
-        ctc = next(
-            item for item in ledger["workflows"]
-            if item["canonicalWorkflowId"] == "HuggingFaceCTCSpeechRecognitionModel:speech_to_text"
-        )
-        self.assertEqual((ctc["mode"], ctc["mediaKind"]), ("speech_to_text", "json"))
-        self.assertEqual(len(ctc["items"]), 1)
-        item = ctc["items"][0]
-        self.assertEqual((item["field"], item["mediaKind"], item["minimumCount"]), ("sourceAudio", "audio", 1))
-        self.assertEqual([fixture["fileName"] for fixture in item["fixtures"]], ["tone_a.wav"])
-        self.assertEqual(item["rightsState"], "review_required")
-        self.assertFalse(item["authoringLedgerSelected"])
-        self.assertTrue(all(value is False for value in ctc["claims"].values()))
+        self.assertNotIn("HuggingFaceCTCSpeechRecognitionModel:speech_to_text", mapped)
 
 
 if __name__ == "__main__":
