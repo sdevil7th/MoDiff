@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:3a75d5c42af0d34df71cc506be22a5d01ea5b76f0812a6f007c02658aa9cccce",
+  "contentHash": "sha256:877e5d7a5780329d595a0e632091436dd251770a2d1e6cab92c679f9df4317cb",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -7536,14 +7536,14 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:84775a028ac12497bba3ca9e57273fe0d14de62cdfe76dc83cdcb10e1713e0af",
+      "contentHash": "sha256:cfab3e691996131af6367c2fd1a28d4bc66962aedb29e19a3c7627a9d4bbaa0d",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:d446105959cfc3b64ea95753ff5511095d149afcb1e9f66cd9d975ef5fb26f2e"
+      "sha256": "sha256:cec51d3395616008b565681fd000127f67eb82019bdd8ff6f58c56ca0a3e9c45"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:971962577832cde0369d5793227f8bec8dce249b66634fab44a0c40eb85be9c9",
+      "contentHash": "sha256:0b85320f46cf52949869677d54bbf2d874ee0fec10a4b77cbef525fe2e0166b0",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:4f7c3d0677ece4e4bd8f935ba8230b805edd77757058dd35803d9544ef2817c6"
+      "sha256": "sha256:49741091e442c6c899a2e2af634c41747b21b2c4455dd140fb70f9b61f8aeb17"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
