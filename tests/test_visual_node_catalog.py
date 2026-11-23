@@ -22,6 +22,8 @@ def test_catalog_covers_every_builtin_and_all_selectable_presets():
     standalone = set()
     for stage in catalog["stages"]:
         assert stage["summary"] and stage["modes"]
+        names = [mode["label"].casefold() for mode in stage["modes"]]
+        assert len(names) == len(set(names)), f"Ambiguous action selector in {stage['label']}"
         concrete = {mode["node"] for mode in stage["modes"]}
         assert not standalone.intersection(concrete), "Every standalone action needs one canonical stage"
         standalone.update(concrete)
