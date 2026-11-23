@@ -111,5 +111,43 @@ def test_sdxl_adapter_accepts_the_canny_maps_from_saved_and_new_workflows(output
         assert calls[0][0] is edges[0]
 
 
+def test_hunyuan_controlnet_accepts_a_grayscale_guide():
+    from types import SimpleNamespace
+
+    import torch
+    from diffusers.image_processor import VaeImageProcessor
+    from diffusers.pipelines.controlnet_hunyuandit.pipeline_hunyuandit_controlnet import (
+        HunyuanDiTControlNetPipeline as UpstreamPipeline,
+    )
+
+    from modules.DiffusersImage.main import ControlGenerate
+
+    guide = Image.new("L", (512, 512))
+    ImageDraw.Draw(guide).rectangle((100, 100, 300, 400), outline=255, width=4)
+    pixels_before = guide.tobytes()
+    projection = torch.nn.Conv2d(in_channels=3, out_channels=4, kernel_size=3)
+
+    class HunyuanDiTControlNetPipeline:
+        _execution_device = "cpu"
+        image_processor = VaeImageProcessor(vae_scale_factor=8)
+
+        def __call__(self, *, control_image, use_resolution_binning=True, **kwargs):
+            assert not use_resolution_binning
+            pixels = UpstreamPipeline.prepare_image(
+                self, control_image, 512, 512, 1, 1, "cpu", torch.float32,
+            )
+            features = projection(pixels)
+            assert tuple(features.shape) == (1, 4, 510, 510)
+            assert torch.equal(pixels[:, 0], pixels[:, 1]) and torch.equal(pixels[:, 0], pixels[:, 2])
+            return SimpleNamespace(images=[guide.convert("RGB")])
+
+    result = ControlGenerate("hunyuan-canny")(
+        pipeline=HunyuanDiTControlNetPipeline(), control_image=guide, width=512, height=512,
+        prompt="A glass cube", num_inference_steps=1,
+    )
+    assert result["images"][0].size == (512, 512)
+    assert guide.mode == "L" and guide.tobytes() == pixels_before
+
+
 if __name__ == "__main__":
     unittest.main()

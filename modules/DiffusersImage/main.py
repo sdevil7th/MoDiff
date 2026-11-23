@@ -190,6 +190,7 @@ class ImagePipelineAdapter:
     conditioning_component_parameter: str | None = None
     conditioning_weight_variant: str | None = None
     control_image_parameter: str = "control_image"
+    requires_rgb_control_image: bool = False
     conditioning_scale_parameter: str | None = None
     conditioning_config_requirements: tuple[tuple[str, int], ...] = ()
     pag_applied_layers: tuple[str, ...] = ()
@@ -850,6 +851,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         default_conditioning_repo=HUNYUAN_DIT_CONTROLNET_CANNY_REPO,
         conditioning_component_class="HunyuanDiT2DControlNetModel",
         conditioning_component_parameter="controlnet",
+        requires_rgb_control_image=True,
         conditioning_scale_parameter="controlnet_conditioning_scale",
     ),
     "StableDiffusionXLAdapterPipeline": ImagePipelineAdapter(
@@ -865,6 +867,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         conditioning_component_parameter="adapter",
         conditioning_weight_variant="fp16",
         control_image_parameter="image",
+        requires_rgb_control_image=True,
         conditioning_scale_parameter="adapter_conditioning_scale",
     ),
     "StableDiffusionXLPAGPipeline": ImagePipelineAdapter(
@@ -5645,10 +5648,10 @@ class ControlGenerate(Edit):
         pipeline = kwargs.get("pipeline")
         adapter, values = preflight_image_action(pipeline, "ControlGenerate", kwargs)
         control_image = values["control_image"]
-        if adapter.conditioning_kind == "t2i_adapter":
-            # Diffusers' XL adapter preserves the input channel count. Its
-            # reviewed checkpoint consumes RGB, including legacy Canny maps.
-            control_image = _convert_adapter_control_to_rgb(control_image)
+        if adapter.requires_rgb_control_image:
+            # These preprocessors preserve the input channel count, including
+            # for legacy grayscale Canny guides.
+            control_image = _convert_pil_control_to_rgb(control_image)
         return self._execute_conditioned(
             values,
             {adapter.control_image_parameter: control_image},
@@ -5656,9 +5659,9 @@ class ControlGenerate(Edit):
         )
 
 
-def _convert_adapter_control_to_rgb(image):
+def _convert_pil_control_to_rgb(image):
     if isinstance(image, (list, tuple)):
-        return [_convert_adapter_control_to_rgb(item) for item in image]
+        return [_convert_pil_control_to_rgb(item) for item in image]
     if isinstance(image, Image.Image) and image.mode != "RGB":
         return image.convert("RGB")
     return image

@@ -1,5 +1,10 @@
 # Image template migration and validation
 
+The reviewed HunyuanDiT Canny ControlNet and SDXL T2I Adapter consume
+three-channel guides. Their shared Generate stage converts grayscale PIL
+guides to RGB at the model boundary. The guide file and the user's Canny
+output setting are preserved.
+
 Image templates use the same ordinary operation-authoring transaction as the
 developer workflow. Choose the template's exact model, task and execution
 profile; do not substitute a family alias or a different task to obtain a native
