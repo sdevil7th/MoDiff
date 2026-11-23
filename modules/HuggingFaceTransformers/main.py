@@ -1132,10 +1132,10 @@ def _generate_janus_image(
     to_cpu = getattr(decoded_float, "cpu", None)
     if not callable(to_cpu):
         raise RuntimeError("The Janus decoded image batch cannot be copied to host memory.")
-    # BatchFeature's NumPy conversion cannot consume CUDA/ROCm tensors. Copy the
-    # small, already-decoded pixel batch to host memory before post-processing.
+    # Only the decoded pixels cross to the host. Janus clamps and casts with
+    # Torch operations during postprocessing, so request a Torch batch.
     decoded_values = list(to_cpu())
-    processed = postprocess(decoded_values, return_tensors="np")
+    processed = postprocess(decoded_values, return_tensors="pt")
     if not hasattr(processed, "items"):
         raise RuntimeError("The Janus processor returned a non-mapping image batch.")
     processed_values = dict(processed.items())

@@ -204,6 +204,12 @@ a Transformers Install/Activate detour. A damaged environment exposes repair.
 in CPU smokes; full recorded Qwen/Z-Image cloud generation used the installed
 base library.
 
+Janus image generation uses the installed processor's Torch postprocessing
+contract. The adapter moves the single decoded image to host memory, lets the
+processor clamp and cast it, and normalizes the resulting RGB pixels to the
+generic image output. A native processor test covers the conversion without
+downloading weights.
+
 **Remaining:** review Windows's actual fresh GPU installation result; the clone
 references are now corrected. Do not reinterpret successful runs as compatibility
 with every future Transformers release.
