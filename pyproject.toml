@@ -75,9 +75,6 @@ quote-style = "double"
 # Like Black, indent with spaces, rather than tabs.
 indent-style = "space"
 
-[tool.setuptools.package-data]
-modiff = ["visual_node_catalog.v1.json"]
-
 [tool.setuptools.packages.find]
 # MoDiff intentionally keeps both the server package and its built-in node
 # modules at the repository root. Explicit discovery prevents editable
