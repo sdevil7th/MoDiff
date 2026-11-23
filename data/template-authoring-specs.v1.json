@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:c3116a751047d6c17c2547c14c04bd0d26a5b4085f4b9c845095949cb477d039",
+  "contentHash": "sha256:4f216b20d4faf3651bfae4667f74a7e657eac52f418ab067f503783ce930c084",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:63ac45ecf09dc26d3f93ce27ffb296570e912cd2ccede19073aa1cd52267cbf7",
+      "contentHash": "sha256:98ae2f031160a7dce02b2d3fcf52503d12ed624bb9363b98d084936672244319",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:7025a303062f7cb38c012615b7bba215de911180f86e384936f68eb56eb30d7e"
+      "sha256": "sha256:0e084ecab1eb4bca1de607ad3da17af29000702b8218fe50a2dde27fb8bfdd80"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:fd5e51a2c1493e09a87fa7f2cccfc20da1e2c5f63827a049ffbbe653ab1dd788"
+      "sha256": "sha256:3c474f7be98f4bb24d82d756dbcfa40d4a7b91c2e86208078748b257f841bb15"
     }
   },
   "specifications": [
@@ -217,7 +217,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-control-net-pipeline/control-to-video.json",
-        "sha256": "6a28c8772ec7ddc6b46371415601fef5fb5e539288a108d7dee322cd6faecc5b"
+        "sha256": "75c79322c586c7b48e70b4bd5debdeeacf1925b02d8a322a21a16fa676f61794"
       },
       "canonicalWorkflowId": "AnimateDiffControlNetPipeline:control_to_video",
       "claims": {
@@ -330,7 +330,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "6a28c8772ec7ddc6b46371415601fef5fb5e539288a108d7dee322cd6faecc5b",
+        "sourceGraphSha256": "75c79322c586c7b48e70b4bd5debdeeacf1925b02d8a322a21a16fa676f61794",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -775,7 +775,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json",
-        "sha256": "5f1bee4be4569336f16c38aa23ac92d6b5d6be013e478bb7453de8a5373e0f5f"
+        "sha256": "01a251e7e737c22eea276368790868f21b0370d4b972b205dd5e079b2c8e172e"
       },
       "canonicalWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
       "claims": {
@@ -903,7 +903,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "5f1bee4be4569336f16c38aa23ac92d6b5d6be013e478bb7453de8a5373e0f5f",
+        "sourceGraphSha256": "01a251e7e737c22eea276368790868f21b0370d4b972b205dd5e079b2c8e172e",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -1009,7 +1009,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-video-to-video-pipeline/video-to-video.json",
-        "sha256": "80ddf4fb49b6b0ff44503ca19d0dd55bf4c97217948c702dbad596b915f5664f"
+        "sha256": "42d456a15cd61bd7ceb3ffdd0ff1a064c296b42eb72de053614b7072035a769a"
       },
       "canonicalWorkflowId": "AnimateDiffVideoToVideoPipeline:video_to_video",
       "claims": {
@@ -1112,7 +1112,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "80ddf4fb49b6b0ff44503ca19d0dd55bf4c97217948c702dbad596b915f5664f",
+        "sourceGraphSha256": "42d456a15cd61bd7ceb3ffdd0ff1a064c296b42eb72de053614b7072035a769a",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {

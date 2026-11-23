@@ -12048,7 +12048,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             ),
             "roles": _V2V_GRAPH_ROLES,
             "edges": _V2V_GRAPH_EDGES,
-            "bindings": _ANIMATEDIFF_V2V_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_ANIMATEDIFF_V2V_GRAPH_BINDINGS),
         },
         "animatediff-controlnet:control-to-video:v1": {
             "modelType": "AnimateDiffControlNetPipeline",
@@ -12062,7 +12062,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             ),
             "roles": _ANIMATEDIFF_CONTROL_GRAPH_ROLES,
             "edges": _ANIMATEDIFF_CONTROL_GRAPH_EDGES,
-            "bindings": _ANIMATEDIFF_CONTROL_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_ANIMATEDIFF_CONTROL_GRAPH_BINDINGS),
         },
         "animatediff-controlnet-video-to-video:control-video-to-video:v1": {
             "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
@@ -12076,7 +12076,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             ),
             "roles": _ANIMATEDIFF_CONTROL_V2V_GRAPH_ROLES,
             "edges": _ANIMATEDIFF_CONTROL_V2V_GRAPH_EDGES,
-            "bindings": _ANIMATEDIFF_CONTROL_V2V_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_ANIMATEDIFF_CONTROL_V2V_GRAPH_BINDINGS),
         },
         "animatelcm:text-to-video:v1": {
             "modelType": "AnimateLCMPipeline",
@@ -18996,30 +18996,46 @@ def _historical_studio_execution_spec(spec_id: str, content_hash: str) -> dict[s
         return spec
     video_attention_records = {
         ("animatediff:text-to-video:v1", "studio-spec-v1-ccb16ca8"):
-            ("AnimateDiffPipeline", "animatediff-sd15-v2:direct"),
+            ("AnimateDiffPipeline", "text_to_video", "animatediff-sd15-v2:direct"),
         ("animatediff-pag:text-to-video:v1", "studio-spec-v1-e980c1b1"):
-            ("AnimateDiffPAGPipeline", "animatediff-sd15-v2-pag:direct"),
+            ("AnimateDiffPAGPipeline", "text_to_video", "animatediff-sd15-v2-pag:direct"),
         ("animatelcm:text-to-video:v1", "studio-spec-v1-aba7ebb7"):
-            ("AnimateLCMPipeline", "animatelcm-sd15:direct"),
+            ("AnimateLCMPipeline", "text_to_video", "animatelcm-sd15:direct"),
         ("cogvideox-2b:text-to-video:v1", "studio-spec-v1-0993e43c"):
-            ("CogVideoXPipeline", "cogvideox-2b:direct"),
+            ("CogVideoXPipeline", "text_to_video", "cogvideox-2b:direct"),
         ("sana-video-480p:text-to-video:v1", "studio-spec-v1-b2fedfda"):
-            ("SanaVideoPipeline", "sana-video-480p:direct"),
+            ("SanaVideoPipeline", "text_to_video", "sana-video-480p:direct"),
     }
+    conditioned_attention_records = {
+        ("animatediff-video-to-video:video-to-video:v1", "studio-spec-v1-62b8350d"):
+            ("AnimateDiffVideoToVideoPipeline", "video_to_video", "animatediff-sd15-v2-video-to-video:direct"),
+        ("animatediff-controlnet:control-to-video:v1", "studio-spec-v1-9b2c17f0"):
+            ("AnimateDiffControlNetPipeline", "control_to_video", "animatediff-sd15-v2-controlnet:direct"),
+        ("animatediff-controlnet-video-to-video:control-video-to-video:v1", "studio-spec-v1-6ac02464"):
+            ("AnimateDiffVideoToVideoControlNetPipeline", "control_video_to_video",
+             "animatediff-sd15-v2-controlnet-video-to-video:direct"),
+    }
+    if (spec_id, content_hash) in conditioned_attention_records:
+        video_attention_records = conditioned_attention_records
+        archive_name = "video-conditioned-attention-compatibility.v1.json"
+        expected_bytes = 25656
+        expected_sha256 = "f2eda05862c2cc880e43e71a145503e15f2064b33f12f9093d29acaf7554e160"
+        source_commit = "913befd66a841d5d2e1b05ec86a25421d63f611f"
+    else:
+        archive_name = "video-attention-studio-spec-compatibility.v1.json"
+        expected_bytes = 34008
+        expected_sha256 = "73654399712f3553f21757249d4e3b2f2aeb798271ffdb4f1913ea464f2d36ad"
+        source_commit = "0d80138d13bee585957f77403ec1144bc3e2a1f9"
     video_identity = video_attention_records.get((spec_id, content_hash))
     if video_identity is not None:
-        path = Path(__file__).resolve().parents[1] / "data/video-attention-studio-spec-compatibility.v1.json"
+        path = Path(__file__).resolve().parents[1] / "data" / archive_name
         with path.open("rb") as handle:
-            raw = handle.read(34009)
-        if len(raw) != 34008 or hashlib.sha256(raw).hexdigest() != (
-            "73654399712f3553f21757249d4e3b2f2aeb798271ffdb4f1913ea464f2d36ad"
-        ):
+            raw = handle.read(expected_bytes + 1)
+        if len(raw) != expected_bytes or hashlib.sha256(raw).hexdigest() != expected_sha256:
             raise RuntimeError("The historical video attention specification bytes changed.")
         value = json.loads(raw)
         records = value.get("specifications") if value.get("schemaVersion") == 1 else None
-        if len(records or ()) != len(video_attention_records) or value.get("sourceCommit") != (
-            "0d80138d13bee585957f77403ec1144bc3e2a1f9"
-        ):
+        if len(records or ()) != len(video_attention_records) or value.get("sourceCommit") != source_commit:
             raise RuntimeError("The historical video attention specification contract is invalid.")
         matches = [row["specification"] for row in records if (
             row["specification"]["id"], row["specification"]["contentHash"],
@@ -19028,8 +19044,7 @@ def _historical_studio_execution_spec(spec_id: str, content_hash: str) -> dict[s
             raise RuntimeError("The historical video attention specification identity changed.")
         spec = matches[0]
         if (
-            (spec["modelType"], spec["executionProfileId"]) != video_identity
-            or spec["mode"] != "text_to_video"
+            (spec["modelType"], spec["mode"], spec["executionProfileId"]) != video_identity
             or "studio-spec-v1-" + _hash_string(_stable_json(
                 {key: item for key, item in spec.items() if key != "contentHash"}
             )) != content_hash

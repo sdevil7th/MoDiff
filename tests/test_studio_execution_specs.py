@@ -1861,10 +1861,13 @@ class StudioExecutionSpecTests(unittest.TestCase):
     def test_video_attention_defaults_preserve_exact_saved_receipts_and_other_routes(self):
         root = Path(module_registry.__file__).resolve().parents[1] / "data"
         archive = json.loads((root / "video-attention-studio-spec-compatibility.v1.json").read_text(encoding="utf-8"))
+        conditioned_archive = json.loads(
+            (root / "video-conditioned-attention-compatibility.v1.json").read_text(encoding="utf-8")
+        )
         manifest = json.loads((root / "workflow-library-manifest.json").read_text(encoding="utf-8"))
         paths = {row["id"]: row["graphPath"] for row in manifest["workflows"]}
         role_field = ["diffusersRecipe", "attention_backend"]
-        for entry in archive["specifications"]:
+        for entry in [*archive["specifications"], *conditioned_archive["specifications"]]:
             saved = entry["specification"]
             model, mode = saved["modelType"], saved["mode"]
             with self.subTest(model=model):
@@ -1902,7 +1905,6 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertEqual([recipe["attention_backend"]["value"] for recipe in recipes], ["auto"])
 
         for model, mode in (
-            ("AnimateDiffVideoToVideoPipeline", "video_to_video"),
             ("CogVideoXVideoToVideoPipeline", "video_to_video"),
             ("SanaImageToVideoPipeline", "image_to_video"),
             ("AllegroPipeline", "text_to_video"),

@@ -36,6 +36,13 @@ recompression step. Preflight and runtime health check that PyAV can resolve the
 setup for your current accelerator. The adapter preserves the upstream
 conditioning-compression defaults.
 
+AnimateDiff source, control and combined source/control starters use **Auto**
+attention. Their loaders may reject a forced math backend. The current
+recipes change only that explicit attention setting. Previously saved
+execution specs retain their original identity and do not silently override
+the user's selection. Source Video and Control Video use the same generic
+video input component and present separately labelled file fields.
+
 Registered native-stage recipe descriptors retain their original versioned
 selection metadata when only their visual grouping changes. Selection notes
 participate in the strict template lock; editing explanatory wording must not

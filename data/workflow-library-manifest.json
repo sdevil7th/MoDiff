@@ -304,7 +304,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-diff-control-net-pipeline/control-to-video.json",
-      "graphHash": "6a28c8772ec7ddc6b46371415601fef5fb5e539288a108d7dee322cd6faecc5b"
+      "graphHash": "75c79322c586c7b48e70b4bd5debdeeacf1925b02d8a322a21a16fa676f61794"
     },
     {
       "id": "AnimateDiffPAGPipeline:text_to_video",
@@ -470,7 +470,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json",
-      "graphHash": "5f1bee4be4569336f16c38aa23ac92d6b5d6be013e478bb7453de8a5373e0f5f"
+      "graphHash": "01a251e7e737c22eea276368790868f21b0370d4b972b205dd5e079b2c8e172e"
     },
     {
       "id": "AnimateDiffVideoToVideoPipeline:video_to_video",
@@ -521,7 +521,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-diff-video-to-video-pipeline/video-to-video.json",
-      "graphHash": "80ddf4fb49b6b0ff44503ca19d0dd55bf4c97217948c702dbad596b915f5664f"
+      "graphHash": "42d456a15cd61bd7ceb3ffdd0ff1a064c296b42eb72de053614b7072035a769a"
     },
     {
       "id": "AnimateLCMPipeline:text_to_video",

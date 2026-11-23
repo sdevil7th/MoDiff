@@ -111,7 +111,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "6a28c8772ec7ddc6b46371415601fef5fb5e539288a108d7dee322cd6faecc5b",
+      "graphHash": "75c79322c586c7b48e70b4bd5debdeeacf1925b02d8a322a21a16fa676f61794",
       "graphPath": "studio/animate-diff-control-net-pipeline/control-to-video.json",
       "id": "AnimateDiffControlNetPipeline:control_to_video",
       "mode": "control_to_video",
@@ -144,7 +144,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5f1bee4be4569336f16c38aa23ac92d6b5d6be013e478bb7453de8a5373e0f5f",
+      "graphHash": "01a251e7e737c22eea276368790868f21b0370d4b972b205dd5e079b2c8e172e",
       "graphPath": "studio/animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json",
       "id": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
       "mode": "control_video_to_video",
@@ -155,7 +155,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "80ddf4fb49b6b0ff44503ca19d0dd55bf4c97217948c702dbad596b915f5664f",
+      "graphHash": "42d456a15cd61bd7ceb3ffdd0ff1a064c296b42eb72de053614b7072035a769a",
       "graphPath": "studio/animate-diff-video-to-video-pipeline/video-to-video.json",
       "id": "AnimateDiffVideoToVideoPipeline:video_to_video",
       "mode": "video_to_video",
@@ -2660,7 +2660,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:80232b95af940af7f7c4c6e8362c4d0be80657c5b9c7e102d974e4969b3440f9",
+  "contentHash": "sha256:7d7c004e8ac54f41c789bf200c9c28e6175628b68f17c00d6eae38cdf74c3790",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
