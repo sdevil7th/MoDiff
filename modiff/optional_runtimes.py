@@ -1287,7 +1287,7 @@ _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE = replace(
 _GALLERY_MEDIA_PROFILE = replace(
     _TRANSFORMERS_MAIN_PEFT_PROFILE,
     id=GALLERY_MEDIA_RUNTIME_PROFILE_ID,
-    label="Transformers main + PEFT + media codecs (OpenCV + PyAV)",
+    label="OpenCV 5.0.0.93",
     packages=(
         *_TRANSFORMERS_MAIN_PEFT_PROFILE.packages,
         OptionalRuntimePackageContract(
@@ -1308,25 +1308,14 @@ _GALLERY_MEDIA_PROFILE = replace(
                 "remap",
             ),
         ),
-        OptionalRuntimePackageContract(
-            distribution="av",
-            import_name="av",
-            version="18.1.0",
-            publisher="PyAV contributors",
-            project_url="https://pyav.org/",
-            distribution_url="https://pypi.org/project/av/18.1.0/",
-            license="BSD-3-Clause",
-            role="runtime_root",
-            required_symbols=("open", "VideoFrame"),
-            required_class_symbols=("VideoFrame",),
-        ),
     ),
-    # OpenCV 5 requires NumPy 2 on Python 3.12. NumPy remains owned by the
-    # application's verified base environment rather than duplicated into the
-    # overlay.
-    base_packages=tuple(
-        replace(package, specifier=">=2,<3") if package.distribution == "numpy" else package
-        for package in _TRANSFORMERS_MAIN_PEFT_PROFILE.base_packages
+    # OpenCV needs NumPy 2. Video decoding uses the PyAV already pinned in the base.
+    base_packages=(
+        *(
+            replace(package, specifier=">=2,<3") if package.distribution == "numpy" else package
+            for package in _TRANSFORMERS_MAIN_PEFT_PROFILE.base_packages
+        ),
+        OptionalRuntimeBaseContract("av", "av", "==18.1.0"),
     ),
     artifact_locks=(
         *_TRANSFORMERS_MAIN_PEFT_PROFILE.artifact_locks,
@@ -1346,17 +1335,17 @@ _GALLERY_MEDIA_PROFILE = replace(
             "machine": "x86_64",
         },
         {
-            "distribution": "av",
-            "version": "18.1.0",
-            "filename": "av-18.1.0-cp311-abi3-manylinux_2_28_x86_64.whl",
+            "distribution": "opencv-python-headless",
+            "version": "5.0.0.93",
+            "filename": "opencv_python_headless-5.0.0.93-cp37-abi3-win_amd64.whl",
             "url": (
-                "https://files.pythonhosted.org/packages/27/3a/"
-                "204dbfc3e08eb4cdc6e6ff57be02150bc44523ebdb50182d10025792ebd9/"
-                "av-18.1.0-cp311-abi3-manylinux_2_28_x86_64.whl"
+                "https://files.pythonhosted.org/packages/b8/88/"
+                "763b967f7efd7226b82c9fae16d560cba049b1f0c036647e65c610fd636e/"
+                "opencv_python_headless-5.0.0.93-cp37-abi3-win_amd64.whl"
             ),
-            "sha256": "8a032e8d8ebc73dec079364b9b4a6837638a2d106e8472314e685ffbf163e700",
-            "byteSize": 35_786_210,
-            "platform": "linux",
+            "sha256": "829717b6a95554f273e49e357cee3b3a2a26b6f4842fbc1bed2b45bdd8f87e0e",
+            "byteSize": 43_825_962,
+            "platform": "windows",
             "pythonTag": "cp312",
             "machine": "x86_64",
         },
@@ -1654,7 +1643,7 @@ _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE = replace(
 )
 _GALLERY_MEDIA_PROFILE = _native_base_auxiliary_profile(
     _GALLERY_MEDIA_PROFILE,
-    label="Media codecs: OpenCV 5.0.0.93 + PyAV 18.1.0",
+    label="OpenCV 5.0.0.93 video conditioning",
     diffusers_symbols=(),
     linux_installation_qualified=True,
 )
@@ -1870,8 +1859,15 @@ _DIFFUSERS_FLUX3_PROFILE = project_optional_runtime_qualification(
 _DIFFUSERS_FLUX3_PROFILE = project_optional_runtime_qualification(
     _DIFFUSERS_FLUX3_PROFILE, platform_name='windows', machine='x86_64',
 )
+# The Windows managed installer and its CPU Canny/PyAV check passed against
+# the required native base. Keep the same workflow profile ID on both hosts.
+_GALLERY_MEDIA_PROFILE = project_optional_runtime_qualification(
+    _GALLERY_MEDIA_PROFILE, platform_name="windows", machine="x86_64",
+)
 OPTIONAL_RUNTIME_PROFILES = MappingProxyType({
-    **OPTIONAL_RUNTIME_PROFILES, _DIFFUSERS_FLUX3_PROFILE.id: _DIFFUSERS_FLUX3_PROFILE,
+    **OPTIONAL_RUNTIME_PROFILES,
+    _DIFFUSERS_FLUX3_PROFILE.id: _DIFFUSERS_FLUX3_PROFILE,
+    _GALLERY_MEDIA_PROFILE.id: _GALLERY_MEDIA_PROFILE,
 })
 
 

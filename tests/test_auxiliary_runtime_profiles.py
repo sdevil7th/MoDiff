@@ -13,7 +13,7 @@ EXPECTED_STAGED = {
     runtimes.TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID: {"optimum-quanto", "ninja"},
     runtimes.TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID: {"gguf"},
     runtimes.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID: {"bitsandbytes"},
-    runtimes.GALLERY_MEDIA_RUNTIME_PROFILE_ID: {"opencv-python-headless", "av"},
+    runtimes.GALLERY_MEDIA_RUNTIME_PROFILE_ID: {"opencv-python-headless"},
 }
 PREVIOUS_COMPOSITE_DIGESTS = {
     runtimes.TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID:
@@ -62,7 +62,10 @@ def test_auxiliary_actions_remain_scoped_to_checked_installation_target(profile_
             and profile_id != runtimes.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID
         ) or (
             (platform_name, machine) == ("windows", "x86_64")
-            and profile_id == runtimes.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID
+            and profile_id in {
+                runtimes.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
+                runtimes.GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+            }
         )
         assert (policy.cutover_ready, policy.install_action_available, policy.activation_available) == (qualified,) * 3
         assert policy.contract_state == ("qualified" if qualified else "candidate_unqualified")
@@ -90,3 +93,12 @@ def test_auxiliary_wheel_bytes_keep_the_existing_reviewed_identity():
     assert windows[0]["filename"] == "bitsandbytes-0.50.0-py3-none-win_amd64.whl"
     assert windows[0]["byteSize"] == 37_961_095
     assert windows[0]["sha256"] == "7f9ebf51d76a00341711cdd557af97555274b5aad3444975ff9927866a18bc11"
+
+
+def test_gallery_media_uses_the_same_pyav_as_the_native_runtime():
+    profile = runtimes.OPTIONAL_RUNTIME_PROFILES[runtimes.GALLERY_MEDIA_RUNTIME_PROFILE_ID]
+    project = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
+    pyav_requirement = next(req for req in map(Requirement, project["project"]["dependencies"]) if req.name == "av")
+    base = next(base for base in profile.base_packages if base.distribution == "av")
+    assert base.import_name == "av"
+    assert base.specifier == str(pyav_requirement.specifier)

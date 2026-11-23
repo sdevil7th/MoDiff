@@ -417,50 +417,29 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
         ):
             optimization_packages._artifact_install_plan(replace(profile, artifact_locks=tuple(malformed)))
 
-    def test_gallery_media_runtime_has_exact_opencv_and_pyav_linux_wheels(self):
+    def test_gallery_media_runtime_selects_exact_opencv_for_each_platform(self):
         from packaging import tags
 
         profile = optimization_packages.OPTIONAL_RUNTIME_PROFILES[
             GALLERY_MEDIA_RUNTIME_PROFILE_ID
         ]
-        linux_tags = set(
-            tags.cpython_tags(
-                python_version=(3, 12),
-                abis=["cp312"],
-                platforms=[
-                    "manylinux_2_28_x86_64",
-                    "manylinux_2_17_x86_64",
-                ],
-            )
-        ) | set(
-            tags.compatible_tags(
-                python_version=(3, 12),
-                interpreter="cp312",
-                platforms=[
-                    "manylinux_2_28_x86_64",
-                    "manylinux_2_17_x86_64",
-                ],
-            )
-        )
-        with (
-            mock.patch.object(optimization_packages, "_platform_name", return_value="linux"),
-            mock.patch.object(optimization_packages, "_machine_name", return_value="x86_64"),
-            mock.patch.object(tags, "sys_tags", return_value=iter(linux_tags)),
+        for platform_name, tag, digest, size in (
+            ("linux", "manylinux_2_28_x86_64",
+             "ed709fdf9aa0bd1f2ed8549e71d19449b03a675bb581eb292285f6861953be37", 61_204_038),
+            ("windows", "win_amd64",
+             "829717b6a95554f273e49e357cee3b3a2a26b6f4842fbc1bed2b45bdd8f87e0e", 43_825_962),
         ):
-            selected = optimization_packages._artifact_install_plan(profile)
-        self.assertEqual(len(selected), 2)
-        self.assertEqual(
-            [item["distribution"] for item in selected[-2:]],
-            ["opencv-python-headless", "av"],
-        )
-        self.assertEqual(
-            selected[-2]["sha256"],
-            "ed709fdf9aa0bd1f2ed8549e71d19449b03a675bb581eb292285f6861953be37",
-        )
-        self.assertEqual(
-            selected[-1]["sha256"],
-            "8a032e8d8ebc73dec079364b9b4a6837638a2d106e8472314e685ffbf163e700",
-        )
+            wheel_tags = tags.cpython_tags(python_version=(3, 12), abis=["cp312"], platforms=[tag])
+            with (
+                self.subTest(platform=platform_name),
+                mock.patch.object(optimization_packages, "_platform_name", return_value=platform_name),
+                mock.patch.object(optimization_packages, "_machine_name", return_value="x86_64"),
+                mock.patch.object(tags, "sys_tags", return_value=wheel_tags),
+            ):
+                selected, = optimization_packages._artifact_install_plan(profile)
+                self.assertEqual(selected["distribution"], "opencv-python-headless")
+                self.assertEqual(selected["sha256"], digest)
+                self.assertEqual(selected["byteSize"], size)
 
     def test_gallery_auxiliary_profile_requires_its_exact_digest_and_has_no_core_alias(self):
         gallery = optimization_packages.OPTIONAL_RUNTIME_PROFILES[

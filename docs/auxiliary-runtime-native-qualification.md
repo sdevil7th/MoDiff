@@ -51,6 +51,24 @@ required project dependency floors, changed composite spec digests, and the
 target action boundaries. The CPU computations above were separate production
 installer checks, not mocked unit tests.
 
+## Current video-conditioning runtime
+
+The existing Gallery media profile installs OpenCV only. It uses PyAV 18.1.0
+from the base environment installed by normal MoDiff setup. Its profile ID is
+unchanged so saved workflows can still resolve their video-conditioning
+requirements. The current specification digest is
+`sha256:7c53a136178d7c037a9997f088887edd1b278046c79ea121b917b7ed1f916589`.
+
+On Windows and Linux x86-64 with CPython 3.12, the managed installer verified
+the pinned OpenCV wheel, activated it in a fresh process, and rolled back to
+the original base. Both hosts produced a non-empty Canny map and used the
+base PyAV to decode a PNG with exact pixel equality. This qualifies optional
+package installation on those two hosts. Each generative video recipe still
+needs its own completed run and output review.
+
+OpenCV is installed through the explicit runtime action in MoDiff Setup.
+Opening a workflow or checking Auto readiness does not install it.
+
 ## Windows bitsandbytes package checks, 2026-10-14
 
 The current Windows-enabled auxiliary spec digest is
