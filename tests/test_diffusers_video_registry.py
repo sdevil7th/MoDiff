@@ -3398,7 +3398,11 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
     def test_latte_loader_pins_safe_float16_weights_and_sequential_offload(self):
         pipeline = SimpleNamespace()
         node = LoadPipeline("latte-loader")
+        snapshot = Path("installed-latte") / "snapshots" / LATTE_REVISION
         with (
+            patch(
+                "modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=snapshot
+            ) as resolve_snapshot,
             patch("diffusers.LattePipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
             patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
@@ -3418,10 +3422,12 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertEqual(pipeline._modiff_video_pipeline_class, "LattePipeline")
         self.assertEqual(pipeline._modiff_video_repo, LATTE_REPO)
         self.assertEqual(pipeline._modiff_video_revision, LATTE_REVISION)
-        self.assertEqual(load_pipeline.call_args.args, (LATTE_REPO,))
+        resolve_snapshot.assert_called_once_with(LATTE_REPO, LATTE_REVISION)
+        self.assertEqual(load_pipeline.call_args.args, (snapshot,))
         self.assertEqual(str(load_pipeline.call_args.kwargs["torch_dtype"]), "torch.float16")
         self.assertEqual(load_pipeline.call_args.kwargs["revision"], LATTE_REVISION)
         self.assertIs(load_pipeline.call_args.kwargs["use_safetensors"], True)
+        self.assertIs(load_pipeline.call_args.kwargs["local_files_only"], True)
         self.assertNotIn("trust_remote_code", load_pipeline.call_args.kwargs)
         self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
         self.assertNotIn("device_map", load_pipeline.call_args.kwargs)
@@ -3434,6 +3440,25 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             scope="latte",
         )
         mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_latte_missing_snapshot_does_not_retry_the_hub_repository(self):
+        with (
+            patch(
+                "modules.DiffusersVideo.main.exact_cached_snapshot_path",
+                side_effect=FileNotFoundError("Install the exact reviewed snapshot"),
+            ),
+            patch("diffusers.LattePipeline.from_pretrained") as from_pretrained,
+        ):
+            with self.assertRaisesRegex(FileNotFoundError, "Install the exact reviewed snapshot"):
+                LoadPipeline("latte-missing-snapshot").execute(
+                    pipeline_class="LattePipeline",
+                    model_id={"source": "hub", "value": LATTE_REPO},
+                    revision=LATTE_REVISION,
+                    dtype="float16",
+                    device="cpu",
+                    offload_mode="none",
+                )
+        from_pretrained.assert_not_called()
 
     def test_latte_loader_rejects_unreviewed_artifacts_before_diffusers(self):
         node = LoadPipeline("strict-latte-loader")

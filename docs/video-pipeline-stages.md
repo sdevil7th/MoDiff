@@ -433,6 +433,12 @@ original repository and revision remain the execution identity. Local selections
 retain their explicit path. Loading neither copies weights between caches nor
 downloads a replacement when the selected revision is absent.
 
+Latte also loads from its exact managed snapshot. The pinned model index
+selects the standard VAE. Passing a Hub repository ID to Diffusers can make
+its repository-tree check demand the separate temporal decoder even after
+Model Manager verified every selected file. The installed snapshot directory
+keeps loading restricted to the components named by the pinned pipeline.
+
 Workflow Auto inspects Storyboard, Shot Inputs and Shot Prompt through their
 shared deterministic scalar logic, without constructing or executing a node.
 Numeric widget strings use the ordinary declared scalar conversion. Prepared

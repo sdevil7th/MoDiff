@@ -2465,20 +2465,19 @@ class LoadPipeline(WanVACELoadPipeline):
         )
         if "quantization_config" in recipe_load_kwargs or "device_map" in recipe_load_kwargs:
             raise ValueError("Latte source qualification does not admit on-load quantization or a device map.")
+        load_target = exact_cached_snapshot_path(model_id, revision)
         load_kwargs = {
             "torch_dtype": torch.float16,
             "use_safetensors": True,
             "low_cpu_mem_usage": bool(kwargs.get("low_cpu_mem_usage", True)),
             "revision": revision,
-            "local_files_only": local_files_only(model_id),
+            "local_files_only": True,
         }
-        if CONFIG.hf.get("cache_dir"):
-            load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
 
         logger.info("Loading %s pipeline: %s", adapter.diffusers_class, model_id)
         self.progress(-1, phase="loading", message="Loading Latte")
         pipeline = LattePipeline.from_pretrained(
-            model_id,
+            load_target,
             **load_kwargs,
             **recipe_load_kwargs,
         )
