@@ -267,6 +267,8 @@ silently reshape incompatible inputs or execute arbitrary Python callbacks.
 
 Existing saved outpaint strength values are not silently replaced with 1.
 Change an old instance explicitly if blank border regeneration is intended.
+The bundled Z-Image Outpaint starts at strength 1 so the expanded margins
+are regenerated. Use Seam overlap and Mask feather to tune the transition.
 Do not copy a base model's step count onto a distilled model, or vice versa.
 Model/resource changes, reduced steps and quantization must remain explicit.
 Model installation uses the app's Hugging Face Hub path and pinned revisions.

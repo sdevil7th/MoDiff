@@ -6822,7 +6822,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/z-image-inpaint-pipeline/outpaint.json",
-      "graphHash": "79897c5cfa698fec162dca4949f908ab1cc54de7eed4ceb18aecf468e32639c1"
+      "graphHash": "e3223df3a869e469660bbfd8b720095dd84bf06f43dd969cd2d1483c296a3daf"
     },
     {
       "id": "ZImageModularPipeline:edit_image",

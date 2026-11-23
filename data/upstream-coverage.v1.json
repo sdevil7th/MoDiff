@@ -2595,7 +2595,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "79897c5cfa698fec162dca4949f908ab1cc54de7eed4ceb18aecf468e32639c1",
+      "graphHash": "e3223df3a869e469660bbfd8b720095dd84bf06f43dd969cd2d1483c296a3daf",
       "graphPath": "studio/z-image-inpaint-pipeline/outpaint.json",
       "id": "ZImageInpaintPipeline:outpaint",
       "mode": "outpaint",
@@ -2660,7 +2660,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:bd05cc99f45cb8b366b2f88cb2b4efcb4d91868a47ca5f0ae44ede4b4e9e8243",
+  "contentHash": "sha256:971962577832cde0369d5793227f8bec8dce249b66634fab44a0c40eb85be9c9",
   "diffusersPipelines": [
     {
       "artifactReviews": [],

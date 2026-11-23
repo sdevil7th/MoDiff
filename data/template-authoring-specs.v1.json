@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:39013f1b9c43ce43a26ef4e1e76748c5973b1f6485a56471076663fc2bcfdfb0",
+  "contentHash": "sha256:84775a028ac12497bba3ca9e57273fe0d14de62cdfe76dc83cdcb10e1713e0af",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:d6c5be0c95a554f969e51a2d90420c4ff0079be4319152133df34b2ef5ec01a0",
+      "contentHash": "sha256:b5c3d66462d6c848f090e500d49aa5d017483aa42168b6244fc1e81571dcbe72",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:6658c9c72ef01fa5afcc57768461eb5458d9f1417e0d463425495d729a059be4"
+      "sha256": "sha256:3005c74c59aff840d8517d82245b154f2af85ef22af910b803fbca14dfbaa841"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:3c474f7be98f4bb24d82d756dbcfa40d4a7b91c2e86208078748b257f841bb15"
+      "sha256": "sha256:289a9943bda9d48339491a47f68a73689b888beb2d26033b8b1fcb7dfc29d372"
     }
   },
   "specifications": [
@@ -22231,7 +22231,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/z-image-inpaint-pipeline/outpaint.json",
-        "sha256": "79897c5cfa698fec162dca4949f908ab1cc54de7eed4ceb18aecf468e32639c1"
+        "sha256": "e3223df3a869e469660bbfd8b720095dd84bf06f43dd969cd2d1483c296a3daf"
       },
       "canonicalWorkflowId": "ZImageInpaintPipeline:outpaint",
       "claims": {
@@ -22275,7 +22275,7 @@
           {
             "parameter": "strength",
             "role": "diffusersImageInpaint",
-            "value": 0.85
+            "value": 1
           },
           {
             "parameter": "width",
@@ -22334,7 +22334,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "79897c5cfa698fec162dca4949f908ab1cc54de7eed4ceb18aecf468e32639c1",
+        "sourceGraphSha256": "e3223df3a869e469660bbfd8b720095dd84bf06f43dd969cd2d1483c296a3daf",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {

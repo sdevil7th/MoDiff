@@ -2975,6 +2975,18 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 graph, hints = executable_graph_for_spec(specification)
                 assert_studio_execution_graph(graph, hints)
 
+    def test_bundled_z_image_outpaint_starts_with_full_strength(self):
+        root = Path(module_registry.__file__).resolve().parents[1] / "data"
+        manifest = json.loads((root / "workflow-library-manifest.json").read_text(encoding="utf-8"))
+        entries = {row["id"]: row for row in manifest["workflows"]}
+
+        for mode, expected in (("outpaint", 1.0), ("inpaint", 0.8)):
+            with self.subTest(mode=mode):
+                path = root / "graphs" / entries[f"ZImageInpaintPipeline:{mode}"]["graphPath"]
+                graph = json.loads(path.read_text(encoding="utf-8"))
+                actors = [node["data"]["params"] for node in graph["nodes"] if node["data"].get("action") == "Inpaint"]
+                self.assertEqual([actor["strength"]["value"] for actor in actors], [expected])
+
     def test_qwen_image_edit_outpaint_seals_the_generated_canvas_and_mask_route(self):
         spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "outpaint")
         self.assertIsNotNone(spec)

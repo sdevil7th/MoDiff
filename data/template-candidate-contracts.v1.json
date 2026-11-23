@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:d6c5be0c95a554f969e51a2d90420c4ff0079be4319152133df34b2ef5ec01a0",
+  "contentHash": "sha256:b5c3d66462d6c848f090e500d49aa5d017483aa42168b6244fc1e81571dcbe72",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -6984,7 +6984,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "79897c5cfa698fec162dca4949f908ab1cc54de7eed4ceb18aecf468e32639c1",
+      "graphHash": "e3223df3a869e469660bbfd8b720095dd84bf06f43dd969cd2d1483c296a3daf",
       "graphPath": "studio/z-image-inpaint-pipeline/outpaint.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -7061,13 +7061,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:bd05cc99f45cb8b366b2f88cb2b4efcb4d91868a47ca5f0ae44ede4b4e9e8243",
+      "contentHash": "sha256:971962577832cde0369d5793227f8bec8dce249b66634fab44a0c40eb85be9c9",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:9fb5d8b853c89433f6211ceb30ca3898502de2555b3aa8666dacb0965b8b27e7"
+      "sha256": "sha256:4f7c3d0677ece4e4bd8f935ba8230b805edd77757058dd35803d9544ef2817c6"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:3c474f7be98f4bb24d82d756dbcfa40d4a7b91c2e86208078748b257f841bb15"
+      "sha256": "sha256:289a9943bda9d48339491a47f68a73689b888beb2d26033b8b1fcb7dfc29d372"
     }
   },
   "summary": {
