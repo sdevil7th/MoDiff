@@ -2209,17 +2209,16 @@ class LoadPipeline(WanVACELoadPipeline):
         cache_dir = CONFIG.hf.get("cache_dir")
         if cache_dir:
             common["cache_dir"] = cache_dir
-        motion_kwargs = {**common, "revision": motion_revision}
-        if motion_repo == ANIMATELCM_MOTION_REPO:
-            motion_target = motion_repo
-            motion_kwargs.update(variant="fp16", local_files_only=local_files_only(motion_repo))
-        else:
-            # The named fp16 artifact contains different motion tensors. Use the
-            # standard file from the upstream recipe and cast to the runtime dtype.
-            motion_target = exact_cached_snapshot_path(
-                motion_repo, motion_revision, marker_file="diffusion_pytorch_model.safetensors"
-            )
-            motion_kwargs["local_files_only"] = True
+        is_lcm = adapter.pipeline_class == "AnimateLCMPipeline"
+        # AnimateDiff's alternate FP16 file contains different motion tensors.
+        # AnimateLCM has a separate, reviewed FP16 file and spatial LoRA.
+        motion_marker = (
+            "diffusion_pytorch_model.fp16.safetensors" if is_lcm else "diffusion_pytorch_model.safetensors"
+        )
+        motion_target = exact_cached_snapshot_path(motion_repo, motion_revision, marker_file=motion_marker)
+        motion_kwargs = {**common, "revision": motion_revision, "local_files_only": True}
+        if is_lcm:
+            motion_kwargs["variant"] = "fp16"
         base_kwargs = {
             **common,
             "revision": base_revision,
@@ -2271,18 +2270,19 @@ class LoadPipeline(WanVACELoadPipeline):
             motion_adapter=motion_adapter,
             **base_kwargs,
         )
-        if adapter.pipeline_class == "AnimateLCMPipeline":
+        if is_lcm:
             pipeline.scheduler = LCMScheduler.from_config(pipeline.scheduler.config, beta_schedule="linear")
-            lora_kwargs = {
-                "weight_name": ANIMATELCM_LORA_WEIGHT_NAME,
-                "adapter_name": ANIMATELCM_LORA_ADAPTER_NAME,
-                "revision": motion_revision,
-                "local_files_only": local_files_only(motion_repo),
-                "use_safetensors": True,
-            }
-            if cache_dir:
-                lora_kwargs["cache_dir"] = cache_dir
-            pipeline.load_lora_weights(motion_repo, **lora_kwargs)
+            lora_target = exact_cached_snapshot_path(
+                motion_repo, motion_revision, marker_file=ANIMATELCM_LORA_WEIGHT_NAME
+            )
+            pipeline.load_lora_weights(
+                lora_target,
+                weight_name=ANIMATELCM_LORA_WEIGHT_NAME,
+                adapter_name=ANIMATELCM_LORA_ADAPTER_NAME,
+                revision=motion_revision,
+                local_files_only=True,
+                use_safetensors=True,
+            )
             pipeline.set_adapters([ANIMATELCM_LORA_ADAPTER_NAME], [ANIMATELCM_LORA_SCALE])
 
         vae = getattr(pipeline, "vae", None)

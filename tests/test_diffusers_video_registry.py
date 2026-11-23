@@ -3022,9 +3022,11 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             set_adapters=MagicMock(),
         )
         node = LoadPipeline("animatelcm-loader")
+        installed_snapshot = Path("verified-secondary-cache") / ANIMATELCM_MOTION_REVISION
         with (
             patch.dict("modules.DiffusersVideo.main.CONFIG.hf", {"cache_dir": "reviewed-test-cache"}),
-            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path") as resolve_snapshot,
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path",
+                  return_value=installed_snapshot) as resolve_snapshot,
             patch("diffusers.MotionAdapter.from_pretrained", return_value=object()) as load_motion,
             patch("diffusers.AnimateDiffPipeline.from_pretrained", return_value=pipeline),
             patch("diffusers.LCMScheduler.from_config", return_value=replacement_scheduler) as lcm_scheduler,
@@ -3042,20 +3044,25 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                 device="cpu",
             )
 
-        self.assertEqual(load_motion.call_args.args, (ANIMATELCM_MOTION_REPO,))
+        self.assertEqual(load_motion.call_args.args, (installed_snapshot,))
+        self.assertTrue(load_motion.call_args.kwargs["local_files_only"])
         self.assertEqual(load_motion.call_args.kwargs["revision"], ANIMATELCM_MOTION_REVISION)
         self.assertEqual(load_motion.call_args.kwargs["variant"], "fp16")
-        resolve_snapshot.assert_not_called()
+        self.assertEqual(resolve_snapshot.call_args_list, [
+            call(ANIMATELCM_MOTION_REPO, ANIMATELCM_MOTION_REVISION,
+                 marker_file="diffusion_pytorch_model.fp16.safetensors"),
+            call(ANIMATELCM_MOTION_REPO, ANIMATELCM_MOTION_REVISION,
+                 marker_file=ANIMATELCM_LORA_WEIGHT_NAME),
+        ])
         lcm_scheduler.assert_called_once_with({"beta_schedule": "scaled_linear"}, beta_schedule="linear")
         self.assertIs(pipeline.scheduler, replacement_scheduler)
         pipeline.load_lora_weights.assert_called_once_with(
-            ANIMATELCM_MOTION_REPO,
+            installed_snapshot,
             weight_name=ANIMATELCM_LORA_WEIGHT_NAME,
             adapter_name=ANIMATELCM_LORA_ADAPTER_NAME,
             revision=ANIMATELCM_MOTION_REVISION,
             local_files_only=True,
             use_safetensors=True,
-            cache_dir="reviewed-test-cache",
         )
         pipeline.set_adapters.assert_called_once_with(
             [ANIMATELCM_LORA_ADAPTER_NAME],

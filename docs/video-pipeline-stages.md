@@ -49,7 +49,9 @@ separately published FP16 filename contains different motion tensors and
 produced dark frames in a controlled comparison. An installation containing
 only the older file needs the standard file from Model Manager. Older run
 records retain their actual artifact and source identity. AnimateLCM retains
-its own FP16 adapter and spatial LoRA.
+its own FP16 adapter and spatial LoRA. The loader resolves both files through
+the same immutable snapshot lookup as Model Manager, including secondary
+cache locations.
 
 Registered native-stage recipe descriptors retain their original versioned
 selection metadata when only their visual grouping changes. Selection notes
