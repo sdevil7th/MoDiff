@@ -3,6 +3,27 @@
 Creator opens Templates. Developer opens Workflows. Both use the same editable
 nodes, Blocks, execution path and independent memory policy.
 
+## Choose a node on an empty canvas
+
+Start with Process Image, Process Audio, Process Video or Process Text/Data for a
+deterministic media operation. Select the operation on the card. For generation,
+start from the task to get the connected model setup, inputs, generation and output
+that its adapter supports. A mask, independent control source, optional upscale
+or second soundtrack has its own editable connection.
+
+Search for a specialist such as Gaussian Blur or Decode Latents when you need
+its precise controls or an intermediate result. Dragging from a port offers
+compatible specialists. **Show implementation nodes** opens the broader library.
+On an empty canvas, **Include catalog Blocks** adds prebuilt compositions to the
+unfiltered picker. A matching name or compatible wire also finds them. Saved
+Blocks stay accessible under their authored names.
+
+Fresh examples use one Video Input for a file and its normalization, including
+when the prepared clip feeds an edge processor. Prepare Mask combines loading
+and aligning a mask. Composite can include foreground sizing, padding and cropping.
+A separately consumed intermediate remains accessible. Opening an existing user
+document respects the presentation saved in that document.
+
 ## Start a workflow
 
 In Developer, search for an action or filter by Image, Audio, Video, 3D, or Text &
@@ -28,8 +49,8 @@ remain unqualified and unavailable to Auto, templates and Gallery. Ordinary
 release discovery does not expose this namespace. Graph creation still uses the
 existing starter and nodes, with runtime and artifact checks repeated at execution.
 
-Composable routes expose meaningful independent nodes such as Load Models,
-Encode Prompt, Denoise and Decode Latents. Tasks can need additional image, mask,
+Composable routes show Model Setup, Encode Inputs and Generate. Inspect Implementation
+shows the underlying loaders, encoders, sampler and decoder. Tasks can need additional image, mask,
 conditioning or audio operations. Whole-pipeline routes expose Generate/Edit
 operations instead; those nodes do not claim independently replaceable denoising.
 Qwen-Image 2.1 uses its supported whole-pipeline route with the compatible
