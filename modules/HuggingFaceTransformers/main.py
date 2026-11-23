@@ -1169,6 +1169,10 @@ def _generate_janus_any_to_any(
             maximum_characters=MAX_RENDERED_PROMPT_CHARACTERS,
             maximum_bytes=MAX_PROMPT_UTF8_BYTES * 2,
         )
+    elif mode == "text":
+        adapted_prompt = _multimodal_prompt(
+            processor, prompt=prompt, image_count=0, video_count=0, use_chat_template=True
+        )
     else:
         adapted_prompt = prompt
     processor_kwargs: dict[str, Any] = {

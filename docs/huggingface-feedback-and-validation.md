@@ -204,6 +204,11 @@ a Transformers Install/Activate detour. A damaged environment exposes repair.
 in CPU smokes; full recorded Qwen/Z-Image cloud generation used the installed
 base library.
 
+Janus text-only requests render the pinned processor's chat template with
+the assistant generation marker. The same rendered prompt is used for
+token accounting and the native pipeline call. The generic Generate Text
+card still takes the user's ordinary prompt.
+
 Janus image generation uses the installed processor's Torch postprocessing
 contract. The adapter moves the single decoded image to host memory, lets the
 processor clamp and cast it, and normalizes the resulting RGB pixels to the

@@ -49,6 +49,7 @@ class JanusProcessor:
         self.input_ids = torch.tensor([[1, 2]]) if input_ids is None else input_ids
         self.calls = Mock()
         self.decode = Mock(return_value=decoded)
+        self.apply_chat_template = Mock(return_value="<|User|>: A fact\n\n<|Assistant|>:")
         self.postprocess = Mock(
             return_value={"pixel_values": np.ones((1, 8, 8, 3), dtype=np.float32)}
         )
@@ -808,6 +809,23 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
         self.assertEqual(result["result"]["generatedTokens"], 1)
         self.assertEqual(result["result"]["inputImageCount"], 1)
         self.assertEqual(result["result"]["inputMediaPixels"], 4)
+
+    def test_any_to_any_janus_text_only_uses_its_chat_template(self):
+        loaded, _runtime, processor, _model, pipeline = _load_janus_handle()
+
+        GenerateAnyToAny("generate-janus-text-only").execute(
+            model=loaded["model"], prompt="A fact", generation_mode="text"
+        )
+
+        processor.apply_chat_template.assert_called_once_with(
+            [{"role": "user", "content": [{"type": "text", "text": "A fact"}]}],
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+        rendered = ["<|User|>: A fact\n\n<|Assistant|>:"]
+        self.assertEqual(processor.calls.call_args.kwargs["text"], rendered)
+        self.assertEqual(pipeline.calls.call_args.args[0]["text"], rendered)
+        self.assertNotIn("images", pipeline.calls.call_args.args[0])
 
     def test_any_to_any_janus_image_generation_is_fixed_token_and_geometry_bounded(self):
         loaded, _runtime, processor, _model, pipeline = _load_janus_handle()
