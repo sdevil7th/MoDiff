@@ -67,6 +67,28 @@ def test_exact_code_enable_reload_and_change_rejection(store, tmp_path, monkeypa
     assert sys.modules["custom.Example.main"].Echo is not action
 
 
+def test_search_terms_follow_inspected_source_and_reload(store, tmp_path):
+    source = source_node(tmp_path / "source")
+    path = source / "main.py"
+    path.write_text(path.read_text().replace("    params =", '    searchTerms = ["uppercase", "uppercase"]\n    params ='))
+    item = store.stage(kind="local", source=str(source), name="Example")
+    assert "custom.Example.main" not in sys.modules
+    assert item["preview"]["nodes"]["Echo"]["searchTerms"] == ["uppercase"]
+    assert store.enable("Example", code_hash=item["codeHash"], consent=True)["Echo"]["searchTerms"] == ["uppercase"]
+    saved = Path(item["path"]) / "main.py"
+    saved.write_text(saved.read_text().replace('["uppercase", "uppercase"]', '["word case"]'))
+    updated = store.inspect("Example")
+    assert store.enable("Example", code_hash=updated["codeHash"], consent=True)["Echo"]["searchTerms"] == ["word case"]
+
+
+def test_search_terms_reject_nontext_before_enable(store, tmp_path):
+    source = source_node(tmp_path / "source")
+    path = source / "main.py"
+    path.write_text(path.read_text().replace("    params =", '    searchTerms = [42]\n    params ='))
+    with pytest.raises(ExtensionError, match="searchTerms"):
+        store.stage(kind="local", source=str(source), name="Example")
+
+
 def test_path_escape_and_missing_dependencies_do_not_execute(store, tmp_path):
     source = source_node(tmp_path / "source")
     (source / "escape.py").symlink_to(tmp_path / "private.py")

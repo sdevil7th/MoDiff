@@ -20,6 +20,8 @@ These rules apply to AI-assisted work in this repository. `CONTRIBUTING.md` is t
 
 ## Generic Workflow Stages
 
+- Keep search metadata with the backend visual stage catalog. Add modes, action names, familiar aliases and typed roles to an existing stage first. Verify name and action searches, click and wire insertion, model switching and saved graph export before adding another public stage.
+
 - Reuse a task- or modality-generic node for the same user-visible job across models and workflows. Put model-specific execution and schema differences in the declared backend adapter.
 - Use an ordinary node for a stage with one executable action. Expose the inputs, effective controls and outputs the user needs. Fold internal preparation or decoding into a stage only when it shares one owner and its intermediate result has no independent consumer.
 - Reserve new Blocks for meaningful typed boundaries, such as storyboard shots, reusable compositions, loops or genuine nested control flow. Preserve existing saved Block interfaces and registered definition hashes.

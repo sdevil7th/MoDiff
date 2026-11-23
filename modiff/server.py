@@ -3020,6 +3020,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "label": values.get("label", f"{module}: {action}"),
             "category": values.get("category", "default"),
             "description": values.get("description", ""),
+            **({"searchTerms": values["searchTerms"]} if values.get("searchTerms") else {}),
             "resizable": values.get("resizable", False),
             "skipParamsCheck": values.get("skipParamsCheck", False),
             "style": values.get("style", ""),
@@ -3056,7 +3057,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     continue
                 output[f"{module}.{action}"] = self._describe_registered_node(module, action, values)
 
-        return web.json_response({"instance": self.instance, "nodes": output})
+        response = {"instance": self.instance, "nodes": output}
+        if not id:
+            from modiff.visual_node_catalog import visual_node_catalog
+            response["visualNodeCatalog"] = visual_node_catalog()
+        return web.json_response(response)
 
     def _field_action_runtime_hints(self, data):
         if not isinstance(data, dict):

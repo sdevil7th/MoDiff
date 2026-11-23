@@ -26,7 +26,7 @@ your workflow. Intentional Add/Load imports and enables it in one action.
   it appears in the permanent Custom nodes category without executing. Choose
   **Manage nodes → Load** to load it. Advanced accepts another backend source path.
   Enabled nodes are grouped by their declared `category` within Custom nodes.
-  The library search matches both the displayed `label` and the category.
+  The library searches the displayed label, category, description and optional action terms.
 - Hugging Face: enter a compatible repository ID or repository URL and click
   **Add node**. A model repository alone is not a custom node.
 - Git: enter an HTTPS repository URL and click **Add node**. Git must be installed
@@ -72,6 +72,7 @@ class PromptPrefix(NodeBase):
     """Add a reusable prefix to a prompt without loading any models."""
 
     label = "Prompt Prefix"
+    searchTerms = ["prepend text", "prompt prefix"]
     category = "Text"
     resizable = True
     params = {
@@ -142,6 +143,8 @@ The audio example accepts a bounded waveform, keeps its sample rate and channel
 layout, and copies samples before processing. Connect Load Audio → Audio Envelope
 → Preview Audio; start with a three-second clip and −6 dB gain. These processors
 work after any compatible model's decoded media output, not its latents.
+
+A custom class can declare `searchTerms` as a literal list of up to 32 nonempty strings, each at most 96 characters. The library and canvas search use them after enable or reload. These terms only describe the action.
 
 Set `resizable = True` on the class when the node should show a resize handle.
 Use `display: "textarea"` for a multi-line inline editor. A field can render only

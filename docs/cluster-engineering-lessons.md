@@ -833,6 +833,8 @@ successful run, and retain immutable definitions and unrelated preview owners.
   graph before and after presentation changes and keep the saved input and
   output evidence tied to its recorded run.
 
+For visual stage discovery, exercise both a name and an action alias in the picker, import a saved graph, and verify its typed wires and executable export. Search metadata belongs to the published registry. A wording change must preserve the recorded recipe and the approved asset.
+
 Keep acceptance criteria in [workbench acceptance](workbench-acceptance.md),
 implementation contracts in technical references, and dated plans/run ledgers in
 Git history or local evidence. Retiring a tracker must preserve unresolved
