@@ -3,6 +3,8 @@
   "stages": [
     {
       "id": "model-setup",
+      "modelBound": true,
+      "memberDecomposition": "loader",
       "label": "Model Setup",
       "tier": "browse",
       "summary": "Choose a model, task and loading configuration.",
@@ -49,12 +51,14 @@
         {"node":"modules.MediaSource.WebMedia","label":"Web Media"},
         {"node":"modules.MediaSource.YouTubeMedia","label":"YouTube Media"},
         {"node":"modules.Audio.Load","label":"Load Audio","terms":["open WAV","LoadAudio"]},
-        {"node":"modules.Video.Load","label":"Load Video","terms":["open clip","LoadVideo"]},
-        {"node":"modules.VideoConditioning.Normalize","label":"Normalize Video"}
-      ]
+        {"node":"modules.Video.Load","label":"Load Video","terms":["open clip","LoadVideo"]}
+      ],
+      "members": ["modules.VideoConditioning.Normalize"]
     },
     {
       "id": "generate-image",
+      "modelBound": true,
+      "memberTasks": ["text_to_image", "unconditional_image", "control_image", "any_to_image"],
       "label": "Generate Image",
       "tier": "browse",
       "summary": "Create images from a prompt or supported guidance.",
@@ -89,6 +93,8 @@
     },
     {
       "id": "edit-image",
+      "modelBound": true,
+      "memberTasks": ["edit_image", "image_to_image", "multi_image_reference_edit", "control_edit_image"],
       "label": "Edit Image",
       "tier": "browse",
       "summary": "Transform a source image or ordered references.",
@@ -116,6 +122,8 @@
     },
     {
       "id": "inpaint-image",
+      "modelBound": true,
+      "memberTasks": ["inpaint", "outpaint", "control_inpaint"],
       "label": "Inpaint Image",
       "tier": "browse",
       "summary": "Generate inside a selected image mask.",
@@ -143,6 +151,8 @@
     },
     {
       "id": "generate-video",
+      "modelBound": true,
+      "memberTasks": ["text_to_video", "image_to_video", "reference_to_video", "control_to_video", "control_video_to_video", "video_to_video", "video_inpaint", "video_outpaint", "character_animate", "character_replace", "audio_to_video", "audio_video", "text_to_audio_video", "image_to_audio_video", "any_to_video"],
       "label": "Generate Video",
       "tier": "browse",
       "summary": "Generate or transform a video shot.",
@@ -178,6 +188,7 @@
     },
     {
       "id": "generate-audio",
+      "modelBound": true,
       "label": "Generate Audio",
       "tier": "browse",
       "summary": "Create music or sound, or continue an existing recording.",
@@ -192,6 +203,7 @@
     },
     {
       "id": "generate-text",
+      "modelBound": true,
       "label": "Generate Text",
       "tier": "browse",
       "summary": "Write text or describe supplied media.",
@@ -203,6 +215,7 @@
     },
     {
       "id": "transcribe-audio",
+      "modelBound": true,
       "label": "Transcribe Audio",
       "tier": "browse",
       "summary": "Turn speech into words and supported timestamps.",
@@ -310,12 +323,13 @@
         {"node":"modules.Video.Export","label":"Export Video","terms":["export MP4","SaveVideo"]},
         {"node":"modules.Video.ExportAsset","label":"Export Retained Video Asset"},
         {"node":"modules.Video.ExportWithAudio","label":"Export Video with Audio"},
-        {"node":"modules.Video.MuxAudioAsset","label":"Add Audio to Retained Video","terms":["mux soundtrack"]},
         {"node":"modules.Primitive.ExportData","label":"Export Data","terms":["export JSON"]}
-      ]
+      ],
+      "members": ["modules.Video.MuxAudioAsset"]
     },
     {
       "id": "encode-inputs",
+      "modelBound": true,
       "label": "Encode Inputs",
       "tier": "task",
       "summary": "Encode prompts and media into model conditioning.",
@@ -400,6 +414,7 @@
     },
     {
       "id": "predict-map",
+      "modelBound": true,
       "label": "Predict Map",
       "tier": "task",
       "summary": "Predict a map from an image and inspect the result.",
@@ -410,6 +425,7 @@
     },
     {
       "id": "separate-layers",
+      "modelBound": true,
       "label": "Separate Layers",
       "tier": "task",
       "summary": "Decompose an image into ordered layers.",
@@ -419,6 +435,7 @@
     },
     {
       "id": "render-3d",
+      "modelBound": true,
       "label": "Render 3D",
       "tier": "task",
       "summary": "Render views of a generated 3D subject.",
