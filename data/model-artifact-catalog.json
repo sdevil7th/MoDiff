@@ -9544,11 +9544,11 @@
       "revision": "6167b88ffe39b4441fdf2113e77b99a6f56b7906",
       "license": "not-declared",
       "purpose": "animatediff-sd15-motion-adapter",
-      "variant": "fp16",
-      "weightName": "diffusion_pytorch_model.fp16.safetensors",
-      "sha256": "5fd196988206cfac90bab1dc56cc59fdd12035492f74ff0662eb6eed5113c547",
+      "variant": "default",
+      "weightName": "diffusion_pytorch_model.safetensors",
+      "sha256": "d95c417ddd4ffe1f7d4df43b51ef1c2c3c4fd7c3fd5ae53c75ef5d798a2213a3",
       "byteSize": 1815329816,
-      "verifiedAt": "2026-08-13T00:00:00+05:30"
+      "verifiedAt": "2026-11-24T02:59:00+05:30"
     },
     {
       "repo": "wangfuyun/AnimateLCM",

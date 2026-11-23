@@ -2209,12 +2209,17 @@ class LoadPipeline(WanVACELoadPipeline):
         cache_dir = CONFIG.hf.get("cache_dir")
         if cache_dir:
             common["cache_dir"] = cache_dir
-        motion_kwargs = {
-            **common,
-            "revision": motion_revision,
-            "variant": "fp16",
-            "local_files_only": local_files_only(motion_repo),
-        }
+        motion_kwargs = {**common, "revision": motion_revision}
+        if motion_repo == ANIMATELCM_MOTION_REPO:
+            motion_target = motion_repo
+            motion_kwargs.update(variant="fp16", local_files_only=local_files_only(motion_repo))
+        else:
+            # The named fp16 artifact contains different motion tensors. Use the
+            # standard file from the upstream recipe and cast to the runtime dtype.
+            motion_target = exact_cached_snapshot_path(
+                motion_repo, motion_revision, marker_file="diffusion_pytorch_model.safetensors"
+            )
+            motion_kwargs["local_files_only"] = True
         base_kwargs = {
             **common,
             "revision": base_revision,
@@ -2223,7 +2228,7 @@ class LoadPipeline(WanVACELoadPipeline):
         }
 
         self.progress(-1, phase="loading", message=f"Loading {adapter.pipeline_class} MotionAdapter")
-        motion_adapter = MotionAdapter.from_pretrained(motion_repo, **motion_kwargs)
+        motion_adapter = MotionAdapter.from_pretrained(motion_target, **motion_kwargs)
         if conditioning_artifact is not None:
             conditioning_repo, conditioning_revision = conditioning_artifact
             conditioning_class = getattr(diffusers, str(adapter.conditioning_component_class), None)

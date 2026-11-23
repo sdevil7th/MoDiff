@@ -43,6 +43,14 @@ execution specs retain their original identity and do not silently override
 the user's selection. Source Video and Control Video use the same generic
 video input component and present separately labelled file fields.
 
+The AnimateDiff SD1.5 routes select the standard MotionAdapter safetensors file
+from the pinned revision and load it at the requested FP16 precision. The
+separately published FP16 filename contains different motion tensors and
+produced dark frames in a controlled comparison. An installation containing
+only the older file needs the standard file from Model Manager. Older run
+records retain their actual artifact and source identity. AnimateLCM retains
+its own FP16 adapter and spatial LoRA.
+
 Registered native-stage recipe descriptors retain their original versioned
 selection metadata when only their visual grouping changes. Selection notes
 participate in the strict template lock; editing explanatory wording must not

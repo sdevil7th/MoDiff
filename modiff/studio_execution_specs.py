@@ -1670,11 +1670,11 @@ STABLE_VIDEO_DIFFUSION_FP16_FILES = [
     "vae/diffusion_pytorch_model.fp16.safetensors",
 ]
 ANIMATEDIFF_MOTION_REPO = "guoyww/animatediff-motion-adapter-v1-5-2"
-ANIMATEDIFF_MOTION_FP16_FILES = [
+ANIMATEDIFF_MOTION_FILES = [
     ".gitattributes",
     "README.md",
     "config.json",
-    "diffusion_pytorch_model.fp16.safetensors",
+    "diffusion_pytorch_model.safetensors",
 ]
 ANIMATELCM_MOTION_REPO = "wangfuyun/AnimateLCM"
 ANIMATELCM_MOTION_FP16_FILES = [
@@ -2088,8 +2088,8 @@ _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS = {
             "revision": require_catalog_revision(ANIMATEDIFF_MOTION_REPO),
             "kind": "adapter",
             "requiredForModes": ["text_to_video"],
-            "downloadFiles": ANIMATEDIFF_MOTION_FP16_FILES,
-            "description": "Exact fp16 safetensors motion module for the reviewed AnimateDiff SD1.5 recipe.",
+            "downloadFiles": ANIMATEDIFF_MOTION_FILES,
+            "description": "Standard safetensors motion weights used by the Diffusers AnimateDiff SD1.5 recipe.",
         },
     ),
     ("AnimateLCMPipeline", "text_to_video"): (

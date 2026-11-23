@@ -3,6 +3,7 @@ from source_contract_helpers import source_sha256
 import ast
 import sys
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -191,7 +192,9 @@ class DiffusersVideoExtendedRouteTests(unittest.TestCase):
                 scheduler = object()
                 controlnet = object()
                 node = LoadPipeline(f"load-{pipeline_class}")
+                motion_path = Path("installed-motion") / "snapshots" / ANIMATEDIFF_MOTION_REVISION
                 with (
+                    patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=motion_path),
                     patch("diffusers.MotionAdapter.from_pretrained", return_value=motion_adapter) as load_motion,
                     patch("diffusers.DDIMScheduler.from_pretrained", return_value=scheduler) as load_scheduler,
                     patch("diffusers.ControlNetModel.from_pretrained", return_value=controlnet) as load_controlnet,
@@ -216,7 +219,8 @@ class DiffusersVideoExtendedRouteTests(unittest.TestCase):
 
                 self.assertIs(result["pipeline"], pipeline)
                 self.assertEqual(pipeline._modiff_video_pipeline_class, pipeline_class)
-                load_motion.assert_called_once()
+                self.assertEqual(load_motion.call_args.args, (motion_path,))
+                self.assertNotIn("variant", load_motion.call_args.kwargs)
                 load_scheduler.assert_called_once()
                 load_args, load_kwargs = load_pipeline.call_args
                 self.assertEqual(load_args, (ANIMATEDIFF_BASE_REPO,))

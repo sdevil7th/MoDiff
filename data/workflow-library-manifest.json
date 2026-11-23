@@ -270,7 +270,7 @@
               ".gitattributes",
               "README.md",
               "config.json",
-              "diffusion_pytorch_model.fp16.safetensors"
+              "diffusion_pytorch_model.safetensors"
             ],
             "description": "Required by the generic AnimateDiffControlNetPipeline control to video workflow."
           },
@@ -338,7 +338,7 @@
               ".gitattributes",
               "README.md",
               "config.json",
-              "diffusion_pytorch_model.fp16.safetensors"
+              "diffusion_pytorch_model.safetensors"
             ],
             "description": "Required by the generic AnimateDiffPAGPipeline text to video workflow."
           }
@@ -386,9 +386,9 @@
               ".gitattributes",
               "README.md",
               "config.json",
-              "diffusion_pytorch_model.fp16.safetensors"
+              "diffusion_pytorch_model.safetensors"
             ],
-            "description": "Exact fp16 safetensors motion module for the reviewed AnimateDiff SD1.5 recipe."
+            "description": "Standard safetensors motion weights used by the Diffusers AnimateDiff SD1.5 recipe."
           }
         ],
         "note": "Uses the exact AnimateDiff SD1.5 v2 motion module and documented linear-beta DDIM scheduler."
@@ -435,7 +435,7 @@
               ".gitattributes",
               "README.md",
               "config.json",
-              "diffusion_pytorch_model.fp16.safetensors"
+              "diffusion_pytorch_model.safetensors"
             ],
             "description": "Required by the generic AnimateDiffVideoToVideoControlNetPipeline control video to video workflow."
           },
@@ -504,7 +504,7 @@
               ".gitattributes",
               "README.md",
               "config.json",
-              "diffusion_pytorch_model.fp16.safetensors"
+              "diffusion_pytorch_model.safetensors"
             ],
             "description": "Required by the generic AnimateDiffVideoToVideoPipeline video to video workflow."
           }

@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:77310ec038b0bc26f293a7dd9bac9cf1187823b3b594a405c696d2172f777ef0",
+  "contentHash": "sha256:c6f1914611e1cad53c222de1b541c9c702a098fc90189d5527ecc935969846c1",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -98,7 +98,7 @@
               ".gitattributes",
               "README.md",
               "config.json",
-              "diffusion_pytorch_model.fp16.safetensors"
+              "diffusion_pytorch_model.safetensors"
             ],
             "id": "animatediff-motion-adapter-v1-5-2",
             "kind": "adapter",
@@ -177,7 +177,7 @@
               ".gitattributes",
               "README.md",
               "config.json",
-              "diffusion_pytorch_model.fp16.safetensors"
+              "diffusion_pytorch_model.safetensors"
             ],
             "id": "animatediff-motion-adapter-v1-5-2",
             "kind": "adapter",
@@ -231,12 +231,12 @@
       "requiredInputs": {
         "modelRequirements": [
           {
-            "description": "Exact fp16 safetensors motion module for the reviewed AnimateDiff SD1.5 recipe.",
+            "description": "Standard safetensors motion weights used by the Diffusers AnimateDiff SD1.5 recipe.",
             "downloadFiles": [
               ".gitattributes",
               "README.md",
               "config.json",
-              "diffusion_pytorch_model.fp16.safetensors"
+              "diffusion_pytorch_model.safetensors"
             ],
             "id": "animatediff-motion-adapter-v1-5-2",
             "kind": "adapter",
@@ -296,7 +296,7 @@
               ".gitattributes",
               "README.md",
               "config.json",
-              "diffusion_pytorch_model.fp16.safetensors"
+              "diffusion_pytorch_model.safetensors"
             ],
             "id": "animatediff-motion-adapter-v1-5-2",
             "kind": "adapter",
@@ -376,7 +376,7 @@
               ".gitattributes",
               "README.md",
               "config.json",
-              "diffusion_pytorch_model.fp16.safetensors"
+              "diffusion_pytorch_model.safetensors"
             ],
             "id": "animatediff-motion-adapter-v1-5-2",
             "kind": "adapter",
@@ -7061,13 +7061,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:0b85320f46cf52949869677d54bbf2d874ee0fec10a4b77cbef525fe2e0166b0",
+      "contentHash": "sha256:ea23def36a4cfb0d3a195243dc970e7c53fe2a9f3a398568560e4ab6aa03d3b3",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:49741091e442c6c899a2e2af634c41747b21b2c4455dd140fb70f9b61f8aeb17"
+      "sha256": "sha256:a72d118bb1b912d49df6f3616ed9b54de9c8fab5d346c28e93421cb0d498e9c3"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:289a9943bda9d48339491a47f68a73689b888beb2d26033b8b1fcb7dfc29d372"
+      "sha256": "sha256:992de94fb865ec7ec2cbf00ce26c2a8f950c600d5397fe4236aa0b2abb0d7762"
     }
   },
   "summary": {

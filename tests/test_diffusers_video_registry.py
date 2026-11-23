@@ -2951,7 +2951,9 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         scheduler = object()
         pipeline = SimpleNamespace(vae=SimpleNamespace(enable_slicing=MagicMock()))
         node = LoadPipeline("animatediff-loader")
+        motion_path = Path("installed-motion") / "snapshots" / ANIMATEDIFF_MOTION_REVISION
         with (
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=motion_path) as find_motion,
             patch("diffusers.MotionAdapter.from_pretrained", return_value=motion_adapter) as load_motion,
             patch("diffusers.DDIMScheduler.from_pretrained", return_value=scheduler) as load_scheduler,
             patch("diffusers.AnimateDiffPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
@@ -2976,10 +2978,14 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertEqual(pipeline._modiff_video_revision, ANIMATEDIFF_BASE_REVISION)
         self.assertEqual(pipeline._modiff_video_motion_adapter_repo, ANIMATEDIFF_MOTION_REPO)
         self.assertEqual(pipeline._modiff_video_motion_adapter_revision, ANIMATEDIFF_MOTION_REVISION)
+        find_motion.assert_called_once_with(
+            ANIMATEDIFF_MOTION_REPO, ANIMATEDIFF_MOTION_REVISION, marker_file="diffusion_pytorch_model.safetensors"
+        )
         motion_args, motion_kwargs = load_motion.call_args
-        self.assertEqual(motion_args, (ANIMATEDIFF_MOTION_REPO,))
+        self.assertEqual(motion_args, (motion_path,))
         self.assertEqual(motion_kwargs["revision"], ANIMATEDIFF_MOTION_REVISION)
-        self.assertEqual(motion_kwargs["variant"], "fp16")
+        self.assertNotIn("variant", motion_kwargs)
+        self.assertIs(motion_kwargs["local_files_only"], True)
         self.assertIs(motion_kwargs["use_safetensors"], True)
         scheduler_args, scheduler_kwargs = load_scheduler.call_args
         self.assertEqual(scheduler_args, (ANIMATEDIFF_BASE_REPO,))
@@ -3018,6 +3024,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         node = LoadPipeline("animatelcm-loader")
         with (
             patch.dict("modules.DiffusersVideo.main.CONFIG.hf", {"cache_dir": "reviewed-test-cache"}),
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path") as resolve_snapshot,
             patch("diffusers.MotionAdapter.from_pretrained", return_value=object()) as load_motion,
             patch("diffusers.AnimateDiffPipeline.from_pretrained", return_value=pipeline),
             patch("diffusers.LCMScheduler.from_config", return_value=replacement_scheduler) as lcm_scheduler,
@@ -3037,6 +3044,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
         self.assertEqual(load_motion.call_args.args, (ANIMATELCM_MOTION_REPO,))
         self.assertEqual(load_motion.call_args.kwargs["revision"], ANIMATELCM_MOTION_REVISION)
+        self.assertEqual(load_motion.call_args.kwargs["variant"], "fp16")
+        resolve_snapshot.assert_not_called()
         lcm_scheduler.assert_called_once_with({"beta_schedule": "scaled_linear"}, beta_schedule="linear")
         self.assertIs(pipeline.scheduler, replacement_scheduler)
         pipeline.load_lora_weights.assert_called_once_with(
