@@ -27,6 +27,7 @@ These rules apply to AI-assisted work in this repository. `CONTRIBUTING.md` is t
 - Label ports by role, including Source, Mask, Control, and First or Last Frame. Show one editor per effective setting and retain the saved fallback when a typed connection supplies the value. Choose a shared default only after it works in both the fresh workflow and the corresponding saved workflow.
 - Resolve model variants that share a repository through the exact connected model and task declaration. Keep the canvas, restored workflow and saved output metadata consistent.
 - Test the canvas and the ordered executable graph separately. Compare controls, typed bindings, model switching, and save/reopen. A presentation-only change preserves the executable graph and reuses the original run evidence.
+- When unifying stages across model families or input types, test a real wire change and an older saved workflow in the packaged UI. Restore fixed model capabilities from the installed registry. Preserve the saved file fallback and each family’s settings across switches.
 - Review the default blank-canvas picker separately from the execution registry. Start with generic stages and media processors. Keep specialist tools reachable by search, compatible wire or explicit implementation browsing. Compare the fresh template with its shipped Example and reopened execution graph. Check independent branches before folding preparation into a stage.
 
 ## Hugging Face Model Libraries

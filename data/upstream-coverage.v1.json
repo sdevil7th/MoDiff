@@ -2660,7 +2660,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:25e383a02f3b518aebfb0250ed602a6e9772885cd0e286b4ddeb53420dc03884",
+  "contentHash": "sha256:64a269ee55f769a6e16ee21815fd05577f0006d69dfc7d18385db2ba03fe937a",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -10811,7 +10811,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "75bcbbd4ad8fd7508ce82feecbf65e249030ce45f862c6b24005a30d1492ef8d",
+    "templateBundleSha256": "c9647067a9d8a95bdbfe1e65aa035782b69bb221338dbaa279a76c84b6c66cf8",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -10921,7 +10921,7 @@
             "TranscribeAudio"
           ],
           "path": "modules/HuggingFaceSpeech/main.py",
-          "sha256": "9f8adda57d405b29c0340f492950fbc57b1bbdbd7979c3cb116ad110ff5c6345"
+          "sha256": "c1b171840edf596550af5268c7bddf039b7c3f2f336bb1e5874ad0c5868db5ce"
         }
       ],
       "nodeKeys": [

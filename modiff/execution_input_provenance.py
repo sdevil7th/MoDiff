@@ -193,7 +193,7 @@ ACCOUNTING_FIELDS = {
     ('DiffusersImage', 'Edit'): DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS,
     ('DiffusersImage', 'Inpaint'): DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS,
     ('HuggingFaceSpeech', 'TranscribeAudio'): frozenset(
-        'task language timestamps chunk_length_seconds stride_length_seconds'.split()),
+        'task language timestamps ctc_timestamps chunk_length_seconds stride_length_seconds'.split()),
     ('HuggingFaceSpeech', 'TranscribeCTCAudio'): frozenset(
         'timestamps chunk_length_seconds stride_length_seconds'.split()),
     ('Image', 'Preview'): frozenset({'device', 'export'}),

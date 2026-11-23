@@ -210,6 +210,34 @@ class HuggingFaceSpeechRegistryTests(unittest.TestCase):
         self.assertEqual(result["text"], "Hello world.")
         self.assertEqual(result["duration_seconds"], 1.0)
 
+    def test_same_transcribe_stage_switches_families_without_consuming_hidden_settings(self):
+        recognizer = Mock(return_value={"text": "TEST", "chunks": []})
+        stage = TranscribeAudio("shared-transcribe")
+        settings = dict(audio={"samples": np.zeros((16000, 1), dtype=np.float32), "sample_rate": 16000,
+                               "sample_layout": "frames_first", "channels": 1},
+                        language="French", task="translate", timestamps="segment", ctc_timestamps="none",
+                        chunk_length_seconds=0, stride_length_seconds=0)
+        for family in (SPEECH_MODEL_FAMILY_SEQ2SEQ, SPEECH_MODEL_FAMILY_CTC, SPEECH_MODEL_FAMILY_SEQ2SEQ):
+            result = stage.execute(model={"schemaVersion": 1, "family": family, "pipeline": recognizer}, **settings)
+            if family == SPEECH_MODEL_FAMILY_CTC:
+                self.assertEqual(recognizer.call_args.kwargs, {"return_timestamps": False})
+                self.assertEqual(result["transcript"]["task"], "transcribe")
+            else:
+                self.assertEqual(recognizer.call_args.kwargs, {
+                    "generate_kwargs": {"task": "translate", "language": "French"}, "return_timestamps": True})
+
+    def test_shared_stage_converts_to_the_recognizers_declared_sample_rate(self):
+        recognizer = Mock(return_value={"text": "TEST", "chunks": []})
+        recognizer.feature_extractor.sampling_rate = 16000
+        audio = {"samples": np.zeros((22050, 1), dtype=np.float32), "sample_rate": 22050,
+                 "sample_layout": "frames_first", "channels": 1}
+        for family in (SPEECH_MODEL_FAMILY_CTC, SPEECH_MODEL_FAMILY_SEQ2SEQ):
+            result = TranscribeAudio().execute(model={"schemaVersion": 1, "family": family, "pipeline": recognizer},
+                                               audio=audio)
+            effective = recognizer.call_args.args[0]
+            self.assertEqual((effective["sampling_rate"], effective["raw"].shape), (16000, (16000,)))
+            self.assertEqual(result["duration_seconds"], 1)
+
     def test_ctc_transcription_has_no_whisper_generation_controls(self):
         recognizer = Mock(
             return_value={

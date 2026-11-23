@@ -19612,6 +19612,16 @@ def _execution_spec_role_params(
     role: str | None = None,
 ) -> dict[str, Any]:
     params = deepcopy(node["params"])
+    if node_key == "modules.HuggingFaceSpeech.TranscribeAudio" and public["pipelineClass"] == "AutoModelForSpeechSeq2Seq":
+        # Historical Whisper recipes bind the generative timestamp setting only.
+        # The standalone node also exposes a setting for a connected CTC model.
+        params.pop("ctc_timestamps", None)
+        params["model"].pop("onSignal", None)
+    if node_key in {
+        "modules.HuggingFaceSpeech.LoadSpeechRecognitionModel", "modules.HuggingFaceSpeech.LoadCTCSpeechRecognitionModel",
+    }:
+        # These fixed-family compositions never switch a connected recognizer.
+        params["model"].pop("signal", None)
     if (node_key == 'modules.DiffusersVideo.LoadPipeline'
             and public['pipelineClass'] != 'WanTI2VImageToVideoPipeline'):
         # The new manual loader option belongs to the new image recipe. Old

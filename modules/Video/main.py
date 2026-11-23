@@ -2,6 +2,8 @@
 from modiff.NodeBase import NodeBase
 from modiff.path_identifiers import resolve_runtime_input_path
 from pathlib import Path
+from contextlib import contextmanager, nullcontext
+import tempfile
 import logging
 import math
 from utils.paths import parse_filename
@@ -1259,6 +1261,26 @@ class TrimAsset(NodeBase):
         return _derived_asset_result(destination, asset_id, [source], "trim", pin=bool(kwargs.get("pin")))
 
 
+def _timeline_audio_sources(sources, preserve):
+    """Return source indices with an embedded track for an explicitly audio-aware edit."""
+    if not preserve:
+        return []
+    import imageio.v2 as imageio
+
+    tracks = []
+    for index, source in enumerate(sources):
+        with imageio.get_reader(source["path"], "ffmpeg") as reader:
+            if reader.get_meta_data().get("audio_codec"):
+                tracks.append(index)
+    return tracks
+
+
+def _audio_timeline_filter(index, duration, has_track):
+    source = (f"[{index}:a:0]aresample=48000,aformat=channel_layouts=stereo,asetpts=PTS-STARTPTS,apad"
+              if has_track else "anullsrc=r=48000:cl=stereo")
+    return f"{source},atrim=duration={duration:.12g}[a{index}]"
+
+
 class ConcatenateAssets(NodeBase):
     """Join retained videos through FFmpeg with bounded process memory."""
 
@@ -1287,13 +1309,22 @@ class ConcatenateAssets(NodeBase):
             _video_filter(source, index, width=width, height=height, fps=fps) + f"[v{index}]"
             for index, source in enumerate(sources)
         ]
+        tracks = _timeline_audio_sources(sources, kwargs.get("preserve_audio"))
+        if tracks:
+            filters.extend(_audio_timeline_filter(i, float(source["duration_seconds"]), i in tracks)
+                           for i, source in enumerate(sources))
         if len(sources) == 1:
             filters.append("[v0]null[outv]")
+            if tracks:
+                filters.append("[a0]anull[outa]")
         elif transition <= 0:
             filters.append(
                 "".join(f"[v{index}]" for index in range(len(sources))) + f"concat=n={len(sources)}:v=1:a=0[outv]"
             )
+            if tracks:
+                filters.append("".join(f"[a{i}]" for i in range(len(sources))) + f"concat=n={len(sources)}:v=0:a=1[outa]")
         else:
+            previous_audio = "a0"
             previous = "v0"
             elapsed = float(first["duration_seconds"])
             fps_text = f"{fps:.12g}"
@@ -1312,6 +1343,10 @@ class ConcatenateAssets(NodeBase):
                 # duration and cause fps to drop the final real frame.
                 normalizer = f"fps={fps_text}" if index < len(sources) - 1 else "null"
                 filters.append(f"[{raw_output}]{normalizer}[{output}]")
+                if tracks:
+                    audio_output = "outa" if index == len(sources) - 1 else f"ax{index}"
+                    filters.append(f"[{previous_audio}][a{index}]acrossfade=d={usable}[{audio_output}]")
+                    previous_audio = audio_output
                 previous = output
                 elapsed += float(source["duration_seconds"]) - usable
         asset_id, destination = allocate_video_path(task_id=current_task_id())
@@ -1325,7 +1360,7 @@ class ConcatenateAssets(NodeBase):
                 "[outv]",
                 "-r",
                 str(fps),
-                "-an",
+                *(["-map", "[outa]", "-c:a", "aac"] if tracks else ["-an"]),
                 "-c:v",
                 "libx264",
                 "-crf",
@@ -1397,6 +1432,97 @@ def _validate_video_interpolation(source, target_fps):
     return target_fps
 
 
+def _file_video(value):
+    return isinstance(value, (str, Path, dict))
+
+
+def _edit_frame_pixels(frame):
+    import numpy as np
+    from PIL import Image
+    from torch import Tensor
+
+    if isinstance(frame, Image.Image):
+        width, height = frame.size
+    elif isinstance(frame, (np.ndarray, Tensor)) and frame.ndim in (2, 3):
+        if frame.ndim == 3:
+            # Torch video is commonly channel-first; image arrays are usually HWC.
+            if frame.shape[0] in (1, 3, 4) and (isinstance(frame, Tensor) or frame.shape[-1] not in (1, 3, 4)):
+                frame = frame.movedim(0, -1) if isinstance(frame, Tensor) else np.moveaxis(frame, 0, -1)
+            if frame.shape[-1] not in (1, 3, 4):
+                raise ValueError("Decoded frames require one, three, or four channels.")
+        height, width = frame.shape[:2]
+    else:
+        raise ValueError("A decoded clip must contain individual image frames.")
+    if min(width, height) < 1 or width * height > MAX_VIDEO_OPERATION_PIXELS:
+        raise ValueError("Decoded frames must have bounded, positive dimensions.")
+    if isinstance(frame, Image.Image):
+        return np.asarray(frame.convert("RGB"))
+    if isinstance(frame, Tensor):
+        frame = frame.detach().cpu()
+        frame = frame.float().numpy() if frame.is_floating_point() else frame.numpy()
+    if frame.dtype.kind == "f":
+        frame = np.clip(frame, 0, 1) * 255
+    if frame.ndim == 3 and frame.shape[-1] == 1:
+        frame = frame[:, :, 0]
+    return np.asarray(Image.fromarray(frame.astype(np.uint8, copy=False)).convert("RGB"))
+
+
+@contextmanager
+def _editing_sources(value, fps, *, interrupted):
+    """Pass file sources through untouched. Spool decoded clips one frame at a time."""
+    from modiff.config import CONFIG
+    from PIL import Image
+    import imageio.v2 as imageio
+
+    if _file_video(value) or value is None:
+        yield value
+        return
+    if isinstance(value, (tuple, list)):
+        if all(_file_video(item) for item in value):
+            yield value
+            return
+        first = value[0]
+        single_clip = isinstance(first, Image.Image) or getattr(first, "ndim", 4) in (2, 3)
+        clips = [value] if single_clip else value
+    else:
+        clips = [value]
+    if not 1 <= len(clips) <= MAX_VIDEO_OPERATION_INPUTS:
+        raise ValueError("Too many input clips for Process Video.")
+    fps = float(24 if fps is None else fps)
+    if not math.isfinite(fps) or not 1 <= fps <= 120:
+        raise ValueError("Decoded frame rate must be between 1 and 120 FPS.")
+    root = Path(CONFIG.paths["temp"])
+    root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=root, prefix="video-edit-") as directory:
+        sources = []
+        total = 0
+        for index, clip in enumerate(clips):
+            if _file_video(clip):
+                sources.append(clip)
+                continue
+            if getattr(clip, "ndim", 0) == 5 and clip.shape[0] == 1:
+                clip = clip[0]
+            if not isinstance(clip, (tuple, list)) and getattr(clip, "ndim", 0) != 4:
+                raise ValueError("A decoded video must be an ordered sequence of frames.")
+            total += len(clip)
+            if not 1 <= len(clip) <= MAX_VIDEO_OPERATION_FRAMES_PER_INPUT or total > MAX_VIDEO_OPERATION_TOTAL_FRAMES:
+                raise ValueError("Decoded video exceeds the supported frame count.")
+            target = Path(directory) / f"clip-{index}.mkv"
+            with imageio.get_writer(str(target), format="ffmpeg", fps=fps, codec="ffv1",
+                                    pixelformat="bgr0", macro_block_size=1) as writer:
+                shape = None
+                for frame in clip:
+                    if interrupted():
+                        raise InterruptedError("Video editing interrupted.")
+                    pixels = _edit_frame_pixels(frame)
+                    if shape is not None and shape != pixels.shape:
+                        raise ValueError("Decoded frames must have consistent dimensions.")
+                    shape = pixels.shape
+                    writer.append_data(pixels)
+            sources.append(str(target))
+        yield sources
+
+
 class ProcessVideo(NodeBase):
     """Dispatch reviewed install-free video tasks through existing bounded nodes."""
 
@@ -1404,8 +1530,13 @@ class ProcessVideo(NodeBase):
     category = "Video"
     resizable = True
     params = {
+        "source": {
+            "label": "Source video or clips", "display": "input",
+            "type": ["video", "video_asset", "video_asset_collection", "collection"],
+            "fieldOptions": {"omitInactiveDefault": True},
+        },
         "videos": {
-            "label": "Videos",
+            "label": "Video files",
             "display": "filebrowser",
             "type": "str",
             "fieldOptions": {"fileTypes": ["video"], "multiple": True},
@@ -1431,7 +1562,7 @@ class ProcessVideo(NodeBase):
         "indices": {"label": "Frame Indices", "type": "string", "default": "0,-1"},
         "timecodes": {"label": "Times (seconds)", "type": "string", "default": "0"},
         "every_n": {"label": "Every N Frames", "type": "int", "default": 16, "min": 1, "max": 14400},
-        "fps": {"label": "Output FPS", "type": "float", "default": 24, "min": 1, "max": 120},
+        "fps": {"label": "Decoded frame rate (FPS)", "type": "float", "default": 24, "min": 1, "max": 120},
         "interpolation_fps": {
             "label": "Interpolation FPS",
             "type": "float",
@@ -1472,9 +1603,13 @@ class ProcessVideo(NodeBase):
 
     def execute(self, **kwargs):
         from modiff.builtin_media_evidence import begin_media_capture, snapshot_video_inputs
-        with snapshot_video_inputs(kwargs.get('videos')) as (actual, files):
-            capture = begin_media_capture(self, kwargs, inputs={'videos': actual}, files={'videos': files or []})
-            result = self._execute_operation(**{**kwargs, 'videos': actual})
+        wired = kwargs.get("source") is not None
+        value = kwargs.get("source") if wired else kwargs.get("videos")
+        with (nullcontext((value, None)) if wired else snapshot_video_inputs(value)) as (actual, files):
+            # A wire has its own provenance. Never attribute it to the saved file picker.
+            capture = begin_media_capture(self, kwargs, inputs={'videos': actual}, files={'videos': [] if wired else files or []})
+            with _editing_sources(actual, kwargs.get("fps"), interrupted=lambda: self._interrupt) as sources:
+                result = self._execute_operation(**{**kwargs, 'videos': sources})
             capture.finish({'images': result['images'], 'video': result['video']})
             return result
 
@@ -1524,7 +1659,7 @@ class ProcessVideo(NodeBase):
                 raise ValueError("Video frame interpolation requires exactly one input video.")
             source = assets[0]
             target_fps = _validate_video_interpolation(source, kwargs.get("interpolation_fps") or 60)
-            result = FrameInterpolateAsset().execute(video=source, target_fps=target_fps, pin=False)
+            result = FrameInterpolateAsset().execute(video=source, target_fps=target_fps, preserve_audio=True, pin=False)
         elif operation == "video_stitch":
             assets = _bounded_video_operation_assets(kwargs.get("videos"), minimum=2)
             transition_seconds = float(kwargs.get("transition_seconds") or 0)
@@ -1533,6 +1668,7 @@ class ProcessVideo(NodeBase):
             result = ConcatenateAssets().execute(
                 clips=assets,
                 transition_seconds=transition_seconds,
+                preserve_audio=True,
                 pin=False,
             )
         elif operation == "video_trim":
@@ -1565,7 +1701,7 @@ class ProcessVideo(NodeBase):
                     "Video reverse exceeds the bounded in-memory FFmpeg reverse workload "
                     f"of {MAX_VIDEO_REVERSE_PIXEL_FRAMES} pixel-frames."
                 )
-            result = ReverseAsset().execute(video=source, pin=False)
+            result = ReverseAsset().execute(video=source, preserve_audio=True, pin=False)
         else:
             assets = _bounded_video_operation_assets(kwargs.get("videos"), minimum=2)
             raw_columns = kwargs.get("columns", 2)
@@ -1598,6 +1734,7 @@ class ProcessVideo(NodeBase):
                 sync=sync,
                 gap=gap,
                 background=background,
+                preserve_audio=True,
                 pin=False,
             )
         return {
@@ -1832,6 +1969,10 @@ class StackTileAssets(NodeBase):
             "".join(f"[v{index}]" for index in range(len(sources)))
             + f"xstack=inputs={len(sources)}:layout={layout}:fill={kwargs.get('background') or 'black'}[outv]"
         )
+        tracks = _timeline_audio_sources(sources, kwargs.get("preserve_audio"))
+        if tracks:
+            filters.extend(_audio_timeline_filter(i, output_duration, True) for i in tracks)
+            filters.append("".join(f"[a{i}]" for i in tracks) + f"amix=inputs={len(tracks)}[outa]")
         asset_id, destination = allocate_video_path(task_id=current_task_id())
         inputs = [part for source in sources for part in ("-i", source["path"])]
         run_ffmpeg(
@@ -1845,7 +1986,7 @@ class StackTileAssets(NodeBase):
                 str(fps),
                 "-t",
                 str(output_duration),
-                "-an",
+                *(["-map", "[outa]", "-c:a", "aac"] if tracks else ["-an"]),
                 "-c:v",
                 "libx264",
                 "-crf",
@@ -1884,7 +2025,8 @@ class ReverseAsset(NodeBase):
                 source["path"],
                 "-vf",
                 "reverse",
-                "-an",
+                *(["-map", "0:v:0", "-map", "0:a:0?", "-af", "areverse", "-c:a", "aac"]
+                  if kwargs.get("preserve_audio") else ["-an"]),
                 "-c:v",
                 "libx264",
                 "-crf",
@@ -1943,7 +2085,8 @@ class FrameInterpolateAsset(NodeBase):
                     f"minterpolate=fps={fps_text}:mi_mode=blend,"
                     f"trim=duration={duration_text},setpts=PTS-STARTPTS"
                 ),
-                "-an",
+                *(["-map", "0:v:0", "-map", "0:a:0?", "-c:a", "aac", "-t", duration_text]
+                  if kwargs.get("preserve_audio") else ["-an"]),
                 "-r",
                 fps_text,
                 "-c:v",

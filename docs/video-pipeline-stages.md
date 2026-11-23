@@ -440,3 +440,19 @@ deductions. This is retained-frame storage accounting, not a measured activation
 peak, arbitrary-graph permission or hardware qualification. Unknown sources,
 borrowed bindings and unresolved controls remain refused. The original closed
 single-shot LTX storage contract keeps its existing identity.
+
+## Editing existing video
+
+Use **Process Video** for frame extraction, trim, reversal, interpolation, joins
+and tiling. Select files or connect a source clip or an ordered collection.
+A connected source takes precedence over the saved file selection. Files use
+their own frame rate. For decoded frames, set the frame rate on the card.
+Decoded frames are written incrementally to a temporary lossless clip that is
+removed after the operation. File sources stay on disk.
+
+Trim and interpolation retain embedded sound. Reverse follows the reversed
+picture. A join aligns each first audio track to its clip, inserts silence for
+silent clips and crossfades sound over the same interval as the picture.
+Tiling mixes available first tracks over the chosen output duration. Extracting
+frames returns images, indices and times. The existing bounds on frame count,
+output size, interpolation and reverse buffering apply to both input forms.

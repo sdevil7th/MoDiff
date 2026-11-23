@@ -118,9 +118,10 @@ def _normalized_audio(value: Any) -> tuple[np.ndarray, int, float]:
     return np.ascontiguousarray(np.clip(mono, -1.0, 1.0)), int(sample_rate), duration
 
 
-def _run_recognizer(node, model, inputs, call_kwargs):
-    consumed = {"timestamps": call_kwargs["return_timestamps"]}
-    inactive = {}
+def _run_recognizer(node, model, inputs, call_kwargs, *, timestamp_field):
+    consumed = {timestamp_field: call_kwargs["return_timestamps"]}
+    conditional = ("task", "language", "timestamps") if timestamp_field == "ctc_timestamps" else ("ctc_timestamps",)
+    inactive = {name: "feature-disabled" for name in conditional if name in inputs}
     generate_kwargs = call_kwargs.get("generate_kwargs")
     if generate_kwargs is not None:
         consumed["task"] = generate_kwargs["task"]
@@ -142,7 +143,14 @@ def _run_recognizer(node, model, inputs, call_kwargs):
     # path and cannot become a file observation at the speech boundary.
     capture = begin_media_capture(node, {}, inputs={"audio": audio if type(audio) is dict else {}})
     samples, sample_rate, duration = _normalized_audio(audio)
-    result = model["pipeline"]({"raw": samples, "sampling_rate": sample_rate}, **call_kwargs)
+    recognizer = model["pipeline"]
+    target_rate = getattr(getattr(recognizer, "feature_extractor", None), "sampling_rate", None)
+    if isinstance(target_rate, int) and target_rate != sample_rate:
+        from modules.DiffusersAudio.main import resample_audio_object
+
+        converted = resample_audio_object({"samples": samples, "sample_rate": sample_rate}, target_rate)
+        samples, sample_rate = converted["samples"], converted["sample_rate"]
+    result = recognizer({"raw": samples, "sampling_rate": sample_rate}, **call_kwargs)
     capture.finish({})
     return result, duration
 
@@ -193,7 +201,10 @@ class LoadSpeechRecognitionModel(NodeBase):
     category = "Hugging Face Speech"
     resizable = True
     params = {
-        "model": {"label": "Model", "display": "output", "type": "speech_recognition_model"},
+        "model": {
+            "label": "Model", "display": "output", "type": "speech_recognition_model",
+            "signal": {"direction": "output", "origin": "pipeline_class", "value": "AutoModelForSpeechSeq2Seq", "fixed": True},
+        },
         "model_id": {
             "label": "Model",
             "display": "modelselect",
@@ -285,7 +296,10 @@ class LoadCTCSpeechRecognitionModel(NodeBase):
     category = "Hugging Face Speech"
     resizable = True
     params = {
-        "model": {"label": "Model", "display": "output", "type": "speech_recognition_model"},
+        "model": {
+            "label": "Model", "display": "output", "type": "speech_recognition_model",
+            "signal": {"direction": "output", "origin": "pipeline_class", "value": "AutoModelForCTC", "fixed": True},
+        },
         "model_id": {
             "label": "Model",
             "display": "modelselect",
@@ -370,6 +384,65 @@ class LoadCTCSpeechRecognitionModel(NodeBase):
         }
 
 
+def _transcribe(node, kwargs, *, legacy_ctc=False):
+    model = kwargs.get("model")
+    family = model.get("family") if isinstance(model, dict) else None
+    allowed = (SPEECH_MODEL_FAMILY_CTC,) if legacy_ctc else (SPEECH_MODEL_FAMILY_SEQ2SEQ, SPEECH_MODEL_FAMILY_CTC)
+    if family not in allowed or model.get("schemaVersion") != 1 or not callable(model.get("pipeline")):
+        raise ValueError(f"{node.label} requires a model from a compatible speech recognition loader.")
+    timestamp_field = "timestamps"
+    if family == SPEECH_MODEL_FAMILY_CTC:
+        timestamp_field = "timestamps" if legacy_ctc else "ctc_timestamps"
+        task = "transcribe"
+        timestamp_mode = str(kwargs.get(timestamp_field) or "word").strip().casefold()
+        if timestamp_mode not in CTC_TIMESTAMP_MODES:
+            raise ValueError("CTC speech timestamps must be exactly none or word.")
+        call_kwargs = {"return_timestamps": "word" if timestamp_mode == "word" else False}
+    else:
+        task = str(kwargs.get("task") or "transcribe").strip().casefold()
+        if task not in SPEECH_TASKS:
+            raise ValueError("Speech task must be exactly transcribe or translate.")
+        timestamp_mode = str(kwargs.get("timestamps") or "segment").strip().casefold()
+        if timestamp_mode not in TIMESTAMP_MODES:
+            raise ValueError("Speech timestamps must be exactly none, segment, or word.")
+        language = str(kwargs.get("language") or "").strip()
+        if len(language) > 64 or any(character in language for character in "\r\n\0"):
+            raise ValueError("Speech language hint must be at most 64 characters on one line.")
+        generate_kwargs = {"task": task}
+        if language:
+            generate_kwargs["language"] = language
+        call_kwargs: dict[str, Any] = {
+            "generate_kwargs": generate_kwargs,
+            "return_timestamps": False if timestamp_mode == "none" else "word" if timestamp_mode == "word" else True,
+        }
+    chunk_length = _bounded_float(
+        kwargs.get("chunk_length_seconds"), field="Speech chunk length", default=30.0, minimum=0.0, maximum=30.0
+    )
+    stride_length = _bounded_float(
+        kwargs.get("stride_length_seconds"), field="Speech chunk stride", default=5.0, minimum=0.0, maximum=10.0
+    )
+    if chunk_length and (chunk_length < 5.0 or stride_length * 2 >= chunk_length):
+        raise ValueError("Speech chunk length must be 5-30 seconds with total stride smaller than the chunk.")
+    if not chunk_length and stride_length:
+        raise ValueError("Speech chunk stride must be zero when chunking is disabled.")
+    if chunk_length:
+        call_kwargs["chunk_length_s"] = chunk_length
+        call_kwargs["stride_length_s"] = stride_length
+    result, duration = _run_recognizer(node, model, kwargs, call_kwargs, timestamp_field=timestamp_field)
+    transcript = _normalize_transcript_result(
+        result,
+        task=task,
+        timestamp_mode=timestamp_mode,
+        duration=duration,
+    )
+    return {
+        "transcript": transcript,
+        "text": transcript["text"],
+        "segments": transcript["segments"],
+        "duration_seconds": duration,
+    }
+
+
 class TranscribeAudio(NodeBase):
     """Transcribe or translate bounded local audio into a normalized transcript."""
 
@@ -382,6 +455,10 @@ class TranscribeAudio(NodeBase):
             "display": "input",
             "type": "speech_recognition_model",
             "required": True,
+            "onSignal": {"action": "show", "data": {
+                "AutoModelForSpeechSeq2Seq": ["task", "language", "timestamps"],
+                "AutoModelForCTC": ["ctc_timestamps"],
+            }},
         },
         "audio": {"label": "Audio", "display": "input", "type": "audio", "required": True},
         "task": {"label": "Task", "type": "string", "options": ["transcribe", "translate"], "default": "transcribe"},
@@ -391,6 +468,10 @@ class TranscribeAudio(NodeBase):
             "type": "string",
             "options": ["none", "segment", "word"],
             "default": "segment",
+        },
+        "ctc_timestamps": {
+            "label": "Timestamps", "type": "string", "options": ["none", "word"], "default": "word", "hidden": True,
+            "fieldOptions": {"omitInactiveDefault": True},
         },
         "chunk_length_seconds": {
             "label": "Chunk length",
@@ -413,56 +494,7 @@ class TranscribeAudio(NodeBase):
     }
 
     def execute(self, **kwargs):
-        model = kwargs.get("model")
-        if (
-            not isinstance(model, dict)
-            or model.get("schemaVersion") != 1
-            or model.get("family") != SPEECH_MODEL_FAMILY_SEQ2SEQ
-            or not callable(model.get("pipeline"))
-        ):
-            raise ValueError("Transcribe Audio requires a model from Load Speech Recognition Model.")
-        task = str(kwargs.get("task") or "transcribe").strip().casefold()
-        if task not in SPEECH_TASKS:
-            raise ValueError("Speech task must be exactly transcribe or translate.")
-        timestamp_mode = str(kwargs.get("timestamps") or "segment").strip().casefold()
-        if timestamp_mode not in TIMESTAMP_MODES:
-            raise ValueError("Speech timestamps must be exactly none, segment, or word.")
-        language = str(kwargs.get("language") or "").strip()
-        if len(language) > 64 or any(character in language for character in "\r\n\0"):
-            raise ValueError("Speech language hint must be at most 64 characters on one line.")
-        chunk_length = _bounded_float(
-            kwargs.get("chunk_length_seconds"), field="Speech chunk length", default=30.0, minimum=0.0, maximum=30.0
-        )
-        stride_length = _bounded_float(
-            kwargs.get("stride_length_seconds"), field="Speech chunk stride", default=5.0, minimum=0.0, maximum=10.0
-        )
-        if chunk_length and (chunk_length < 5.0 or stride_length * 2 >= chunk_length):
-            raise ValueError("Speech chunk length must be 5-30 seconds with total stride smaller than the chunk.")
-        if not chunk_length and stride_length:
-            raise ValueError("Speech chunk stride must be zero when chunking is disabled.")
-        generate_kwargs = {"task": task}
-        if language:
-            generate_kwargs["language"] = language
-        call_kwargs: dict[str, Any] = {
-            "generate_kwargs": generate_kwargs,
-            "return_timestamps": False if timestamp_mode == "none" else "word" if timestamp_mode == "word" else True,
-        }
-        if chunk_length:
-            call_kwargs["chunk_length_s"] = chunk_length
-            call_kwargs["stride_length_s"] = stride_length
-        result, duration = _run_recognizer(self, model, kwargs, call_kwargs)
-        transcript = _normalize_transcript_result(
-            result,
-            task=task,
-            timestamp_mode=timestamp_mode,
-            duration=duration,
-        )
-        return {
-            "transcript": transcript,
-            "text": transcript["text"],
-            "segments": transcript["segments"],
-            "duration_seconds": duration,
-        }
+        return _transcribe(self, kwargs)
 
 
 class TranscribeCTCAudio(NodeBase):
@@ -506,51 +538,4 @@ class TranscribeCTCAudio(NodeBase):
     }
 
     def execute(self, **kwargs):
-        model = kwargs.get("model")
-        if (
-            not isinstance(model, dict)
-            or model.get("schemaVersion") != 1
-            or model.get("family") != SPEECH_MODEL_FAMILY_CTC
-            or not callable(model.get("pipeline"))
-        ):
-            raise ValueError("Transcribe CTC Audio requires a model from Load CTC Speech Recognition Model.")
-        timestamp_mode = str(kwargs.get("timestamps") or "word").strip().casefold()
-        if timestamp_mode not in CTC_TIMESTAMP_MODES:
-            raise ValueError("CTC speech timestamps must be exactly none or word.")
-        chunk_length = _bounded_float(
-            kwargs.get("chunk_length_seconds"),
-            field="Speech chunk length",
-            default=30.0,
-            minimum=0.0,
-            maximum=30.0,
-        )
-        stride_length = _bounded_float(
-            kwargs.get("stride_length_seconds"),
-            field="Speech chunk stride",
-            default=5.0,
-            minimum=0.0,
-            maximum=10.0,
-        )
-        if chunk_length and (chunk_length < 5.0 or stride_length * 2 >= chunk_length):
-            raise ValueError("Speech chunk length must be 5-30 seconds with total stride smaller than the chunk.")
-        if not chunk_length and stride_length:
-            raise ValueError("Speech chunk stride must be zero when chunking is disabled.")
-        call_kwargs: dict[str, Any] = {
-            "return_timestamps": "word" if timestamp_mode == "word" else False,
-        }
-        if chunk_length:
-            call_kwargs["chunk_length_s"] = chunk_length
-            call_kwargs["stride_length_s"] = stride_length
-        result, duration = _run_recognizer(self, model, kwargs, call_kwargs)
-        transcript = _normalize_transcript_result(
-            result,
-            task="transcribe",
-            timestamp_mode=timestamp_mode,
-            duration=duration,
-        )
-        return {
-            "transcript": transcript,
-            "text": transcript["text"],
-            "segments": transcript["segments"],
-            "duration_seconds": duration,
-        }
+        return _transcribe(self, kwargs, legacy_ctc=True)
