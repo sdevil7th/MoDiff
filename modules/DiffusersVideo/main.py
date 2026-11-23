@@ -3025,10 +3025,13 @@ class Generate(WanVACEGenerate):
         expected = _adapter_signal(adapter)
         legacy = {**expected, 'actions': {key: value for key, value in expected['actions'].items()
                                          if key not in {'EncodeInputs', 'Denoise', 'DecodeLatents'}}}
-        if signal not in (expected, legacy):
+        # Earlier saved loaders published the same adapter identity and ordered
+        # modes before the per-action table existed. The registry owns that table.
+        compact = {key: value for key, value in expected.items() if key != 'actions'}
+        if signal not in (expected, legacy, compact):
             raise ValueError("The connected video pipeline published a stale or mismatched adapter contract.")
         current_mode = values.get("mode")
-        actions = _adapter_signal(adapter)['actions']
+        actions = expected['actions']
         modes = actions.get(self.class_name, actions['Generate'])
         if not modes:
             raise ValueError('Select a generation node compatible with this model and its audio/video task.')

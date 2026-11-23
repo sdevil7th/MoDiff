@@ -1,4 +1,5 @@
 import inspect
+import json
 import importlib.util
 import sys
 import tempfile
@@ -708,6 +709,25 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             LoadPipeline.params["pipeline"]["signal"]["value"],
             _adapter_signal(VIDEO_PIPELINE_ADAPTERS["WanVACEPipeline"]),
         )
+
+    def test_saved_animatediff_contract_restores_current_controls_from_its_registered_adapter(self):
+        path = (Path(__file__).resolve().parents[1] / 'data/graphs/studio' /
+                'animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json')
+        graph = json.loads(path.read_text(encoding='utf-8'))
+        fields = next(node['data']['params'] for node in graph['nodes'] if node['data']['action'] == 'Generate')
+        signal, mode = fields['video_contract']['value'], fields['mode']['value']
+        generator = Generate('reopened-video')
+        generator.set_field_params = MagicMock()
+        generator.update_adapter_modes({'video_contract': signal, 'mode': mode}, None)
+        current = _adapter_signal(VIDEO_PIPELINE_ADAPTERS[signal['pipelineClass']])
+        self.assertNotIn('actions', signal)
+        self.assertIn(mode, current['actions']['Generate'])
+        self.assertEqual(generator.set_field_params.call_args_list[0], call('mode', {
+            'options': current['actions']['Generate'], 'default': current['actions']['Generate'][0], 'value': mode}))
+        for invalid in ({**signal, 'modes': ['text_to_video']}, {**signal, 'actions': {}},
+                        {**signal, 'unexpected': True}):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'stale or mismatched'):
+                generator.update_adapter_modes({'video_contract': invalid, 'mode': mode}, None)
 
     def test_video_model_action_couples_repository_and_revision_before_real_execution(self):
         stale_revision = "0" * 40

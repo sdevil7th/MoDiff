@@ -21,6 +21,10 @@ Blocks stay accessible under their authored names.
 Fresh examples use one Video Input for a file and its normalization, including
 when the prepared clip feeds an edge processor. Prepare Mask combines loading
 and aligning a mask. Composite can include foreground sizing, padding and cropping.
+A video-to-video workflow with separate footage and motion guidance has two Video
+Input cards. Their file pickers identify the source video and the control video.
+A saved loader from before per-action video metadata can restore controls when
+its library, adapter, schema and ordered modes still match the current registry.
 A separately consumed intermediate remains accessible. Opening an existing user
 document respects the presentation saved in that document.
 
