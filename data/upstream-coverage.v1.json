@@ -2660,7 +2660,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:4ff9388a48d8f19e5e5eac398f074e3019eee46351ab2cb2e4c966d1c47403d9",
+  "contentHash": "sha256:bd05cc99f45cb8b366b2f88cb2b4efcb4d91868a47ca5f0ae44ede4b4e9e8243",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -11001,7 +11001,7 @@
             "PredictDepth"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "79e512b7b04effe494bb4b2d1d291ee16b4f2a0c77aa7adda425ca12e6f8289a"
+          "sha256": "8133b52efa4d93f58900c38a98e914d240975ce17ddee784a26074ae9d85e8ee"
         }
       ],
       "nodeKeys": [
@@ -11084,7 +11084,7 @@
             "LoadTextGenerationModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "79e512b7b04effe494bb4b2d1d291ee16b4f2a0c77aa7adda425ca12e6f8289a"
+          "sha256": "8133b52efa4d93f58900c38a98e914d240975ce17ddee784a26074ae9d85e8ee"
         }
       ],
       "nodeKeys": [
@@ -11165,7 +11165,7 @@
             "LoadImageTextToTextModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "79e512b7b04effe494bb4b2d1d291ee16b4f2a0c77aa7adda425ca12e6f8289a"
+          "sha256": "8133b52efa4d93f58900c38a98e914d240975ce17ddee784a26074ae9d85e8ee"
         }
       ],
       "nodeKeys": [
@@ -11267,7 +11267,7 @@
             "LoadAnyToAnyModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "79e512b7b04effe494bb4b2d1d291ee16b4f2a0c77aa7adda425ca12e6f8289a"
+          "sha256": "8133b52efa4d93f58900c38a98e914d240975ce17ddee784a26074ae9d85e8ee"
         }
       ],
       "nodeKeys": [
