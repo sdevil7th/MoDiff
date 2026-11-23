@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+import pytest
 from PIL import Image, ImageDraw
 
 from modules.ImageFilters import MODULE_MAP as FILTER_DEFINITIONS, main as filters
@@ -66,6 +67,48 @@ class ImageFilterTests(unittest.TestCase):
         self.assertEqual(output[0].size, source.size)
         self.assertEqual(output[0].mode, "L")
         self.assertGreater(np.asarray(output[0]).max(), 0)
+
+
+@pytest.mark.parametrize("output_mode", ["L", "RGB"])
+def test_sdxl_adapter_accepts_the_canny_maps_from_saved_and_new_workflows(output_mode):
+    from types import SimpleNamespace
+
+    from diffusers.models.adapter import FullAdapterXL
+    from diffusers.pipelines.t2i_adapter.pipeline_stable_diffusion_xl_adapter import _preprocess_adapter_image
+
+    from modules.DiffusersImage import main as image
+
+    source = Image.new("RGB", (128, 128), "white")
+    ImageDraw.Draw(source).rectangle((24, 24, 103, 103), fill="gray")
+    options = {"output_mode": "RGB"} if output_mode == "RGB" else {}
+    edges = Canny("canny-adapter")(image=source, device=CPU_DEVICE, **options)["output"]
+    assert edges[0].mode == output_mode
+    original_bytes = edges[0].tobytes()
+    # Use the installed Diffusers preprocessing and the first convolution of
+    # its XL adapter. The reduced output width avoids allocating other weights.
+    adapter_kernel = FullAdapterXL(in_channels=3, channels=[8], num_res_blocks=1, downscale_factor=16)
+    calls = []
+
+    class StableDiffusionXLAdapterPipeline:
+        _execution_device = "cpu"
+
+        def __call__(self, **kwargs):
+            calls.append(kwargs["image"])
+            pixels = _preprocess_adapter_image(kwargs["image"], 128, 128)
+            assert tuple(pixels.shape) == (1, 3, 128, 128)
+            features = adapter_kernel.conv_in(adapter_kernel.unshuffle(pixels))
+            assert tuple(features.shape) == (1, 8, 8, 8)
+            return SimpleNamespace(images=[source])
+
+    result = image.ControlGenerate("canny-adapter-image")(
+        pipeline=StableDiffusionXLAdapterPipeline(), control_image=edges, width=128, height=128,
+        prompt="A glass cube", num_inference_steps=1,
+    )
+    assert result["images"] == [source]
+    assert calls[0][0].tobytes() == edges[0].convert("RGB").tobytes()
+    assert edges[0].mode == output_mode and edges[0].tobytes() == original_bytes
+    if output_mode == "RGB":
+        assert calls[0][0] is edges[0]
 
 
 if __name__ == "__main__":

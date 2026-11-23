@@ -191,6 +191,11 @@ software boundaries; trained output parity and Windows memory qualification
 require the matched live evidence described here. See
 [Image pipeline stages](image-pipeline-stages.md) for the exact stage contracts.
 
+The reviewed SDXL T2I Adapter expects a three-channel control image. Its
+Generate stage converts PIL guides to RGB at the model call. Existing
+grayscale Canny graphs keep their saved controls and produce the same edge
+map, which other consumers can continue to use directly.
+
 FLUX true CFG and transformer distilled guidance are distinct settings. The
 old image wrapper's primary guidance field sets true CFG; its secondary control
 sets distilled guidance. Converted Dev/Krea and Kontext templates retain both:

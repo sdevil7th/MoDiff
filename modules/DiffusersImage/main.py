@@ -5639,11 +5639,24 @@ class ControlGenerate(Edit):
     def execute(self, **kwargs):
         pipeline = kwargs.get("pipeline")
         adapter, values = preflight_image_action(pipeline, "ControlGenerate", kwargs)
+        control_image = values["control_image"]
+        if adapter.conditioning_kind == "t2i_adapter":
+            # Diffusers' XL adapter preserves the input channel count. Its
+            # reviewed checkpoint consumes RGB, including legacy Canny maps.
+            control_image = _convert_adapter_control_to_rgb(control_image)
         return self._execute_conditioned(
             values,
-            {adapter.control_image_parameter: values["control_image"]},
+            {adapter.control_image_parameter: control_image},
             adapter=adapter,
         )
+
+
+def _convert_adapter_control_to_rgb(image):
+    if isinstance(image, (list, tuple)):
+        return [_convert_adapter_control_to_rgb(item) for item in image]
+    if isinstance(image, Image.Image) and image.mode != "RGB":
+        return image.convert("RGB")
+    return image
 
 
 class ControlEdit(Edit):
