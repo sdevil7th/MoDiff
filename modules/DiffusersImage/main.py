@@ -4742,6 +4742,7 @@ class LoadPipeline(NodeBase):
         }
 
         self.progress(-1, phase="loading", message=f"Loading {pipeline_class_name}")
+        conditioning_component = None
         if pipeline_class_name == "FluxReduxPipeline":
             from diffusers import FluxPipeline, FluxPriorReduxPipeline
 
@@ -4865,6 +4866,10 @@ class LoadPipeline(NodeBase):
                 scope=f"diffusers-image-{index}" if len(offload_targets) > 1 else "diffusers-image",
                 **adapter_offload,
             )
+            if conditioning_component is not None and getattr(offload_result, "method", None) == "preserve_device_map":
+                # Diffusers streams its own components but leaves separately
+                # supplied ones where they were loaded. Move only that component.
+                conditioning_component.to(device)
             self.progress(
                 -1,
                 phase="component_placement",

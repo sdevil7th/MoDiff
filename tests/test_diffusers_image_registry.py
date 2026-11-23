@@ -4621,6 +4621,61 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             catalog_revision(SD15_CONTROLNET_CANNY_REPO),
         )
 
+    def test_streamed_resident_image_pipeline_places_the_supplied_controlnet(self):
+        class ControlNet:
+            def __init__(self):
+                self.device = "cpu"
+
+            def to(self, device):
+                self.device = str(device)
+                return self
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                return cls()
+
+        class Pipeline:
+            def __init__(self, controlnet, device_map):
+                self.controlnet = controlnet
+                self.hf_device_map = device_map
+                self.offload_device = None
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                return cls(kwargs["controlnet"], kwargs.get("device_map"))
+
+            def enable_model_cpu_offload(self, device):
+                self.offload_device = str(device)
+
+        classes = {"ControlNetModel": ControlNet, "StableDiffusionControlNetPipeline": Pipeline}
+        node = LoadPipeline("sd15-resident-controlnet")
+        node.progress = Mock()
+        node.mm_add = Mock()
+        with (
+            patch("modules.DiffusersImage.main.pipeline_class_from_name", side_effect=classes.__getitem__),
+            patch("modules.DiffusersRuntime.main.enable_parallel_weight_loading"),
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline", return_value={}),
+        ):
+            for offload_mode, expected_device in [("none", "cuda:0"), ("model_cpu", "cpu")]:
+                with self.subTest(offload_mode=offload_mode):
+                    result = node.execute(
+                        model_id=SD15_BASE_REPO,
+                        pipeline_class="StableDiffusionControlNetPipeline",
+                        mode="control_image",
+                        conditioning_kind="controlnet",
+                        conditioning_model_id=SD15_CONTROLNET_CANNY_REPO,
+                        dtype="float32",
+                        device="cuda:0",
+                        auto_offload=offload_mode != "none",
+                        offload_mode=offload_mode,
+                    )
+                    pipeline = result["pipeline"]
+                    self.assertEqual(pipeline.controlnet.device, expected_device)
+                    if offload_mode == "none":
+                        self.assertEqual(pipeline.hf_device_map, "cuda")
+                    else:
+                        self.assertEqual(pipeline.offload_device, "cuda:0")
+
     def test_sdxl_conditioned_loader_uses_only_pinned_fp16_safetensors_variants(self):
         calls = {}
 

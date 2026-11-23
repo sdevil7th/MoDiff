@@ -196,6 +196,12 @@ Generate stage converts PIL guides to RGB at the model call. Existing
 grayscale Canny graphs keep their saved controls and produce the same edge
 map, which other consumers can continue to use directly.
 
+Resident image pipelines can stream their base weights directly to the
+accelerator. Diffusers leaves supplied conditioning components on their loaded
+device, so the image loader moves those components to the accelerator when it
+preserves the base pipeline's device map. Model and group offload keep their
+existing hook-based placement.
+
 FLUX true CFG and transformer distilled guidance are distinct settings. The
 old image wrapper's primary guidance field sets true CFG; its secondary control
 sets distilled guidance. Converted Dev/Krea and Kontext templates retain both:
