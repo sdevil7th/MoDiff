@@ -138,6 +138,45 @@ def test_exact_installed_secondary_snapshot_is_loadable(caches):
     assert hf.exact_cached_snapshot_path("example/audio", REVISION) == snapshot
 
 
+def test_reviewed_motion_adapter_readiness_recovers_from_a_stale_variant_plan(tmp_path, monkeypatch):
+    from modiff import auto_resource
+    from modiff.model_artifact_catalog import catalog_repository_pin
+    from modiff.studio_execution_specs import ANIMATEDIFF_MOTION_REPO
+
+    repo = ANIMATEDIFF_MOTION_REPO
+    pin = catalog_repository_pin(repo)
+    revision, weight = pin["revision"], pin["weightName"]
+    body = b"reviewed motion weights"
+    monkeypatch.setattr(auto_resource, "catalog_repository_pin", lambda _repo: {**pin, "byteSize": len(body)}, raising=False)
+    relative = f"models--{repo.replace('/', '--')}/snapshots/{revision}"
+    primary, secondary = tmp_path / "primary", tmp_path / "secondary"
+    old_snapshot, current_snapshot = primary / relative, secondary / relative
+    old_snapshot.mkdir(parents=True)
+    (old_snapshot / "config.json").write_text("{}", encoding="utf-8")
+    obsolete = "diffusion_pytorch_model.fp16.safetensors"
+    (old_snapshot / obsolete).write_bytes(body)
+    receipt = old_snapshot.parent.parent / ".modiff_download_plan.json"
+    receipt.write_text(json.dumps({"revision": revision, "files": [{"name": obsolete, "size": len(body)}]}),
+                       encoding="utf-8")
+    monkeypatch.setattr(hf, "_hf_cache_locations", lambda: [("configured", str(primary)), ("secondary", str(secondary))])
+    record = {"id": repo, "cache_dirs": [str(primary), str(secondary)], "revisions": [{"hash": revision}]}
+
+    incomplete = auto_resource.artifact_cache_status(repo, [record])
+    assert not incomplete["complete"] and incomplete["repairRequired"]
+    assert weight in incomplete["missingFiles"]
+
+    current_snapshot.mkdir(parents=True)
+    (current_snapshot / weight).write_bytes(body)
+    assert not auto_resource.artifact_cache_status(repo, [record])["complete"], "Do not join files across cache roots"
+    (current_snapshot / "config.json").write_text("{}", encoding="utf-8")
+    complete = auto_resource.artifact_cache_status(repo, [record])
+    assert complete["complete"]
+    assert complete["plannedRevision"] == revision
+    assert set(complete["plannedFiles"]) == {"config.json", weight}
+    assert hf.exact_cached_snapshot_path(repo, revision, weight) == current_snapshot
+    assert json.loads(receipt.read_bytes())["files"][0]["name"] == obsolete
+
+
 @pytest.mark.parametrize("canonical_alias", [False, True])
 def test_cache_root_alias_accepts_lexical_and_canonical_files(tmp_path, monkeypatch, canonical_alias):
     actual = tmp_path / "actual"

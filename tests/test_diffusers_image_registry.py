@@ -5291,6 +5291,36 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(result["images"][0].getpixel((0, 0)), (10, 20, 30))
         self.assertEqual(result["images"][0].getpixel((3, 1)), (200, 210, 220))
 
+    def test_kontext_outpaint_keeps_a_matching_canvas_and_mask_at_requested_size(self):
+        class Pipeline:
+            _execution_device = "cpu"
+
+            def __call__(self, *, image, mask_image, width, height, _auto_resize=True, **_kwargs):
+                self.received = (image.size, mask_image.size, width, height, _auto_resize)
+                output_size = (1328, 800) if _auto_resize else image.size
+                return SimpleNamespace(images=[Image.new("RGB", output_size, "green")])
+
+        requested_size = (1344, 768)
+        for mode, canvas_size, keep_size in (
+            ("outpaint", requested_size, True),
+            ("outpaint", (1024, 768), False),
+            ("inpaint", requested_size, False),
+        ):
+            with self.subTest(mode=mode, canvas_size=canvas_size):
+                canvas = Image.new("RGB", canvas_size, "blue")
+                mask = Image.new("L", canvas_size, 0)
+                mask.paste(255, (0, 0, 256, canvas_size[1]))
+                pipeline = tag_test_image_pipeline(Pipeline(), "FluxKontextInpaintPipeline", mode)
+                result = Inpaint("kontext-canvas-probe").execute(
+                    pipeline=pipeline, image=canvas, mask_image=mask, prompt="Extend the lake",
+                    width=requested_size[0], height=requested_size[1], num_inference_steps=1,
+                )
+                self.assertEqual(pipeline.received, (canvas_size, canvas_size, *requested_size, not keep_size))
+                if keep_size:
+                    self.assertEqual(result["images"][0].size, requested_size)
+                    self.assertEqual(result["images"][0].getpixel((256, 0)), (0, 0, 255))
+                    self.assertEqual(result["images"][0].getpixel((0, 0)), (0, 128, 0))
+
     def test_generic_step_callback_propagates_interrupt_to_pipeline(self):
         class FakePipeline:
             _interrupt = False

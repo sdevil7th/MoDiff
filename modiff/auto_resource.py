@@ -44,12 +44,14 @@ from modiff.model_artifact_catalog import (
     AUTO_TRUST_LEVELS,
     catalog_artifact,
     catalog_model,
+    catalog_repository_pin,
     catalog_revision,
     community_artifact_is_discoverable,
 )
 from modiff.optional_runtimes import public_optional_runtime_profiles
 from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution, optional_runtime_requirement_for_profiles
 from modiff.studio_execution_specs import (
+    ANIMATEDIFF_MOTION_REPO,
     studio_auto_model_requirements,
     studio_execution_spec_for_pair,
     studio_model_dependencies_for_pair,
@@ -789,6 +791,15 @@ def _artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | No
         else []
     )
     planned_revision = str(download_plan.get("revision") or "") if isinstance(download_plan, dict) else ""
+    motion_pin = catalog_repository_pin(repo_id) if repo_id.lower() == ANIMATEDIFF_MOTION_REPO.lower() else None
+    if motion_pin:
+        # Older download receipts can name a different weight variant at the
+        # same commit. The live loaders select the current exact catalog files.
+        planned_revision = catalog_revision(repo_id)
+        expected_files = [
+            {"name": "config.json"},
+            {"name": motion_pin["weightName"], "size": motion_pin["byteSize"]},
+        ]
     # Download-plan receipts created before immutable catalog pins were added
     # do not contain ``revision`` even though the scanned cache record does.
     # Recover the catalog pin only when that exact snapshot is actually
@@ -812,6 +823,21 @@ def _artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | No
         active_files.extend(_active_repo_download_files(_hf_repo_cache_dir(repo_id, cache_dir)))
     active_files = list(dict.fromkeys(active_files))
     snapshot_dirs = _snapshot_dirs_for_model(repo_id, record)
+    if motion_pin:
+        from utils.huggingface import exact_cached_snapshot_path
+
+        snapshot_dirs = [path for path in snapshot_dirs if path.name == planned_revision]
+        if snapshot_dirs:
+            try:
+                selected = exact_cached_snapshot_path(motion_pin["repo"], planned_revision, motion_pin["weightName"])
+            except FileNotFoundError:
+                # The existing snapshot scan identifies the missing required files.
+                pass
+            except (ValueError, OSError):
+                snapshot_dirs = []
+            else:
+                # Validate the entire selection where the execution loader opens it.
+                snapshot_dirs = [selected]
     if not snapshot_dirs:
         return {
             "installed": True,

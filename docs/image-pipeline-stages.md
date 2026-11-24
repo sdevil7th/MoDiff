@@ -115,6 +115,10 @@ generic canvas keeps a matching 832×768 source at its original size and
 builds the expansion mask. This only seeds new workflows. Existing
 saved sizes, margins and connections are preserved.
 
+FLUX Kontext outpaint uses the connected canvas and mask dimensions when
+they match the requested output size. The backend disables the pipeline's
+automatic resize in that case so the preserved source crop stays aligned.
+
 ### Cached weights and runtime kernels
 
 AuraFlow v0.3 publishes its FP16 transformer shards under the legacy

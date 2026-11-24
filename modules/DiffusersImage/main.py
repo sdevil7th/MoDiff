@@ -173,6 +173,7 @@ class ImagePipelineAdapter:
     reference_prompt_placeholders: bool = False
     max_input_image_size: int | None = None
     resize_reference_to_output: bool = False
+    preserve_explicit_outpaint_canvas: bool = False
     max_sequence_length: int = 512
     max_sequence_length_parameter: str = "max_sequence_length"
     max_reference_images: int = 1
@@ -467,6 +468,15 @@ class ImagePipelineAdapter:
                 if not callable(resize):
                     raise RuntimeError(f"{self.pipeline_class} did not expose its reviewed image resize boundary.")
                 target[self.image_parameter] = resize(image, height=height, width=width)
+        if self.preserve_explicit_outpaint_canvas and getattr(pipeline, "_modiff_image_mode", None) == "outpaint":
+            image, mask = target.get(self.image_parameter), target.get("mask_image")
+            size = (target.get("width"), target.get("height"))
+            if isinstance(image, Image.Image) and isinstance(mask, Image.Image) and image.size == mask.size == size:
+                # Kontext otherwise snaps even a prepared canvas to its preferred
+                # training resolutions, moving the original crop and its mask.
+                if not supports_arg(pipeline, "_auto_resize"):
+                    raise RuntimeError(f"{self.pipeline_class} did not expose its reviewed canvas resize control.")
+                target["_auto_resize"] = False
 
     @contextmanager
     def prompt_encoding_context(self, pipeline: Any):
@@ -1601,6 +1611,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({FLUX_KONTEXT_NVFP4_REPO}),
         artifact_pipeline_classes=("FluxKontextPipeline", "FluxKontextInpaintPipeline"),
         safe_serialization_required=True,
+        preserve_explicit_outpaint_canvas=True,
         guidance_parameter="true_cfg_scale",
         secondary_guidance_parameter="guidance_scale",
         secondary_guidance_default=2.5,

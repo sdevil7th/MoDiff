@@ -53,6 +53,10 @@ its own FP16 adapter and spatial LoRA. The loader resolves both files through
 the same immutable snapshot lookup as Model Manager, including secondary
 cache locations.
 
+AnimateDiff adapter readiness checks the catalog's standard weight file and
+configuration in the snapshot used by the loader. A download receipt for an
+older file variant alone does not mark the current workflow ready.
+
 The built-in Latte text-to-video and CogVideoX video-to-video recipes
 start with Auto attention, which uses the processors supported by their
 installed pipelines. If a saved workflow reports that Math attention is
