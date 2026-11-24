@@ -342,6 +342,7 @@ def run_conditional_image(monkeypatch, pipeline_class, **changes):
 @pytest.mark.parametrize('pipeline_class,pag,sequence_parameter', [
     ('StableDiffusionPipeline', False, None),
     ('StableDiffusionPAGPipeline', True, None),
+    ('LuminaPipeline', False, 'max_sequence_length'),
     ('PRXPipeline', False, 'tokenizer_max_length'),
 ])
 def test_conditional_image_accounting_matches_actual_call(monkeypatch, pipeline_class, pag, sequence_parameter):
@@ -365,6 +366,9 @@ def test_conditional_image_accounting_matches_actual_call(monkeypatch, pipeline_
     assert sequence['disposition'] == ('consumed' if sequence_parameter else 'inactive')
     if sequence_parameter:
         assert sequence['value'] == calls[sequence_parameter] == 224
+    if pipeline_class == 'LuminaPipeline':
+        assert calls['clean_caption'] is False
+        assert 'clean_caption' not in fields
     assert fields['layers']['disposition'] == 'inactive'
     assert fields['layers']['inputValue'] == fields['layers']['value'] == requested['layers'] == 4
 

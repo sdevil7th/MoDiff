@@ -322,6 +322,9 @@ def _record_direct_image_accounting(node, requested, values, call_kwargs, adapte
                    image_guidance_scale=adapter.image_guidance_parameter,
                    max_sequence_length=adapter.max_sequence_length_parameter)
     internal = {'generator', 'return_dict', 'callback_on_step_end', 'callback_on_step_end_tensor_inputs'}
+    # The adapter fixes caption cleanup independently of graph controls.
+    if adapter.clean_caption is not None and call_kwargs.get('clean_caption') is adapter.clean_caption:
+        internal.add('clean_caption')
     image_ports = {'edit_image': ('image',), 'inpaint': ('image', 'mask_image')}.get(task, ())
     internal.update(image_ports)
     if call_kwargs.keys() - internal - set(aliases.values()):
