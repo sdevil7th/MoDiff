@@ -30,15 +30,26 @@ CONTROL_FIELDS = {
     ('Audio', 'Export'): ['filename', 'sample_rate'],
     ('HuggingFaceSpeech', 'TranscribeAudio'): [],
     ('HuggingFaceSpeech', 'TranscribeCTCAudio'): [],
+    ('Video', 'Load'): [],
     ('Video', 'ProcessVideo'): VIDEO_CONTROLS,
     ('Video', 'Export'): ['filename', 'quality', 'fps'],
     ('Video', 'UpscaleVideo'): ['pipeline_class', 'operation', 'tile_size', 'tile_overlap', 'device', 'fps'],
+    ('DiffusersVideo', 'Generate'): ['mode'],
 }
-_VIDEO_SNAPSHOT_FIELDS = {('Video', 'ProcessVideo'): 'videos', ('Video', 'UpscaleVideo'): 'video'}
+_VIDEO_SNAPSHOT_FIELDS = {
+    ('Video', 'Load'): 'file',
+    ('Video', 'ProcessVideo'): 'videos',
+    ('Video', 'UpscaleVideo'): 'video',
+}
+_VIDEO_FRAME_PORTS = {
+    ('Video', 'Load'): {'video'},
+    ('DiffusersVideo', 'Generate'): {'pose_video', 'face_video', 'background_video', 'mask'},
+}
 MAX_CAPTURE_ITEMS = 16
 MAX_CAPTURE_BYTES = 32 * 1024
 MAX_FILE_BYTES = 256 * 1024 * 1024
 MAX_PIXEL_BYTES = 64 * 1024 * 1024
+MAX_VIDEO_CAPTURE_FRAMES = 1_200
 
 
 def enabled():
@@ -93,6 +104,33 @@ def identities(value):
     return [media_identity(item) for item in values]
 
 
+def video_frame_identity(frames):
+    """Describe the exact ordered pixels of a bounded, uniform decoded clip."""
+    from PIL import Image
+
+    if type(frames) not in (list, tuple) or not 1 <= len(frames) <= MAX_VIDEO_CAPTURE_FRAMES:
+        raise ValueError('unsupported-video-frame-list')
+    first = frames[0]
+    if not isinstance(first, Image.Image) or first.mode not in {'L', 'RGB', 'RGBA'}:
+        raise ValueError('unsupported-video-frame-mode')
+    width, height = first.size
+    mode = first.mode
+    frame_size = width * height * len(first.getbands())
+    total_size = frame_size * len(frames)
+    if not 0 < frame_size <= MAX_PIXEL_BYTES or total_size > MAX_FILE_BYTES:
+        raise ValueError('video-frame-capture-limit')
+    digest = hashlib.sha256()
+    for frame in frames:
+        if not isinstance(frame, Image.Image) or frame.mode != mode or frame.size != first.size:
+            raise ValueError('nonuniform-video-frames')
+        pixels = frame.tobytes()
+        if len(pixels) != frame_size:
+            raise ValueError('unsupported-video-frame-bytes')
+        digest.update(pixels)
+    return {'kind': 'video', 'sha256': digest.hexdigest(), 'byteSize': total_size, 'frameCount': len(frames),
+            'width': width, 'height': height, 'mode': mode}
+
+
 class _Capture:
     def __init__(self, node, controls, inputs, files):
         self.node = node
@@ -106,6 +144,7 @@ class _Capture:
         scope = (module_name.removeprefix('modules.'), class_name)
         if scope not in CONTROL_FIELDS:
             return
+        self.video_frame_ports = _VIDEO_FRAME_PORTS.get(scope, ())
         try:
             snapshot_field = _VIDEO_SNAPSHOT_FIELDS.get(scope)
             if snapshot_field is not None:
@@ -125,18 +164,22 @@ class _Capture:
                     raise ValueError('control-capture-limit')
                 values[name] = value
             self.record = {'schemaVersion': 1, 'source': 'native-builtin-media-v1', 'status': 'complete',
-                           'controls': values, 'inputs': {key: identities(value) for key, value in inputs.items()},
+                           'controls': values, 'inputs': self._identities(inputs),
                            'outputs': {}, 'files': files or {}}
             json.dumps(self.record, allow_nan=False)
         except (ValueError, TypeError, OSError, MemoryError):
             self.record = {'schemaVersion': 1, 'status': 'unavailable', 'reason': 'unsupported-or-bounded-input'}
+
+    def _identities(self, ports):
+        return {port: [video_frame_identity(value)] if port in self.video_frame_ports and value is not None
+                else identities(value) for port, value in ports.items()}
 
     def finish(self, outputs):
         if self.record is None:
             return
         if self.record['status'] == 'complete':
             try:
-                self.record['outputs'] = {key: identities(value) for key, value in outputs.items()}
+                self.record['outputs'] = self._identities(outputs)
                 size = len(json.dumps(self.record, allow_nan=False, ensure_ascii=True).encode('ascii'))
                 if size > MAX_CAPTURE_BYTES:
                     self.record = {'schemaVersion': 1, 'status': 'truncated', 'reason': 'capture-size-limit'}
@@ -168,8 +211,13 @@ def snapshot_video_inputs(value):
     from modiff.config import CONFIG
     from modiff.path_identifiers import resolve_runtime_input_path
     root = Path(CONFIG.paths['data']) / '.media-evidence'
-    root.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(dir=root, prefix='inputs-') as temporary:
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        workspace = tempfile.TemporaryDirectory(dir=root, prefix='inputs-')
+    except OSError:
+        yield value, None
+        return
+    with workspace as temporary:
         actual, files = [], []
         try:
             for index, original in enumerate(values):

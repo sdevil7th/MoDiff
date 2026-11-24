@@ -30,6 +30,15 @@ Snapshots are deleted after the call. No original input is changed. Existing
 structured retained-asset behavior is preserved and is not silently relabelled
 as captured file-input evidence.
 
+Load Video uses that snapshot boundary while preserving the existing File Name
+output. It records one ordered fingerprint of the decoded frames, including
+frame count, size and pixel mode. The Wan character animation and replacement
+routes record the same fingerprint at the generation call for each connected
+video guide. The comparison can verify that the intended decoded sequence
+reached Diffusers. Resizing, preprocessing and model-specific effects inside
+Diffusers require separate evidence. A capture made before the decoded-frame
+fingerprints were available keeps its original observation scope.
+
 Upscale Video uses the same opt-in snapshot boundary for its source file. Its
 receipt binds the source bytes, effective tile size, tile overlap, device, FPS,
 and the encoded intermediate consumed by a downstream Video Output stage.
@@ -40,6 +49,8 @@ proof scope.
 Capture is bounded to 16 members per port, 256 MiB per file, 64 MiB of raw pixel
 or sample bytes per member, and 32 KiB of metadata per node. Unsupported or
 oversized evidence is explicit rather than a fabricated complete receipt.
+An ordered decoded video fingerprint hashes up to 1,200 equal-size PIL frames
+and up to 256 MiB of decoded pixels without retaining another frame list.
 These capture limits do not constrain ordinary user workflows. Optional metadata
 is budgeted after existing receipt sections; omission sets
 `mediaEvidenceStatus.truncated` without evicting legacy node records or summaries.

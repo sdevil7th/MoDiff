@@ -37,7 +37,7 @@ MAX_VIDEO_UPSCALE_INPUT_PIXELS = 4_194_304
 MAX_VIDEO_UPSCALE_OUTPUT_PIXELS = 16_777_216
 
 
-def load_video_file(file_value, *, interrupted=None):
+def load_video_file(file_value, *, interrupted=None, snapshot_path=None):
     """Shared local decoder; the ordinary runtime path resolver owns access."""
     import imageio
     from PIL import Image
@@ -46,10 +46,11 @@ def load_video_file(file_value, *, interrupted=None):
     if not file_value:
         raise ValueError("Load Video needs an existing video file.")
     file = resolve_runtime_input_path(file_value)
-    if not file.is_file():
+    decode_path = snapshot_path or file
+    if not Path(decode_path).is_file():
         raise ValueError("Load Video needs an existing video file.")
     images = []
-    reader = imageio.get_reader(str(file), "ffmpeg")
+    reader = imageio.get_reader(str(decode_path), "ffmpeg")
     try:
         meta = reader.get_meta_data()
         width, height = meta.get("size", (0, 0))
@@ -99,7 +100,17 @@ class Load(NodeBase):
     }
 
     def execute(self, **kwargs):
-        return load_video_file(kwargs["file"], interrupted=lambda: self._interrupt)
+        from modiff.builtin_media_evidence import begin_media_capture, snapshot_video_inputs
+
+        value = kwargs["file"]
+        selected = value[0] if isinstance(value, list) and value else value
+        with snapshot_video_inputs(selected) as (actual, files):
+            output = load_video_file(
+                value, interrupted=lambda: self._interrupt, snapshot_path=actual[0] if files else None,
+            )
+            capture = begin_media_capture(self, {}, inputs={}, files={"file": files} if files else None)
+            capture.finish({"video": output["video"]})
+            return output
 
 
 class Export(NodeBase):

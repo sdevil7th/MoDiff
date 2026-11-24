@@ -2993,6 +2993,7 @@ class Generate(WanVACEGenerate):
         try:
             _adapter, result = self._execute_with_adapter(**kwargs)
             result.pop("_audio", None)
+            media_capture = result.pop('_native_media_capture', None)
             if encoding is not None:
                 from .stage_execution import require_encoding
                 require_encoding(kwargs['pipeline'], encoding)
@@ -3003,6 +3004,8 @@ class Generate(WanVACEGenerate):
                 self.record_generation_inputs({**consumed, 'num_frames': result['frames_out']})
             else:
                 self.record_generation_inputs({**kwargs, 'executed_task': kwargs['mode']})
+            if media_capture is not None:
+                media_capture.finish({})
             return result
         finally:
             self._integrated_video_encoding = None
@@ -3110,6 +3113,13 @@ class Generate(WanVACEGenerate):
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
         height = int(kwargs.get("height") or 720)
         width = int(kwargs.get("width") or 1280)
+        from modiff.builtin_media_evidence import begin_media_capture
+
+        capture = begin_media_capture(
+            self, {'mode': mode},
+            inputs={'reference': references[0], 'pose_video': pose_video, 'face_video': face_video,
+                    'background_video': background, 'mask': mask},
+        )
         self._active_pipeline = pipeline
         try:
             result = pipeline(
@@ -3144,6 +3154,7 @@ class Generate(WanVACEGenerate):
         if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
             frames = frames[0]
         return {
+            "_native_media_capture": capture,
             "video_out": frames,
             "width_out": width,
             "height_out": height,

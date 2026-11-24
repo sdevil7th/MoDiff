@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from modiff.builtin_media_evidence import begin_media_capture, snapshot_video_inputs
+from modiff.builtin_media_evidence import begin_media_capture, snapshot_video_inputs, video_frame_identity
 
 
 def owner(module='modules.ImageOperations', action='ProcessImage'):
@@ -90,6 +90,106 @@ def test_video_consumes_the_same_snapshot_that_was_hashed(tmp_path, monkeypatch)
         retained = Path(actual[0])
     assert not retained.exists()
     assert source.read_bytes() == b'replaced-video'
+
+
+def test_video_loader_receipt_keeps_source_path_and_decodes_only_snapshotted_bytes(tmp_path, monkeypatch):
+    import imageio
+    from modiff.config import CONFIG
+    from modules.Video.main import Load
+
+    monkeypatch.setenv('MODIFF_CAPTURE_BUILTIN_MEDIA', '1')
+    monkeypatch.setitem(CONFIG.paths, 'data', str(tmp_path))
+    path = tmp_path / 'guide.mp4'
+    path.write_bytes(b'original-encoded-source')
+    frames = [np.full((2, 3, 3), value, dtype=np.uint8) for value in range(20)]
+
+    class Reader:
+        def get_meta_data(self):
+            return {'size': (3, 2), 'fps': 12}
+
+        def count_frames(self):
+            return len(frames)
+
+        def __iter__(self):
+            return iter(frames)
+
+        def close(self):
+            pass
+
+    def open_snapshot(filename, format):
+        from pathlib import Path
+        path.write_bytes(b'source-replaced-during-decode')
+        assert filename != str(path) and Path(filename).read_bytes() == b'original-encoded-source'
+        assert format == 'ffmpeg'
+        return Reader()
+
+    monkeypatch.setattr(imageio, 'get_reader', open_snapshot)
+    node = owner('modules.Video', 'Load')
+    node._interrupt = False
+    output = Load.execute(node, file=['@data/guide.mp4'])
+    evidence = node._execution_input_record['mediaEvidence']
+    assert output['filename'] == str(path)
+    assert evidence['files']['file'][0]['sourceValue'] == '@data/guide.mp4'
+    assert evidence['files']['file'][0]['sha256'] == hashlib.sha256(b'original-encoded-source').hexdigest()
+    video = evidence['outputs']['video'][0]
+    assert video == {
+        'kind': 'video', 'width': 3, 'height': 2, 'mode': 'RGB', 'frameCount': 20, 'byteSize': 360,
+        'sha256': hashlib.sha256(b''.join(frame.tobytes() for frame in frames)).hexdigest(),
+    }
+    assert video_frame_identity(output['video'][::-1])['sha256'] != video['sha256']
+    assert not list((tmp_path / '.media-evidence').iterdir())
+
+
+def test_video_projection_rejects_mismatched_or_oversized_frame_lists(monkeypatch):
+    frame = Image.new('RGB', (3, 2))
+    with pytest.raises(ValueError, match='nonuniform-video-frames'):
+        video_frame_identity([frame, Image.new('L', (3, 2))])
+    monkeypatch.setattr('modiff.builtin_media_evidence.MAX_FILE_BYTES', 20)
+    with pytest.raises(ValueError, match='video-frame-capture-limit'):
+        video_frame_identity([frame, frame])
+
+
+def test_unavailable_snapshot_directory_preserves_normal_video_input(tmp_path, monkeypatch):
+    from modiff.config import CONFIG
+
+    monkeypatch.setenv('MODIFF_CAPTURE_BUILTIN_MEDIA', '1')
+    monkeypatch.setitem(CONFIG.paths, 'data', str(tmp_path))
+    (tmp_path / '.media-evidence').write_bytes(b'not-a-directory')
+    with snapshot_video_inputs('@data/guide.mp4') as (actual, files):
+        assert actual == '@data/guide.mp4'
+        assert files is None
+
+
+@pytest.mark.parametrize('mode', ['character_animate', 'character_replace'])
+def test_wan_motion_capture_describes_the_actual_library_inputs(monkeypatch, mode):
+    from modules.DiffusersVideo.main import Generate
+
+    monkeypatch.setenv('MODIFF_CAPTURE_BUILTIN_MEDIA', '1')
+    reference = Image.new('RGB', (4, 3))
+    pose = [Image.new('RGB', (4, 3), (step, 0, 0)) for step in range(20)]
+    face = pose[::-1]
+    background = pose if mode == 'character_replace' else None
+    mask = [Image.new('L', (4, 3), 255)] * len(pose) if background else None
+
+    class Pipeline:
+        _modiff_video_pipeline_class = 'WanAnimatePipeline'
+        _execution_device = 'cpu'
+
+        def __call__(self, **arguments):
+            self.arguments = arguments
+            return SimpleNamespace(frames=[pose])
+
+    pipeline = Pipeline()
+    node = Generate()
+    output = node.execute(pipeline=pipeline, mode=mode, reference_images=[reference], pose_video=pose,
+                          face_video=face, background_video=background, mask=mask)
+    assert '_native_media_capture' not in output
+    recorded = node._execution_input_record['mediaEvidence']
+    assert recorded['controls'] == {'mode': mode}
+    for socket in ('pose_video', 'face_video', 'background_video', 'mask'):
+        value = pipeline.arguments['mask_video' if socket == 'mask' else socket]
+        assert recorded['inputs'][socket] == ([video_frame_identity(value)] if value else [])
+    assert recorded['inputs']['pose_video'] != recorded['inputs']['face_video']
 
 
 def test_capture_never_traverses_unknown_objects_or_custom_nodes(monkeypatch):
