@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:ec9cc1fde152992123b0302ff55310b257752c923252b31ca0c398320010849f",
+  "contentHash": "sha256:c3fb618194fa502b16fe3b650fc23e2b43ca797e9a218df5307bfda390c281eb",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -1589,7 +1589,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "1c7ecbbc85f354360673bc56f7cf59fa18cf53dea470477901ed6bced448b985",
+      "graphHash": "ff62618a2dffa6c1dd11752c5ea8cde5f530f4ee4d1223c00b2fd09c0bc3e490",
       "graphPath": "studio/cog-video-x-video-to-video-pipeline/video-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -7061,13 +7061,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:700445a779a53b47df091500ea76a68283781cb722f348a259c9ec4538c5d0fd",
+      "contentHash": "sha256:b6f813d1f90ce91998e8b9123e741c117fb80cfd3b0da7aa6d26737bf0fb71f9",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:9ef4b72708b0627d385f196d89ed8db883f38bd8ee14054f733b0e27d8b1ea75"
+      "sha256": "sha256:aff63fafb865ac1a1bd7106d75062c6732f90cfebb297ebcec1c769946a07ee2"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:b07a3d8dc132dac589212bf568f9a63c37c5570997f28185ee7e5b39a84c578f"
+      "sha256": "sha256:758a1e26cfc4e9d6ec0d1d55733448cf1cbabd2f1467c3d2635c752ac2d76ff3"
     }
   },
   "summary": {

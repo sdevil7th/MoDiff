@@ -474,7 +474,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "1c7ecbbc85f354360673bc56f7cf59fa18cf53dea470477901ed6bced448b985",
+      "graphHash": "ff62618a2dffa6c1dd11752c5ea8cde5f530f4ee4d1223c00b2fd09c0bc3e490",
       "graphPath": "studio/cog-video-x-video-to-video-pipeline/video-to-video.json",
       "id": "CogVideoXVideoToVideoPipeline:video_to_video",
       "mode": "video_to_video",
@@ -2660,7 +2660,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:700445a779a53b47df091500ea76a68283781cb722f348a259c9ec4538c5d0fd",
+  "contentHash": "sha256:b6f813d1f90ce91998e8b9123e741c117fb80cfd3b0da7aa6d26737bf0fb71f9",
   "diffusersPipelines": [
     {
       "artifactReviews": [],

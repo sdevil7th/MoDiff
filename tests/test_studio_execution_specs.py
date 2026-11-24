@@ -1869,8 +1869,15 @@ class StudioExecutionSpecTests(unittest.TestCase):
         latte_archive = json.loads(
             (root / "latte-attention-studio-spec-compatibility.v1.json").read_text(encoding="utf-8")
         )
+        cogvideox_archive = json.loads(
+            (root / "cogvideox-v2v-attention-compatibility.v1.json").read_text(encoding="utf-8")
+        )
         role_field = ["diffusersRecipe", "attention_backend"]
-        for entry in [*archive["specifications"], *conditioned_archive["specifications"], *latte_archive["specifications"]]:
+        entries = [
+            *archive["specifications"], *conditioned_archive["specifications"],
+            *latte_archive["specifications"], *cogvideox_archive["specifications"],
+        ]
+        for entry in entries:
             saved = entry["specification"]
             model, mode = saved["modelType"], saved["mode"]
             with self.subTest(model=model):
@@ -1908,7 +1915,6 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertEqual([recipe["attention_backend"]["value"] for recipe in recipes], ["auto"])
 
         for model, mode in (
-            ("CogVideoXVideoToVideoPipeline", "video_to_video"),
             ("SanaImageToVideoPipeline", "image_to_video"),
             ("AllegroPipeline", "text_to_video"),
             ("MochiPipeline", "text_to_video"),

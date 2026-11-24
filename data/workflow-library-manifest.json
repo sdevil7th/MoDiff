@@ -1421,7 +1421,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/cog-video-x-video-to-video-pipeline/video-to-video.json",
-      "graphHash": "1c7ecbbc85f354360673bc56f7cf59fa18cf53dea470477901ed6bced448b985"
+      "graphHash": "ff62618a2dffa6c1dd11752c5ea8cde5f530f4ee4d1223c00b2fd09c0bc3e490"
     },
     {
       "id": "CogView3PlusPipeline:text_to_image",

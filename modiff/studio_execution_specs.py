@@ -12103,7 +12103,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "capability": _cogvideox_v2v_capability(),
             "roles": _V2V_GRAPH_ROLES,
             "edges": _V2V_GRAPH_EDGES,
-            "bindings": _COGVIDEOX_V2V_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_COGVIDEOX_V2V_GRAPH_BINDINGS),
         },
         "allegro:text-to-video:v1": {
             "modelType": "AllegroPipeline",
@@ -19040,6 +19040,15 @@ def _historical_studio_execution_spec(spec_id: str, content_hash: str) -> dict[s
         expected_bytes = 6727
         expected_sha256 = "30fa2a67536ad57dffe44e72d47c09dcb72f3790150e210b6375ad2ab37b1648"
         source_commit = "f2659f449b06cd8589d65792842fc93d800ccf89"
+    elif (spec_id, content_hash) == ("cogvideox-2b-video-to-video:video-to-video:v1", "studio-spec-v1-3a843ad7"):
+        video_attention_records = {
+            ("cogvideox-2b-video-to-video:video-to-video:v1", "studio-spec-v1-3a843ad7"):
+                ("CogVideoXVideoToVideoPipeline", "video_to_video", "cogvideox-2b-video-to-video:direct"),
+        }
+        archive_name = "cogvideox-v2v-attention-compatibility.v1.json"
+        expected_bytes = 7707
+        expected_sha256 = "ef7ea55e07f31061c878d0d2ff34884a899496bdf7a6cae966f6569aa8031145"
+        source_commit = "b433df336dfd94619ebeaae57ece18d9dcb735ea"
     else:
         archive_name = "video-attention-studio-spec-compatibility.v1.json"
         expected_bytes = 34008

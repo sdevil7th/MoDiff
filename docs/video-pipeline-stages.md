@@ -53,10 +53,10 @@ its own FP16 adapter and spatial LoRA. The loader resolves both files through
 the same immutable snapshot lookup as Model Manager, including secondary
 cache locations.
 
-The built-in Latte text-to-video recipe starts with Auto attention, which
-uses the processors supported by its installed pipeline. A saved Latte
-workflow that specifies Math can use Auto in Model Setup to clear the
-unsupported attention error.
+The built-in Latte text-to-video and CogVideoX video-to-video recipes
+start with Auto attention, which uses the processors supported by their
+installed pipelines. If a saved workflow reports that Math attention is
+unsupported, select Auto in Model Setup.
 
 Registered native-stage recipe descriptors retain their original versioned
 selection metadata when only their visual grouping changes. Selection notes
