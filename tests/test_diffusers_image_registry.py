@@ -4070,6 +4070,56 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 )
             self.assertEqual(loaded[-1][2].text_encoder.to_calls, expected_calls)
 
+    def test_joyimage_plus_patch_barrier_is_scoped_to_the_reviewed_hip_projection(self):
+        import torch
+
+        class JoyImageEditPlusPipeline:
+            @classmethod
+            def from_pretrained(cls, _repo, **_kwargs):
+                pipeline = cls()
+                pipeline.transformer = SimpleNamespace(img_in=Mock())
+                return pipeline
+
+        for platform, device, hip, version, architecture, expected in (
+            ("linux", "cuda:0", "7.2.26015", "2.9.1+rocm7.2.0.git7e1940d4", "gfx1151:xnack+", True),
+            ("linux", "cuda:0", "7.2.26015", "2.9.1+rocm7.2.0.git7e1940d4", "gfx1100", False),
+            ("linux", "cuda:0", "7.3.0", "2.10.0+rocm7.3.0", "gfx1151", False),
+            ("win32", "cuda:0", None, "2.11.0+cu128", "", False),
+            ("linux", "cpu", "7.2.26015", "2.9.1+rocm7.2.0.git7e1940d4", "gfx1151", False),
+        ):
+            with self.subTest(platform=platform, device=device, architecture=architecture, version=version):
+                node = LoadPipeline("joy-plus-hip-projection-test")
+                node.progress = Mock()
+                node.mm_add = Mock()
+                with (
+                    patch("modules.DiffusersImage.main.pipeline_class_from_name", return_value=JoyImageEditPlusPipeline),
+                    patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+                    patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
+                    patch.object(sys, "platform", platform),
+                    patch.object(torch.version, "hip", hip),
+                    patch.object(torch, "__version__", version),
+                    patch.object(torch.cuda, "get_device_properties", return_value=SimpleNamespace(gcnArchName=architecture)),
+                    patch.object(torch.cuda, "synchronize") as synchronize,
+                ):
+                    result = node.execute(
+                        model_id=JOYIMAGE_EDIT_PLUS_REPO, pipeline_class="JoyImageEditPlusPipeline", mode="edit_image",
+                        revision=catalog_revision(JOYIMAGE_EDIT_PLUS_REPO), dtype="bfloat16", device=device,
+                        offload_mode="none", auto_offload=False,
+                    )
+                    projection = result["pipeline"].transformer.img_in
+                    if not expected:
+                        projection.register_forward_pre_hook.assert_not_called()
+                        synchronize.assert_not_called()
+                        continue
+                    projection.register_forward_pre_hook.assert_called_once()
+                    hook = projection.register_forward_pre_hook.call_args.args[0]
+                    for dtype, input_device in ((torch.float16, "cuda:0"), (torch.bfloat16, "cpu")):
+                        hook(projection, (SimpleNamespace(dtype=dtype, device=torch.device(input_device)),))
+                    synchronize.assert_not_called()
+                    patch_tensor = SimpleNamespace(dtype=torch.bfloat16, device=torch.device("cuda:0"))
+                    hook(projection, (patch_tensor,))
+                    synchronize.assert_called_once_with(patch_tensor.device)
+
     def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):
         loaded = {}
 
@@ -4152,6 +4202,31 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 num_inference_steps=4,
                 guidance_scale=1.0,
             )
+
+    def test_dreamlite_tiled_and_untiled_edit_latents_reach_the_denoiser_in_the_requested_dtype(self):
+        import torch
+
+        def prepare_image_latents(image, dtype, device):
+            # AutoencoderTiny returns a float32 composite for tiled BF16 encodes.
+            encoded_dtype = torch.float32 if use_tiling else dtype
+            return torch.ones(1, 4, 2, 2, dtype=encoded_dtype, device=device)
+
+        for model in ("DreamLitePipeline", "DreamLiteMobilePipeline"):
+            adapter = IMAGE_PIPELINE_ADAPTERS[model]
+            for use_tiling in (True, False):
+                with self.subTest(model=model, use_tiling=use_tiling):
+                    pipeline = SimpleNamespace(
+                        vae=SimpleNamespace(use_tiling=use_tiling),
+                        _modiff_image_mode="edit_image",
+                        prepare_image_latents=prepare_image_latents,
+                    )
+                    noise = torch.zeros(1, 4, 2, 2, dtype=torch.bfloat16)
+                    with adapter.edit_latent_dtype_context(pipeline):
+                        latents = pipeline.prepare_image_latents(None, dtype=noise.dtype, device=noise.device)
+                        conditioning = torch.cat((noise, latents), dim=3)
+                        self.assertEqual(conditioning.dtype, noise.dtype)
+                        self.assertTrue(torch.equal(conditioning[..., 2:], torch.ones_like(noise)))
+                    self.assertIs(pipeline.prepare_image_latents, prepare_image_latents)
 
     def test_sdxl_instruct_pix2pix_loads_safetensors_and_enforces_image_guidance(self):
         loaded = {}

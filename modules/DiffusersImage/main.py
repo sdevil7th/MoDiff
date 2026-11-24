@@ -1280,6 +1280,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         # Edit prepares latents from text_encoder.dtype; a float32 encoder vs bf16 UNet
         # fails in time_embedding (mat1 Float / mat2 BFloat16).
         component_dtype_overrides=(("text_encoder", "bfloat16"),),
+        normalize_tiled_edit_latent_dtype=True,
     ),
     "DreamLiteMobilePipeline": ImagePipelineAdapter(
         "DreamLiteMobilePipeline",
@@ -4334,6 +4335,31 @@ def configure_nucleus_expert_matmul(pipeline):
     logger.info("Nucleus uses Diffusers' unfused experts because torch.nn.functional.grouped_mm is unavailable.")
 
 
+def configure_joyimage_hip_projection(pipeline, device):
+    """Keep the reviewed BF16 JoyImage patch projection ordered on gfx1151."""
+    import torch
+
+    selected_device = torch.device(device)
+    if (
+        sys.platform != "linux"
+        or selected_device.type != "cuda"
+        or torch.__version__ != "2.9.1+rocm7.2.0.git7e1940d4"
+        or not torch.version.hip
+    ):
+        return
+    properties = torch.cuda.get_device_properties(selected_device)
+    if getattr(properties, "gcnArchName", "").split(":", 1)[0] != "gfx1151":
+        return
+
+    def synchronize_projection_input(_module, args):
+        image_patches = args[0]
+        if image_patches.device.type == "cuda" and image_patches.dtype == torch.bfloat16:
+            torch.cuda.synchronize(image_patches.device)
+
+    pipeline.transformer.img_in.register_forward_pre_hook(synchronize_projection_input)
+    logger.info("JoyImage Edit Plus uses a BF16 input projection barrier on gfx1151 ROCm.")
+
+
 def load_cached_image_component(factory, model_id: str, **load_kwargs):
     """Keep missing-cache recovery actionable without enabling inference downloads."""
     from huggingface_hub.errors import LocalEntryNotFoundError
@@ -4876,6 +4902,13 @@ class LoadPipeline(NodeBase):
                 pipeline = load_cached_image_component(pipeline_class, model_id, **load_kwargs)
         if adapter.pipeline_class == "NucleusMoEImagePipeline":
             configure_nucleus_expert_matmul(pipeline)
+        if (
+            pipeline_class_name == "JoyImageEditPlusPipeline"
+            and model_source == "hub"
+            and model_id == JOYIMAGE_EDIT_PLUS_REPO
+            and revision == "c2686460c7b64d8aa11bc4d0da423fb316b33f9e"
+        ):
+            configure_joyimage_hip_projection(pipeline, device)
         if adapter.checkpoint_sample_sigmas:
             actual_sigmas = getattr(getattr(pipeline, "config", None), "sample_sigmas", None)
             if not isinstance(actual_sigmas, (list, tuple)) or tuple(actual_sigmas) != adapter.checkpoint_sample_sigmas:

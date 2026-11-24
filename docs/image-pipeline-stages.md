@@ -119,12 +119,26 @@ FLUX Kontext outpaint uses the connected canvas and mask dimensions when
 they match the requested output size. The backend disables the pipeline's
 automatic resize in that case so the preserved source crop stays aligned.
 
+### DreamLite reference-image latents
+
+DreamLite Base and Mobile cast the tiled AutoencoderTiny result back to the
+requested latent dtype before denoising a source-bound edit. Diffusers 0.43
+assembles the tiled result in float32, which would promote the concatenated
+noise and cause a dtype mismatch in the denoiser. Text-only and untiled calls
+keep their native input handling. The edit keeps the saved VAE tiling setting.
+
 ### Cached weights and runtime kernels
 
 AuraFlow v0.3 publishes its FP16 transformer shards under the legacy
 Diffusers index name. The managed-cache route resolves the exact installed
 revision and passes its repository-relative transformer path to Diffusers.
 The generic loader uses that transformer with the standard pipeline.
+
+The reviewed JoyImage Edit Plus checkpoint uses a BF16 projection barrier on
+Linux gfx1151 with the specific PyTorch ROCm build that exposed the failure.
+The hook runs on the loaded image projection before the upstream call. The
+same ordered reference input, generation controls and model files remain in
+use.
 
 Nucleus Image selects grouped expert matrix multiplication in its
 checkpoint. When the PyTorch build lacks that operator, the Nucleus adapter
