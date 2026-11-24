@@ -114,3 +114,16 @@ starts with a 1024×768 canvas and 96-pixel left and right margins. The
 generic canvas keeps a matching 832×768 source at its original size and
 builds the expansion mask. This only seeds new workflows. Existing
 saved sizes, margins and connections are preserved.
+
+### Cached weights and runtime kernels
+
+AuraFlow v0.3 publishes its FP16 transformer shards under the legacy
+Diffusers index name. The managed-cache route resolves the exact installed
+revision and passes its repository-relative transformer path to Diffusers.
+The generic loader uses that transformer with the standard pipeline.
+
+Nucleus Image selects grouped expert matrix multiplication in its
+checkpoint. When the PyTorch build lacks that operator, the Nucleus adapter
+selects Diffusers' unfused experts on the loaded transformer and logs the
+selection before attaching execution hooks. Both routes use the same generic
+image nodes and model installation flow.

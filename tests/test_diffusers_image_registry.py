@@ -3404,6 +3404,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
     def test_auraflow_loads_only_the_pinned_fp16_partition_and_bounds_native_recipe(self):
         loaded = {}
+        verified_transformer = object()
 
         class AuraFlowPipeline:
             @classmethod
@@ -3422,6 +3423,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 "modules.DiffusersImage.main.pipeline_class_from_name",
                 return_value=AuraFlowPipeline,
             ),
+            patch(
+                "modules.DiffusersImage.main.load_legacy_cached_image_transformer",
+                return_value=verified_transformer,
+            ) as load_transformer,
             patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
             patch("modules.DiffusersImage.main.apply_pipeline_offload"),
         ):
@@ -3440,6 +3445,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(loaded["kwargs"]["torch_dtype"], "float16")
         self.assertTrue(loaded["kwargs"]["use_safetensors"])
         self.assertEqual(loaded["kwargs"]["variant"], "fp16")
+        load_transformer.assert_called_once()
+        selected_adapter, selected_repo, _ = load_transformer.call_args.args
+        self.assertEqual(selected_adapter.pipeline_class, "AuraFlowPipeline")
+        self.assertEqual(selected_repo, AURAFLOW_V03_REPO)
+        self.assertIs(loaded["kwargs"]["transformer"], verified_transformer)
         self.assertNotIn("trust_remote_code", loaded["kwargs"])
         for field, value in (("width", 1552), ("height", 1552)):
             with self.subTest(field=field), self.assertRaisesRegex(ValueError, "between 16 and 1536"):

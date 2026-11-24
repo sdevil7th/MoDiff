@@ -142,6 +142,7 @@ class ImagePipelineAdapter:
     upstream_pipeline_class: str | None = None
     safe_serialization_required: bool = False
     weight_variant: str | None = None
+    legacy_cached_transformer_class: str | None = None
     component_dtype_overrides: tuple[tuple[str, str], ...] = ()
     prompt_embedding_dtype_component: str | None = None
     native_prompt_encoding: bool = False
@@ -1125,6 +1126,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         AURAFLOW_V03_REPO,
         safe_serialization_required=True,
         weight_variant="fp16",
+        legacy_cached_transformer_class="AuraFlowTransformer2DModel",
         max_inference_steps=50,
         max_output_side=1536,
         max_sequence_length=256,
@@ -4287,6 +4289,40 @@ class ControlComponent(NodeBase):
         return {'components': configs}
 
 
+def load_legacy_cached_image_transformer(adapter, model_id, load_kwargs):
+    """Keep the published legacy shard index relative to its exact Hub repository."""
+    from utils.huggingface import exact_cached_snapshot_path
+
+    snapshot = exact_cached_snapshot_path(model_id, load_kwargs["revision"])
+    factory = pipeline_class_from_name(adapter.legacy_cached_transformer_class)
+    component_kwargs = {
+        key: load_kwargs[key]
+        for key in ("torch_dtype", "revision", "low_cpu_mem_usage", "local_files_only",
+                    "use_safetensors", "variant", "device_map", "max_memory")
+        if key in load_kwargs
+    }
+    return load_cached_image_component(
+        factory, model_id, subfolder="transformer", cache_dir=str(snapshot.parents[2]), **component_kwargs,
+    )
+
+
+def configure_nucleus_expert_matmul(pipeline):
+    """Use Diffusers' unfused experts when PyTorch lacks the configured fused operator."""
+    from torch.nn import functional
+
+    transformer = pipeline.transformer
+    if not transformer.config.use_grouped_mm or callable(getattr(functional, "grouped_mm", None)):
+        return
+
+    from diffusers.models.transformers.transformer_nucleusmoe_image import SwiGLUExperts
+
+    for module in transformer.modules():
+        if isinstance(module, SwiGLUExperts):
+            module.use_grouped_mm = False
+    transformer.register_to_config(use_grouped_mm=False)
+    logger.info("Nucleus uses Diffusers' unfused experts because torch.nn.functional.grouped_mm is unavailable.")
+
+
 def load_cached_image_component(factory, model_id: str, **load_kwargs):
     """Keep missing-cache recovery actionable without enabling inference downloads."""
     from huggingface_hub.errors import LocalEntryNotFoundError
@@ -4822,7 +4858,13 @@ class LoadPipeline(NodeBase):
         else:
             pipeline_class = pipeline_class_from_name(adapter.load_pipeline_class)
             with self.diffusers_loading_progress():
+                if (adapter.legacy_cached_transformer_class and model_source == "hub"
+                        and load_kwargs["local_files_only"] and quant_config is None
+                        and "transformer" not in load_kwargs):
+                    load_kwargs["transformer"] = load_legacy_cached_image_transformer(adapter, model_id, load_kwargs)
                 pipeline = load_cached_image_component(pipeline_class, model_id, **load_kwargs)
+        if adapter.pipeline_class == "NucleusMoEImagePipeline":
+            configure_nucleus_expert_matmul(pipeline)
         if adapter.checkpoint_sample_sigmas:
             actual_sigmas = getattr(getattr(pipeline, "config", None), "sample_sigmas", None)
             if not isinstance(actual_sigmas, (list, tuple)) or tuple(actual_sigmas) != adapter.checkpoint_sample_sigmas:
