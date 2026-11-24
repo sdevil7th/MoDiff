@@ -222,7 +222,8 @@ def direct_image_accounting_fields(action, adapter, pipeline):
         return CONDITIONAL_IMAGE_ACCOUNTING_FIELDS
     if action == 'Edit' and is_reviewed_direct_image_edit(adapter, pipeline):
         return DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS
-    if (action == 'Inpaint' and adapter.pipeline_class == 'StableDiffusionInpaintPipeline'
+    if (action == 'Inpaint'
+            and adapter.pipeline_class in {'StableDiffusionInpaintPipeline', 'StableDiffusionXLInpaintPipeline'}
             and getattr(pipeline, '_modiff_image_mode', None) == 'inpaint'
             and getattr(pipeline, '_modiff_image_source', None) == 'hub'
             and getattr(pipeline, '_modiff_image_repo', None) == adapter.default_repo):

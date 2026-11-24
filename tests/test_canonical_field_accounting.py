@@ -496,14 +496,14 @@ def test_direct_image_edit_accounts_for_the_real_normalized_argument(
 
 
 @pytest.mark.parametrize('identity', ['pinned', 'wrong-revision', 'local', 'external-generator', 'rgb-mask'])
-def test_direct_inpaint_accounts_for_both_actual_image_arguments(monkeypatch, tmp_path, identity):
+@pytest.mark.parametrize('pipeline_name', ['StableDiffusionInpaintPipeline', 'StableDiffusionXLInpaintPipeline'])
+def test_direct_inpaint_accounts_for_both_actual_image_arguments(monkeypatch, tmp_path, identity, pipeline_name):
     from inspect import signature
 
     from modiff.model_artifact_catalog import require_catalog_revision
     from modules.DiffusersImage import main as image
     from modules.Image import main as media
 
-    pipeline_name = 'StableDiffusionInpaintPipeline'
     adapter = image.get_image_pipeline_adapter(pipeline_name)
     upstream = image.pipeline_class_from_name(pipeline_name).__call__
     calls = {}

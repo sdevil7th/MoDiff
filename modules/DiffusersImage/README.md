@@ -118,6 +118,12 @@ composite admissions and paired compiled V2 identities together. Existing saved
 definitions and instance values are not silently rewritten. New backend-defined
 routes use their compiled defaults when no explicit legacy Studio profile exists.
 
+For reviewed Stable Diffusion 1.5 and SDXL inpaint snapshots, private run
+evidence can bind the separate decoded source and mask to the actual pipeline
+call. The verifier checks both original file uploads and the exact model and
+recipe. This evidence records execution and media identity. Template approval
+and redistribution use their own records.
+
 Tests distinguish contract fixtures, tiny real components and full-weight frontend
 generation. `test_flux_controlnet_runtime.py` uses actual small ControlNet/transformer/
 VAE components but fixed embeddings; `test_flux_klein_kv_adapter.py` verifies real KV
