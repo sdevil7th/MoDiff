@@ -162,7 +162,13 @@ For native accelerator profiles, after pulling application changes run `uv sync 
 with the same accelerator extra, then preflight and restart the backend.
 Keep specialized Ryzen ROCm environments on their reviewed direct-wheel profile;
 a generic sync can replace their Torch stack. Review dependency changes against
-that profile before updating its environment. For the Instinct SDK, rerun its
+that profile before updating its environment. On Ryzen Linux, set `ROCM_PATH`
+to the SDK prefix that matches the installed PyTorch wheel if multiple ROCm
+versions are present. `HIP_PATH` selects the prefix when `ROCM_PATH` is absent.
+Installation validation and the launcher add that prefix's `lib` directory.
+Without either setting, they use the active system SDK at `/opt/rocm` or
+`/opt/rocm/core`. Check inherited `LD_LIBRARY_PATH` for paths from older SDKs.
+For the Instinct SDK, rerun its
 explicit `uv pip install` and `uv pip check` commands above instead.
 An intentional package upgrade uses
 `uv lock --upgrade-package transformers --upgrade-package peft`, then sync and

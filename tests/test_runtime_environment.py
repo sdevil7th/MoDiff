@@ -10,6 +10,51 @@ from modiff import runtime_environment
 from modiff.runtime_environment import configure_allocator, configure_model_loading
 
 
+def test_rocm_runtime_injects_only_the_selected_sdk(tmp_path):
+    system_root = tmp_path / "rocm"
+    (system_root / "lib").mkdir(parents=True)
+    (system_root / "core-7.13" / "lib").mkdir(parents=True)
+    selected = tmp_path / "explicit 7.2"
+    (selected / "lib").mkdir(parents=True)
+    environment = {"ROCM_PATH": str(selected), "LD_LIBRARY_PATH": "/operator/lib"}
+
+    runtime_environment.configure_rocm_library_path(environment, system_root=system_root)
+
+    assert environment["LD_LIBRARY_PATH"].split(os.pathsep) == [
+        str((selected / "lib").resolve()),
+        "/operator/lib",
+    ]
+    assert environment["HIP_PATH"] == str(selected)
+    automatic = {}
+    runtime_environment.configure_rocm_library_path(automatic, system_root=system_root)
+    assert automatic["LD_LIBRARY_PATH"] == str((system_root / "lib").resolve())
+    hip_only = {"HIP_PATH": str(selected)}
+    runtime_environment.configure_rocm_library_path(hip_only, system_root=system_root)
+    assert hip_only["ROCM_PATH"] == str(selected)
+    assert hip_only["LD_LIBRARY_PATH"] == str((selected / "lib").resolve())
+    missing = {"ROCM_PATH": str(tmp_path / "missing"), "LD_LIBRARY_PATH": "/operator/lib"}
+    runtime_environment.configure_rocm_library_path(missing, system_root=system_root)
+    assert missing["LD_LIBRARY_PATH"] == "/operator/lib"
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="The Ryzen ROCm launcher runs on Linux.")
+def test_rocm_shell_launcher_honors_explicit_sdk(tmp_path):
+    sdk_lib = tmp_path / "rocm explicit" / "lib"
+    sdk_lib.mkdir(parents=True)
+    root = Path(__file__).resolve().parents[1]
+    environment = {
+        **os.environ,
+        "MODIFF_RUNTIME_PROFILE": "amd-rocm-linux",
+        "ROCM_PATH": str(sdk_lib.parent),
+        "LD_LIBRARY_PATH": "/operator/runtime/lib",
+    }
+    result = subprocess.run(
+        ["bash", str(root / "scripts" / "with-runtime-env.sh"), "printenv", "LD_LIBRARY_PATH"],
+        cwd=tmp_path, env=environment, capture_output=True, text=True, timeout=15, check=True,
+    )
+    assert result.stdout.strip().split(os.pathsep) == [str(sdk_lib.resolve()), "/operator/runtime/lib"]
+
+
 def test_windows_and_macos_use_default_allocator():
     for platform_name in ("win32", "darwin"):
         environment = {}

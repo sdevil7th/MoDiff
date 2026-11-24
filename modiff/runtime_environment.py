@@ -12,7 +12,36 @@ import os
 import importlib.metadata
 import re
 import sys
-from collections.abc import MutableMapping
+from collections.abc import Mapping, MutableMapping
+from pathlib import Path
+
+
+def rocm_library_directory(
+    environment: Mapping[str, str],
+    *,
+    system_root: Path = Path("/opt/rocm"),
+) -> Path | None:
+    """Select one ROCm SDK prefix for a child process using the Ryzen wheels."""
+    configured_root = environment.get("ROCM_PATH") or environment.get("HIP_PATH")
+    roots = (Path(configured_root),) if configured_root else (system_root, system_root / "core")
+    return next((root / "lib" for root in roots if (root / "lib").is_dir()), None)
+
+
+def configure_rocm_library_path(
+    environment: MutableMapping[str, str],
+    *,
+    system_root: Path = Path("/opt/rocm"),
+) -> None:
+    library_dir = rocm_library_directory(environment, system_root=system_root)
+    if library_dir is None:
+        return
+    paths = [str(library_dir.resolve())]
+    if existing := environment.get("LD_LIBRARY_PATH"):
+        paths.append(existing)
+    environment["LD_LIBRARY_PATH"] = os.pathsep.join(paths)
+    environment.setdefault("ROCM_PATH", str(library_dir.parent))
+    environment.setdefault("HIP_PATH", str(library_dir.parent))
+    environment.setdefault("TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL", "1")
 
 
 def configure_allocator(

@@ -226,8 +226,8 @@ class GuidedInstallerTests(unittest.TestCase):
         self.assertIn("scripts/with-runtime-env.sh", linux_launcher)
         self.assertNotIn("ROCM_LIBRARY_PATHS", linux_launcher)
         self.assertIn('RUNTIME_PROFILE" == "amd-rocm-linux"', runtime_wrapper)
-        self.assertIn("/opt/rocm/core-*/lib", runtime_wrapper)
-        self.assertIn('LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH', runtime_wrapper)
+        self.assertIn("configure_rocm_library_path(environment)", runtime_wrapper)
+        self.assertNotIn("/opt/rocm/core-*/lib", runtime_wrapper)
         bash = shutil.which("bash")
         bash_usable = False
         if bash:

@@ -43,18 +43,20 @@ PY
 fi
 
 if [[ "$RUNTIME_PROFILE" == "amd-rocm-linux" ]]; then
-  ROCM_LIBRARY_PATHS=()
-  [[ -d /opt/rocm/lib ]] && ROCM_LIBRARY_PATHS+=(/opt/rocm/lib)
-  for directory in /opt/rocm/core-*/lib; do
-    [[ -d "$directory" ]] && ROCM_LIBRARY_PATHS+=("$directory")
-  done
-  if (( ${#ROCM_LIBRARY_PATHS[@]} > 0 )); then
-    ROCM_JOINED="$(IFS=:; echo "${ROCM_LIBRARY_PATHS[*]}")"
-    export LD_LIBRARY_PATH="$ROCM_JOINED${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-    export ROCM_PATH="${ROCM_PATH:-/opt/rocm}"
-    export HIP_PATH="${HIP_PATH:-/opt/rocm}"
-    export TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL="${TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL:-1}"
+  if [[ ! -x "$MANAGED_PYTHON" ]]; then
+    MANAGED_PYTHON="$(command -v python3)"
   fi
+  exec "$MANAGED_PYTHON" -c '
+import os
+import sys
+
+sys.path.insert(0, sys.argv[1])
+from modiff.runtime_environment import configure_rocm_library_path
+
+environment = os.environ.copy()
+configure_rocm_library_path(environment)
+os.execvpe(sys.argv[2], sys.argv[2:], environment)
+' "$PROJECT_ROOT" "$@"
 fi
 
 exec "$@"

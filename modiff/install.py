@@ -27,6 +27,7 @@ try:
 except ImportError:  # Windows does not provide the POSIX group database.
     grp = None
 
+from modiff.runtime_environment import configure_rocm_library_path, rocm_library_directory
 from modiff.runtime_profile import (
     RUNTIME_CONTRACT_SCHEMA,
     load_manifest,
@@ -128,20 +129,9 @@ def _kernel_tuple(value: str) -> tuple[int, ...]:
     return tuple(int(item) for item in re.findall(r"\d+", value)[:3])
 
 
-def _rocm_library_dirs() -> list[Path]:
-    candidates = [Path("/opt/rocm/lib")]
-    candidates.extend(sorted(Path("/opt/rocm").glob("core-*/lib"), reverse=True))
-    return [path.resolve() for path in candidates if path.is_dir()]
-
-
 def _rocm_environment() -> dict[str, str]:
     environment = os.environ.copy()
-    library_dirs = [str(path) for path in _rocm_library_dirs()]
-    existing = environment.get("LD_LIBRARY_PATH")
-    environment["LD_LIBRARY_PATH"] = os.pathsep.join([*library_dirs, *([existing] if existing else [])])
-    environment.setdefault("ROCM_PATH", "/opt/rocm")
-    environment.setdefault("HIP_PATH", "/opt/rocm")
-    environment.setdefault("TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL", "1")
+    configure_rocm_library_path(environment)
     return environment
 
 
@@ -321,7 +311,8 @@ def _amd_qualification(host: dict[str, Any], spec: dict[str, Any]) -> tuple[str,
         issues.append(_issue("amd-architecture-unverified", "rocminfo did not expose a supported GPU agent."))
     library_result = _command(["ldconfig", "-p"])
     library_text = library_result["stdout"]
-    library_names = {path.name for directory in _rocm_library_dirs() for path in directory.glob("*.so*")}
+    library_dir = rocm_library_directory(os.environ)
+    library_names = {path.name for path in library_dir.glob("*.so*")} if library_dir else set()
     required_libraries = {
         "libamdhip64.so.7", "libMIOpen.so.1", "libhipblas.so.3", "libhipblaslt.so.1",
         "libhipfft.so.0", "libhiprand.so.1", "libhiprtc.so.7", "libhipsolver.so.1",
