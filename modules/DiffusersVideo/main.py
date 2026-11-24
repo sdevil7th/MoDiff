@@ -2547,6 +2547,8 @@ class LoadPipeline(WanVACELoadPipeline):
         enable_vae_tiling = getattr(getattr(pipeline, "vae", None), "enable_tiling", None)
         if not callable(enable_vae_tiling):
             raise RuntimeError("Mochi did not expose the documented VAE tiling hook.")
+        # Mochi's transformer and its text pooler call Torch SDPA directly.
+        pipeline.transformer._modiff_direct_torch_math = True
         apply_execution_recipe_to_pipeline(pipeline, recipe)
         # The specialized graph keeps its generic VAE-tiling switch off so the
         # reviewed pipeline requirement cannot be disabled by users.

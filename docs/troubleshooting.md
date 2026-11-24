@@ -425,6 +425,12 @@ an adapter defect; changing drivers, the prompt, or the generation settings
 will not repair it. The indexed T5 selection, BF16 variant, and original
 offload policy remain part of the reviewed route.
 
+For the existing Mochi math-attention recipe, the transformer and its text
+pooler call Torch SDPA directly. MoDiff applies the selected math backend
+inside that transformer call. Switching back to Auto clears the override
+while preserving the offload hook. For a full 64-step clip, sampling time
+depends on the device and component placement.
+
 ## Short SANA-Video clips with an opening image
 
 Set **Frames** on the existing Generate stage to a value from 33 through 81

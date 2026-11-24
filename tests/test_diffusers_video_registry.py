@@ -3563,7 +3563,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
     @requires_transformers
     def test_mochi_loader_pins_indexed_t5_and_bfloat16_variant(self):
-        pipeline = SimpleNamespace(vae=SimpleNamespace(enable_tiling=MagicMock()))
+        pipeline = SimpleNamespace(vae=SimpleNamespace(enable_tiling=MagicMock()), transformer=SimpleNamespace())
         text_encoder = object()
         node = LoadPipeline("mochi-loader")
         with (
@@ -3600,6 +3600,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertNotIn("trust_remote_code", load_pipeline.call_args.kwargs)
         self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
         self.assertNotIn("device_map", load_pipeline.call_args.kwargs)
+        self.assertIs(pipeline.transformer._modiff_direct_torch_math, True)
         apply_recipe.assert_called_once_with(pipeline, {})
         pipeline.vae.enable_tiling.assert_called_once_with()
         apply_offload.assert_called_once_with(

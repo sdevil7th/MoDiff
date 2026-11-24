@@ -6,6 +6,7 @@ import json
 import importlib.util
 import os
 import threading
+from functools import wraps
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +52,7 @@ ATTENTION_COMPONENTS = (
     "controlnet",
     "prior",
 )
+_TORCH_SDPA_LOCK = threading.RLock()
 
 SAFETENSORS_DTYPE_BYTES = {
     "F64": 8,
@@ -382,6 +384,25 @@ def _dispatcher_attention_processors(component: Any) -> list[Any]:
     return processors
 
 
+def _enable_direct_torch_math(component: Any) -> None:
+    from torch.nn.attention import SDPBackend, sdpa_kernel
+
+    if not hasattr(component, "_modiff_direct_torch_math_enabled"):
+        forward = component.forward
+
+        @wraps(forward)
+        def scoped_forward(*args, **kwargs):
+            if not component._modiff_direct_torch_math_enabled:
+                return forward(*args, **kwargs)
+            with _TORCH_SDPA_LOCK, sdpa_kernel(SDPBackend.MATH):
+                return forward(*args, **kwargs)
+
+        # The wrapper stays inside any later Accelerate hook. Resetting the
+        # policy must not replace the hook that controls component placement.
+        component.forward = scoped_forward
+    component._modiff_direct_torch_math_enabled = True
+
+
 def apply_attention_backend(pipeline: Any, backend: str, components: Any = None) -> dict[str, Any]:
     requested = str(backend or "auto")
     if requested not in ATTENTION_BACKENDS:
@@ -401,6 +422,17 @@ def apply_attention_backend(pipeline: Any, backend: str, components: Any = None)
             if component is None or id(component) in seen:
                 continue
             seen.add(id(component))
+
+            if getattr(component, "_modiff_direct_torch_math", False):
+                if requested == "_native_math":
+                    _enable_direct_torch_math(component)
+                    applied.append(name)
+                    continue
+                if getattr(component, "_modiff_direct_torch_math_enabled", False):
+                    component._modiff_direct_torch_math_enabled = False
+                    if requested == "auto":
+                        reset.append(name)
+                        continue
 
             if requested == "auto":
                 resetter = getattr(component, "reset_attention_backend", None)
@@ -1085,7 +1117,6 @@ def assert_runtime_quantization_full_residency(
 
 
 _ROCM_BF16_VISION_MATH = ROCM_BF16_VISION_MATH
-_ROCM_VISION_MATH_LOCK = threading.RLock()
 
 
 def _rocm_bf16_vision_math_attention(module, query, key, value, attention_mask=None, *args, **kwargs):
@@ -1103,7 +1134,7 @@ def _rocm_bf16_vision_math_attention(module, query, key, value, attention_mask=N
 
     if getattr(query, "dtype", None) != torch.bfloat16:
         raise RuntimeError("The reviewed ROCm vision math policy requires bfloat16 inputs.")
-    with _ROCM_VISION_MATH_LOCK:
+    with _TORCH_SDPA_LOCK:
         previous = torch.backends.cuda.fp16_bf16_reduction_math_sdp_allowed()
         try:
             torch.backends.cuda.allow_fp16_bf16_reduction_math_sdp(True)

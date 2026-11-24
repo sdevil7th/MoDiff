@@ -320,6 +320,37 @@ class DiffusersRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "processors did not retain"):
             apply_attention_backend(pipeline, "_native_math")
 
+    def test_direct_torch_math_is_scoped_to_the_reviewed_component(self):
+        from torch.backends.cuda import flash_sdp_enabled, math_sdp_enabled
+        from torch.nn.attention import SDPBackend, sdpa_kernel
+
+        def forward(value):
+            if value == "error":
+                raise ValueError("forward failed")
+            return value, flash_sdp_enabled(), math_sdp_enabled()
+
+        transformer = types.SimpleNamespace(
+            forward=forward, _modiff_direct_torch_math=True,
+        )
+        pipeline = types.SimpleNamespace(transformer=transformer)
+        sibling = types.SimpleNamespace(forward=forward)
+
+        with sdpa_kernel([SDPBackend.FLASH_ATTENTION, SDPBackend.MATH]):
+            self.assertEqual(apply_attention_backend(pipeline, "_native_math")["applied"], ["transformer"])
+            self.assertEqual(transformer.forward("sample"), ("sample", False, True))
+            self.assertEqual(sibling.forward("sample"), ("sample", True, True))
+            with self.assertRaisesRegex(ValueError, "forward failed"):
+                transformer.forward("error")
+            self.assertTrue(flash_sdp_enabled())
+            placement = unittest.mock.Mock(wraps=transformer.forward)
+            transformer.forward = placement
+            self.assertEqual(apply_attention_backend(pipeline, "auto")["reset"], ["transformer"])
+            self.assertIs(transformer.forward, placement)
+            self.assertEqual(transformer.forward("sample"), ("sample", True, True))
+            apply_attention_backend(pipeline, "_native_math")
+            self.assertIs(transformer.forward, placement)
+            self.assertEqual(transformer.forward("sample"), ("sample", False, True))
+
     def test_attention_auto_restores_model_and_process_defaults(self):
         from diffusers.models.attention_dispatch import AttentionBackendName, _AttentionBackendRegistry
         from diffusers.utils.constants import DIFFUSERS_ATTN_BACKEND

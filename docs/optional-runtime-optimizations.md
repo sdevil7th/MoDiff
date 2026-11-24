@@ -53,10 +53,11 @@ refreshes runtime and optional-package status. It does not start another install
    forged state remains non-active and leaves graph execution fail-closed.
 5. A successful import/capability probe only proves that the feature can load.
    It never authorizes Auto.
-   An explicit attention backend also requires the selected component's actual
-   processors to honor Diffusers' dispatcher. Older processors can inherit a
-   successful `set_attention_backend()` while calling Torch SDPA directly; those
-   components require `auto` and must not be reported as forced-kernel passes.
+   Explicit attention selection normally requires the selected component's
+   processors to honor Diffusers' dispatcher. A successful setter alone gives
+   no evidence of the selected kernel. The reviewed Mochi transformer also
+   supports explicit Torch math SDPA. Its adapter scopes that policy to its
+   forward call and restores the prior policy when the call finishes.
 6. Auto may select an optimization only after:
    - the user explicitly enables the capability;
    - the exact runtime, model artifact, mode, and result-affecting workload
