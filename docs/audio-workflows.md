@@ -66,6 +66,13 @@ valid for a sound-generation or speech model. AudioLDM2's candidate waveforms
 remain available through Audio Variations. LongCat duration follows upstream
 VAE-frame quantization; output is not padded to manufacture an exact duration.
 
+For spoken LongCat showcases, enter the sentence to be spoken in Generate.
+The reviewed checkpoint reads text aloud. An ambience description can
+therefore produce narration of the description. Check the exact words and
+listen for repeated or clipped endings before publishing a sample. The
+[publisher's LongCat AudioDiT documentation](https://github.com/meituan-longcat/LongCat-AudioDiT)
+describes the upstream speech model.
+
 The selected audio contract must agree with the owner's literal repository,
 immutable revision, pipeline and task. The revision remains on the model owner;
 the audio signal itself carries the repository. Selecting an alternate compatible base must not

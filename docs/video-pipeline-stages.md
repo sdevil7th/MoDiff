@@ -68,6 +68,16 @@ start with Auto attention, which uses the processors supported by their
 installed pipelines. If a saved workflow reports that Math attention is
 unsupported, select Auto in Model Setup.
 
+Wan Animate takes a character image and prepared, time-aligned pose and face
+videos. In character replacement, the white area of the mask marks where the
+new subject is generated. Clear those pixels to black in Background Video and
+preserve the scene elsewhere. A background clip that still contains the
+original character can carry that character into the result. Prepare both
+clips from the same frame sequence and review the replacement and the
+unmasked scene together. See the
+[Wan replacement preprocessing guide](https://github.com/Wan-Video/Wan2.2/blob/main/wan/modules/animate/preprocess/UserGuider.md)
+and its [background preparation](https://github.com/Wan-Video/Wan2.2/blob/main/wan/modules/animate/preprocess/process_pipepline.py).
+
 Registered native-stage recipe descriptors retain their original versioned
 selection metadata when only their visual grouping changes. Selection notes
 participate in the strict template lock; editing explanatory wording must not
