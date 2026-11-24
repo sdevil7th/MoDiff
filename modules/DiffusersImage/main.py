@@ -3771,12 +3771,14 @@ class OutpaintCanvas(NodeBase):
         canvas = Image.new("RGB", (target_width, target_height), fill_color)
         canvas.paste(source_rgba, (offset_x, offset_y), source_rgba)
         mask = Image.new("L", (target_width, target_height), 255)
-        keep_left = min(target_width, max(0, offset_x + overlap))
-        keep_top = min(target_height, max(0, offset_y + overlap))
-        keep_right = min(target_width, max(0, offset_x + pasted_width - overlap))
-        keep_bottom = min(target_height, max(0, offset_y + pasted_height - overlap))
+        source_right = offset_x + pasted_width
+        source_bottom = offset_y + pasted_height
+        keep_left = offset_x + (overlap if offset_x > 0 else 0)
+        keep_top = offset_y + (overlap if offset_y > 0 else 0)
+        keep_right = source_right - (overlap if source_right < target_width else 0)
+        keep_bottom = source_bottom - (overlap if source_bottom < target_height else 0)
         if keep_right > keep_left and keep_bottom > keep_top:
-            ImageDraw.Draw(mask).rectangle((keep_left, keep_top, keep_right, keep_bottom), fill=0)
+            ImageDraw.Draw(mask).rectangle((keep_left, keep_top, keep_right - 1, keep_bottom - 1), fill=0)
         if feather > 0:
             mask = mask.filter(ImageFilter.GaussianBlur(radius=feather))
         return {
