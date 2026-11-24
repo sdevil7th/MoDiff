@@ -5661,23 +5661,24 @@ class LayerDecompose(Edit):
     def execute(self, **kwargs):
         pipeline = kwargs.get("pipeline")
         adapter, values = preflight_image_action(pipeline, "LayerDecompose", kwargs)
-        result = self._execute_conditioned(
-            values,
-            {
-                adapter.image_parameter: values["image"],
-                "layers": values["layers"],
-                "resolution": values["resolution"],
-                "cfg_normalize": values["cfg_normalize"],
-                "use_en_prompt": values["use_en_prompt"],
-            },
-            adapter=adapter,
-        )
+        from modiff.builtin_media_evidence import begin_media_capture
+
+        layer_inputs = {
+            adapter.image_parameter: values["image"],
+            "layers": values["layers"],
+            "resolution": values["resolution"],
+            "cfg_normalize": values["cfg_normalize"],
+            "use_en_prompt": values["use_en_prompt"],
+        }
+        capture = begin_media_capture(self, layer_inputs, inputs={"image": layer_inputs[adapter.image_parameter]})
+        result = self._execute_conditioned(values, layer_inputs, adapter=adapter)
         images = normalize_layer_decomposition_images(
             result.get("images"),
             layers=values["layers"],
             output_type=values["output_type"],
         )
         result["images"] = images
+        capture.finish({"images": images})
         width, height = output_image_dimensions(images, values["output_type"])
         result["width_out"] = width
         result["height_out"] = height

@@ -24,6 +24,14 @@ an unresolved root binding. Audio Load records the selected source path as a str
 The client can read older Audio Load receipts that carry the same path in a
 single-item file-picker list.
 
+Layer Decompose captures its source image, requested layer count, resolution,
+guidance normalization and caption language at the adapter boundary. It
+records the ordered PIL stack leaving the operation. The matching Preview
+input receipt carries that same order into the output package. The canonical
+reader compares each exported file with the matching item in the collection.
+Non-PIL results retain their normal execution path with unavailable media
+evidence.
+
 For captured literal video paths, Process Video streams each source once into
 an owned temporary snapshot while hashing it; FFmpeg consumes only that snapshot.
 Snapshots are deleted after the call. No original input is changed. Existing

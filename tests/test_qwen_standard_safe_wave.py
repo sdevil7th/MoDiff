@@ -326,6 +326,27 @@ class QwenStandardSafeWaveTests(unittest.TestCase):
                 layers=2,
             )
 
+    def test_layer_decomposition_receipt_binds_native_controls_source_and_layer_order(self):
+        from modiff.builtin_media_evidence import media_identity
+
+        source = Image.new("RGBA", (16, 16), (200, 100, 50, 192))
+        pipeline = tag_pipeline(
+            QwenImageLayeredPipeline(), "QwenImageLayeredPipeline", "layer_decomposition", QWEN_IMAGE_LAYERED_REPO,
+        )
+        node = LayerDecompose("qwen-layer-receipt")
+        with patch.dict("os.environ", {"MODIFF_CAPTURE_BUILTIN_MEDIA": "1"}):
+            result = node.execute(pipeline=pipeline, image=source, prompt="layers", layers=3,
+                                  resolution=640, cfg_normalize=True, use_en_prompt=False)
+        native = pipeline.calls[0]
+        evidence = node._execution_input_record["mediaEvidence"]
+        self.assertEqual(evidence["status"], "complete")
+        self.assertEqual(evidence["controls"], {
+            key: native[key] for key in ("layers", "resolution", "cfg_normalize", "use_en_prompt")
+        })
+        self.assertEqual(evidence["inputs"]["image"], [media_identity(native["image"])])
+        self.assertEqual(evidence["outputs"]["images"], [media_identity(layer) for layer in result["images"]])
+        self.assertEqual(len({layer["sha256"] for layer in evidence["outputs"]["images"]}), 3)
+
     def test_layer_decomposition_flattens_exactly_one_numpy_batch(self):
         source = Image.new("RGB", (16, 16), "black")
         pipeline = tag_pipeline(

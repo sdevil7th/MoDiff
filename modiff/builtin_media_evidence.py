@@ -24,6 +24,7 @@ VIDEO_CONTROLS = '''pipeline_class operation selection_mode indices timecodes ev
 CONTROL_FIELDS = {
     ('Image', 'Load'): ['alpha_channel'],
     ('Image', 'Preview'): ['device', 'export'],
+    ('DiffusersImage', 'LayerDecompose'): ['layers', 'resolution', 'cfg_normalize', 'use_en_prompt'],
     ('ImageOperations', 'ProcessImage'): IMAGE_CONTROLS,
     ('Audio', 'Load'): [],
     ('Audio', 'ProcessAudio'): AUDIO_CONTROLS,
