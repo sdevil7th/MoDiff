@@ -184,8 +184,8 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.ledger["summary"],
             {
                 "canonicalWorkflowCount": 225,
-                "canonicalWorkflowsWithPublicTemplates": 78,
-                "canonicalWorkflowsWithoutPublicTemplates": 147,
+                "canonicalWorkflowsWithPublicTemplates": 99,
+                "canonicalWorkflowsWithoutPublicTemplates": 126,
                 "diffusersPipelineSymbolCount": 340,
                 "pipelineStatusCounts": {
                     "contract-only": 5,
@@ -195,12 +195,12 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "research-blocked": 116,
                     "unreviewed": 5,
                 },
-                "publicTemplateCount": 98,
-                "reviewedGalleryTemplateCount": 91,
+                "publicTemplateCount": 119,
+                "reviewedGalleryTemplateCount": 112,
                 "templateStatusCounts": {
                     "contract-only": 11,
                     "equivalent": 0,
-                    "executable": 87,
+                    "executable": 108,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -491,9 +491,9 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(_canonical_json_sha256(graph_path), item["graphHash"], workflow_id)
 
         templates = self.ledger["publicTemplates"]
-        self.assertEqual(len({item["id"] for item in templates}), 98)
+        self.assertEqual(len({item["id"] for item in templates}), 119)
         self.assertTrue(all(item["canonicalWorkflowId"] in ledger_workflows for item in templates))
-        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 91)
+        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 112)
         for template_id in (
             "flux_lora_cinematic_octane_3d", "minimax_music3_chamber_pop", "wan_video_long_showcase",
         ):
@@ -501,8 +501,8 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertTrue(item["reviewedGalleryExample"])
             self.assertEqual(item["galleryVerificationStatus"], "reviewed")
             self.assertEqual(item["galleryExecutionCompatibility"], "historical_reference_requires_new_execution_evidence")
-        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 91)
-        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 78)
+        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 112)
+        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 99)
         contract_only = [item for item in templates if item["status"] == "contract-only"]
         self.assertEqual(len(contract_only), 11)
         self.assertEqual(sum(item["reviewedGalleryExample"] for item in contract_only), 11)
@@ -530,6 +530,27 @@ class UpstreamCoverageTests(unittest.TestCase):
             "wav2vec2_station_announcement": "HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
             "lcm_dawn_alpine_lake": "LatentConsistencyModelPipeline:edit_image",
             "sana_sprint_monochrome_tiger": "SanaSprintPipeline:edit_image",
+            "alpine_lake_in_oils": "StableDiffusionPipeline:edit_image",
+            "bookshop_at_blue_hour": "ErnieImagePipeline:text_to_image",
+            "flowers_after_rain": "OvisImagePipeline:text_to_image",
+            "forest_ferns": "GlmImagePipeline:text_to_image",
+            "ochre_paper_pavilion": "CogView3PlusPipeline:text_to_image",
+            "quiet_current": "CogView4Pipeline:text_to_image",
+            "persimmon_glaze": "SanaPAGPipeline:text_to_image",
+            "porcelain_on_slate_linen": "LatentConsistencyModelPipeline:text_to_image",
+            "salt_marsh_from_above": "AuraFlowPipeline:text_to_image",
+            "cobalt_jug_and_lemons": "StableDiffusionPipeline:text_to_image",
+            "copper_hour_dunes": "PRXPipeline:text_to_image",
+            "glasshouse_rain": "StableDiffusionXLPipeline:text_to_image",
+            "pomegranate_on_blue_linen": "StableDiffusionPAGPipeline:text_to_image",
+            "canal_lantern_in_warm_light": "SanaSprintPipeline:text_to_image",
+            "the_glasshouse_seed_tray": "StableDiffusionXLPAGPipeline:text_to_image",
+            "quiet_kiln_at_daybreak": "NucleusMoEImagePipeline:text_to_image",
+            "restoring_the_studio_backdrop": "StableDiffusionPipeline:inpaint",
+            "janus_reykjavik_travel_note": "HuggingFaceAnyToAnyModel:text_generation",
+            "janus_red_triangle_caption": "HuggingFaceAnyToAnyModel:image_to_text",
+            "janus_red_enamel_teapot": "HuggingFaceAnyToAnyModel:text_to_image",
+            "lumina_opal_pendant_in_limestone": "LuminaPipeline:text_to_image",
         }
         for template_id, workflow_id in retained_public_pairs.items():
             item = public_by_id[template_id]
@@ -555,7 +576,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             sum({**supported, **experimental}[item["canonicalWorkflowId"]]["mediaKind"] == "image"
                 for item in templates),
-            71,
+            90,
         )
         for template_id, (workflow_id, profile_id) in experimental_public_pairs.items():
             item = public_by_id[template_id]
@@ -588,7 +609,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(source["mode"], "huggingface")
             self.assertRegex(source["revision"], r"^[0-9a-f]{40}$")
             self.assertRegex(source["assetSetId"], r"^sha256:canonical-json:[0-9a-f]{64}$")
-            self.assertEqual(len(ledger_gallery_ids), 91)
+            self.assertEqual(len(ledger_gallery_ids), 112)
 
     def test_remote_asset_build_requires_an_explicit_reviewed_gallery_manifest(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

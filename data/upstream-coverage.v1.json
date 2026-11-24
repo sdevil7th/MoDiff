@@ -193,7 +193,9 @@
       "id": "AuraFlowPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "AuraFlowPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "salt_marsh_from_above"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -490,7 +492,9 @@
       "id": "CogView3PlusPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "CogView3PlusPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "ochre_paper_pavilion"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -501,7 +505,9 @@
       "id": "CogView4Pipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "CogView4Pipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "quiet_current"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -602,7 +608,9 @@
       "id": "ErnieImagePipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "ErnieImagePipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "bookshop_at_blue_hour"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1196,7 +1204,9 @@
       "id": "GlmImagePipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "GlmImagePipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "forest_ferns"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1207,7 +1217,9 @@
       "id": "HuggingFaceAnyToAnyModel:image_to_text",
       "mode": "image_to_text",
       "modelType": "HuggingFaceAnyToAnyModel",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "janus_red_triangle_caption"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1218,7 +1230,9 @@
       "id": "HuggingFaceAnyToAnyModel:text_generation",
       "mode": "text_generation",
       "modelType": "HuggingFaceAnyToAnyModel",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "janus_reykjavik_travel_note"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1229,7 +1243,9 @@
       "id": "HuggingFaceAnyToAnyModel:text_to_image",
       "mode": "text_to_image",
       "modelType": "HuggingFaceAnyToAnyModel",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "janus_red_enamel_teapot"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1568,7 +1584,9 @@
       "id": "LatentConsistencyModelPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "LatentConsistencyModelPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "porcelain_on_slate_linen"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1634,7 +1652,9 @@
       "id": "LuminaPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "LuminaPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "lumina_opal_pendant_in_limestone"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1706,7 +1726,9 @@
       "id": "NucleusMoEImagePipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "NucleusMoEImagePipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "quiet_kiln_at_daybreak"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1750,7 +1772,9 @@
       "id": "OvisImagePipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "OvisImagePipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flowers_after_rain"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1761,7 +1785,9 @@
       "id": "PRXPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "PRXPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "copper_hour_dunes"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2027,7 +2053,9 @@
       "id": "SanaPAGPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "SanaPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "persimmon_glaze"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2062,7 +2090,9 @@
       "id": "SanaSprintPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "SanaSprintPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "canal_lantern_in_warm_light"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2174,7 +2204,9 @@
       "id": "StableDiffusionPAGPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "StableDiffusionPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "pomegranate_on_blue_linen"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2218,7 +2250,9 @@
       "id": "StableDiffusionPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "StableDiffusionPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "alpine_lake_in_oils"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2229,7 +2263,9 @@
       "id": "StableDiffusionPipeline:inpaint",
       "mode": "inpaint",
       "modelType": "StableDiffusionPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "restoring_the_studio_backdrop"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2240,7 +2276,9 @@
       "id": "StableDiffusionPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "StableDiffusionPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "cobalt_jug_and_lemons"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2350,7 +2388,9 @@
       "id": "StableDiffusionXLPAGPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "StableDiffusionXLPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "the_glasshouse_seed_tray"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2383,7 +2423,9 @@
       "id": "StableDiffusionXLPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "StableDiffusionXLPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "glasshouse_rain"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2660,7 +2702,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:4f0c5d2e7469ef443df500369818f5a0827d4260a46c297b5404184a62d0e330",
+  "contentHash": "sha256:176cee1842be4e60d2e229f2c2808ac2ca354801f68140360eba643367fe1d9c",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -8127,6 +8169,51 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "StableDiffusionPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "alpine_lake_in_oils",
+      "mode": "edit_image",
+      "modelType": "StableDiffusionPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "ErnieImagePipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "bookshop_at_blue_hour",
+      "mode": "text_to_image",
+      "modelType": "ErnieImagePipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "SanaSprintPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "canal_lantern_in_warm_light",
+      "mode": "text_to_image",
+      "modelType": "SanaSprintPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "QwenImageEditPlusModularPipeline:edit_image",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -8152,6 +8239,36 @@
       "modelType": "QwenImageEditPlusModularPipeline",
       "readinessPolicy": "requires_input",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "cobalt_jug_and_lemons",
+      "mode": "text_to_image",
+      "modelType": "StableDiffusionPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "PRXPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "copper_hour_dunes",
+      "mode": "text_to_image",
+      "modelType": "PRXPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -8219,6 +8336,21 @@
       "modelType": "ZImageModularPipeline",
       "readinessPolicy": "requires_input",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "OvisImagePipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flowers_after_rain",
+      "mode": "text_to_image",
+      "modelType": "OvisImagePipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -9231,6 +9363,36 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "GlmImagePipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "forest_ferns",
+      "mode": "text_to_image",
+      "modelType": "GlmImagePipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "glasshouse_rain",
+      "mode": "text_to_image",
+      "modelType": "StableDiffusionXLPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -9256,6 +9418,51 @@
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "runnable",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "janus_red_enamel_teapot",
+      "mode": "text_to_image",
+      "modelType": "HuggingFaceAnyToAnyModel",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:image_to_text",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "janus_red_triangle_caption",
+      "mode": "image_to_text",
+      "modelType": "HuggingFaceAnyToAnyModel",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "janus_reykjavik_travel_note",
+      "mode": "text_generation",
+      "modelType": "HuggingFaceAnyToAnyModel",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -9492,6 +9699,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "LuminaPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "lumina_opal_pendant_in_limestone",
+      "mode": "text_to_image",
+      "modelType": "LuminaPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -9563,6 +9785,96 @@
       "modelType": "MiniMaxMusic3ModularPipeline",
       "readinessPolicy": "runnable",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "CogView3PlusPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "ochre_paper_pavilion",
+      "mode": "text_to_image",
+      "modelType": "CogView3PlusPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "SanaPAGPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "persimmon_glaze",
+      "mode": "text_to_image",
+      "modelType": "SanaPAGPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionPAGPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "pomegranate_on_blue_linen",
+      "mode": "text_to_image",
+      "modelType": "StableDiffusionPAGPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "LatentConsistencyModelPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "porcelain_on_slate_linen",
+      "mode": "text_to_image",
+      "modelType": "LatentConsistencyModelPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "quiet_current",
+      "mode": "text_to_image",
+      "modelType": "CogView4Pipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "NucleusMoEImagePipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "quiet_kiln_at_daybreak",
+      "mode": "text_to_image",
+      "modelType": "NucleusMoEImagePipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -10262,6 +10574,36 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "StableDiffusionPipeline:inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "restoring_the_studio_backdrop",
+      "mode": "inpaint",
+      "modelType": "StableDiffusionPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "salt_marsh_from_above",
+      "mode": "text_to_image",
+      "modelType": "AuraFlowPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "SanaSprintPipeline:edit_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -10301,6 +10643,21 @@
       "mode": "image_upscale",
       "modelType": "SpandrelImageUpscale",
       "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "the_glasshouse_seed_tray",
+      "mode": "text_to_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "readinessPolicy": "runnable",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
@@ -10811,7 +11168,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "4291dee9aff16c2498ca14030ece3d851871f8a2bedd092980ae339c2d0b4717",
+    "templateBundleSha256": "77a7559ab6894fdb07451990808f77b33839b18bd1d111e5dc65c9d94b80d526",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -10859,8 +11216,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithPublicTemplates": 78,
-    "canonicalWorkflowsWithoutPublicTemplates": 147,
+    "canonicalWorkflowsWithPublicTemplates": 99,
+    "canonicalWorkflowsWithoutPublicTemplates": 126,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -10870,12 +11227,12 @@
       "research-blocked": 116,
       "unreviewed": 5
     },
-    "publicTemplateCount": 98,
-    "reviewedGalleryTemplateCount": 91,
+    "publicTemplateCount": 119,
+    "reviewedGalleryTemplateCount": 112,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
-      "executable": 87,
+      "executable": 108,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

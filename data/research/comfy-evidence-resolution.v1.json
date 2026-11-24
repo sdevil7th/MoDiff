@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:3a7f2ab3712cd3034d58ae63ed7dae720b0a20b6016b52e94b35481ae73b815f",
+  "contentHash": "sha256:940f296bd1a470acb858f2a99f11b8a8f756c57b89a58e7a35dcaf5481488940",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -3002,11 +3002,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HuggingFaceAnyToAnyModel:text_generation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
         "modelFamily": "Janus",
         "modelType": "HuggingFaceAnyToAnyModel",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "janus_reykjavik_travel_note"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3255,11 +3257,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3463,11 +3467,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3671,11 +3677,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3881,11 +3889,13 @@
         "ERNIE Image"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ErnieImagePipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ErnieImagePipeline:text_to_image",
         "modelFamily": "ERNIE Image",
         "modelType": "ErnieImagePipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "bookshop_at_blue_hour"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3989,11 +3999,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -4197,11 +4209,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -5747,11 +5761,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -5956,11 +5972,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7536,14 +7554,14 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:8b0b7c1c7a76d85706868cbd57d7ddd054186606331de23f7f04b7c26622c37a",
+      "contentHash": "sha256:05a52b0825ea9f3c78310814c60660b20046fc541bbafcac1f85f5f35a151d50",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:6e1cebb147904ba521736e4ee8e6e42355eb8540233c892a276b864205e79dd0"
+      "sha256": "sha256:ccaf14bc9f1a87ad79609af18c9d12abc375ba9a4c98ca61ab0209f63f42ef8f"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:4f0c5d2e7469ef443df500369818f5a0827d4260a46c297b5404184a62d0e330",
+      "contentHash": "sha256:176cee1842be4e60d2e229f2c2808ac2ca354801f68140360eba643367fe1d9c",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:be9f93997674ac3ef7f542da256bd57e6b0d6a99e0121c284c36cc8dcb0ba4e9"
+      "sha256": "sha256:3555e8c986edd5e7194811c8b204bca1553882e4cb18b92d9ea9c8132594142c"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -7599,9 +7617,9 @@
     },
     "newWorkflowClaims": 0,
     "recordsStillUndetermined": 1,
-    "recordsWithHiddenAuthoringSpecOption": 57,
+    "recordsWithHiddenAuthoringSpecOption": 48,
     "recordsWithInferredTask": 115,
-    "recordsWithPublicTemplateOption": 32,
+    "recordsWithPublicTemplateOption": 41,
     "recordsWithRecommendedWorkflow": 89,
     "resolutionCount": 116,
     "resolutionStateCounts": {

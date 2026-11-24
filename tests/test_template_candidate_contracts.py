@@ -73,15 +73,15 @@ class TemplateCandidateContractTests(unittest.TestCase):
             self.ledger["summary"],
             {
                 "canonicalWorkflowCount": 225,
-                "publicTemplateCount": 98,
-                "canonicalWorkflowsWithPublicTemplates": 78,
-                "canonicalWorkflowsWithExecutablePublicTemplates": 67,
-                "candidateContractCount": 158,
-                "mediaKindCounts": {"audio": 6, "image": 112, "json": 7, "video": 33},
-                "contractsRequiringInputExamples": 94,
-                "contractsWithComfyResearchRecords": 11,
-                "comfyResearchRecordCount": 14,
-                "comfyMappingStatusCounts": {"existing_contract_candidate": 14},
+                "publicTemplateCount": 119,
+                "canonicalWorkflowsWithPublicTemplates": 99,
+                "canonicalWorkflowsWithExecutablePublicTemplates": 88,
+                "candidateContractCount": 137,
+                "mediaKindCounts": {"audio": 6, "image": 93, "json": 5, "video": 33},
+                "contractsRequiringInputExamples": 91,
+                "contractsWithComfyResearchRecords": 8,
+                "comfyResearchRecordCount": 10,
+                "comfyMappingStatusCounts": {"existing_contract_candidate": 10},
             },
         )
 
@@ -90,7 +90,6 @@ class TemplateCandidateContractTests(unittest.TestCase):
             "HuggingFaceImageTextToTextModel:image_to_text",
             "HunyuanDiTPAGPipeline:text_to_image",
             "PixArtSigmaPAGPipeline:text_to_image",
-            "SanaPAGPipeline:text_to_image",
             "StableDiffusionPAGPipeline:edit_image",
             "StableDiffusionPAGPipeline:inpaint",
             "SpandrelVideoUpscale:video_upscale",
@@ -135,20 +134,21 @@ class TemplateCandidateContractTests(unittest.TestCase):
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 
-        self.assertEqual(len(public_templates), 98)
+        self.assertEqual(len(public_templates), 119)
         experimental_public_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "contract-only"}
         self.assertEqual(len(experimental_public_ids), 11)
         self.assertTrue(experimental_public_ids <= set(contracts_by_id))
-        self.assertEqual(len(public_workflow_ids), 67)
+        self.assertEqual(len(public_workflow_ids), 88)
         self.assertIn("AceStepAudioPipeline:text_to_audio:ace_step_lyric_music_video", public_workflow_ids)
         self.assertIn("HuggingFaceSpeechRecognitionModel:speech_to_text", public_workflow_ids)
         self.assertIn("LatentConsistencyModelPipeline:edit_image", public_workflow_ids)
         self.assertIn("SanaSprintPipeline:edit_image", public_workflow_ids)
+        self.assertIn("SanaPAGPipeline:text_to_image", public_workflow_ids)
         self.assertEqual(public_workflow_ids, coverage_public_workflow_ids)
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)
         self.assertFalse(set(contracts_by_id) & public_workflow_ids)
-        self.assertEqual(len(contracts_by_id), 158)
+        self.assertEqual(len(contracts_by_id), 137)
         experimental_public_pairs = {
             "flux2_dev_text_to_image": "Flux2ModularPipeline:text_to_image",
             "cosmos3_super_text_to_image": "Cosmos3OmniModularPipeline:text_to_image",
@@ -262,8 +262,8 @@ class TemplateCandidateContractTests(unittest.TestCase):
             rows.sort(key=lambda item: (item["recordType"], item["id"]))
         actual = {row["canonicalWorkflowId"]: row["comfyResearchRecords"] for row in self.ledger["contracts"]}
         self.assertEqual(actual, expected)
-        self.assertEqual(sum(bool(rows) for rows in actual.values()), 11)
-        self.assertEqual(sum(len(rows) for rows in actual.values()), 14)
+        self.assertEqual(sum(bool(rows) for rows in actual.values()), 8)
+        self.assertEqual(sum(len(rows) for rows in actual.values()), 10)
 
         forbidden_keys = {"edges", "graph", "links", "nodes", "workflow"}
 
