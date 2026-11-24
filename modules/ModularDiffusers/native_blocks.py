@@ -20,10 +20,17 @@ import math
 import torch
 from diffusers import (
     ClassifierFreeGuidance, FluxKontextModularPipeline, FluxModularPipeline,
-    QwenImageEditModularPipeline, QwenImageEditPlusModularPipeline, QwenImageModularPipeline, ZImageModularPipeline,
+    QwenImageEditModularPipeline, QwenImageEditPlusModularPipeline, QwenImageModularPipeline,
+    WanImage2VideoModularPipeline, ZImageModularPipeline,
 )
 from diffusers.configuration_utils import FrozenDict
 from diffusers.modular_pipelines.modular_pipeline_utils import ComponentSpec, InputParam, OutputParam
+from diffusers.modular_pipelines.wan.encoders import WanImageCropResizeStep
+from diffusers.modular_pipelines.wan.modular_blocks_wan_i2v import (
+    WanAutoImageEncoderStep, WanAutoVaeEncoderStep, WanFLF2VImageEncoderStep, WanFLF2VVaeEncoderStep,
+    WanImage2VideoAutoBlocks,
+)
+from PIL import Image, ImageOps
 from diffusers.modular_pipelines.flux.denoise import (
     FluxDenoiseStep, FluxKontextDenoiseStep, FluxKontextLoopDenoiser, FluxLoopAfterDenoiser, FluxLoopDenoiser,
 )
@@ -301,6 +308,38 @@ def _replace_block(parent, name, replacement):
     parent.block_classes = classes
 
 
+class WanLastFrameFitStep(WanImageCropResizeStep):
+    """Fit the closing frame to the resolved first-frame width and height."""
+
+    def __call__(self, components, state):
+        block_state = self.get_block_state(state)
+        block_state.resized_last_image = ImageOps.fit(
+            block_state.last_image, block_state.resized_image.size, method=Image.Resampling.BICUBIC,
+        )
+        self.set_block_state(state, block_state)
+        return components, state
+
+
+def _prepare_wan_last_frame_blocks(blocks):
+    if type(blocks) is not WanImage2VideoAutoBlocks:
+        raise ValueError("Wan last-frame sizing requires the reviewed AutoBlocks blueprint.")
+    for owner_name, owner_type, branch_type in (
+        ("image_encoder", WanAutoImageEncoderStep, WanFLF2VImageEncoderStep),
+        ("vae_encoder", WanAutoVaeEncoderStep, WanFLF2VVaeEncoderStep),
+    ):
+        owner = blocks.sub_blocks.get(owner_name)
+        if type(owner) is not owner_type:
+            raise ValueError(f"The reviewed Wan {owner_name} has changed.")
+        branch = owner.sub_blocks.get(f"flf2v_{owner_name}")
+        if (
+            type(branch) is not branch_type
+            or type(branch.sub_blocks.get("last_image_resize")) is not WanImageCropResizeStep
+        ):
+            raise ValueError(f"The reviewed Wan {owner_name} last-frame resize has changed.")
+        _replace_block(branch, "last_image_resize", WanLastFrameFitStep())
+    return blocks
+
+
 def _prepare_flux_blocks(blocks):
     if type(blocks) is not FluxAutoBlocks:
         raise ValueError("Flux native time compatibility requires its reviewed AutoBlocks blueprint.")
@@ -512,7 +551,7 @@ def _prepare_qwen_t2i_blocks(blocks):
 
 
 def prepare_native_pipeline_blocks(pipeline_class, blocks):
-    """Adapt newly constructed exact Flux, Kontext, Qwen and Z-Image blueprints.
+    """Adapt newly constructed exact Flux, Kontext, Qwen, Wan and Z-Image blueprints.
 
     Callers own this fresh tree. Neither upstream class-level block definitions
     nor another component owner's pipeline is modified. Both reviewed native
@@ -525,6 +564,8 @@ def prepare_native_pipeline_blocks(pipeline_class, blocks):
         return _prepare_flux_kontext_blocks(blocks)
     if pipeline_class is QwenImageModularPipeline:
         return _prepare_qwen_t2i_blocks(blocks)
+    if pipeline_class is WanImage2VideoModularPipeline:
+        return _prepare_wan_last_frame_blocks(blocks)
     if pipeline_class in (QwenImageEditModularPipeline, QwenImageEditPlusModularPipeline):
         from .qwen_vl import prepare_qwen_edit_vl_blocks
 

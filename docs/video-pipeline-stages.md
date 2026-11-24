@@ -173,6 +173,15 @@ both transformer experts and any optional image encoder/processor; replacing a
 component invalidates earlier encodings. Its high- and low-noise guidance controls
 remain distinct in the Generate stage and consumed-input evidence.
 
+Wan first-and-last-frame workflows fit the closing image to the first image's
+resolved geometry in both the vision and VAE encoders. The pinned Diffusers
+crop passed dimensions in reverse order, which padded landscape inputs and
+distorted the ending. The compatibility step center-crops to the requested
+aspect ratio and resizes to the resolved dimensions. The existing source
+limits still bound the fit, and the single-image branch keeps its own native
+preparation. The First and Last Frame inputs and the saved graph format stay
+the same.
+
 VACE has a different genuine material boundary. Encode Inputs retains its frozen
 video, aligned masks and optional references and runs official text encoding.
 The existing generic Generate action receives that owned encoding. Its native

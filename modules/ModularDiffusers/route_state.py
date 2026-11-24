@@ -1765,7 +1765,7 @@ def _wan_clip_resize_dimensions(height, width, *, workflow):
     )
 
 
-def _wan_last_image_intermediate_dimensions(last_image, *, height, width, stage):
+def _wan_last_frame_output_size(last_image, *, height, width, stage):
     if last_image is None:
         return None
     resize_ratio = max(width / last_image.width, height / last_image.height)
@@ -1776,7 +1776,7 @@ def _wan_last_image_intermediate_dimensions(last_image, *, height, width, stage)
         resized_width,
         label=f"FLF {stage} last-image intermediate",
     )
-    return resized_height, resized_width
+    return width, height
 
 
 def wan_area_budget_dimensions(image, height, width):
@@ -1808,7 +1808,7 @@ def preflight_wan_image_encoder_inputs(*, image, last_image, height, width):
         first_width,
         workflow=workflow,
     )
-    last_intermediate = _wan_last_image_intermediate_dimensions(
+    last_size = _wan_last_frame_output_size(
         last_image,
         height=first_height,
         width=first_width,
@@ -1822,7 +1822,7 @@ def preflight_wan_image_encoder_inputs(*, image, last_image, height, width):
         first_width,
         clip_height,
         clip_width,
-        last_intermediate,
+        last_size,
     )
 
 
@@ -2948,7 +2948,7 @@ def issue_wan_image_encoder_route_state(
         first_width,
         _clip_height,
         _clip_width,
-        last_intermediate,
+        last_size,
     ) = current_preflight
     _validate_wan_resized_media(
         workflow=workflow,
@@ -2956,7 +2956,7 @@ def issue_wan_image_encoder_route_state(
         resized_last_image=resized_last_image,
         height=first_height,
         width=first_width,
-        expected_last_size=last_intermediate,
+        expected_last_size=last_size,
         stage="image encoding",
     )
     _validate_wan_image_embeds(image_embeds, workflow=workflow)
@@ -3122,7 +3122,7 @@ def preflight_wan_vae_route_state(
         payload._first_height,
         payload._first_width,
     )
-    second_last_intermediate = _wan_last_image_intermediate_dimensions(
+    second_last_size = _wan_last_frame_output_size(
         last_image,
         height=second_height,
         width=second_width,
@@ -3142,7 +3142,7 @@ def preflight_wan_vae_route_state(
         spatial_scale,
         temporal_scale,
         _wan_vae_config_seal(vae_component),
-        second_last_intermediate,
+        second_last_size,
         video_tensor_bytes,
     )
 
@@ -3207,7 +3207,7 @@ def issue_wan_vae_route_state(
         spatial_scale,
         temporal_scale,
         vae_config_seal,
-        second_last_intermediate,
+        second_last_size,
         _video_tensor_bytes,
     ) = current_preflight
     video_processor_config_seal = wan_video_processor_config_seal(video_processor)
@@ -3217,7 +3217,7 @@ def issue_wan_vae_route_state(
         resized_last_image=resized_last_image,
         height=second_height,
         width=second_width,
-        expected_last_size=second_last_intermediate,
+        expected_last_size=second_last_size,
         stage="VAE encoding",
     )
     _validate_wan_video_tensor(
