@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import unittest
@@ -104,6 +105,63 @@ class VideoUpscaleContractTests(unittest.TestCase):
             [source],
             "spandrel-video-upscale",
         )
+
+    def test_opt_in_evidence_binds_the_snapshot_opened_by_the_upscaler(self):
+        from modiff.config import CONFIG
+
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source.mp4"
+            destination = Path(directory) / "upscaled.mp4"
+            original = b"original encoded video fixture"
+            encoded = b"encoded upscale fixture"
+            source.write_bytes(original)
+            node = UpscaleVideo("observed-upscale")
+            node._execution_input_record = {}
+            node.progress = MagicMock()
+            reader = MagicMock()
+            reader.__iter__.return_value = iter([np.zeros((2, 2, 3), dtype=np.uint8)])
+            writer = MagicMock()
+            writer.close.side_effect = lambda: destination.write_bytes(encoded)
+            model = MagicMock()
+            model.execute.return_value = {"output": [Image.new("RGB", (4, 4))]}
+            snapshots = []
+
+            def assets(value, *, minimum):
+                self.assertEqual(minimum, 1)
+                source.write_bytes(b"replacement video")
+                return [{"path": value[0] if isinstance(value, list) else value, "width": 2, "height": 2,
+                         "fps": 16, "frame_count": 1}]
+
+            def open_reader(path, _format):
+                snapshot = Path(path)
+                self.assertNotEqual(snapshot, source)
+                self.assertEqual(snapshot.read_bytes(), original)
+                snapshots.append(snapshot)
+                return reader
+
+            with (
+                patch.dict("os.environ", {"MODIFF_CAPTURE_BUILTIN_MEDIA": "1"}),
+                patch.dict(CONFIG.paths, {"data": directory}),
+                patch("modules.Video.main._bounded_video_operation_assets", side_effect=assets),
+                patch("modiff.media_assets.allocate_video_path", return_value=("asset-upscale", destination)),
+                patch("imageio.get_reader", side_effect=open_reader),
+                patch("imageio.get_writer", return_value=writer),
+                patch("modules.Spandrel.main.Upscaler", return_value=model),
+                patch("modules.Video.main._derived_asset_result", return_value={"file": str(destination)}),
+            ):
+                node.execute(video=str(source), device="cpu", fps=16, tile_size=256, tile_overlap=32)
+
+            evidence = node._execution_input_record["mediaEvidence"]
+            self.assertEqual(evidence["status"], "complete")
+            self.assertEqual(evidence["controls"]["fps"], 16)
+            self.assertEqual(evidence["controls"]["tile_overlap"], 32)
+            expected_hash = hashlib.sha256(original).hexdigest()
+            self.assertEqual(evidence["files"]["video"][0]["sourceValue"], str(source))
+            self.assertEqual(evidence["files"]["video"][0]["sha256"], expected_hash)
+            self.assertEqual(evidence["inputs"]["video"][0]["sha256"], expected_hash)
+            self.assertEqual(evidence["outputs"]["video_out"][0]["sha256"], hashlib.sha256(encoded).hexdigest())
+            self.assertEqual(len(snapshots), 1)
+            self.assertFalse(snapshots[0].exists())
 
     def test_combined_node_is_part_of_controlled_upscaler_receipts(self):
         selection = dict(VIDEO_UPSCALE_MODEL_SELECTION)

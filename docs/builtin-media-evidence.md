@@ -30,6 +30,13 @@ Snapshots are deleted after the call. No original input is changed. Existing
 structured retained-asset behavior is preserved and is not silently relabelled
 as captured file-input evidence.
 
+Upscale Video uses the same opt-in snapshot boundary for its source file. Its
+receipt binds the source bytes, effective tile size, tile overlap, device, FPS,
+and the encoded intermediate consumed by a downstream Video Output stage.
+The existing controlled-artifact receipt separately binds the Spandrel weights.
+Saved runs recorded before this capture was available retain their original
+proof scope.
+
 Capture is bounded to 16 members per port, 256 MiB per file, 64 MiB of raw pixel
 or sample bytes per member, and 32 KiB of metadata per node. Unsupported or
 oversized evidence is explicit rather than a fabricated complete receipt.

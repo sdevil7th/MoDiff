@@ -1822,17 +1822,24 @@ class UpscaleVideo(NodeBase):
         self.set_field_value({"model_id": pin_upscaler_model_selection(selection)})
 
     def execute(self, **kwargs):
-        import imageio
-        import numpy as np
-        from PIL import Image
-        from modiff.media_assets import allocate_video_path, current_task_id
-        from modules.Spandrel.main import Upscaler
+        from modiff.builtin_media_evidence import snapshot_video_inputs
 
         if kwargs.get("pipeline_class", VIDEO_UPSCALE_PIPELINE_CLASS) != VIDEO_UPSCALE_PIPELINE_CLASS:
             raise ValueError("Upscale Video received an unsupported pipeline contract identity.")
         if kwargs.get("operation", VIDEO_UPSCALE_MODE) != VIDEO_UPSCALE_MODE:
             raise ValueError("Upscale Video received an unsupported operation.")
-        assets = _bounded_video_operation_assets(kwargs.get("video"), minimum=1)
+        with snapshot_video_inputs(kwargs.get("video")) as (video, snapshot_files):
+            return self._execute_upscale(video, snapshot_files, kwargs)
+
+    def _execute_upscale(self, video, snapshot_files, kwargs):
+        import imageio
+        import numpy as np
+        from PIL import Image
+        from modiff.builtin_media_evidence import begin_media_capture
+        from modiff.media_assets import allocate_video_path, current_task_id
+        from modules.Spandrel.main import Upscaler
+
+        assets = _bounded_video_operation_assets(video, minimum=1)
         if len(assets) != 1:
             raise ValueError("Video upscaling requires exactly one input video.")
         source = assets[0]
@@ -1854,6 +1861,14 @@ class UpscaleVideo(NodeBase):
         output_fps = float(kwargs.get("fps") or 24)
         if not math.isfinite(output_fps) or not 1 <= output_fps <= 120:
             raise ValueError("Video upscale output FPS must be between 1 and 120.")
+        device = kwargs.get("device") or DEFAULT_DEVICE
+        capture = begin_media_capture(
+            self,
+            {"pipeline_class": VIDEO_UPSCALE_PIPELINE_CLASS, "operation": VIDEO_UPSCALE_MODE,
+             "tile_size": tile_size, "tile_overlap": tile_overlap, "device": device, "fps": output_fps},
+            inputs={"video": source["path"]},
+            files={"video": snapshot_files or []},
+        )
 
         asset_id, destination = allocate_video_path(task_id=current_task_id())
         reader = imageio.get_reader(source["path"], "ffmpeg")
@@ -1871,7 +1886,7 @@ class UpscaleVideo(NodeBase):
                     downscale=1.0,
                     tile_size=tile_size,
                     tile_overlap=tile_overlap,
-                    device=kwargs.get("device") or DEFAULT_DEVICE,
+                    device=device,
                 ).get("output")
                 if not isinstance(result, list) or len(result) != 1 or not isinstance(result[0], Image.Image):
                     raise ValueError("The selected video upscaler returned an invalid frame batch.")
@@ -1913,6 +1928,7 @@ class UpscaleVideo(NodeBase):
             destination.unlink(missing_ok=True)
             raise ValueError("Decoded video frame count does not match the reviewed source metadata.")
         result = _derived_asset_result(destination, asset_id, [source], "spandrel-video-upscale")
+        capture.finish({"video_out": result["file"]})
         self.progress(100, phase="upscaling", message=f"Upscaled {decoded_frames} frames")
         return {
             "video_out": result["file"],

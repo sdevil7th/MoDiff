@@ -32,7 +32,9 @@ CONTROL_FIELDS = {
     ('HuggingFaceSpeech', 'TranscribeCTCAudio'): [],
     ('Video', 'ProcessVideo'): VIDEO_CONTROLS,
     ('Video', 'Export'): ['filename', 'quality', 'fps'],
+    ('Video', 'UpscaleVideo'): ['pipeline_class', 'operation', 'tile_size', 'tile_overlap', 'device', 'fps'],
 }
+_VIDEO_SNAPSHOT_FIELDS = {('Video', 'ProcessVideo'): 'videos', ('Video', 'UpscaleVideo'): 'video'}
 MAX_CAPTURE_ITEMS = 16
 MAX_CAPTURE_BYTES = 32 * 1024
 MAX_FILE_BYTES = 256 * 1024 * 1024
@@ -105,10 +107,12 @@ class _Capture:
         if scope not in CONTROL_FIELDS:
             return
         try:
-            if scope == ('Video', 'ProcessVideo'):
-                value = inputs.get('videos')
+            snapshot_field = _VIDEO_SNAPSHOT_FIELDS.get(scope)
+            if snapshot_field is not None:
+                value = inputs.get(snapshot_field)
                 count = len(value) if isinstance(value, (list, tuple)) else 1
-                if not files or not isinstance(files.get('videos'), list) or len(files['videos']) != count:
+                snapshots = (files or {}).get(snapshot_field)
+                if not isinstance(snapshots, list) or len(snapshots) != count:
                     raise ValueError('video-snapshot-unavailable')
             values = {}
             for name in CONTROL_FIELDS[scope]:
