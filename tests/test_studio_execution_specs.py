@@ -2701,6 +2701,16 @@ class StudioExecutionSpecTests(unittest.TestCase):
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
 
+    def test_ltx_long_distilled_defaults_use_the_native_sampler(self):
+        capability = STUDIO_MODEL_CAPABILITIES["LTXI2VLongMultiPromptPipeline"]
+        self.assertEqual(capability["recommendedSteps"], 8)
+        self.assertEqual(capability["recommendedGuidance"], 1.0)
+        self.assertEqual(capability["recommendedMaxSequenceLength"], 128)
+        self.assertEqual(capability["lowVram"]["steps"], 8)
+        spec = studio_execution_spec_for_pair("LTXI2VLongMultiPromptPipeline", "image_to_video")
+        self.assertEqual(spec["id"], "ltx-long:image-to-video:v1")
+        self.assertIn(["wanGenerate", "num_inference_steps", "steps"], [list(row) for row in spec["bindings"]])
+
     def test_latte_seals_exact_safe_native_text_to_video_route(self):
         spec = studio_execution_spec_for_pair("LattePipeline", "text_to_video")
         self.assertIsNotNone(spec)

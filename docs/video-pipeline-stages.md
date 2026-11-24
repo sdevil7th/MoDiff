@@ -36,6 +36,12 @@ recompression step. Preflight and runtime health check that PyAV can resolve the
 setup for your current accelerator. The adapter preserves the upstream
 conditioning-compression defaults.
 
+LTX long image-to-video starts with the distilled model's eight steps per
+window, guidance of one, and a 128-token sequence length. The standard and
+low-memory starters use the same sampling controls. A saved older draft
+that reports an incompatible sampler can set Steps to 8 and Guidance to 1
+in Generate Video.
+
 AnimateDiff source, control and combined source/control starters use **Auto**
 attention. Their loaders may reject a forced math backend. The current
 recipes change only that explicit attention setting. Previously saved

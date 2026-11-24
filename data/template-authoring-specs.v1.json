@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:707dc918c04978e600fde659b7348ff8ca507d336dca269677fde52befccc9d1",
+  "contentHash": "sha256:8b0b7c1c7a76d85706868cbd57d7ddd054186606331de23f7f04b7c26622c37a",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:c3fb618194fa502b16fe3b650fc23e2b43ca797e9a218df5307bfda390c281eb",
+      "contentHash": "sha256:abb573dd1c8c42edd1f6d98ddcee32bf1ef5332f34821cfce4169df50971a9c4",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:002bbe1c2ada8658acf62edc7475da10ecc1ad9221ef57e4368316579358c5a2"
+      "sha256": "sha256:d3123fd3f7bb74285a473ecb84a3b65f5020dffb86aadf019aacefd3e8fa1ad2"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:758a1e26cfc4e9d6ec0d1d55733448cf1cbabd2f1467c3d2635c752ac2d76ff3"
+      "sha256": "sha256:5b1c652f6ad4f4bce5bda8e6eb43fa9e48ddb31efd583537fc47c2b4d7f1fb9a"
     }
   },
   "specifications": [
@@ -12262,7 +12262,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/ltxi2-v-long-multi-prompt-pipeline/image-to-video.json",
-        "sha256": "7715c08078c2fada5b6855a97f23a39c477e77117996703312fd1f04a1a6e98b"
+        "sha256": "0284c5de079533c999d3af1c57dd8b1381c87dce49e74f4db98bdb642bafe560"
       },
       "canonicalWorkflowId": "LTXI2VLongMultiPromptPipeline:image_to_video",
       "claims": {
@@ -12308,7 +12308,7 @@
           {
             "parameter": "guidance_scale",
             "role": "wanGenerate",
-            "value": 3
+            "value": 1
           },
           {
             "parameter": "guidance_scale_2",
@@ -12323,7 +12323,7 @@
           {
             "parameter": "max_sequence_length",
             "role": "wanGenerate",
-            "value": 512
+            "value": 128
           },
           {
             "parameter": "num_frames",
@@ -12333,7 +12333,7 @@
           {
             "parameter": "num_inference_steps",
             "role": "wanGenerate",
-            "value": 30
+            "value": 8
           },
           {
             "parameter": "prompt_segments_json",
@@ -12380,7 +12380,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "7715c08078c2fada5b6855a97f23a39c477e77117996703312fd1f04a1a6e98b",
+        "sourceGraphSha256": "0284c5de079533c999d3af1c57dd8b1381c87dce49e74f4db98bdb642bafe560",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
