@@ -425,6 +425,15 @@ an adapter defect; changing drivers, the prompt, or the generation settings
 will not repair it. The indexed T5 selection, BF16 variant, and original
 offload policy remain part of the reviewed route.
 
+## Short SANA-Video clips with an opening image
+
+Set **Frames** on the existing Generate stage to a value from 33 through 81
+in increments of four. The opening-image route uses the pinned VAE's
+four-frame temporal stride plus the first frame. The standard workflow starts
+at 81 frames. The text-to-video route continues to require 81 frames.
+The verified 33-frame example used 24 steps and Auto attention, with the
+opening image at the workflow's native 832×480 resolution.
+
 ## GLM-Image rejects unequal prompt embedding shapes
 
 GLM glyph encoding can produce a long positive sequence and a one-token empty

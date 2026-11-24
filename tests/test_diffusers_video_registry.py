@@ -3766,9 +3766,6 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         from_pretrained.assert_not_called()
 
     def test_sana_video_generation_seals_native_text_and_image_contracts(self):
-        class Output:
-            frames = [[f"frame-{index}" for index in range(81)]]
-
         class FakePipeline:
             _modiff_video_repo = SANA_VIDEO_REPO
             _modiff_video_revision = SANA_VIDEO_REVISION
@@ -3780,14 +3777,15 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
             def __call__(self, **kwargs):
                 self.calls.append(kwargs)
-                return Output()
+                return SimpleNamespace(frames=[[f"frame-{index}" for index in range(kwargs["frames"])]])
 
         reference = Image.new("RGB", (832, 480))
-        for pipeline_class, mode, media in (
-            ("SanaVideoPipeline", "text_to_video", {}),
-            ("SanaImageToVideoPipeline", "image_to_video", {"reference_images": [reference]}),
+        for pipeline_class, mode, media, num_frames in (
+            ("SanaVideoPipeline", "text_to_video", {}, 81),
+            ("SanaImageToVideoPipeline", "image_to_video", {"reference_images": [reference]}, 81),
+            ("SanaImageToVideoPipeline", "image_to_video", {"reference_images": [reference]}, 33),
         ):
-            with self.subTest(mode=mode):
+            with self.subTest(mode=mode, frames=num_frames):
                 pipeline = FakePipeline(pipeline_class)
                 result = Generate().execute(
                     pipeline=pipeline,
@@ -3796,7 +3794,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                     negative_prompt="flicker",
                     width=832,
                     height=480,
-                    num_frames=81,
+                    num_frames=num_frames,
                     num_inference_steps=50,
                     guidance_scale=6,
                     max_sequence_length=300,
@@ -3806,19 +3804,47 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     result,
-                    {"video_out": Output.frames[0], "width_out": 832, "height_out": 480, "frames_out": 81},
+                    {
+                        "video_out": [f"frame-{index}" for index in range(num_frames)],
+                        "width_out": 832,
+                        "height_out": 480,
+                        "frames_out": num_frames,
+                    },
                 )
                 call_kwargs = pipeline.calls[0]
                 self.assertEqual(
                     call_kwargs["prompt"], "A red kite crosses a windswept coastal bluff. motion score: 30."
                 )
-                self.assertEqual(call_kwargs["frames"], 81)
+                self.assertEqual(call_kwargs["frames"], num_frames)
                 self.assertEqual(call_kwargs["num_inference_steps"], 50)
                 self.assertEqual(call_kwargs["guidance_scale"], 6)
                 self.assertEqual(call_kwargs["max_sequence_length"], 300)
                 self.assertIs(call_kwargs["clean_caption"], False)
                 self.assertIs(call_kwargs["use_resolution_binning"], False)
                 self.assertIs(call_kwargs.get("image"), reference if media else None)
+
+    def test_sana_video_opening_image_rejects_out_of_range_or_unaligned_frames(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="SanaImageToVideoPipeline",
+            _modiff_video_repo=SANA_VIDEO_REPO,
+            _modiff_video_revision=SANA_VIDEO_REVISION,
+        )
+        reference = Image.new("RGB", (832, 480))
+        with patch.dict(sys.modules, {"torch": None}):
+            for num_frames, error in (
+                (32, "integer from 33 through 81"),
+                (34, "frame count must have the form 4k"),
+                (80, "frame count must have the form 4k"),
+                (85, "integer from 33 through 81"),
+            ):
+                with self.subTest(frames=num_frames), self.assertRaisesRegex(ValueError, error):
+                    Generate().execute(
+                        pipeline=pipeline,
+                        mode="image_to_video",
+                        prompt="Morning in a greenhouse.",
+                        reference_images=[reference],
+                        num_frames=num_frames,
+                    )
 
     def test_sana_video_invalid_native_contracts_fail_before_torch_or_execution(self):
         pipeline = SimpleNamespace(

@@ -4172,9 +4172,11 @@ class Generate(WanVACEGenerate):
             family="SANA-Video",
             default=81,
             label="frame count",
-            minimum=81,
+            minimum=33 if references else 81,
             maximum=81,
         )
+        if references and (num_frames - 1) % 4 != 0:
+            raise ValueError("SANA-Video opening-image frame count must have the form 4k+1.")
         steps = _bounded_short_video_int(
             kwargs.get("num_inference_steps"),
             family="SANA-Video",
