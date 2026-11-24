@@ -184,8 +184,8 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.ledger["summary"],
             {
                 "canonicalWorkflowCount": 225,
-                "canonicalWorkflowsWithPublicTemplates": 99,
-                "canonicalWorkflowsWithoutPublicTemplates": 126,
+                "canonicalWorkflowsWithPublicTemplates": 105,
+                "canonicalWorkflowsWithoutPublicTemplates": 120,
                 "diffusersPipelineSymbolCount": 340,
                 "pipelineStatusCounts": {
                     "contract-only": 5,
@@ -195,12 +195,12 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "research-blocked": 116,
                     "unreviewed": 5,
                 },
-                "publicTemplateCount": 119,
-                "reviewedGalleryTemplateCount": 112,
+                "publicTemplateCount": 125,
+                "reviewedGalleryTemplateCount": 118,
                 "templateStatusCounts": {
                     "contract-only": 11,
                     "equivalent": 0,
-                    "executable": 108,
+                    "executable": 114,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -491,9 +491,9 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(_canonical_json_sha256(graph_path), item["graphHash"], workflow_id)
 
         templates = self.ledger["publicTemplates"]
-        self.assertEqual(len({item["id"] for item in templates}), 119)
+        self.assertEqual(len({item["id"] for item in templates}), 125)
         self.assertTrue(all(item["canonicalWorkflowId"] in ledger_workflows for item in templates))
-        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 112)
+        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 118)
         for template_id in (
             "flux_lora_cinematic_octane_3d", "minimax_music3_chamber_pop", "wan_video_long_showcase",
         ):
@@ -501,8 +501,8 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertTrue(item["reviewedGalleryExample"])
             self.assertEqual(item["galleryVerificationStatus"], "reviewed")
             self.assertEqual(item["galleryExecutionCompatibility"], "historical_reference_requires_new_execution_evidence")
-        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 112)
-        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 99)
+        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 118)
+        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 105)
         contract_only = [item for item in templates if item["status"] == "contract-only"]
         self.assertEqual(len(contract_only), 11)
         self.assertEqual(sum(item["reviewedGalleryExample"] for item in contract_only), 11)
@@ -551,6 +551,12 @@ class UpstreamCoverageTests(unittest.TestCase):
             "janus_red_triangle_caption": "HuggingFaceAnyToAnyModel:image_to_text",
             "janus_red_enamel_teapot": "HuggingFaceAnyToAnyModel:text_to_image",
             "lumina_opal_pendant_in_limestone": "LuminaPipeline:text_to_image",
+            "ddim_cifar10_preview": "DDIMPipeline:unconditional_image",
+            "sdxl_clear_cobalt_backdrop": "StableDiffusionXLPipeline:inpaint",
+            "sdxl_turbo_orange_caps": "StableDiffusionXLTurboPipeline:text_to_image",
+            "whisper_small_an_open_door": "HuggingFaceSpeechRecognitionModel:speech_translation",
+            "smolvlm_red_triangle": "HuggingFaceImageTextToTextModel:image_to_text",
+            "kandinsky3_ginkgo_on_slate": "Kandinsky3Pipeline:text_to_image",
         }
         for template_id, workflow_id in retained_public_pairs.items():
             item = public_by_id[template_id]
@@ -576,7 +582,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             sum({**supported, **experimental}[item["canonicalWorkflowId"]]["mediaKind"] == "image"
                 for item in templates),
-            90,
+            94,
         )
         for template_id, (workflow_id, profile_id) in experimental_public_pairs.items():
             item = public_by_id[template_id]
@@ -609,7 +615,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(source["mode"], "huggingface")
             self.assertRegex(source["revision"], r"^[0-9a-f]{40}$")
             self.assertRegex(source["assetSetId"], r"^sha256:canonical-json:[0-9a-f]{64}$")
-            self.assertEqual(len(ledger_gallery_ids), 112)
+            self.assertEqual(len(ledger_gallery_ids), 118)
 
     def test_remote_asset_build_requires_an_explicit_reviewed_gallery_manifest(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

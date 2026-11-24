@@ -255,6 +255,25 @@ def _canonical_graph_hash(value: Mapping[str, Any]) -> str:
     return _sha256_bytes(_stable_json(value).encode("utf-8"))
 
 
+def read_graph_authoring_defaults(
+    root: Path, workflow_id: str, graph_path: Any, graph_hash: Any,
+) -> tuple[list[dict[str, Any]], bool]:
+    """Read authoring defaults from the exact shipped canonical graph."""
+    if not isinstance(graph_path, str) or not isinstance(graph_hash, str) or _SHA256.fullmatch(graph_hash) is None:
+        raise TemplateAuthoringSpecError(f"Template candidate {workflow_id} has an invalid graph binding.")
+    graphs = (root / "data" / "graphs").resolve()
+    path = (graphs / graph_path).resolve()
+    if not path.is_relative_to(graphs):
+        raise TemplateAuthoringSpecError(f"Canonical graph path escaped the catalogue for {workflow_id}.")
+    try:
+        graph = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise TemplateAuthoringSpecError(f"Canonical graph is unavailable for {workflow_id}.") from error
+    if not isinstance(graph, dict) or _canonical_graph_hash(graph) != graph_hash:
+        raise TemplateAuthoringSpecError(f"Canonical graph hash drifted for {workflow_id}.")
+    return _graph_default_snapshot(graph)
+
+
 def _graph_default_snapshot(graph: Mapping[str, Any]) -> tuple[list[dict[str, Any]], bool]:
     nodes = graph.get("nodes")
     if not isinstance(nodes, list):
@@ -434,14 +453,7 @@ def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
         workflow = manifest_by_id[workflow_id]
         graph_path = contract.get("graphPath")
         graph_hash = contract.get("graphHash")
-        if not isinstance(graph_path, str) or not isinstance(graph_hash, str) or _SHA256.fullmatch(graph_hash) is None:
-            raise TemplateAuthoringSpecError(f"Template candidate {workflow_id} has an invalid graph binding.")
-        try:
-            graph = json.loads((root / "data" / "graphs" / graph_path).read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as error:
-            raise TemplateAuthoringSpecError(f"Canonical graph is unavailable for {workflow_id}.") from error
-        if not isinstance(graph, dict) or _canonical_graph_hash(graph) != graph_hash:
-            raise TemplateAuthoringSpecError(f"Canonical graph hash drifted for {workflow_id}.")
+        defaults, has_negative_prompt = read_graph_authoring_defaults(root, workflow_id, graph_path, graph_hash)
 
         model_type = contract.get("modelType")
         mode = contract.get("mode")
@@ -450,7 +462,6 @@ def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
         if any(not isinstance(value, str) or not value for value in (model_type, mode, media_kind, model_family)):
             raise TemplateAuthoringSpecError(f"Template candidate identity is invalid for {workflow_id}.")
         prompt = _prompt_for(workflow_id, mode)
-        defaults, has_negative_prompt = _graph_default_snapshot(graph)
         inputs = _input_items(contract.get("requiredInputs"), mode=mode)
         required_artifacts = contract.get("requiredArtifacts")
         if not isinstance(required_artifacts, list) or any(

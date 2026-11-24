@@ -542,7 +542,9 @@
       "id": "DDIMPipeline:unconditional_image",
       "mode": "unconditional_image",
       "modelType": "DDIMPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "ddim_cifar10_preview"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1269,7 +1271,9 @@
       "id": "HuggingFaceImageTextToTextModel:image_to_text",
       "mode": "image_to_text",
       "modelType": "HuggingFaceImageTextToTextModel",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "smolvlm_red_triangle"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1293,7 +1297,9 @@
       "id": "HuggingFaceSpeechRecognitionModel:speech_translation",
       "mode": "speech_translation",
       "modelType": "HuggingFaceSpeechRecognitionModel",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "whisper_small_an_open_door"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1416,7 +1422,9 @@
       "id": "Kandinsky3Pipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "Kandinsky3Pipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "kandinsky3_ginkgo_on_slate"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2412,7 +2420,9 @@
       "id": "StableDiffusionXLPipeline:inpaint",
       "mode": "inpaint",
       "modelType": "StableDiffusionXLPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_clear_cobalt_backdrop"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2436,7 +2446,9 @@
       "id": "StableDiffusionXLTurboPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "StableDiffusionXLTurboPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_turbo_orange_caps"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2702,7 +2714,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:176cee1842be4e60d2e229f2c2808ac2ca354801f68140360eba643367fe1d9c",
+  "contentHash": "sha256:deb82d12296afbaf1bcacd1ac2ded23801f399c30dd10d7500938d4bbc554b55",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -8308,6 +8320,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "DDIMPipeline:unconditional_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "ddim_cifar10_preview",
+      "mode": "unconditional_image",
+      "modelType": "DDIMPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "ZImageModularPipeline:text_to_image:fast_lora",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -9468,6 +9495,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "Kandinsky3Pipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "kandinsky3_ginkgo_on_slate",
+      "mode": "text_to_image",
+      "modelType": "Kandinsky3Pipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "LatentConsistencyModelPipeline:edit_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -10619,6 +10661,36 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "StableDiffusionXLPipeline:inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_clear_cobalt_backdrop",
+      "mode": "inpaint",
+      "modelType": "StableDiffusionXLPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLTurboPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_turbo_orange_caps",
+      "mode": "text_to_image",
+      "modelType": "StableDiffusionXLTurboPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -10628,6 +10700,21 @@
       "mode": "text_generation",
       "modelType": "HuggingFaceTextGenerationModel",
       "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "smolvlm_red_triangle",
+      "mode": "image_to_text",
+      "modelType": "HuggingFaceImageTextToTextModel",
+      "readinessPolicy": "requires_input",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
@@ -10989,6 +11076,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_translation",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "whisper_small_an_open_door",
+      "mode": "speech_translation",
+      "modelType": "HuggingFaceSpeechRecognitionModel",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_to_text",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -11168,7 +11270,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "77a7559ab6894fdb07451990808f77b33839b18bd1d111e5dc65c9d94b80d526",
+    "templateBundleSha256": "e4e0f34a3b40cf9878602f1d3f6ee4272cf82d3e33df3316f9c318bbace37699",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -11216,8 +11318,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithPublicTemplates": 99,
-    "canonicalWorkflowsWithoutPublicTemplates": 126,
+    "canonicalWorkflowsWithPublicTemplates": 105,
+    "canonicalWorkflowsWithoutPublicTemplates": 120,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -11227,12 +11329,12 @@
       "research-blocked": 116,
       "unreviewed": 5
     },
-    "publicTemplateCount": 119,
-    "reviewedGalleryTemplateCount": 112,
+    "publicTemplateCount": 125,
+    "reviewedGalleryTemplateCount": 118,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
-      "executable": 108,
+      "executable": 114,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

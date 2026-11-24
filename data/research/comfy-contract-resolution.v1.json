@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:037718b34b58d625e7fabf02d4f2230a1b6bd975a3a7fc9fe11ca3441855f813",
+  "contentHash": "sha256:f07967a9f1677e50cfb206eaf6dc3abc692fa43c43fed10fca0aaf854b875f52",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -5509,11 +5509,13 @@
         "Kandinsky"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:Kandinsky3Pipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "Kandinsky3Pipeline:text_to_image",
         "modelFamily": "Kandinsky",
         "modelType": "Kandinsky3Pipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "kandinsky3_ginkgo_on_slate"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -9530,11 +9532,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HuggingFaceImageTextToTextModel:image_to_text",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
         "modelFamily": "SmolVLM",
         "modelType": "HuggingFaceImageTextToTextModel",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "smolvlm_red_triangle"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -9702,11 +9706,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HuggingFaceImageTextToTextModel:image_to_text",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
         "modelFamily": "SmolVLM",
         "modelType": "HuggingFaceImageTextToTextModel",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "smolvlm_red_triangle"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -16659,14 +16665,14 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:05a52b0825ea9f3c78310814c60660b20046fc541bbafcac1f85f5f35a151d50",
+      "contentHash": "sha256:e045981bbeb572a59b55298e9109feadd373ebcb93c1cc6fe419b37cd1f248de",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:ccaf14bc9f1a87ad79609af18c9d12abc375ba9a4c98ca61ab0209f63f42ef8f"
+      "sha256": "sha256:2bcc25760427fb23e546e3f1a355d06c025169e37d6bfc073377fd550c08c1e4"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:176cee1842be4e60d2e229f2c2808ac2ca354801f68140360eba643367fe1d9c",
+      "contentHash": "sha256:deb82d12296afbaf1bcacd1ac2ded23801f399c30dd10d7500938d4bbc554b55",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:3555e8c986edd5e7194811c8b204bca1553882e4cb18b92d9ea9c8132594142c"
+      "sha256": "sha256:12e29c299a219cb5695780aad7fe90f11c36cea17a9de1bb952796d9285614bd"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -16725,8 +16731,8 @@
       "same_upstream_generation_different_partition_and_auxiliary": 8,
       "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 58,
-    "recordsWithPublicTemplateOption": 52,
+    "recordsWithHiddenAuthoringSpecOption": 55,
+    "recordsWithPublicTemplateOption": 55,
     "recordsWithRecommendedWorkflow": 110,
     "resolutionCount": 138,
     "resolutionStateCounts": {
