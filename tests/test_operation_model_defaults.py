@@ -39,6 +39,18 @@ def test_profile_starter_uses_reviewed_values_without_constructing_models(
     assert MODULE_MAP["modules.DiffusersImage"] == original
 
 
+@pytest.mark.parametrize("task,height", [("inpaint", 1024), ("outpaint", 768)])
+def test_chroma_starter_seeds_geometry_for_the_selected_task(contracts, task, height):
+    starter = resolve_operation_starter(MODULE_MAP, contracts, {
+        "pipelineClass": "ChromaInpaintPipeline",
+        "task": task,
+        "executionProfileId": "chroma1-hd-inpaint:direct",
+    })
+    edit = next(node for node in starter["nodes"] if node["action"] == "Inpaint")
+    assert (edit["values"]["width"], edit["values"]["height"]) == (1024, height)
+    assert (edit["params"]["width"]["value"], edit["params"]["height"]["value"]) == (1024, height)
+
+
 def test_individually_resolved_lcm_node_uses_same_reviewed_defaults(contracts):
     result = resolve_operation(MODULE_MAP, contracts, {
         "pipelineClass": "LatentConsistencyModelPipeline", "task": "text_to_image",

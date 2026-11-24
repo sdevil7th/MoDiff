@@ -56,6 +56,8 @@ def seed_standard_operation_defaults(node, profile):
         }
     else:
         size = capability.get("defaultSize", {})
+        if node.get("operation", {}).get("task") == "outpaint":
+            size = capability.get("outpaintDefaults", size)
         defaults = {
             "num_inference_steps": capability.get("recommendedSteps"),
             "guidance_scale": capability.get("recommendedGuidance"),

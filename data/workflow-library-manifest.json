@@ -1336,7 +1336,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/chroma-inpaint-pipeline/outpaint.json",
-      "graphHash": "54dbdca8b76f84abd603f48a2e000280ebd172b3fe191e51e3262ae0c9d3ec76"
+      "graphHash": "80f147eb2530d0c6fc97ca5b5db216118514f48e712c01c3e51d608b08d8fb51"
     },
     {
       "id": "ChromaPipeline:text_to_image",
@@ -3952,7 +3952,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/latte-pipeline/text-to-video.json",
-      "graphHash": "e6d9dc9edddd4efe5186cf152749c17a37e7d668b05ad7aedd9cd9f7e3438cd3"
+      "graphHash": "52646f5fe4769c4e4739dee5cc5df6f0d824e66b9c50f3cfa58b84b9bd3f0251"
     },
     {
       "id": "LongCatAudioDiTPipeline:text_to_audio",

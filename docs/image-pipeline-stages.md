@@ -16,6 +16,10 @@ decoding remain available. New staged latents require their matching binding.
 
 ## Inputs and state
 
+The generic Edit action uses an ordered list for JoyImage Edit Plus. One
+connected source becomes a one-item list, and multiple references reach
+Diffusers in their connected order.
+
 `EncodeInputs` returns `image_conditioning` owned by the selected loader. Its
 material is sealed against changes to the owner, component identities, runtime
 recipe, adapters, geometry, and relevant input values. `Denoise` consumes that
@@ -101,3 +105,12 @@ Tiny CPU component and dispatcher tests establish numerical and lifecycle
 contracts. They do not establish trained-artifact GPU fit, Windows memory
 headroom, disk-hook adapter mutation, or live recovery qualification. Those
 checks use the ordinary application and original settings separately.
+
+### Outpaint starter geometry
+
+An outpaint-capable model can declare geometry defaults when the shared
+starter dimensions are outside its reviewed range. Chroma1-HD Inpaint
+starts with a 1024×768 canvas and 96-pixel left and right margins. The
+generic canvas keeps a matching 832×768 source at its original size and
+builds the expansion mask. This only seeds new workflows. Existing
+saved sizes, margins and connections are preserved.

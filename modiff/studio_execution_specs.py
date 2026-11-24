@@ -12121,7 +12121,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "capability": _latte_capability(),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
-            "bindings": _COGVIDEOX_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_COGVIDEOX_GRAPH_BINDINGS),
         },
         "mochi:text-to-video:v1": {
             "modelType": "MochiPipeline",
@@ -16901,6 +16901,16 @@ _CHROMA1_HD_INPAINT_DIRECT_CAPABILITY = {
     "artifactLabel": "Reused Apache-2.0 bfloat16 safetensors Diffusers repository",
     "recommendedMaxSequenceLength": 512,
     "supportsLora": False,
+    # Keep an 832×768 source area inside the current 1024px adapter bound.
+    "outpaintDefaults": {
+        "width": 1024,
+        "height": 768,
+        "aspectRatio": "4:3",
+        "outpaintLeft": 96,
+        "outpaintRight": 96,
+        "outpaintOverlap": 48,
+        "outpaintFeather": 16,
+    },
 }
 _LTX2_STANDARD_DIRECT_CAPABILITY = {
     **_planning_video_capability(
@@ -19021,6 +19031,15 @@ def _historical_studio_execution_spec(spec_id: str, content_hash: str) -> dict[s
         expected_bytes = 25656
         expected_sha256 = "f2eda05862c2cc880e43e71a145503e15f2064b33f12f9093d29acaf7554e160"
         source_commit = "913befd66a841d5d2e1b05ec86a25421d63f611f"
+    elif (spec_id, content_hash) == ("latte:text-to-video:v1", "studio-spec-v1-a3ae0927"):
+        video_attention_records = {
+            ("latte:text-to-video:v1", "studio-spec-v1-a3ae0927"):
+                ("LattePipeline", "text_to_video", "latte:direct"),
+        }
+        archive_name = "latte-attention-studio-spec-compatibility.v1.json"
+        expected_bytes = 6727
+        expected_sha256 = "30fa2a67536ad57dffe44e72d47c09dcb72f3790150e210b6375ad2ab37b1648"
+        source_commit = "f2659f449b06cd8589d65792842fc93d800ccf89"
     else:
         archive_name = "video-attention-studio-spec-compatibility.v1.json"
         expected_bytes = 34008

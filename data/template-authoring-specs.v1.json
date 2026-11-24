@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:6d30a5bfae2c3cd03b89ce46e08820d406ad47e9f5ce8d629c33a45afdc9f071",
+  "contentHash": "sha256:dd062827f86cdb3ad87c0adc6ec4d0af2e6b9b8ce495276ec8f98a533bdb5279",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:c6f1914611e1cad53c222de1b541c9c702a098fc90189d5527ecc935969846c1",
+      "contentHash": "sha256:ec9cc1fde152992123b0302ff55310b257752c923252b31ca0c398320010849f",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:edae6f06fff10964fc4ccc74ad7a4a1e0a39be246b9ce3db1372bd9d908b4d32"
+      "sha256": "sha256:83f89c4c573698185b4c48708d0003c7cae1eac7aabfb29261180586d249a30d"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:992de94fb865ec7ec2cbf00ce26c2a8f950c600d5397fe4236aa0b2abb0d7762"
+      "sha256": "sha256:b07a3d8dc132dac589212bf568f9a63c37c5570997f28185ee7e5b39a84c578f"
     }
   },
   "specifications": [
@@ -3973,7 +3973,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/chroma-inpaint-pipeline/outpaint.json",
-        "sha256": "54dbdca8b76f84abd603f48a2e000280ebd172b3fe191e51e3262ae0c9d3ec76"
+        "sha256": "80f147eb2530d0c6fc97ca5b5db216118514f48e712c01c3e51d608b08d8fb51"
       },
       "canonicalWorkflowId": "ChromaInpaintPipeline:outpaint",
       "claims": {
@@ -4017,12 +4017,12 @@
           {
             "parameter": "strength",
             "role": "diffusersImageInpaint",
-            "value": 0.85
+            "value": 1
           },
           {
             "parameter": "width",
             "role": "diffusersImageInpaint",
-            "value": 1344
+            "value": 1024
           },
           {
             "parameter": "alpha_channel",
@@ -4037,7 +4037,7 @@
           {
             "parameter": "feather",
             "role": "outpaintCanvas",
-            "value": 8
+            "value": 16
           },
           {
             "parameter": "fill_color",
@@ -4052,17 +4052,17 @@
           {
             "parameter": "left",
             "role": "outpaintCanvas",
-            "value": 256
+            "value": 96
           },
           {
             "parameter": "overlap",
             "role": "outpaintCanvas",
-            "value": 24
+            "value": 48
           },
           {
             "parameter": "right",
             "role": "outpaintCanvas",
-            "value": 256
+            "value": 96
           },
           {
             "parameter": "top",
@@ -4072,11 +4072,11 @@
           {
             "parameter": "width",
             "role": "outpaintCanvas",
-            "value": 1344
+            "value": 1024
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "54dbdca8b76f84abd603f48a2e000280ebd172b3fe191e51e3262ae0c9d3ec76",
+        "sourceGraphSha256": "80f147eb2530d0c6fc97ca5b5db216118514f48e712c01c3e51d608b08d8fb51",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -12588,7 +12588,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/latte-pipeline/text-to-video.json",
-        "sha256": "e6d9dc9edddd4efe5186cf152749c17a37e7d668b05ad7aedd9cd9f7e3438cd3"
+        "sha256": "52646f5fe4769c4e4739dee5cc5df6f0d824e66b9c50f3cfa58b84b9bd3f0251"
       },
       "canonicalWorkflowId": "LattePipeline:text_to_video",
       "claims": {
@@ -12676,7 +12676,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "e6d9dc9edddd4efe5186cf152749c17a37e7d668b05ad7aedd9cd9f7e3438cd3",
+        "sourceGraphSha256": "52646f5fe4769c4e4739dee5cc5df6f0d824e66b9c50f3cfa58b84b9bd3f0251",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {

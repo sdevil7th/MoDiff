@@ -1,6 +1,7 @@
 from source_contract_helpers import source_sha256
 
 import ast
+import json
 from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
@@ -28,6 +29,7 @@ from modules.DiffusersImage.main import (
     IMAGE_PIPELINE_ADAPTERS,
     Edit,
     Inpaint,
+    OutpaintCanvas,
     LoadPipeline as LoadImagePipeline,
     _tag_image_pipeline,
     image_pipeline_contract,
@@ -453,6 +455,18 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
                 all(parameter != "true_cfg_scale" for _role, parameter, _source in specification["bindings"])
             )
         self.assertIn(("outpaintCanvas", "mask_image", "diffusersImageInpaint", "mask_image"), outpaint["edges"])
+        self.assertEqual(
+            capabilities["ChromaInpaintPipeline"]["outpaintDefaults"],
+            {
+                "width": 1024,
+                "height": 768,
+                "aspectRatio": "4:3",
+                "outpaintLeft": 96,
+                "outpaintRight": 96,
+                "outpaintOverlap": 48,
+                "outpaintFeather": 16,
+            },
+        )
 
         ltx2 = studio_execution_spec_for_pair("LTX2Pipeline", "text_to_video")
         ltx2_capability = capabilities["LTX2Pipeline"]
@@ -560,6 +574,29 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
 
         self.assertEqual((result["width_out"], result["height_out"]), (64, 48))
         self.assertEqual(len(pipeline.calls), 1)
+
+    def test_chroma_portable_outpaint_defaults_keep_source_geometry(self):
+        graph = Path(__file__).resolve().parents[1] / "data/graphs/studio/chroma-inpaint-pipeline/outpaint.json"
+        values = {
+            node["data"]["action"]: {key: field.get("value") for key, field in node["data"]["params"].items()}
+            for node in json.loads(graph.read_text(encoding="utf-8"))["nodes"]
+        }
+        defaults = studio_capability_definitions()["ChromaInpaintPipeline"]["outpaintDefaults"]
+        fields = {
+            "width": "width", "height": "height", "left": "outpaintLeft", "right": "outpaintRight",
+            "overlap": "outpaintOverlap", "feather": "outpaintFeather",
+        }
+        self.assertEqual({key: values["OutpaintCanvas"][key] for key in fields},
+                         {key: defaults[source] for key, source in fields.items()})
+        self.assertEqual((values["Inpaint"]["width"], values["Inpaint"]["height"]), (1024, 768))
+        self.assertEqual(values["Inpaint"]["strength"], 1.0)
+        source = Image.new("RGB", (832, 768), (177, 96, 42))
+        result = OutpaintCanvas("chroma-starter-canvas").execute(
+            image=source, **{key: values["OutpaintCanvas"][key] for key in fields}
+        )
+        self.assertEqual(result["canvas"].crop((96, 0, 928, 768)).tobytes(), source.tobytes())
+        self.assertEqual(result["mask_image"].getpixel((512, 384)), 0)
+        self.assertEqual(result["mask_image"].getpixel((0, 384)), 255)
 
     def test_chroma_loaders_use_exact_pin_and_safe_serialization_without_downloads(self):
         for pipeline_class, mode in (

@@ -1850,6 +1850,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("JoyImageEditPipeline", "text_to_image", Generate, {}),
             ("JoyImageEditPipeline", "edit_image", Edit, {"image": image}),
             ("JoyImageEditPlusPipeline", "edit_image", Edit, {"image": image}),
+            ("JoyImageEditPlusPipeline", "multi_image_reference_edit", Edit,
+             {"image": [image, Image.new("RGB", image.size, "orange")]}),
             ("DreamLitePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
             ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
@@ -2010,6 +2012,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     action_class(f"signature-{pipeline_name}").execute(**values)
 
                 self.assertEqual(set(received), expected_keys)
+                if pipeline_name == "JoyImageEditPlusPipeline":
+                    references = action_inputs["image"]
+                    self.assertIsInstance(received["images"], list)
+                    self.assertEqual(received["images"],
+                                     references if isinstance(references, list) else [references])
                 if adapter.use_resolution_binning is not None:
                     self.assertIs(received["use_resolution_binning"], adapter.use_resolution_binning)
                 if adapter.guidance_parameter is not None:

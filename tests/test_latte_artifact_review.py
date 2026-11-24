@@ -118,6 +118,7 @@ class LatteArtifactReviewTests(unittest.TestCase):
         self.assertEqual(loader_params["revision"]["value"], self.review["repository"]["revision"])
         self.assertEqual(loader_params["dtype"]["value"], "float16")
         self.assertEqual(recipe_params["offload_mode"]["value"], "sequential_cpu")
+        self.assertEqual(recipe_params["attention_backend"]["value"], "auto")
         self.assertTrue(recipe_params["vae_slicing"]["value"])
         self.assertFalse(recipe_params["vae_tiling"]["value"])
         self.assertEqual(

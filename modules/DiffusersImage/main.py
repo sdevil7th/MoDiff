@@ -1250,6 +1250,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_output_side=2048,
         output_side_step=32,
         max_output_pixels=1024 * 1024,
+        multi_image_strategy="always_list",
         image_parameter="images",
         # JoyImage Edit Plus uses the same 4096-token upstream call contract.
         max_sequence_length=4096,

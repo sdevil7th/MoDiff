@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:c6f1914611e1cad53c222de1b541c9c702a098fc90189d5527ecc935969846c1",
+  "contentHash": "sha256:ec9cc1fde152992123b0302ff55310b257752c923252b31ca0c398320010849f",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -1471,7 +1471,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "54dbdca8b76f84abd603f48a2e000280ebd172b3fe191e51e3262ae0c9d3ec76",
+      "graphHash": "80f147eb2530d0c6fc97ca5b5db216118514f48e712c01c3e51d608b08d8fb51",
       "graphPath": "studio/chroma-inpaint-pipeline/outpaint.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "image",
@@ -4021,7 +4021,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "e6d9dc9edddd4efe5186cf152749c17a37e7d668b05ad7aedd9cd9f7e3438cd3",
+      "graphHash": "52646f5fe4769c4e4739dee5cc5df6f0d824e66b9c50f3cfa58b84b9bd3f0251",
       "graphPath": "studio/latte-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -7061,13 +7061,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:ea23def36a4cfb0d3a195243dc970e7c53fe2a9f3a398568560e4ab6aa03d3b3",
+      "contentHash": "sha256:700445a779a53b47df091500ea76a68283781cb722f348a259c9ec4538c5d0fd",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:a72d118bb1b912d49df6f3616ed9b54de9c8fab5d346c28e93421cb0d498e9c3"
+      "sha256": "sha256:9ef4b72708b0627d385f196d89ed8db883f38bd8ee14054f733b0e27d8b1ea75"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:992de94fb865ec7ec2cbf00ce26c2a8f950c600d5397fe4236aa0b2abb0d7762"
+      "sha256": "sha256:b07a3d8dc132dac589212bf568f9a63c37c5570997f28185ee7e5b39a84c578f"
     }
   },
   "summary": {

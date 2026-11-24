@@ -1866,8 +1866,11 @@ class StudioExecutionSpecTests(unittest.TestCase):
         )
         manifest = json.loads((root / "workflow-library-manifest.json").read_text(encoding="utf-8"))
         paths = {row["id"]: row["graphPath"] for row in manifest["workflows"]}
+        latte_archive = json.loads(
+            (root / "latte-attention-studio-spec-compatibility.v1.json").read_text(encoding="utf-8")
+        )
         role_field = ["diffusersRecipe", "attention_backend"]
-        for entry in [*archive["specifications"], *conditioned_archive["specifications"]]:
+        for entry in [*archive["specifications"], *conditioned_archive["specifications"], *latte_archive["specifications"]]:
             saved = entry["specification"]
             model, mode = saved["modelType"], saved["mode"]
             with self.subTest(model=model):
@@ -1908,7 +1911,6 @@ class StudioExecutionSpecTests(unittest.TestCase):
             ("CogVideoXVideoToVideoPipeline", "video_to_video"),
             ("SanaImageToVideoPipeline", "image_to_video"),
             ("AllegroPipeline", "text_to_video"),
-            ("LattePipeline", "text_to_video"),
             ("MochiPipeline", "text_to_video"),
         ):
             with self.subTest(untouched=model):
@@ -2701,6 +2703,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
         self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
+        self.assertIn(("diffusersRecipe", "attention_backend", "attentionBackend"), spec["bindings"])
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
