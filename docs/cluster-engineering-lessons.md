@@ -813,6 +813,14 @@ successful run, and retain immutable definitions and unrelated preview owners.
   capture must accept the metadata save for its own task, then independently
   join it to the original graph request and terminal event. Preserve any
   missing snapshot as a capture gap.
+- For an archived server run with capture gaps, compare its running queue and
+  terminal records by task, attempt, client run and input identity. Match the
+  saved executable graph independently. Record which original messages are
+  absent in the receipt.
+- A registry replay uses archived source bytes and recorded runtime packages.
+  It verifies the node schemas without executing a model. Where preprocessing
+  changes input bytes, recompute the normalized pixel identity and compare it
+  with the saved execution.
 - Keep reviewed upstream source checkouts outside ordinary application test
   discovery. Distinguish collection/harness failures from product failures;
   reproduce suspect pre-existing assertions on the original commit.

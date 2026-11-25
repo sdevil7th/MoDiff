@@ -53,17 +53,17 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 133,
-                "promptDraftedCount": 113,
+                "authoringSpecCount": 134,
+                "promptDraftedCount": 114,
                 "promptNotApplicableCount": 20,
-                "canonicalDefaultsCapturedCount": 133,
-                "inputSelectionPendingCount": 89,
-                "rightsReviewPendingCount": 133,
-                "generationPendingCount": 133,
+                "canonicalDefaultsCapturedCount": 134,
+                "inputSelectionPendingCount": 90,
+                "rightsReviewPendingCount": 134,
+                "generationPendingCount": 134,
                 "assetCount": 0,
                 "authoringStateCounts": {
                     "draft_complete_execution_pending": 44,
-                    "draft_complete_input_selection_pending": 89,
+                    "draft_complete_input_selection_pending": 90,
                 },
             },
         )
@@ -106,6 +106,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         expected_sources = {
             "WanImageToVideoPipeline:image_to_video": "wan_22_i2v_seed_vault",
             "WanTI2VPipeline:text_to_video": "wan_22_ti2v_5b_seed_vault",
+            "WanVACEPipeline:video_inpaint": "wan_vace_masked_object_replace",
         }
         self.assertEqual(
             {row["canonicalWorkflowId"]: row["replacementSourceTemplateId"] for row in replacements},

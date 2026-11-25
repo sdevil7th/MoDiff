@@ -14,7 +14,7 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:5f42721dbf773903940259dc1dfeee8c250ca0e13511928e9dca867eb2fa59d6",
+  "contentHash": "sha256:e708daa079c72413ec51ce0cfe979d169cefb2bf45a0e8fd2237b010bd1356db",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
@@ -19100,6 +19100,217 @@
         "cacheState": "must_be_rechecked_through_app_before_generation",
         "componentRequirements": [],
         "requiredArtifacts": [
+          "nateraw/real-esrgan/RealESRGAN_x2plus.pth",
+          "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/wan-vace-pipeline/video-inpaint.json",
+        "sha256": "3f161c623662f50af2bc1f1ba347c54d91ab7d1a09d46c22f6bb12b7f7d625f0"
+      },
+      "canonicalWorkflowId": "WanVACEPipeline:video_inpaint",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "height",
+            "role": "normalizeVideo",
+            "value": 480
+          },
+          {
+            "parameter": "num_frames",
+            "role": "normalizeVideo",
+            "value": 161
+          },
+          {
+            "parameter": "width",
+            "role": "normalizeVideo",
+            "value": 832
+          },
+          {
+            "parameter": "downscale",
+            "role": "upscaler",
+            "value": 1
+          },
+          {
+            "parameter": "fps",
+            "role": "videoExport",
+            "value": 16
+          },
+          {
+            "parameter": "conditioning_scale",
+            "role": "wanGenerate",
+            "value": 1
+          },
+          {
+            "parameter": "denoise_strength",
+            "role": "wanGenerate",
+            "value": 0.8
+          },
+          {
+            "parameter": "frame_rate",
+            "role": "wanGenerate",
+            "value": 16
+          },
+          {
+            "parameter": "guidance_scale",
+            "role": "wanGenerate",
+            "value": 5
+          },
+          {
+            "parameter": "guidance_scale_2",
+            "role": "wanGenerate",
+            "value": 0
+          },
+          {
+            "parameter": "height",
+            "role": "wanGenerate",
+            "value": 480
+          },
+          {
+            "parameter": "max_sequence_length",
+            "role": "wanGenerate",
+            "value": 512
+          },
+          {
+            "parameter": "num_frames",
+            "role": "wanGenerate",
+            "value": 161
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "wanGenerate",
+            "value": 30
+          },
+          {
+            "parameter": "scheduler_flow_shift",
+            "role": "wanGenerate",
+            "value": 3
+          },
+          {
+            "parameter": "seed",
+            "role": "wanGenerate",
+            "value": {
+              "isRandom": false,
+              "value": 8217
+            }
+          },
+          {
+            "parameter": "strength",
+            "role": "wanGenerate",
+            "value": 0.8
+          },
+          {
+            "parameter": "use_guidance_scale_2",
+            "role": "wanGenerate",
+            "value": false
+          },
+          {
+            "parameter": "width",
+            "role": "wanGenerate",
+            "value": 832
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "3f161c623662f50af2bc1f1ba347c54d91ab7d1a09d46c22f6bb12b7f7d625f0",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:WanVACEPipeline:video_inpaint",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "sourceVideo",
+            "mediaKind": "video",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_video",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          },
+          {
+            "field": "maskVideo",
+            "mediaKind": "video",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_video",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "video",
+      "mode": "video_inpaint",
+      "modelFamily": "Wan Video",
+      "modelType": "WanVACEPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "video"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_duration_frame_rate_and_decodable_output",
+          "prompt_or_task_alignment",
+          "temporal_coherence_and_stable_subject_identity",
+          "no_flicker_camera_jumps_or_unrequested_text"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "drafted",
+          "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
+        },
+        "prompt": "Replace the object inside the supplied moving mask with one translucent amber glass vessel. Keep the rim and corners rigid, follow the camera and timing of the source clip, and preserve the tabletop and background.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one video result for the exact Wan Video video inpaint workflow without changing its canonical graph contract.",
+      "replacementSourceTemplateId": "wan_vace_masked_object_replace",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Wan Video — Video Inpaint [WanVACEPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
           "Tongyi-MAI/Z-Image-Turbo"
         ]
       },
@@ -19594,16 +19805,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 133,
+    "authoringSpecCount": 134,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 44,
-      "draft_complete_input_selection_pending": 89
+      "draft_complete_input_selection_pending": 90
     },
-    "canonicalDefaultsCapturedCount": 133,
-    "generationPendingCount": 133,
-    "inputSelectionPendingCount": 89,
-    "promptDraftedCount": 113,
+    "canonicalDefaultsCapturedCount": 134,
+    "generationPendingCount": 134,
+    "inputSelectionPendingCount": 90,
+    "promptDraftedCount": 114,
     "promptNotApplicableCount": 20,
-    "rightsReviewPendingCount": 133
+    "rightsReviewPendingCount": 134
   }
 }

@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:dfb06242c5e2ba3c92d4e832b416975bb954835d2d0f49e9d56fae26280f2faa",
+  "contentHash": "sha256:e8db07fabebde47ecd95c7ba4e1b12ec81fdad8d3beab216dac89416336aa976",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -4803,7 +4803,7 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": null,
+        "authoringSpecId": "template-authoring:WanVACEPipeline:video_inpaint",
         "canonicalWorkflowId": "WanVACEPipeline:video_inpaint",
         "modelFamily": "Wan Video",
         "modelType": "WanVACEPipeline",
@@ -7554,9 +7554,9 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:5f42721dbf773903940259dc1dfeee8c250ca0e13511928e9dca867eb2fa59d6",
+      "contentHash": "sha256:e708daa079c72413ec51ce0cfe979d169cefb2bf45a0e8fd2237b010bd1356db",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:3b0d7023a54e94f54b7434c37063c5e9257ed13e1778549a2e2d8dd28c55a4ab"
+      "sha256": "sha256:c9570e5802aadb838a1d551b2b426d464c5e8bc936b18a775f7476a8d5047e7d"
     },
     "upstreamCoverage": {
       "contentHash": "sha256:325a59a49645dc684fa81d1e0683a728ab457926398a9dc13b78559e668e89f4",
@@ -7617,7 +7617,7 @@
     },
     "newWorkflowClaims": 0,
     "recordsStillUndetermined": 1,
-    "recordsWithHiddenAuthoringSpecOption": 48,
+    "recordsWithHiddenAuthoringSpecOption": 49,
     "recordsWithInferredTask": 115,
     "recordsWithPublicTemplateOption": 41,
     "recordsWithRecommendedWorkflow": 89,

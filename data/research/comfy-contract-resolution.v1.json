@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:e0128af6adc94a37b93c43e180770b2b1b9a1ee1cfa4ca5a682039e51b027b4c",
+  "contentHash": "sha256:3816f46a6c5d459f31d37e79f27fe9f01eca1a96f827a2736a69fb87259ee876",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -16104,7 +16104,7 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": null,
+        "authoringSpecId": "template-authoring:WanVACEPipeline:video_inpaint",
         "canonicalWorkflowId": "WanVACEPipeline:video_inpaint",
         "modelFamily": "Wan Video",
         "modelType": "WanVACEPipeline",
@@ -16665,9 +16665,9 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:5f42721dbf773903940259dc1dfeee8c250ca0e13511928e9dca867eb2fa59d6",
+      "contentHash": "sha256:e708daa079c72413ec51ce0cfe979d169cefb2bf45a0e8fd2237b010bd1356db",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:3b0d7023a54e94f54b7434c37063c5e9257ed13e1778549a2e2d8dd28c55a4ab"
+      "sha256": "sha256:c9570e5802aadb838a1d551b2b426d464c5e8bc936b18a775f7476a8d5047e7d"
     },
     "upstreamCoverage": {
       "contentHash": "sha256:325a59a49645dc684fa81d1e0683a728ab457926398a9dc13b78559e668e89f4",
@@ -16731,7 +16731,7 @@
       "same_upstream_generation_different_partition_and_auxiliary": 8,
       "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 57,
+    "recordsWithHiddenAuthoringSpecOption": 58,
     "recordsWithPublicTemplateOption": 55,
     "recordsWithRecommendedWorkflow": 110,
     "resolutionCount": 138,

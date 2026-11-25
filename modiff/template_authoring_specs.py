@@ -28,6 +28,7 @@ _CANDIDATE_PATH = "data/template-candidate-contracts.v1.json"
 _REVIEWED_REPLACEMENT_SOURCES = {
     "WanImageToVideoPipeline:image_to_video": "wan_22_i2v_seed_vault",
     "WanTI2VPipeline:text_to_video": "wan_22_ti2v_5b_seed_vault",
+    "WanVACEPipeline:video_inpaint": "wan_vace_masked_object_replace",
 }
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _MEDIA_FIELDS = {
@@ -184,6 +185,7 @@ _MODE_PROMPTS = {
     "graph_utility": "Primary branch: the repaired footbridge is ready for the morning crossing.",
     "text_select": "Wide establishing shot at dawn\nClose detail of hands fitting the replacement plank\nMedium shot of neighbors testing the repaired footbridge\nQuiet final view as the river passes beneath the completed span",
     "text_to_3d": "A compact mid-century table radio with rounded corners, a large tuning dial, woven speaker grille, four rubber feet, and clean watertight geometry suitable for a neutral turntable preview. No text or extra parts.",
+    "video_inpaint": "Replace the object inside the supplied moving mask with one translucent amber glass vessel. Keep the rim and corners rigid, follow the camera and timing of the source clip, and preserve the tabletop and background.",
     "video_to_video": "Restyle the supplied video as a restrained cinematic documentary while preserving timing, camera motion, subject identity, scene layout, and temporal continuity.",
 }
 

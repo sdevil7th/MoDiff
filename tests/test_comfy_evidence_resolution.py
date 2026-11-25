@@ -104,7 +104,7 @@ class ComfyEvidenceResolutionTests(unittest.TestCase):
                 },
                 "newWorkflowClaims": 0,
                 "recordsStillUndetermined": 1,
-                "recordsWithHiddenAuthoringSpecOption": 48,
+                "recordsWithHiddenAuthoringSpecOption": 49,
                 "recordsWithInferredTask": 115,
                 "recordsWithPublicTemplateOption": 41,
                 "recordsWithRecommendedWorkflow": 89,
