@@ -64,8 +64,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["sourceProposalCount"], 138)
         self.assertEqual(self.ledger["summary"]["resolutionCount"], 138)
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 110)
-        self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 89)
-        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 24)
+        self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 105)
+        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 8)
         self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 138)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],

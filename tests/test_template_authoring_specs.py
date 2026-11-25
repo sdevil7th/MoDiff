@@ -53,17 +53,17 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 69,
-                "promptDraftedCount": 50,
+                "authoringSpecCount": 51,
+                "promptDraftedCount": 32,
                 "promptNotApplicableCount": 19,
-                "canonicalDefaultsCapturedCount": 69,
-                "inputSelectionPendingCount": 41,
-                "rightsReviewPendingCount": 69,
-                "generationPendingCount": 69,
+                "canonicalDefaultsCapturedCount": 51,
+                "inputSelectionPendingCount": 30,
+                "rightsReviewPendingCount": 51,
+                "generationPendingCount": 51,
                 "assetCount": 0,
                 "authoringStateCounts": {
-                    "draft_complete_execution_pending": 28,
-                    "draft_complete_input_selection_pending": 41,
+                    "draft_complete_execution_pending": 21,
+                    "draft_complete_input_selection_pending": 30,
                 },
             },
         )
@@ -308,7 +308,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             )
             captured_count += len(fields)
             self.assertTrue(forbidden_parameters.isdisjoint(item["parameter"] for item in fields))
-        self.assertEqual(captured_count, 511)
+        self.assertEqual(captured_count, 262)
 
     def test_frame_interpolation_authoring_stays_input_and_execution_pending(self):
         specification = next(

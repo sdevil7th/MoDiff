@@ -131,7 +131,9 @@
       "id": "AnimateDiffPAGPipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "AnimateDiffPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "animatediff_pag_snowmelt_over_river_stones"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -181,7 +183,9 @@
       "id": "AnimateLCMPipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "AnimateLCMPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "animatelcm_sunlit_surf"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -192,7 +196,9 @@
       "id": "AudioLDM2Pipeline:text_to_audio",
       "mode": "text_to_audio",
       "modelType": "AudioLDM2Pipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "audioldm2_wind_through_high_pines"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -462,7 +468,9 @@
       "id": "ChromaInpaintPipeline:outpaint",
       "mode": "outpaint",
       "modelType": "ChromaInpaintPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "chroma_copper_medallion_outpaint"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -969,7 +977,9 @@
       "id": "FluxDevPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "FluxDevPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux_dev_forest_green_teapot"
+      ],
       "qualificationStatus": "graph-qualified",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1136,7 +1146,9 @@
       "id": "FluxKontextInpaintPipeline:inpaint",
       "mode": "inpaint",
       "modelType": "FluxKontextInpaintPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux_kontext_bookshop_clear_glass"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1483,7 +1495,9 @@
       "id": "LTX2ConditionPipeline:image_to_video",
       "mode": "image_to_video",
       "modelType": "LTX2ConditionPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "ltx2_glasshouse_drip"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1494,7 +1508,9 @@
       "id": "LTX2ConditionPipeline:reference_to_video",
       "mode": "reference_to_video",
       "modelType": "LTX2ConditionPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "ltx2_enamel_teapot_window_light"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1505,7 +1521,9 @@
       "id": "LTX2ConditionPipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "LTX2ConditionPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "ltx2_kiln_at_first_light"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1516,7 +1534,9 @@
       "id": "LTX2ConditionPipeline:video_to_video",
       "mode": "video_to_video",
       "modelType": "LTX2ConditionPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "ltx2_moss_and_basalt"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1527,7 +1547,9 @@
       "id": "LTX2Pipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "LTX2Pipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "ltx2_surf_below_the_breakwater"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1538,7 +1560,9 @@
       "id": "LTXI2VLongMultiPromptPipeline:image_to_video",
       "mode": "image_to_video",
       "modelType": "LTXI2VLongMultiPromptPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "ltx_long_wind_and_tide_at_the_headland"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1653,7 +1677,9 @@
       "id": "LattePipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "LattePipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "latte_water_folding_over_slate"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2243,7 +2269,9 @@
       "id": "StableAudioPipeline:text_to_audio",
       "mode": "text_to_audio",
       "modelType": "StableAudioPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "stable_audio_glass_roof_rain"
+      ],
       "qualificationStatus": "graph-qualified",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2462,7 +2490,9 @@
       "id": "StableDiffusionXLPAGPipeline:control_edit_image",
       "mode": "control_edit_image",
       "modelType": "StableDiffusionXLPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_pag_two_tier_cobalt_glass"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2486,7 +2516,9 @@
       "id": "StableDiffusionXLPAGPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "StableDiffusionXLPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_pag_lighthouse_in_graphite"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2575,7 +2607,9 @@
       "id": "StableVideoDiffusionPipeline:image_to_video",
       "mode": "image_to_video",
       "modelType": "StableVideoDiffusionPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "stable_video_lighthouse_headland"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2599,7 +2633,9 @@
       "id": "WanAnimatePipeline:character_animate",
       "mode": "character_animate",
       "modelType": "WanAnimatePipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "wan_animate_signal_through_the_rain"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2691,6 +2727,7 @@
       "mode": "video_inpaint",
       "modelType": "WanVACEPipeline",
       "publicTemplateIds": [
+        "wan_vace_amber_glass_stabilized",
         "wan_vace_masked_object_replace"
       ],
       "qualificationStatus": "execution-qualified-gallery-review-pending",
@@ -2846,7 +2883,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:6bb139527a5cb478118dc6c45a219abcc98aaba938952a066be43fe71dcd7708",
+  "contentHash": "sha256:075df6419254713523a7280bb6e5f26d3434ba2c8e9c40afaf3ac19e920b97fd",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -8373,6 +8410,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "AnimateDiffPAGPipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "animatediff_pag_snowmelt_over_river_stones",
+      "mode": "text_to_video",
+      "modelType": "AnimateDiffPAGPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "AnimateDiffVideoToVideoPipeline:video_to_video",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -8397,6 +8449,36 @@
       "mode": "control_video_to_video",
       "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
       "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "AnimateLCMPipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "animatelcm_sunlit_surf",
+      "mode": "text_to_video",
+      "modelType": "AnimateLCMPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "AudioLDM2Pipeline:text_to_audio",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "audioldm2_wind_through_high_pines",
+      "mode": "text_to_audio",
+      "modelType": "AudioLDM2Pipeline",
+      "readinessPolicy": "runnable",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
@@ -8471,6 +8553,21 @@
       "id": "chroma_alpine_block_print",
       "mode": "edit_image",
       "modelType": "ChromaImg2ImgPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "ChromaInpaintPipeline:outpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "chroma_copper_medallion_outpaint",
+      "mode": "outpaint",
+      "modelType": "ChromaInpaintPipeline",
       "readinessPolicy": "requires_input",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
@@ -8588,16 +8685,16 @@
         "schemaVersion": 1,
         "task": "text_to_image"
       },
-      "galleryExamplePresent": false,
+      "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": null,
-      "galleryVerificationStatus": null,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "cosmos3_super_text_to_image",
       "mode": "text_to_image",
       "modelType": "Cosmos3OmniModularPipeline",
       "readinessPolicy": "runnable",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
-      "reviewedGalleryExample": false,
+      "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
@@ -8697,16 +8794,16 @@
         "schemaVersion": 1,
         "task": "text_to_image"
       },
-      "galleryExamplePresent": false,
+      "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
-      "galleryQualityReviewStatus": null,
-      "galleryVerificationStatus": null,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
       "id": "flux2_dev_text_to_image",
       "mode": "text_to_image",
       "modelType": "Flux2ModularPipeline",
       "readinessPolicy": "runnable",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
-      "reviewedGalleryExample": false,
+      "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
@@ -9237,6 +9334,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "FluxDevPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux_dev_forest_green_teapot",
+      "mode": "edit_image",
+      "modelType": "FluxDevPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "FluxFillPipeline:inpaint",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -9320,6 +9432,21 @@
       "id": "flux_klein_open_glacial_lake",
       "mode": "inpaint",
       "modelType": "Flux2KleinInpaintPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "FluxKontextInpaintPipeline:inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux_kontext_bookshop_clear_glass",
+      "mode": "inpaint",
+      "modelType": "FluxKontextInpaintPipeline",
       "readinessPolicy": "requires_input",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
@@ -10002,6 +10129,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "LattePipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "latte_water_folding_over_slate",
+      "mode": "text_to_video",
+      "modelType": "LattePipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "LatentConsistencyModelPipeline:edit_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -10087,6 +10229,96 @@
       "modelType": "ZImageModularPipeline",
       "readinessPolicy": "runnable",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "ltx2_enamel_teapot_window_light",
+      "mode": "reference_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "ltx2_glasshouse_drip",
+      "mode": "image_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "LTX2ConditionPipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "ltx2_kiln_at_first_light",
+      "mode": "text_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "LTX2ConditionPipeline:video_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "ltx2_moss_and_basalt",
+      "mode": "video_to_video",
+      "modelType": "LTX2ConditionPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "LTX2Pipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "ltx2_surf_below_the_breakwater",
+      "mode": "text_to_video",
+      "modelType": "LTX2Pipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "LTXI2VLongMultiPromptPipeline:image_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "ltx_long_wind_and_tide_at_the_headland",
+      "mode": "image_to_video",
+      "modelType": "LTXI2VLongMultiPromptPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -11633,6 +11865,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_pag_lighthouse_in_graphite",
+      "mode": "edit_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:control_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -11640,6 +11887,21 @@
       "galleryVerificationStatus": "reviewed",
       "id": "sdxl_pag_snow_cabin",
       "mode": "control_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:control_edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_pag_two_tier_cobalt_glass",
+      "mode": "control_edit_image",
       "modelType": "StableDiffusionXLPAGPipeline",
       "readinessPolicy": "requires_input",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
@@ -11731,6 +11993,36 @@
       "id": "spandrel_x2_synthetic_gradient",
       "mode": "image_upscale",
       "modelType": "SpandrelImageUpscale",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableAudioPipeline:text_to_audio",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "stable_audio_glass_roof_rain",
+      "mode": "text_to_audio",
+      "modelType": "StableAudioPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableVideoDiffusionPipeline:image_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "stable_video_lighthouse_headland",
+      "mode": "image_to_video",
+      "modelType": "StableVideoDiffusionPipeline",
       "readinessPolicy": "requires_input",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
@@ -11891,6 +12183,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "WanAnimatePipeline:character_animate",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "wan_animate_signal_through_the_rain",
+      "mode": "character_animate",
+      "modelType": "WanAnimatePipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -11916,6 +12223,37 @@
       "modelType": "WanTI2VPipeline",
       "readinessPolicy": "runnable",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "WanVACEPipeline:video_inpaint",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "video_inpaint",
+          "modelType": "WanVACEPipeline"
+        },
+        "executionProfileId": "wan-vace:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs owns official encoding and source media; Generate retains native sampling and decoding, including required continuity work. Video Output exports the result through ordinary typed connections.",
+        "pipelineClass": "WanVACEPipeline",
+        "schemaVersion": 1,
+        "task": "video_inpaint"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "wan_vace_amber_glass_stabilized",
+      "mode": "video_inpaint",
+      "modelType": "WanVACEPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -12407,7 +12745,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "0049294fdb2d792abf6c0a6d35eac8b4a69c588f8aae7bf015d09b52c7a09c87",
+    "templateBundleSha256": "853d8250bffe7193a27b0c3ddedff4fef4ca62bf89bda6fe7de483b5f9f77591",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -12455,8 +12793,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithPublicTemplates": 170,
-    "canonicalWorkflowsWithoutPublicTemplates": 55,
+    "canonicalWorkflowsWithPublicTemplates": 188,
+    "canonicalWorkflowsWithoutPublicTemplates": 37,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -12466,12 +12804,12 @@
       "research-blocked": 116,
       "unreviewed": 5
     },
-    "publicTemplateCount": 192,
-    "reviewedGalleryTemplateCount": 185,
+    "publicTemplateCount": 211,
+    "reviewedGalleryTemplateCount": 206,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
-      "executable": 181,
+      "executable": 200,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

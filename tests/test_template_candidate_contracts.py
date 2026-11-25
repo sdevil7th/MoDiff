@@ -73,15 +73,15 @@ class TemplateCandidateContractTests(unittest.TestCase):
             self.ledger["summary"],
             {
                 "canonicalWorkflowCount": 225,
-                "publicTemplateCount": 192,
-                "canonicalWorkflowsWithPublicTemplates": 170,
-                "canonicalWorkflowsWithExecutablePublicTemplates": 159,
-                "candidateContractCount": 66,
-                "mediaKindCounts": {"audio": 5, "image": 40, "json": 3, "video": 18},
-                "contractsRequiringInputExamples": 39,
-                "contractsWithComfyResearchRecords": 3,
-                "comfyResearchRecordCount": 3,
-                "comfyMappingStatusCounts": {"existing_contract_candidate": 3},
+                "publicTemplateCount": 211,
+                "canonicalWorkflowsWithPublicTemplates": 188,
+                "canonicalWorkflowsWithExecutablePublicTemplates": 177,
+                "candidateContractCount": 48,
+                "mediaKindCounts": {"audio": 3, "image": 35, "json": 3, "video": 7},
+                "contractsRequiringInputExamples": 28,
+                "contractsWithComfyResearchRecords": 0,
+                "comfyResearchRecordCount": 0,
+                "comfyMappingStatusCounts": {},
             },
         )
 
@@ -141,11 +141,11 @@ class TemplateCandidateContractTests(unittest.TestCase):
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 
-        self.assertEqual(len(public_templates), 192)
+        self.assertEqual(len(public_templates), 211)
         experimental_public_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "contract-only"}
         self.assertEqual(len(experimental_public_ids), 11)
         self.assertTrue(experimental_public_ids <= set(contracts_by_id))
-        self.assertEqual(len(public_workflow_ids), 159)
+        self.assertEqual(len(public_workflow_ids), 177)
         self.assertIn("AceStepAudioPipeline:text_to_audio:ace_step_lyric_music_video", public_workflow_ids)
         self.assertIn("HuggingFaceSpeechRecognitionModel:speech_to_text", public_workflow_ids)
         self.assertIn("LatentConsistencyModelPipeline:edit_image", public_workflow_ids)
@@ -155,7 +155,7 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)
         self.assertFalse(set(contracts_by_id) & public_workflow_ids)
-        self.assertEqual(len(contracts_by_id), 66)
+        self.assertEqual(len(contracts_by_id), 48)
         experimental_public_pairs = {
             "flux2_dev_text_to_image": "Flux2ModularPipeline:text_to_image",
             "cosmos3_super_text_to_image": "Cosmos3OmniModularPipeline:text_to_image",
@@ -269,8 +269,8 @@ class TemplateCandidateContractTests(unittest.TestCase):
             rows.sort(key=lambda item: (item["recordType"], item["id"]))
         actual = {row["canonicalWorkflowId"]: row["comfyResearchRecords"] for row in self.ledger["contracts"]}
         self.assertEqual(actual, expected)
-        self.assertEqual(sum(bool(rows) for rows in actual.values()), 3)
-        self.assertEqual(sum(len(rows) for rows in actual.values()), 3)
+        self.assertEqual(sum(bool(rows) for rows in actual.values()), 0)
+        self.assertEqual(sum(len(rows) for rows in actual.values()), 0)
 
         forbidden_keys = {"edges", "graph", "links", "nodes", "workflow"}
 
@@ -321,10 +321,12 @@ class TemplateCandidateContractTests(unittest.TestCase):
         ]
         mutations.append(public_overlap)
 
-        comfy_omission = copy.deepcopy(self.ledger)
-        mapped = next(row for row in comfy_omission["contracts"] if row["comfyResearchRecords"])
-        mapped["comfyResearchRecords"].pop()
-        mutations.append(comfy_omission)
+        unrelated_comfy_record = copy.deepcopy(self.ledger)
+        reference = self.comfy["templates"][0]
+        unrelated_comfy_record["contracts"][0]["comfyResearchRecords"].append(
+            {"recordType": "template", "id": reference["id"], "mappingStatus": reference["mappingStatus"]}
+        )
+        mutations.append(unrelated_comfy_record)
 
         source_hash = copy.deepcopy(self.ledger)
         source_hash["sources"]["workflowManifest"]["sha256"] = "sha256:" + "0" * 64

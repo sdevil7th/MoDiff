@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:247c03faca85d7901c803e2b2c0dedfe848245ae68e6d3f1aa80cfe701f6aa38",
+  "contentHash": "sha256:f9530c9ec71293af2b23e1bddd68df03b7c8e85a992b15cb6b92ba910941ba76",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -53,11 +53,13 @@
         "Stable Audio"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:StableAudioPipeline:text_to_audio",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "StableAudioPipeline:text_to_audio",
         "modelFamily": "Stable Audio",
         "modelType": "StableAudioPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "stable_audio_glass_roof_rain"
+        ],
         "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
@@ -107,11 +109,13 @@
         "Stable Audio"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:StableAudioPipeline:text_to_audio",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "StableAudioPipeline:text_to_audio",
         "modelFamily": "Stable Audio",
         "modelType": "StableAudioPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "stable_audio_glass_roof_rain"
+        ],
         "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
@@ -2640,11 +2644,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -2712,11 +2718,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -4559,11 +4567,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:text_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:text_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_kiln_at_first_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -4824,6 +4834,7 @@
         "modelFamily": "Wan Video",
         "modelType": "WanVACEPipeline",
         "publicTemplateIds": [
+          "wan_vace_amber_glass_stabilized",
           "wan_vace_masked_object_replace"
         ],
         "qualificationStatus": "execution-qualified-gallery-review-pending"
@@ -7265,11 +7276,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:reference_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_enamel_teapot_window_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7320,11 +7333,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:reference_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_enamel_teapot_window_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7503,11 +7518,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanAnimatePipeline:character_animate",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanAnimatePipeline:character_animate",
         "modelFamily": "Wan Video",
         "modelType": "WanAnimatePipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_animate_signal_through_the_rain"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7580,14 +7597,14 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:b14f10e8a46f3e2c83e76620c744c4214749106df4a1a3ec81231158d798a2d4",
+      "contentHash": "sha256:d3fc9996ede96931d9640a599c378b067a42ec131d324ad803105c62c2cd44cc",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:ac633e8ffd7c13a84db19ad9ef5b1454fa1d031e260a776f7b879b4f6e6f4c73"
+      "sha256": "sha256:52078e1c0ccb90626dd630820cc7d48fc9e1650b5f17ae244ec9f0d6044a29ff"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:6bb139527a5cb478118dc6c45a219abcc98aaba938952a066be43fe71dcd7708",
+      "contentHash": "sha256:075df6419254713523a7280bb6e5f26d3434ba2c8e9c40afaf3ac19e920b97fd",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:89d6979f5a54107ae085fe652d5252e571eea76ffda0c55227fc62bc72ae8434"
+      "sha256": "sha256:582813d565ea94082d69455ed04376103c296ed8b6394ab7b964ab606e680ee2"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -7643,9 +7660,9 @@
     },
     "newWorkflowClaims": 0,
     "recordsStillUndetermined": 1,
-    "recordsWithHiddenAuthoringSpecOption": 36,
+    "recordsWithHiddenAuthoringSpecOption": 28,
     "recordsWithInferredTask": 115,
-    "recordsWithPublicTemplateOption": 54,
+    "recordsWithPublicTemplateOption": 62,
     "recordsWithRecommendedWorkflow": 89,
     "resolutionCount": 116,
     "resolutionStateCounts": {

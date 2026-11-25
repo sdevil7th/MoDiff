@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:b9d58f481bbd6aa23f3e549950469ba87227ef982a45ad5f782e0688e033fa3e",
+  "contentHash": "sha256:1969694fda62cef01d961a922956db205dd4b5675039bb9d2f8a13e0caca13a5",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -1265,11 +1265,13 @@
         "Stable Audio"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:StableAudioPipeline:text_to_audio",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "StableAudioPipeline:text_to_audio",
         "modelFamily": "Stable Audio",
         "modelType": "StableAudioPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "stable_audio_glass_roof_rain"
+        ],
         "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
@@ -1351,11 +1353,13 @@
         "Stable Audio"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:StableAudioPipeline:text_to_audio",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "StableAudioPipeline:text_to_audio",
         "modelFamily": "Stable Audio",
         "modelType": "StableAudioPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "stable_audio_glass_roof_rain"
+        ],
         "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
@@ -9831,11 +9835,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -9913,11 +9919,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:text_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:text_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_kiln_at_first_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -10514,11 +10522,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:reference_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_enamel_teapot_window_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -12461,11 +12471,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -12830,11 +12842,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -13078,11 +13092,13 @@
         "Kandinsky"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -13404,11 +13420,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -13574,11 +13592,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:text_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:text_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_kiln_at_first_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -13755,11 +13775,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -13853,11 +13875,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:text_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:text_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_kiln_at_first_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -13952,11 +13976,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -14038,11 +14064,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -14129,11 +14157,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:text_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:text_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_kiln_at_first_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -15780,11 +15810,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:reference_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_enamel_teapot_window_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -16175,6 +16207,7 @@
         "modelFamily": "Wan Video",
         "modelType": "WanVACEPipeline",
         "publicTemplateIds": [
+          "wan_vace_amber_glass_stabilized",
           "wan_vace_masked_object_replace"
         ],
         "qualificationStatus": "execution-qualified-gallery-review-pending"
@@ -16735,14 +16768,14 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:b14f10e8a46f3e2c83e76620c744c4214749106df4a1a3ec81231158d798a2d4",
+      "contentHash": "sha256:d3fc9996ede96931d9640a599c378b067a42ec131d324ad803105c62c2cd44cc",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:ac633e8ffd7c13a84db19ad9ef5b1454fa1d031e260a776f7b879b4f6e6f4c73"
+      "sha256": "sha256:52078e1c0ccb90626dd630820cc7d48fc9e1650b5f17ae244ec9f0d6044a29ff"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:6bb139527a5cb478118dc6c45a219abcc98aaba938952a066be43fe71dcd7708",
+      "contentHash": "sha256:075df6419254713523a7280bb6e5f26d3434ba2c8e9c40afaf3ac19e920b97fd",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:89d6979f5a54107ae085fe652d5252e571eea76ffda0c55227fc62bc72ae8434"
+      "sha256": "sha256:582813d565ea94082d69455ed04376103c296ed8b6394ab7b964ab606e680ee2"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -16801,8 +16834,8 @@
       "same_upstream_generation_different_partition_and_auxiliary": 8,
       "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 24,
-    "recordsWithPublicTemplateOption": 89,
+    "recordsWithHiddenAuthoringSpecOption": 8,
+    "recordsWithPublicTemplateOption": 105,
     "recordsWithRecommendedWorkflow": 110,
     "resolutionCount": 138,
     "resolutionStateCounts": {
