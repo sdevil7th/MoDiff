@@ -53,16 +53,16 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 132,
-                "promptDraftedCount": 112,
+                "authoringSpecCount": 133,
+                "promptDraftedCount": 113,
                 "promptNotApplicableCount": 20,
-                "canonicalDefaultsCapturedCount": 132,
+                "canonicalDefaultsCapturedCount": 133,
                 "inputSelectionPendingCount": 89,
-                "rightsReviewPendingCount": 132,
-                "generationPendingCount": 132,
+                "rightsReviewPendingCount": 133,
+                "generationPendingCount": 133,
                 "assetCount": 0,
                 "authoringStateCounts": {
-                    "draft_complete_execution_pending": 43,
+                    "draft_complete_execution_pending": 44,
                     "draft_complete_input_selection_pending": 89,
                 },
             },
@@ -101,20 +101,26 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
                 self.assertEqual(specification["assetState"], "not_generated")
                 self.assertEqual(specification["assets"], [])
 
-    def test_wan_opening_video_replacement_has_an_independent_pending_authoring_record(self):
+    def test_wan_video_replacements_have_independent_pending_authoring_records(self):
         replacements = [row for row in self.ledger["specifications"] if "replacementSourceTemplateId" in row]
-        self.assertEqual(len(replacements), 1)
-        replacement = replacements[0]
-        workflow_id = "WanImageToVideoPipeline:image_to_video"
-        old = next(row for row in self.manifest["workflows"] if row["id"] == workflow_id)
-        self.assertEqual(replacement["canonicalWorkflowId"], workflow_id)
-        self.assertEqual(replacement["replacementSourceTemplateId"], "wan_22_i2v_seed_vault")
-        self.assertEqual(replacement["replacementSourceTemplateId"], old["sourceTemplateId"])
-        self.assertEqual(replacement["canonicalGraph"], {"path": old["graphPath"], "sha256": old["graphHash"]})
-        self.assertEqual(replacement["artifactPlan"]["requiredArtifacts"], old["requiredArtifacts"])
-        self.assertEqual(replacement["publicationState"], "hidden_candidate")
-        self.assertEqual(replacement["assets"], [])
-        self.assertFalse(any(replacement["claims"].values()))
+        expected_sources = {
+            "WanImageToVideoPipeline:image_to_video": "wan_22_i2v_seed_vault",
+            "WanTI2VPipeline:text_to_video": "wan_22_ti2v_5b_seed_vault",
+        }
+        self.assertEqual(
+            {row["canonicalWorkflowId"]: row["replacementSourceTemplateId"] for row in replacements},
+            expected_sources,
+        )
+        for replacement in replacements:
+            workflow_id = replacement["canonicalWorkflowId"]
+            with self.subTest(workflow_id=workflow_id):
+                old = next(row for row in self.manifest["workflows"] if row["id"] == workflow_id)
+                self.assertEqual(replacement["replacementSourceTemplateId"], old["sourceTemplateId"])
+                self.assertEqual(replacement["canonicalGraph"], {"path": old["graphPath"], "sha256": old["graphHash"]})
+                self.assertEqual(replacement["artifactPlan"]["requiredArtifacts"], old["requiredArtifacts"])
+                self.assertEqual(replacement["publicationState"], "hidden_candidate")
+                self.assertEqual(replacement["assets"], [])
+                self.assertFalse(any(replacement["claims"].values()))
 
     def test_experimental_canonical_candidates_have_hidden_authoring_specs(self):
         experimental = {row["id"]: row for row in self.manifest["experimentalWorkflows"]}

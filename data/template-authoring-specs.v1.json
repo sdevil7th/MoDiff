@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:b0bf31f92c4ce8d4c6b474bf2668d9e80dc5a5b1ff465422b7a432a24c97f39a",
+  "contentHash": "sha256:5f42721dbf773903940259dc1dfeee8c250ca0e13511928e9dca867eb2fa59d6",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:8d136ebdf202dca53a7563f3f1dffcf38a84b5a6245a3489bf43e28f72762baf",
+      "contentHash": "sha256:bde790c5778675c3a792c58d439417291f6ab1e39dad15c6e36f575383947556",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:d1f113dbe3d373a7abb8d99bef35e361252014cef9d3fb42372cb41af2193666"
+      "sha256": "sha256:0fe8c9dbf6f88db58e0b9cc0ca7a68c701412fab28b53f6894d96cc67c5105ef"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:1a0b999b0687f1bfb5c1e7d2513a93a907a689dc8c8971af0c2b54aa69805843"
+      "sha256": "sha256:f1c3785b2341e4705f02a7c0cdac42c5168af00f37ba64752b57d75c7eb0a399"
     }
   },
   "specifications": [
@@ -18726,6 +18726,211 @@
         "cacheState": "must_be_rechecked_through_app_before_generation",
         "componentRequirements": [],
         "requiredArtifacts": [
+          "ACE-Step/acestep-v15-xl-turbo-diffusers",
+          "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_execution_pending",
+      "canonicalGraph": {
+        "path": "studio/wan-ti2-v-pipeline/text-to-video.json",
+        "sha256": "25e819a2e01bf9c1afc7769d03462d4e9e50c2f2106444d3411a5c01b043e635"
+      },
+      "canonicalWorkflowId": "WanTI2VPipeline:text_to_video",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "fps",
+            "role": "exportWithAudio",
+            "value": 24
+          },
+          {
+            "parameter": "audio_duration",
+            "role": "soundtrackGenerate",
+            "value": 12
+          },
+          {
+            "parameter": "guidance_scale",
+            "role": "soundtrackGenerate",
+            "value": 1
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "soundtrackGenerate",
+            "value": 8
+          },
+          {
+            "parameter": "seed",
+            "role": "soundtrackGenerate",
+            "value": 1684710282
+          },
+          {
+            "parameter": "stable_audio_guidance",
+            "role": "soundtrackGenerate",
+            "value": 1
+          },
+          {
+            "parameter": "stable_audio_steps",
+            "role": "soundtrackGenerate",
+            "value": 8
+          },
+          {
+            "parameter": "task_type",
+            "role": "soundtrackGenerate",
+            "value": "text2music"
+          },
+          {
+            "parameter": "fps",
+            "role": "videoExport",
+            "value": 24
+          },
+          {
+            "parameter": "conditioning_scale",
+            "role": "wanGenerate",
+            "value": 1
+          },
+          {
+            "parameter": "denoise_strength",
+            "role": "wanGenerate",
+            "value": 0.8
+          },
+          {
+            "parameter": "frame_rate",
+            "role": "wanGenerate",
+            "value": 24
+          },
+          {
+            "parameter": "guidance_scale",
+            "role": "wanGenerate",
+            "value": 5
+          },
+          {
+            "parameter": "guidance_scale_2",
+            "role": "wanGenerate",
+            "value": 0
+          },
+          {
+            "parameter": "height",
+            "role": "wanGenerate",
+            "value": 704
+          },
+          {
+            "parameter": "max_sequence_length",
+            "role": "wanGenerate",
+            "value": 512
+          },
+          {
+            "parameter": "num_frames",
+            "role": "wanGenerate",
+            "value": 121
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "wanGenerate",
+            "value": 50
+          },
+          {
+            "parameter": "scheduler_flow_shift",
+            "role": "wanGenerate",
+            "value": 8
+          },
+          {
+            "parameter": "seed",
+            "role": "wanGenerate",
+            "value": {
+              "isRandom": false,
+              "value": 898471028164125
+            }
+          },
+          {
+            "parameter": "strength",
+            "role": "wanGenerate",
+            "value": 0.8
+          },
+          {
+            "parameter": "use_guidance_scale_2",
+            "role": "wanGenerate",
+            "value": false
+          },
+          {
+            "parameter": "width",
+            "role": "wanGenerate",
+            "value": 1280
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "25e819a2e01bf9c1afc7769d03462d4e9e50c2f2106444d3411a5c01b043e635",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:WanTI2VPipeline:text_to_video",
+      "inputPlan": {
+        "items": [],
+        "status": "not_applicable"
+      },
+      "mediaKind": "video",
+      "mode": "text_to_video",
+      "modelFamily": "Wan Video",
+      "modelType": "WanTI2VPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "video"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_duration_frame_rate_and_decodable_output",
+          "prompt_or_task_alignment",
+          "temporal_coherence_and_stable_subject_identity",
+          "no_flicker_camera_jumps_or_unrequested_text"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "drafted",
+          "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
+        },
+        "prompt": "Slow cinematic dolly through a quiet greenhouse just after rain; droplets slide from broad leaves, morning mist catches the light, condensation stays physically coherent on glass. Smooth 35 mm chest-height dolly-in, stable horizon, no cuts. Soft overcast skylight, faint brick bounce, continuous plant identity and water motion, no flicker or extra people.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one video result for the exact Wan Video text to video workflow without changing its canonical graph contract.",
+      "replacementSourceTemplateId": "wan_22_ti2v_5b_seed_vault",
+      "rightsPlan": {
+        "inputMediaRights": "not_applicable",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Wan Video — Text To Video [WanTI2VPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
           "nateraw/real-esrgan/RealESRGAN_x2plus.pth",
           "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
         ]
@@ -19389,16 +19594,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 132,
+    "authoringSpecCount": 133,
     "authoringStateCounts": {
-      "draft_complete_execution_pending": 43,
+      "draft_complete_execution_pending": 44,
       "draft_complete_input_selection_pending": 89
     },
-    "canonicalDefaultsCapturedCount": 132,
-    "generationPendingCount": 132,
+    "canonicalDefaultsCapturedCount": 133,
+    "generationPendingCount": 133,
     "inputSelectionPendingCount": 89,
-    "promptDraftedCount": 112,
+    "promptDraftedCount": 113,
     "promptNotApplicableCount": 20,
-    "rightsReviewPendingCount": 132
+    "rightsReviewPendingCount": 133
   }
 }

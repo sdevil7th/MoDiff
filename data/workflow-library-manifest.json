@@ -6511,7 +6511,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/wan-ti2-v-pipeline/text-to-video.json",
-      "graphHash": "087b1f48fb6eccd9bc596cf5a43eacd60cd0812819858cce687d8e26d4aec47e"
+      "graphHash": "25e819a2e01bf9c1afc7769d03462d4e9e50c2f2106444d3411a5c01b043e635"
     },
     {
       "id": "WanVACEPipeline:control_to_video",

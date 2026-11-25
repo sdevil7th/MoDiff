@@ -27,6 +27,7 @@ _WORKFLOW_MANIFEST_PATH = "data/workflow-library-manifest.json"
 _CANDIDATE_PATH = "data/template-candidate-contracts.v1.json"
 _REVIEWED_REPLACEMENT_SOURCES = {
     "WanImageToVideoPipeline:image_to_video": "wan_22_i2v_seed_vault",
+    "WanTI2VPipeline:text_to_video": "wan_22_ti2v_5b_seed_vault",
 }
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _MEDIA_FIELDS = {

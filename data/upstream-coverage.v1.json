@@ -2522,7 +2522,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "087b1f48fb6eccd9bc596cf5a43eacd60cd0812819858cce687d8e26d4aec47e",
+      "graphHash": "25e819a2e01bf9c1afc7769d03462d4e9e50c2f2106444d3411a5c01b043e635",
       "graphPath": "studio/wan-ti2-v-pipeline/text-to-video.json",
       "id": "WanTI2VPipeline:text_to_video",
       "mode": "text_to_video",
@@ -2714,7 +2714,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:faab619c91f3c6e5cab9101a3b0bcbcec70826278018bc63398083b22f1f2b91",
+  "contentHash": "sha256:325a59a49645dc684fa81d1e0683a728ab457926398a9dc13b78559e668e89f4",
   "diffusersPipelines": [
     {
       "artifactReviews": [],

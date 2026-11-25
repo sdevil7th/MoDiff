@@ -35,6 +35,9 @@ unreasonable user expectations. The corrective obligations are:
   Fold internal operations only under the same owner with no independent
   consumer of the intermediate result. Reserve new Blocks for a meaningful
   typed boundary, such as a complete shot, reusable composition or loop.
+- Keep each model stage's task with its own execution owner. When an export
+  combines video with a separately generated soundtrack, test the published
+  graph and confirm that the audio loader retains its declared audio mode.
 - Present one editor for a connected setting and retain the saved fallback.
   When selecting the default for similar stages, verify the fresh Creator
   path and the corresponding saved workflow, including the precise ordered

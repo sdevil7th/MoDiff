@@ -2073,7 +2073,7 @@
               "audio_repaint"
             ],
             "type": "string",
-            "value": "text_to_video"
+            "value": "text_to_audio"
           },
           "model_id": {
             "disabled": true,
