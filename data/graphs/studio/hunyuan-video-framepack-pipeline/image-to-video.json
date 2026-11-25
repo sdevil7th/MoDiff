@@ -534,7 +534,7 @@
               }
             ],
             "type": "string",
-            "value": "_native_flash"
+            "value": "auto"
           },
           "attention_components": {
             "default": "",

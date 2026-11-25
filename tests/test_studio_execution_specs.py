@@ -2334,6 +2334,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 )
 
         framepack = studio_execution_spec_for_pair("HunyuanVideoFramepackPipeline", "image_to_video")
+        self.assertIn(("diffusersRecipe", "attention_backend", "attentionBackend"), framepack["bindings"])
         self.assertIn(("wanGenerate", "true_cfg_scale", "trueCfgScale1"), framepack["bindings"])
 
         no_flow_shift_pairs = {

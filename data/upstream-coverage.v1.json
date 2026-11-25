@@ -1401,7 +1401,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5cb4c6f1b0d8d8c27d86fd14fa6faa7ea777d03cfd7cb39a98e8f569dc89ee92",
+      "graphHash": "3d833891cc2788bb7de7a1ba83b44bcc05d17c4f09f63a4914d4ebeeb9a7f307",
       "graphPath": "studio/hunyuan-video-framepack-pipeline/image-to-video.json",
       "id": "HunyuanVideoFramepackPipeline:image_to_video",
       "mode": "image_to_video",
@@ -2883,7 +2883,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:075df6419254713523a7280bb6e5f26d3434ba2c8e9c40afaf3ac19e920b97fd",
+  "contentHash": "sha256:772f5b7a1b037b33e372aeb45cad613c9bd27d000ba815da906f18855c59e0d3",
   "diffusersPipelines": [
     {
       "artifactReviews": [],

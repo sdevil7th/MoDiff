@@ -75,6 +75,9 @@
     "featureExtractorClass": "SiglipImageProcessor",
     "imageEncoderClass": "SiglipVisionModel",
     "baseTransformerOmitted": true,
+    "baseLoadedFromExactManagedSnapshot": true,
+    "baseRootConfigOmitted": true,
+    "portableAttentionDefault": "auto",
     "unusedVisionImageEmbedderOmitted": true,
     "safetensorsRequiredForEveryWeightBearingLoad": true
   },

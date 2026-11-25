@@ -4454,7 +4454,11 @@ _LTX2_IN_CONTEXT_GRAPH_BINDINGS = tuple(
 )
 _FRAMEPACK_GRAPH_ROLES = _I2V_GRAPH_ROLES
 _FRAMEPACK_GRAPH_EDGES = _I2V_GRAPH_EDGES
-_FRAMEPACK_GRAPH_BINDINGS = _I2V_REVISION_GRAPH_BINDINGS + (
+_FRAMEPACK_GRAPH_BINDINGS = tuple(
+    (role, param, "attentionBackend") if (role, param) == ("diffusersRecipe", "attention_backend")
+    else (role, param, source)
+    for role, param, source in _I2V_REVISION_GRAPH_BINDINGS
+) + (
     ("wanGenerate", "framepack_sampling", "framepackSampling"),
     ("wanGenerate", "latent_window_size", "latentWindowSize9"),
     ("wanGenerate", "true_cfg_scale", "trueCfgScale1"),

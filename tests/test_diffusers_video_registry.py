@@ -2413,6 +2413,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         feature_extractor = object()
         image_encoder = object()
         pipeline = object()
+        base_revision = "e8c2aaa66fe3742a32c11a6766aecbf07c56e773"
+        base_snapshot = Path("managed") / "snapshots" / base_revision
         node = LoadPipeline()
         load_processor = MagicMock(return_value=feature_extractor)
         load_encoder = MagicMock(return_value=image_encoder)
@@ -2422,6 +2424,10 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
         with (
             patch.dict(sys.modules, {"transformers": transformers_module}),
+            patch(
+                "modules.DiffusersVideo.main.exact_cached_snapshot_path",
+                return_value=base_snapshot,
+            ) as resolve_base_snapshot,
             patch(
                 "diffusers.HunyuanVideoFramepackTransformer3DModel.from_pretrained", return_value=transformer
             ) as load_transformer,
@@ -2459,11 +2465,10 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             "45b801affc54ff2af4e5daf1b282e0921901db87",
         )
         self.assertTrue(load_encoder.call_args.kwargs["use_safetensors"])
-        self.assertEqual(load_pipeline.call_args.args[0], FRAMEPACK_BASE_REPO)
-        self.assertEqual(
-            load_pipeline.call_args.kwargs["revision"],
-            "e8c2aaa66fe3742a32c11a6766aecbf07c56e773",
-        )
+        resolve_base_snapshot.assert_called_once_with(FRAMEPACK_BASE_REPO, base_revision)
+        self.assertEqual(load_pipeline.call_args.args[0], base_snapshot)
+        self.assertEqual(load_pipeline.call_args.kwargs["revision"], base_revision)
+        self.assertTrue(load_pipeline.call_args.kwargs["local_files_only"])
         self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
         self.assertIs(load_pipeline.call_args.kwargs["transformer"], transformer)
         self.assertIs(load_pipeline.call_args.kwargs["feature_extractor"], feature_extractor)

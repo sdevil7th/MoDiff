@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:d3fc9996ede96931d9640a599c378b067a42ec131d324ad803105c62c2cd44cc",
+  "contentHash": "sha256:545b166aa7e0b465a13f7d09a8e8c6e94afd803955f754a1da0094e2e450dedf",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:ecac2cfa6c7a195928dcf29b8da42d1c015320d8de7ed5463d8027801a2aa65b",
+      "contentHash": "sha256:48a23285a7df6843f777d4b6ece2538445d89a857113fc7b9092dee80077e634",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:06272b7fc94771ee93a36eec0c62918d5a69d125fb08a98ae619f3b084c4f964"
+      "sha256": "sha256:d70b83246af69347ee3d77c8157e0b5a1a2da632df24735e7799dbc78657d163"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:f1c3785b2341e4705f02a7c0cdac42c5168af00f37ba64752b57d75c7eb0a399"
+      "sha256": "sha256:ed00bee200c560415fcd58364d2ab27d51d8347657bb6187f063123985a30f9f"
     }
   },
   "specifications": [
@@ -4946,7 +4946,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/hunyuan-video-framepack-pipeline/image-to-video.json",
-        "sha256": "5cb4c6f1b0d8d8c27d86fd14fa6faa7ea777d03cfd7cb39a98e8f569dc89ee92"
+        "sha256": "3d833891cc2788bb7de7a1ba83b44bcc05d17c4f09f63a4914d4ebeeb9a7f307"
       },
       "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
       "claims": {
@@ -5054,7 +5054,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "5cb4c6f1b0d8d8c27d86fd14fa6faa7ea777d03cfd7cb39a98e8f569dc89ee92",
+        "sourceGraphSha256": "3d833891cc2788bb7de7a1ba83b44bcc05d17c4f09f63a4914d4ebeeb9a7f307",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {

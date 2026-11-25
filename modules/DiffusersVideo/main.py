@@ -2105,6 +2105,10 @@ class LoadPipeline(WanVACELoadPipeline):
         model_id = repo_value(model_selection) or adapter.default_repo
         dtype = str_to_dtype(kwargs.get("dtype", "bfloat16"))
         revision = _resolve_loader_revision(model_selection, model_id, kwargs.get("revision"))
+        base_revision = require_catalog_revision(FRAMEPACK_BASE_REPO)
+        # Use the reviewed base components, which omit the unused upstream
+        # root config and transformer. The Hub download path checks extra files.
+        base_snapshot = exact_cached_snapshot_path(FRAMEPACK_BASE_REPO, base_revision)
         recipe, device, offload_mode, recipe_load_kwargs = loader_runtime_options(
             kwargs,
             default_device=DEFAULT_DEVICE,
@@ -2152,12 +2156,12 @@ class LoadPipeline(WanVACELoadPipeline):
             **({"cache_dir": common_kwargs["cache_dir"]} if "cache_dir" in common_kwargs else {}),
         )
         pipeline = HunyuanVideoFramepackPipeline.from_pretrained(
-            FRAMEPACK_BASE_REPO,
+            base_snapshot,
             transformer=transformer,
             feature_extractor=feature_extractor,
             image_encoder=image_encoder,
-            revision=require_catalog_revision(FRAMEPACK_BASE_REPO),
-            local_files_only=local_files_only(FRAMEPACK_BASE_REPO),
+            revision=base_revision,
+            local_files_only=True,
             use_safetensors=True,
             **common_kwargs,
             **recipe_load_kwargs,

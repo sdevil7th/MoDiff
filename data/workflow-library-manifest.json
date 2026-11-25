@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-20T14:58:53.147Z",
+  "generatedAt": "2026-11-25T20:04:18.775Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
   "supportedCanonicalPairCount": 290,
@@ -3330,7 +3330,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/hunyuan-video-framepack-pipeline/image-to-video.json",
-      "graphHash": "5cb4c6f1b0d8d8c27d86fd14fa6faa7ea777d03cfd7cb39a98e8f569dc89ee92"
+      "graphHash": "3d833891cc2788bb7de7a1ba83b44bcc05d17c4f09f63a4914d4ebeeb9a7f307"
     },
     {
       "id": "JoyImageEditPipeline:edit_image",
