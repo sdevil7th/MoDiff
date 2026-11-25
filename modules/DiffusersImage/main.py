@@ -5814,6 +5814,12 @@ class ControlInpaint(Inpaint):
     def execute(self, **kwargs):
         pipeline = kwargs.get("pipeline")
         adapter, values = preflight_image_action(pipeline, "ControlInpaint", kwargs)
+        from modiff.builtin_media_evidence import begin_media_capture
+
+        capture = begin_media_capture(self, {}, inputs={
+            "image": values["image"], "mask_image": values["mask_image"],
+            "control_image": values["control_image"],
+        }) if values["output_type"] == "pil" else None
         result = self._execute_conditioned(
             values,
             {
@@ -5830,6 +5836,7 @@ class ControlInpaint(Inpaint):
             values["image"],
             values["mask_image"],
         )
+        capture.finish({"images": result["images"]})
         return result
 
 

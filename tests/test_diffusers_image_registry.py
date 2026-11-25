@@ -2649,6 +2649,33 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "between 0.0 and 30.0"):
                         preflight_image_action(pipeline, action, {**inputs, "guidance_scale": 30.1})
 
+    def test_control_inpaint_evidence_distinguishes_three_native_roles_and_composited_output(self):
+        from modiff.builtin_media_evidence import media_identity
+        from modules.DiffusersImage.main import ControlInpaint
+
+        class Pipeline:
+            _execution_device = "cpu"
+
+            def __call__(self, **arguments):
+                self.arguments = arguments
+                return SimpleNamespace(images=[Image.new("RGB", (32, 32), "blue")])
+
+        pipeline = tag_test_image_pipeline(Pipeline(), "FluxControlInpaintPipeline", "control_inpaint", repo=FLUX_CANNY_REPO)
+        source = Image.new("RGB", (32, 32), "red")
+        mask = Image.new("L", (32, 32), 0)
+        mask.paste(255, (8, 8, 16, 16))
+        guide = Image.new("RGB", (32, 32), "white")
+        action = ControlInpaint("captured-controlled-inpaint")
+        with patch.dict("os.environ", {"MODIFF_CAPTURE_BUILTIN_MEDIA": "1"}):
+            result = action.execute(pipeline=pipeline, image=source, mask_image=mask, control_image=guide)
+        evidence = action._execution_input_record["mediaEvidence"]
+        self.assertEqual(evidence["status"], "complete")
+        for role in ("image", "mask_image", "control_image"):
+            self.assertEqual(evidence["inputs"][role], [media_identity(pipeline.arguments[role])])
+        self.assertEqual(evidence["outputs"]["images"], [media_identity(result["images"][0])])
+        self.assertEqual(result["images"][0].getpixel((0, 0)), (255, 0, 0))
+        self.assertEqual(result["images"][0].getpixel((9, 9)), (0, 0, 255))
+
     def test_control_guidance_bound_update_accepts_exact_saved_contract_only(self):
         from copy import deepcopy
         from modules.DiffusersImage.main import _compatible_image_contract

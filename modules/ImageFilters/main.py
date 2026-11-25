@@ -18,6 +18,12 @@ class Canny(NodeBase):
             max(low_threshold, high_threshold),
         )
         device = kwargs.get("device")
+        from modiff.builtin_media_evidence import begin_media_capture
+
+        capture = begin_media_capture(self, {
+            "low_threshold": low_threshold, "high_threshold": high_threshold,
+            "output_mode": output_mode, "device": device,
+        }, inputs={"image": image})
 
         image = ImageToTensor(image)
         image = image if isinstance(image, list) else [image]
@@ -37,6 +43,7 @@ class Canny(NodeBase):
         if output_mode == "RGB":
             output = [image.convert("RGB") for image in output]
 
+        capture.finish({"output": output})
         return { "output": output }
 
 

@@ -69,6 +69,21 @@ class ImageFilterTests(unittest.TestCase):
         self.assertGreater(np.asarray(output[0]).max(), 0)
 
 
+def test_canny_evidence_records_the_normalized_thresholds_and_exact_edge_map(monkeypatch):
+    from modiff.builtin_media_evidence import media_identity
+
+    monkeypatch.setenv("MODIFF_CAPTURE_BUILTIN_MEDIA", "1")
+    source = Image.new("RGB", (32, 24), "black")
+    ImageDraw.Draw(source).rectangle((8, 6, 23, 17), fill="white")
+    canny = Canny("captured-canny")
+    result = canny(image=source, low_threshold=0.7, high_threshold=0.1, output_mode="RGB", device=CPU_DEVICE)
+    evidence = canny._execution_input_record["mediaEvidence"]
+    assert evidence["controls"] == {"low_threshold": 0.1, "high_threshold": 0.7,
+                                    "output_mode": "RGB", "device": CPU_DEVICE}
+    assert evidence["inputs"]["image"] == [media_identity(source)]
+    assert evidence["outputs"]["output"] == [media_identity(result["output"][0])]
+
+
 @pytest.mark.parametrize("output_mode", ["L", "RGB"])
 def test_sdxl_adapter_accepts_the_canny_maps_from_saved_and_new_workflows(output_mode):
     from types import SimpleNamespace

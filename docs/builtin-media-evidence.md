@@ -32,6 +32,12 @@ reader compares each exported file with the matching item in the collection.
 Non-PIL results retain their normal execution path with unavailable media
 evidence.
 
+For guided inpainting, the existing Canny processor records the normalized
+thresholds, input image and ordered edge maps. Control Inpaint records the
+source, mask and guide separately and binds the masked composite delivered to
+Preview. These observations can join the prepared edge map to its actual guide
+socket while keeping the loaded source and mask roles distinct.
+
 For captured literal video paths, Process Video streams each source once into
 an owned temporary snapshot while hashing it; FFmpeg consumes only that snapshot.
 Snapshots are deleted after the call. No original input is changed. Existing

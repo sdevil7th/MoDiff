@@ -25,6 +25,8 @@ CONTROL_FIELDS = {
     ('Image', 'Load'): ['alpha_channel'],
     ('Image', 'Preview'): ['device', 'export'],
     ('DiffusersImage', 'LayerDecompose'): ['layers', 'resolution', 'cfg_normalize', 'use_en_prompt'],
+    ('DiffusersImage', 'ControlInpaint'): [],
+    ('ImageFilters', 'Canny'): ['low_threshold', 'high_threshold', 'output_mode', 'device'],
     ('ImageOperations', 'ProcessImage'): IMAGE_CONTROLS,
     ('Audio', 'Load'): [],
     ('Audio', 'ProcessAudio'): AUDIO_CONTROLS,
