@@ -105,7 +105,9 @@
       "id": "AllegroPipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "AllegroPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "allegro_basalt_shore_at_dawn"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -116,7 +118,9 @@
       "id": "AnimateDiffControlNetPipeline:control_to_video",
       "mode": "control_to_video",
       "modelType": "AnimateDiffControlNetPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "animatediff_ivory_balloon_blue_mountains"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -138,7 +142,9 @@
       "id": "AnimateDiffPipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "AnimateDiffPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "animatediff_candlelight_behind_amber_glass"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -149,7 +155,9 @@
       "id": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
       "mode": "control_video_to_video",
       "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "animatediff_red_tram_through_snow"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -160,7 +168,9 @@
       "id": "AnimateDiffVideoToVideoPipeline:video_to_video",
       "mode": "video_to_video",
       "modelType": "AnimateDiffVideoToVideoPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "animatediff_red_tram_in_watercolor"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -426,7 +436,9 @@
       "id": "ChromaImg2ImgPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "ChromaImg2ImgPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "chroma_alpine_block_print"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -437,7 +449,9 @@
       "id": "ChromaInpaintPipeline:inpaint",
       "mode": "inpaint",
       "modelType": "ChromaInpaintPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "chroma_restored_cobalt_backdrop"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -459,7 +473,9 @@
       "id": "ChromaPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "ChromaPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "chroma_terracotta_and_blue"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -470,7 +486,9 @@
       "id": "CogVideoXPipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "CogVideoXPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "cogvideox_mossy_mountain_stream"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -481,7 +499,9 @@
       "id": "CogVideoXVideoToVideoPipeline:video_to_video",
       "mode": "video_to_video",
       "modelType": "CogVideoXVideoToVideoPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "cogvideox_red_tram_model_railway"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -623,7 +643,9 @@
       "id": "Flux2KleinInpaintPipeline:inpaint",
       "mode": "inpaint",
       "modelType": "Flux2KleinInpaintPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux_klein_open_glacial_lake"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -634,7 +656,9 @@
       "id": "Flux2KleinInpaintPipeline:outpaint",
       "mode": "outpaint",
       "modelType": "Flux2KleinInpaintPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux_klein_alpine_lake_panorama"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -895,7 +919,9 @@
       "id": "FluxCannyPipeline:control_inpaint",
       "mode": "control_inpaint",
       "modelType": "FluxCannyPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux_canny_clean_backdrop"
+      ],
       "qualificationStatus": "graph-qualified",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -930,7 +956,9 @@
       "id": "FluxDepthPipeline:control_inpaint",
       "mode": "control_inpaint",
       "modelType": "FluxDepthPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux_depth_marine_bow_repair"
+      ],
       "qualificationStatus": "graph-qualified",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -952,7 +980,9 @@
       "id": "FluxDevPipeline:inpaint",
       "mode": "inpaint",
       "modelType": "FluxDevPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux1_dev_limestone_studio_scratch_repair"
+      ],
       "qualificationStatus": "graph-qualified",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1117,7 +1147,9 @@
       "id": "FluxKontextInpaintPipeline:outpaint",
       "mode": "outpaint",
       "modelType": "FluxKontextInpaintPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "kontext_wide_water_alpine_ridge"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1323,7 +1355,9 @@
       "id": "HunyuanDiTControlNetPipeline:control_image",
       "mode": "control_image",
       "modelType": "HunyuanDiTControlNetPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "hunyuan_dit_green_glass_study"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1334,7 +1368,9 @@
       "id": "HunyuanDiTPAGPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "HunyuanDiTPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "hunyuan_pag_burgundy_knight"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1345,7 +1381,9 @@
       "id": "HunyuanDiTPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "HunyuanDiTPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "hunyuan_dit_coastal_lighthouse"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1367,7 +1405,9 @@
       "id": "JoyImageEditPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "JoyImageEditPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "joyimage_base_cobalt_paper_band"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1378,7 +1418,9 @@
       "id": "JoyImageEditPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "JoyImageEditPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "joyimage_herbarium_rainy_porthole"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1389,7 +1431,9 @@
       "id": "JoyImageEditPlusPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "JoyImageEditPlusPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "joy_plus_lavender_on_limestone"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1400,7 +1444,9 @@
       "id": "JoyImageEditPlusPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
       "modelType": "JoyImageEditPlusPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "joy_plus_terracotta_on_limestone"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1411,7 +1457,9 @@
       "id": "Kandinsky3Pipeline:edit_image",
       "mode": "edit_image",
       "modelType": "Kandinsky3Pipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "kandinsky3_smoked_glass_on_limestone"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1616,7 +1664,9 @@
       "id": "LongCatAudioDiTPipeline:text_to_audio",
       "mode": "text_to_audio",
       "modelType": "LongCatAudioDiTPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "longcat_last_tram_at_dusk"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1627,7 +1677,9 @@
       "id": "LongCatImageEditPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "LongCatImageEditPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "longcat_clear_glass_at_the_bookshop"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1638,7 +1690,9 @@
       "id": "LongCatImagePipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "LongCatImagePipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "longcat_florist_end_of_lane"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1649,7 +1703,9 @@
       "id": "Lumina2Pipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "Lumina2Pipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "lumina2_larch_on_glacial_pond"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1723,7 +1779,9 @@
       "id": "MochiPipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "MochiPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "mochi_surf_over_dark_pebbles"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1747,7 +1805,9 @@
       "id": "OmniGenPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "OmniGenPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "omnigen_cobalt_against_soft_apricot"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1758,7 +1818,9 @@
       "id": "OmniGenPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
       "modelType": "OmniGenPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "omnigen_red_enamel_folded_linen"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1769,7 +1831,9 @@
       "id": "OmniGenPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "OmniGenPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "omnigen_tulips_after_rain"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1828,7 +1892,9 @@
       "id": "QwenImageControlNetPipeline:control_image",
       "mode": "control_image",
       "modelType": "QwenImageControlNetPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "qwen_control_winter_cabin_blue_hour"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1882,7 +1948,9 @@
       "id": "QwenImageEditPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "QwenImageEditPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "qwen_cobalt_on_charcoal_slate"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1936,7 +2004,9 @@
       "id": "QwenImageEditPlusPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "QwenImageEditPlusPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "qwen_2511_pale_amber_on_limestone"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1947,7 +2017,9 @@
       "id": "QwenImageEditPlusPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
       "modelType": "QwenImageEditPlusPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "qwen_2511_terracotta_material_transfer"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1971,7 +2043,9 @@
       "id": "QwenImageLayeredPipeline:layer_decomposition",
       "mode": "layer_decomposition",
       "modelType": "QwenImageLayeredPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "qwen_layered_sunset_and_peaks"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1996,7 +2070,9 @@
       "id": "QwenImageModularPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "QwenImageModularPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "qwen_bookshop_gouache"
+      ],
       "qualificationStatus": "graph-qualified",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2007,7 +2083,9 @@
       "id": "QwenImageModularPipeline:inpaint",
       "mode": "inpaint",
       "modelType": "QwenImageModularPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "qwen_2512_cobalt_backdrop_repair"
+      ],
       "qualificationStatus": "graph-qualified",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2050,7 +2128,9 @@
       "id": "SanaImageToVideoPipeline:image_to_video",
       "mode": "image_to_video",
       "modelType": "SanaImageToVideoPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sana_i2v_blue_hour_above_rice_terraces"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2074,7 +2154,9 @@
       "id": "SanaPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "SanaPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sana_tidal_pool_on_black_basalt"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2111,7 +2193,9 @@
       "id": "SanaVideoPipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "SanaVideoPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sana_video_water_terraces_before_sunrise"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2146,7 +2230,9 @@
       "id": "SpandrelVideoUpscale:video_upscale",
       "mode": "video_upscale",
       "modelType": "SpandrelVideoUpscale",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "spandrel_tram_shelter_video_2x"
+      ],
       "qualificationStatus": "execution-qualified-gallery-review-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2168,7 +2254,9 @@
       "id": "StableDiffusionPAGPipeline:control_image",
       "mode": "control_image",
       "modelType": "StableDiffusionPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sd15_pag_canny_guided_glass"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2179,7 +2267,9 @@
       "id": "StableDiffusionPAGPipeline:control_inpaint",
       "mode": "control_inpaint",
       "modelType": "StableDiffusionPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sd15_pag_control_wall_repair"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2190,7 +2280,9 @@
       "id": "StableDiffusionPAGPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "StableDiffusionPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sd15_pag_mountain_lake_watercolor"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2201,7 +2293,9 @@
       "id": "StableDiffusionPAGPipeline:inpaint",
       "mode": "inpaint",
       "modelType": "StableDiffusionPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sd15_pag_cobalt_studio_repair"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2225,7 +2319,9 @@
       "id": "StableDiffusionPipeline:control_edit_image",
       "mode": "control_edit_image",
       "modelType": "StableDiffusionPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sd15_control_cobalt_handmade_paper"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2236,7 +2332,9 @@
       "id": "StableDiffusionPipeline:control_image",
       "mode": "control_image",
       "modelType": "StableDiffusionPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sd15_canny_guided_green_glass"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2247,7 +2345,9 @@
       "id": "StableDiffusionPipeline:control_inpaint",
       "mode": "control_inpaint",
       "modelType": "StableDiffusionPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sd15_control_cobalt_studio_wall_repair"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2297,7 +2397,9 @@
       "id": "StableDiffusionXLAdapterPipeline:control_image",
       "mode": "control_image",
       "modelType": "StableDiffusionXLAdapterPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_canny_adapter_glass_study"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2308,7 +2410,9 @@
       "id": "StableDiffusionXLControlNetPipeline:control_edit_image",
       "mode": "control_edit_image",
       "modelType": "StableDiffusionXLControlNetPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_control_golden_boathouse"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2319,7 +2423,9 @@
       "id": "StableDiffusionXLControlNetPipeline:control_image",
       "mode": "control_image",
       "modelType": "StableDiffusionXLControlNetPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_controlnet_glass_study_on_slate"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2330,7 +2436,9 @@
       "id": "StableDiffusionXLControlNetPipeline:control_inpaint",
       "mode": "control_inpaint",
       "modelType": "StableDiffusionXLControlNetPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_control_inpaint_warm_plaster"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2341,7 +2449,9 @@
       "id": "StableDiffusionXLInstructPix2PixPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "StableDiffusionXLInstructPix2PixPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_pix2pix_pale_amber_glass"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2363,7 +2473,9 @@
       "id": "StableDiffusionXLPAGPipeline:control_image",
       "mode": "control_image",
       "modelType": "StableDiffusionXLPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_pag_snow_cabin"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2385,7 +2497,9 @@
       "id": "StableDiffusionXLPAGPipeline:inpaint",
       "mode": "inpaint",
       "modelType": "StableDiffusionXLPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_pag_cobalt_wall"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2409,7 +2523,9 @@
       "id": "StableDiffusionXLPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "StableDiffusionXLPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "sdxl_blue_glass_on_linen"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2470,7 +2586,9 @@
       "id": "Wan22Pipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "Wan22Pipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "wan_a14b_cloudbreak_over_the_ridges"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2492,7 +2610,9 @@
       "id": "WanAnimatePipeline:character_replace",
       "mode": "character_replace",
       "modelType": "WanAnimatePipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "wan_animate_glasshouse_keeper"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2503,7 +2623,9 @@
       "id": "WanImage2VideoModularPipeline:image_to_video",
       "mode": "image_to_video",
       "modelType": "WanImage2VideoModularPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "wan_flf_blue_hour_at_the_tram_shelter"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2515,7 +2637,8 @@
       "mode": "image_to_video",
       "modelType": "WanImageToVideoPipeline",
       "publicTemplateIds": [
-        "wan_22_i2v_seed_vault"
+        "wan_22_i2v_seed_vault",
+        "wan_a14b_wind_across_pond"
       ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
@@ -2528,7 +2651,8 @@
       "mode": "text_to_video",
       "modelType": "WanTI2VPipeline",
       "publicTemplateIds": [
-        "wan_22_ti2v_5b_seed_vault"
+        "wan_22_ti2v_5b_seed_vault",
+        "wan_ti2v_subway_musician"
       ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
@@ -2553,7 +2677,9 @@
       "id": "WanVACEPipeline:text_to_video",
       "mode": "text_to_video",
       "modelType": "WanVACEPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "wan_vace_amber_rings_after_rain"
+      ],
       "qualificationStatus": "execution-qualified-gallery-review-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2643,7 +2769,9 @@
       "id": "ZImageInpaintPipeline:inpaint",
       "mode": "inpaint",
       "modelType": "ZImageInpaintPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "zimage_seamless_cobalt_backdrop"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2654,7 +2782,9 @@
       "id": "ZImageInpaintPipeline:outpaint",
       "mode": "outpaint",
       "modelType": "ZImageInpaintPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "zimage_rocky_glacial_shores"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2665,7 +2795,9 @@
       "id": "ZImageModularPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "ZImageModularPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "zimage_golden_amber_glass"
+      ],
       "qualificationStatus": "graph-qualified",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2714,7 +2846,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:325a59a49645dc684fa81d1e0683a728ab457926398a9dc13b78559e668e89f4",
+  "contentHash": "sha256:6bb139527a5cb478118dc6c45a219abcc98aaba938952a066be43fe71dcd7708",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -8181,6 +8313,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "AllegroPipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "allegro_basalt_shore_at_dawn",
+      "mode": "text_to_video",
+      "modelType": "AllegroPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "StableDiffusionPipeline:edit_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -8189,6 +8336,66 @@
       "id": "alpine_lake_in_oils",
       "mode": "edit_image",
       "modelType": "StableDiffusionPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "AnimateDiffPipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "animatediff_candlelight_behind_amber_glass",
+      "mode": "text_to_video",
+      "modelType": "AnimateDiffPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "AnimateDiffControlNetPipeline:control_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "animatediff_ivory_balloon_blue_mountains",
+      "mode": "control_to_video",
+      "modelType": "AnimateDiffControlNetPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "AnimateDiffVideoToVideoPipeline:video_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "animatediff_red_tram_in_watercolor",
+      "mode": "video_to_video",
+      "modelType": "AnimateDiffVideoToVideoPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "animatediff_red_tram_through_snow",
+      "mode": "control_video_to_video",
+      "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
       "readinessPolicy": "requires_input",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
@@ -8256,6 +8463,51 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "chroma_alpine_block_print",
+      "mode": "edit_image",
+      "modelType": "ChromaImg2ImgPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "ChromaInpaintPipeline:inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "chroma_restored_cobalt_backdrop",
+      "mode": "inpaint",
+      "modelType": "ChromaInpaintPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "ChromaPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "chroma_terracotta_and_blue",
+      "mode": "text_to_image",
+      "modelType": "ChromaPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "StableDiffusionPipeline:text_to_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -8265,6 +8517,36 @@
       "mode": "text_to_image",
       "modelType": "StableDiffusionPipeline",
       "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "CogVideoXPipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "cogvideox_mossy_mountain_stream",
+      "mode": "text_to_video",
+      "modelType": "CogVideoXPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "CogVideoXVideoToVideoPipeline:video_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "cogvideox_red_tram_model_railway",
+      "mode": "video_to_video",
+      "modelType": "CogVideoXVideoToVideoPipeline",
+      "readinessPolicy": "requires_input",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
@@ -8377,6 +8659,21 @@
       "mode": "text_to_image",
       "modelType": "OvisImagePipeline",
       "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "FluxDevPipeline:inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux1_dev_limestone_studio_scratch_repair",
+      "mode": "inpaint",
+      "modelType": "FluxDevPipeline",
+      "readinessPolicy": "requires_input",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
@@ -8820,6 +9117,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "FluxCannyPipeline:control_inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux_canny_clean_backdrop",
+      "mode": "control_inpaint",
+      "modelType": "FluxCannyPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "FluxCannyPipeline:control_image",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -8875,6 +9187,21 @@
       "modelType": "FluxDepthPipeline",
       "readinessPolicy": "requires_input",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "FluxDepthPipeline:control_inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux_depth_marine_bow_repair",
+      "mode": "control_inpaint",
+      "modelType": "FluxDepthPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -8965,6 +9292,36 @@
       "modelType": "FluxFillPipeline",
       "readinessPolicy": "requires_input",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux2KleinInpaintPipeline:outpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux_klein_alpine_lake_panorama",
+      "mode": "outpaint",
+      "modelType": "Flux2KleinInpaintPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux2KleinInpaintPipeline:inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux_klein_open_glacial_lake",
+      "mode": "inpaint",
+      "modelType": "Flux2KleinInpaintPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -9450,6 +9807,51 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "HunyuanDiTPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "hunyuan_dit_coastal_lighthouse",
+      "mode": "text_to_image",
+      "modelType": "HunyuanDiTPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "HunyuanDiTControlNetPipeline:control_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "hunyuan_dit_green_glass_study",
+      "mode": "control_image",
+      "modelType": "HunyuanDiTControlNetPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "HunyuanDiTPAGPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "hunyuan_pag_burgundy_knight",
+      "mode": "text_to_image",
+      "modelType": "HunyuanDiTPAGPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_to_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -9495,6 +9897,66 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "JoyImageEditPlusPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "joy_plus_lavender_on_limestone",
+      "mode": "edit_image",
+      "modelType": "JoyImageEditPlusPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "JoyImageEditPlusPipeline:multi_image_reference_edit",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "joy_plus_terracotta_on_limestone",
+      "mode": "multi_image_reference_edit",
+      "modelType": "JoyImageEditPlusPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "JoyImageEditPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "joyimage_base_cobalt_paper_band",
+      "mode": "edit_image",
+      "modelType": "JoyImageEditPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "JoyImageEditPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "joyimage_herbarium_rainy_porthole",
+      "mode": "text_to_image",
+      "modelType": "JoyImageEditPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "Kandinsky3Pipeline:text_to_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -9510,6 +9972,36 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "Kandinsky3Pipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "kandinsky3_smoked_glass_on_limestone",
+      "mode": "edit_image",
+      "modelType": "Kandinsky3Pipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "FluxKontextInpaintPipeline:outpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "kontext_wide_water_alpine_ridge",
+      "mode": "outpaint",
+      "modelType": "FluxKontextInpaintPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "LatentConsistencyModelPipeline:edit_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -9519,6 +10011,51 @@
       "mode": "edit_image",
       "modelType": "LatentConsistencyModelPipeline",
       "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "LongCatImageEditPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "longcat_clear_glass_at_the_bookshop",
+      "mode": "edit_image",
+      "modelType": "LongCatImageEditPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "LongCatImagePipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "longcat_florist_end_of_lane",
+      "mode": "text_to_image",
+      "modelType": "LongCatImagePipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "LongCatAudioDiTPipeline:text_to_audio",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "longcat_last_tram_at_dusk",
+      "mode": "text_to_audio",
+      "modelType": "LongCatAudioDiTPipeline",
+      "readinessPolicy": "runnable",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
@@ -9741,6 +10278,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "Lumina2Pipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "lumina2_larch_on_glacial_pond",
+      "mode": "text_to_image",
+      "modelType": "Lumina2Pipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "LuminaPipeline:text_to_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -9832,6 +10384,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "MochiPipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "mochi_surf_over_dark_pebbles",
+      "mode": "text_to_video",
+      "modelType": "MochiPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "CogView3PlusPipeline:text_to_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -9840,6 +10407,51 @@
       "id": "ochre_paper_pavilion",
       "mode": "text_to_image",
       "modelType": "CogView3PlusPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "OmniGenPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "omnigen_cobalt_against_soft_apricot",
+      "mode": "edit_image",
+      "modelType": "OmniGenPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "OmniGenPipeline:multi_image_reference_edit",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "omnigen_red_enamel_folded_linen",
+      "mode": "multi_image_reference_edit",
+      "modelType": "OmniGenPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "OmniGenPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "omnigen_tulips_after_rain",
+      "mode": "text_to_image",
+      "modelType": "OmniGenPipeline",
       "readinessPolicy": "runnable",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
@@ -9922,6 +10534,66 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "QwenImageEditPlusPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "qwen_2511_pale_amber_on_limestone",
+      "mode": "edit_image",
+      "modelType": "QwenImageEditPlusPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "QwenImageEditPlusPipeline:multi_image_reference_edit",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "qwen_2511_terracotta_material_transfer",
+      "mode": "multi_image_reference_edit",
+      "modelType": "QwenImageEditPlusPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "QwenImageModularPipeline:inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "qwen_2512_cobalt_backdrop_repair",
+      "mode": "inpaint",
+      "modelType": "QwenImageModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "QwenImageModularPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "qwen_bookshop_gouache",
+      "mode": "edit_image",
+      "modelType": "QwenImageModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "QwenImageEditModularPipeline:edit_image",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -9952,6 +10624,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "QwenImageEditPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "qwen_cobalt_on_charcoal_slate",
+      "mode": "edit_image",
+      "modelType": "QwenImageEditPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "QwenImageModularPipeline:control_image",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -9977,6 +10664,21 @@
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "requires_input",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "QwenImageControlNetPipeline:control_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "qwen_control_winter_cabin_blue_hour",
+      "mode": "control_image",
+      "modelType": "QwenImageControlNetPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -10129,6 +10831,21 @@
       "modelType": "QwenImageLayeredModularPipeline",
       "readinessPolicy": "requires_input",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "QwenImageLayeredPipeline:layer_decomposition",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "qwen_layered_sunset_and_peaks",
+      "mode": "layer_decomposition",
+      "modelType": "QwenImageLayeredPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -10646,6 +11363,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "SanaImageToVideoPipeline:image_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sana_i2v_blue_hour_above_rice_terraces",
+      "mode": "image_to_video",
+      "modelType": "SanaImageToVideoPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "SanaSprintPipeline:edit_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -10661,6 +11393,171 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "SanaPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sana_tidal_pool_on_black_basalt",
+      "mode": "text_to_image",
+      "modelType": "SanaPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "SanaVideoPipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sana_video_water_terraces_before_sunrise",
+      "mode": "text_to_video",
+      "modelType": "SanaVideoPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionPipeline:control_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sd15_canny_guided_green_glass",
+      "mode": "control_image",
+      "modelType": "StableDiffusionPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionPipeline:control_edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sd15_control_cobalt_handmade_paper",
+      "mode": "control_edit_image",
+      "modelType": "StableDiffusionPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionPipeline:control_inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sd15_control_cobalt_studio_wall_repair",
+      "mode": "control_inpaint",
+      "modelType": "StableDiffusionPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionPAGPipeline:control_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sd15_pag_canny_guided_glass",
+      "mode": "control_image",
+      "modelType": "StableDiffusionPAGPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionPAGPipeline:inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sd15_pag_cobalt_studio_repair",
+      "mode": "inpaint",
+      "modelType": "StableDiffusionPAGPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionPAGPipeline:control_inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sd15_pag_control_wall_repair",
+      "mode": "control_inpaint",
+      "modelType": "StableDiffusionPAGPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionPAGPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sd15_pag_mountain_lake_watercolor",
+      "mode": "edit_image",
+      "modelType": "StableDiffusionPAGPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_blue_glass_on_linen",
+      "mode": "edit_image",
+      "modelType": "StableDiffusionXLPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLAdapterPipeline:control_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_canny_adapter_glass_study",
+      "mode": "control_image",
+      "modelType": "StableDiffusionXLAdapterPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "StableDiffusionXLPipeline:inpaint",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -10669,6 +11566,96 @@
       "id": "sdxl_clear_cobalt_backdrop",
       "mode": "inpaint",
       "modelType": "StableDiffusionXLPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLControlNetPipeline:control_edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_control_golden_boathouse",
+      "mode": "control_edit_image",
+      "modelType": "StableDiffusionXLControlNetPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLControlNetPipeline:control_inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_control_inpaint_warm_plaster",
+      "mode": "control_inpaint",
+      "modelType": "StableDiffusionXLControlNetPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLControlNetPipeline:control_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_controlnet_glass_study_on_slate",
+      "mode": "control_image",
+      "modelType": "StableDiffusionXLControlNetPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_pag_cobalt_wall",
+      "mode": "inpaint",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLPAGPipeline:control_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_pag_snow_cabin",
+      "mode": "control_image",
+      "modelType": "StableDiffusionXLPAGPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "StableDiffusionXLInstructPix2PixPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "sdxl_pix2pix_pale_amber_glass",
+      "mode": "edit_image",
+      "modelType": "StableDiffusionXLInstructPix2PixPipeline",
       "readinessPolicy": "requires_input",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
@@ -10714,6 +11701,21 @@
       "id": "smolvlm_red_triangle",
       "mode": "image_to_text",
       "modelType": "HuggingFaceImageTextToTextModel",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "SpandrelVideoUpscale:video_upscale",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "spandrel_tram_shelter_video_2x",
+      "mode": "video_upscale",
+      "modelType": "SpandrelVideoUpscale",
       "readinessPolicy": "requires_input",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
@@ -10839,6 +11841,96 @@
       "modelType": "WanTI2VPipeline",
       "readinessPolicy": "requires_input",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Wan22Pipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "wan_a14b_cloudbreak_over_the_ridges",
+      "mode": "text_to_video",
+      "modelType": "Wan22Pipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "WanImageToVideoPipeline:image_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "wan_a14b_wind_across_pond",
+      "mode": "image_to_video",
+      "modelType": "WanImageToVideoPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "WanAnimatePipeline:character_replace",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "wan_animate_glasshouse_keeper",
+      "mode": "character_replace",
+      "modelType": "WanAnimatePipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "wan_flf_blue_hour_at_the_tram_shelter",
+      "mode": "image_to_video",
+      "modelType": "WanImage2VideoModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "WanTI2VPipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "wan_ti2v_subway_musician",
+      "mode": "text_to_video",
+      "modelType": "WanTI2VPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "WanVACEPipeline:text_to_video",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "wan_vace_amber_rings_after_rain",
+      "mode": "text_to_video",
+      "modelType": "WanVACEPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -11257,6 +12349,51 @@
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "ZImageModularPipeline:edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "zimage_golden_amber_glass",
+      "mode": "edit_image",
+      "modelType": "ZImageModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "ZImageInpaintPipeline:outpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "zimage_rocky_glacial_shores",
+      "mode": "outpaint",
+      "modelType": "ZImageInpaintPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "ZImageInpaintPipeline:inpaint",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "zimage_seamless_cobalt_backdrop",
+      "mode": "inpaint",
+      "modelType": "ZImageInpaintPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
     }
   ],
   "schemaVersion": 1,
@@ -11270,7 +12407,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "e4e0f34a3b40cf9878602f1d3f6ee4272cf82d3e33df3316f9c318bbace37699",
+    "templateBundleSha256": "0049294fdb2d792abf6c0a6d35eac8b4a69c588f8aae7bf015d09b52c7a09c87",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -11318,8 +12455,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithPublicTemplates": 105,
-    "canonicalWorkflowsWithoutPublicTemplates": 120,
+    "canonicalWorkflowsWithPublicTemplates": 170,
+    "canonicalWorkflowsWithoutPublicTemplates": 55,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -11329,12 +12466,12 @@
       "research-blocked": 116,
       "unreviewed": 5
     },
-    "publicTemplateCount": 125,
-    "reviewedGalleryTemplateCount": 118,
+    "publicTemplateCount": 192,
+    "reviewedGalleryTemplateCount": 185,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
-      "executable": 114,
+      "executable": 181,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

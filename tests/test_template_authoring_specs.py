@@ -53,17 +53,17 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 134,
-                "promptDraftedCount": 114,
-                "promptNotApplicableCount": 20,
-                "canonicalDefaultsCapturedCount": 134,
-                "inputSelectionPendingCount": 90,
-                "rightsReviewPendingCount": 134,
-                "generationPendingCount": 134,
+                "authoringSpecCount": 69,
+                "promptDraftedCount": 50,
+                "promptNotApplicableCount": 19,
+                "canonicalDefaultsCapturedCount": 69,
+                "inputSelectionPendingCount": 41,
+                "rightsReviewPendingCount": 69,
+                "generationPendingCount": 69,
                 "assetCount": 0,
                 "authoringStateCounts": {
-                    "draft_complete_execution_pending": 44,
-                    "draft_complete_input_selection_pending": 90,
+                    "draft_complete_execution_pending": 28,
+                    "draft_complete_input_selection_pending": 41,
                 },
             },
         )
@@ -308,13 +308,13 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             )
             captured_count += len(fields)
             self.assertTrue(forbidden_parameters.isdisjoint(item["parameter"] for item in fields))
-        self.assertGreater(captured_count, 900)
+        self.assertEqual(captured_count, 511)
 
-    def test_video_upscale_authoring_stays_input_and_execution_pending(self):
+    def test_frame_interpolation_authoring_stays_input_and_execution_pending(self):
         specification = next(
             row
             for row in self.ledger["specifications"]
-            if row["canonicalWorkflowId"] == "SpandrelVideoUpscale:video_upscale"
+            if row["canonicalWorkflowId"] == "BuiltinVideoOperation:frame_interpolation"
         )
         self.assertEqual(specification["promptPlan"]["status"], "not_applicable")
         self.assertIsNone(specification["promptPlan"]["prompt"])
@@ -335,7 +335,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
                 }
             ],
         )
-        self.assertEqual(specification["artifactPlan"]["requiredArtifacts"], ["nateraw/real-esrgan"])
+        self.assertEqual(specification["artifactPlan"]["requiredArtifacts"], ["builtin://modiff/video-operations/v1"])
         self.assertEqual(specification["assetState"], "not_generated")
         self.assertFalse(specification["claims"]["workflowExecuted"])
 

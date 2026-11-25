@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:3816f46a6c5d459f31d37e79f27fe9f01eca1a96f827a2736a69fb87259ee876",
+  "contentHash": "sha256:b9d58f481bbd6aa23f3e549950469ba87227ef982a45ad5f782e0688e033fa3e",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -510,11 +510,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -1433,11 +1435,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -1603,11 +1607,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -2542,11 +2548,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AllegroPipeline:text_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AllegroPipeline:text_to_video",
         "modelFamily": "Allegro",
         "modelType": "AllegroPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "allegro_basalt_shore_at_dawn"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3025,11 +3033,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaInpaintPipeline:inpaint",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaInpaintPipeline:inpaint",
         "modelFamily": "Chroma",
         "modelType": "ChromaInpaintPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_restored_cobalt_backdrop"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3393,11 +3403,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3551,11 +3563,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3955,11 +3969,13 @@
         "Chroma"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaPipeline:text_to_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_terracotta_and_blue"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -4045,11 +4061,13 @@
         "FLUX Image"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaPipeline:text_to_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_terracotta_and_blue"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -4139,11 +4157,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -4397,11 +4417,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -6672,11 +6694,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -6830,11 +6854,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7478,11 +7504,13 @@
         "OmniGen"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:Lumina2Pipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "Lumina2Pipeline:text_to_image",
         "modelFamily": "Lumina 2.0",
         "modelType": "Lumina2Pipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "lumina2_larch_on_glacial_pond"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7812,11 +7840,13 @@
         "OmniGen"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:OmniGenPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "OmniGenPipeline:edit_image",
         "modelFamily": "OmniGen",
         "modelType": "OmniGenPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "omnigen_cobalt_against_soft_apricot"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7898,11 +7928,13 @@
         "OmniGen"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:OmniGenPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "OmniGenPipeline:text_to_image",
         "modelFamily": "OmniGen",
         "modelType": "OmniGenPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "omnigen_tulips_after_rain"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -8885,11 +8917,13 @@
         "Qwen Image"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:QwenImageModularPipeline:inpaint",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "QwenImageModularPipeline:inpaint",
         "modelFamily": "Qwen Image",
         "modelType": "QwenImageModularPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "qwen_2512_cobalt_backdrop_repair"
+        ],
         "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
@@ -9192,7 +9226,8 @@
         "modelFamily": "Wan Video",
         "modelType": "WanImageToVideoPipeline",
         "publicTemplateIds": [
-          "wan_22_i2v_seed_vault"
+          "wan_22_i2v_seed_vault",
+          "wan_a14b_wind_across_pond"
         ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
@@ -9959,11 +9994,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:StableDiffusionPipeline:control_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "StableDiffusionPipeline:control_image",
         "modelFamily": "Stable Diffusion 1.x",
         "modelType": "StableDiffusionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "sd15_canny_guided_green_glass"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -11218,11 +11255,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AllegroPipeline:text_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AllegroPipeline:text_to_video",
         "modelFamily": "Allegro",
         "modelType": "AllegroPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "allegro_basalt_shore_at_dawn"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -11924,11 +11963,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:SpandrelVideoUpscale:video_upscale",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "SpandrelVideoUpscale:video_upscale",
         "modelFamily": "Real-ESRGAN",
         "modelType": "SpandrelVideoUpscale",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "spandrel_tram_shelter_video_2x"
+        ],
         "qualificationStatus": "execution-qualified-gallery-review-pending"
       },
       "representativeWorkflowOptions": [
@@ -12173,11 +12214,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -12616,7 +12659,8 @@
         "modelFamily": "Wan Video",
         "modelType": "WanImageToVideoPipeline",
         "publicTemplateIds": [
-          "wan_22_i2v_seed_vault"
+          "wan_22_i2v_seed_vault",
+          "wan_a14b_wind_across_pond"
         ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
@@ -12898,11 +12942,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AllegroPipeline:text_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AllegroPipeline:text_to_video",
         "modelFamily": "Allegro",
         "modelType": "AllegroPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "allegro_basalt_shore_at_dawn"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -13142,11 +13188,13 @@
         "Kandinsky"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AllegroPipeline:text_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AllegroPipeline:text_to_video",
         "modelFamily": "Allegro",
         "modelType": "AllegroPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "allegro_basalt_shore_at_dawn"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -14682,11 +14730,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanAnimatePipeline:character_replace",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanAnimatePipeline:character_replace",
         "modelFamily": "Wan Video",
         "modelType": "WanAnimatePipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_animate_glasshouse_keeper"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -14784,11 +14834,13 @@
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanAnimatePipeline:character_replace",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanAnimatePipeline:character_replace",
         "modelFamily": "Wan Video",
         "modelType": "WanAnimatePipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_animate_glasshouse_keeper"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -14974,11 +15026,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanImage2VideoModularPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "modelFamily": "Wan Video",
         "modelType": "WanImage2VideoModularPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_flf_blue_hour_at_the_tram_shelter"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -15157,11 +15211,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
         "modelFamily": "AnimateDiff",
         "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "animatediff_red_tram_through_snow"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -15263,11 +15319,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanImage2VideoModularPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "modelFamily": "Wan Video",
         "modelType": "WanImage2VideoModularPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_flf_blue_hour_at_the_tram_shelter"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -15448,11 +15506,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
         "modelFamily": "AnimateDiff",
         "modelType": "AnimateDiffVideoToVideoControlNetPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "animatediff_red_tram_through_snow"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -15542,11 +15602,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanImage2VideoModularPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "modelFamily": "Wan Video",
         "modelType": "WanImage2VideoModularPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_flf_blue_hour_at_the_tram_shelter"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -15813,11 +15875,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanVACEPipeline:text_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanVACEPipeline:text_to_video",
         "modelFamily": "Wan Video",
         "modelType": "WanVACEPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_vace_amber_rings_after_rain"
+        ],
         "qualificationStatus": "execution-qualified-gallery-review-pending"
       },
       "representativeWorkflowOptions": [
@@ -16009,11 +16073,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanImage2VideoModularPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "modelFamily": "Wan Video",
         "modelType": "WanImage2VideoModularPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_flf_blue_hour_at_the_tram_shelter"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -16394,11 +16460,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanImage2VideoModularPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "modelFamily": "Wan Video",
         "modelType": "WanImage2VideoModularPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_flf_blue_hour_at_the_tram_shelter"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -16586,11 +16654,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanImage2VideoModularPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanImage2VideoModularPipeline:image_to_video",
         "modelFamily": "Wan Video",
         "modelType": "WanImage2VideoModularPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_flf_blue_hour_at_the_tram_shelter"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -16665,14 +16735,14 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:e708daa079c72413ec51ce0cfe979d169cefb2bf45a0e8fd2237b010bd1356db",
+      "contentHash": "sha256:b14f10e8a46f3e2c83e76620c744c4214749106df4a1a3ec81231158d798a2d4",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:c9570e5802aadb838a1d551b2b426d464c5e8bc936b18a775f7476a8d5047e7d"
+      "sha256": "sha256:ac633e8ffd7c13a84db19ad9ef5b1454fa1d031e260a776f7b879b4f6e6f4c73"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:325a59a49645dc684fa81d1e0683a728ab457926398a9dc13b78559e668e89f4",
+      "contentHash": "sha256:6bb139527a5cb478118dc6c45a219abcc98aaba938952a066be43fe71dcd7708",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:a0968a56c0d855c2058461e4b18bfccf63aa85ee03ac9ecaa59a048dda4b6218"
+      "sha256": "sha256:89d6979f5a54107ae085fe652d5252e571eea76ffda0c55227fc62bc72ae8434"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -16731,8 +16801,8 @@
       "same_upstream_generation_different_partition_and_auxiliary": 8,
       "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 58,
-    "recordsWithPublicTemplateOption": 55,
+    "recordsWithHiddenAuthoringSpecOption": 24,
+    "recordsWithPublicTemplateOption": 89,
     "recordsWithRecommendedWorkflow": 110,
     "resolutionCount": 138,
     "resolutionStateCounts": {
