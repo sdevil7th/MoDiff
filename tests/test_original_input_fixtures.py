@@ -158,7 +158,8 @@ class OriginalInputFixtureLiveLedgerTests(unittest.TestCase):
         self.assertNotIn("HuggingFaceSpeechRecognitionModel:speech_to_text", mapped)
         self.assertNotIn("LatentConsistencyModelPipeline:edit_image", mapped)
         self.assertNotIn("SanaSprintPipeline:edit_image", mapped)
-        self.assertIn("AnimateDiffControlNetPipeline:control_to_video", mapped)
+        self.assertNotIn("AnimateDiffControlNetPipeline:control_to_video", mapped)
+        self.assertIn("WanAnimatePipeline:character_animate", mapped)
         self.assertTrue({
             "Flux3DistilledModularPipeline:edit_image",
             "Flux3ModularPipeline:edit_image",
