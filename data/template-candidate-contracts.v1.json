@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:a33d511a3092b2be4c6f7025fe623713a2077713c6a8dc2fb2406417c82d20ef",
+  "contentHash": "sha256:1d042a4f20ae0f7968794ea1d493909abdedf79f970d5a52a34a7bee36a3d440",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -32,7 +32,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "acc05da225bf77e85d83e08dc07869ba6f0be3765ba3db69112f80279cb6d2d5",
+      "graphHash": "04f23888987663fabf605786156febf502098801ae9b38868a0f13dd69622cc1",
       "graphPath": "studio/allegro-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -4346,7 +4346,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "027ade4a9594743485b4176bc1a018871cd69ee69cf9ed029a00baee21c3ee46",
+      "graphHash": "0da2261fe4a9c00a89f4c7cfba7d98ec9acb79508c470f39de0028a7025d6189",
       "graphPath": "studio/sana-image-to-video-pipeline/image-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -5967,13 +5967,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:deb82d12296afbaf1bcacd1ac2ded23801f399c30dd10d7500938d4bbc554b55",
+      "contentHash": "sha256:9507f348bb2eb601dc383ec6a09149cd89afd9b08e19a32d0b8b70e27908d43b",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:12e29c299a219cb5695780aad7fe90f11c36cea17a9de1bb952796d9285614bd"
+      "sha256": "sha256:be798eca753e3333fb07fa7b5003d41bcecc95416c49652b61535f92eacf2ba6"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:5b1c652f6ad4f4bce5bda8e6eb43fa9e48ddb31efd583537fc47c2b4d7f1fb9a"
+      "sha256": "sha256:c78eac54557a2278bc711982367a200df8fafe8a4dbeaf797af99f72b9f25516"
     }
   },
   "summary": {

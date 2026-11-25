@@ -12120,7 +12120,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "capability": _allegro_capability(),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
-            "bindings": _COGVIDEOX_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_COGVIDEOX_GRAPH_BINDINGS),
         },
         "latte:text-to-video:v1": {
             "modelType": "LattePipeline",
@@ -12156,7 +12156,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "capability": _sana_video_capability(image_conditioned=True),
             "roles": _I2V_GRAPH_ROLES,
             "edges": _I2V_GRAPH_EDGES,
-            "bindings": _SANA_VIDEO_I2V_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_SANA_VIDEO_I2V_GRAPH_BINDINGS),
         },
         "wan-1.3b:modular-text-to-video:v1": {
             "modelType": "WanModularPipeline",
@@ -19033,7 +19033,19 @@ def _historical_studio_execution_spec(spec_id: str, content_hash: str) -> dict[s
             ("AnimateDiffVideoToVideoControlNetPipeline", "control_video_to_video",
              "animatediff-sd15-v2-controlnet-video-to-video:direct"),
     }
-    if (spec_id, content_hash) in conditioned_attention_records:
+    native_processor_attention_records = {
+        ("allegro:text-to-video:v1", "studio-spec-v1-735b2fb3"):
+            ("AllegroPipeline", "text_to_video", "allegro:direct"),
+        ("sana-video-480p:image-to-video:v1", "studio-spec-v1-674186d5"):
+            ("SanaImageToVideoPipeline", "image_to_video", "sana-video-480p-i2v:direct"),
+    }
+    if (spec_id, content_hash) in native_processor_attention_records:
+        video_attention_records = native_processor_attention_records
+        archive_name = "allegro-sana-i2v-attention-compatibility.v1.json"
+        expected_bytes = 13796
+        expected_sha256 = "3fdf7eecbc07474452ff6bd1653c2edb17cd503dca7a9a897969dc6adb202383"
+        source_commit = "eb1fbea7b973743516e732acd49a3cb4ae360522"
+    elif (spec_id, content_hash) in conditioned_attention_records:
         video_attention_records = conditioned_attention_records
         archive_name = "video-conditioned-attention-compatibility.v1.json"
         expected_bytes = 25656

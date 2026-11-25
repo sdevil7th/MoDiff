@@ -235,7 +235,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/allegro-pipeline/text-to-video.json",
-      "graphHash": "acc05da225bf77e85d83e08dc07869ba6f0be3765ba3db69112f80279cb6d2d5"
+      "graphHash": "04f23888987663fabf605786156febf502098801ae9b38868a0f13dd69622cc1"
     },
     {
       "id": "AnimateDiffControlNetPipeline:control_to_video",
@@ -4978,7 +4978,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/sana-image-to-video-pipeline/image-to-video.json",
-      "graphHash": "027ade4a9594743485b4176bc1a018871cd69ee69cf9ed029a00baee21c3ee46"
+      "graphHash": "0da2261fe4a9c00a89f4c7cfba7d98ec9acb79508c470f39de0028a7025d6189"
     },
     {
       "id": "SanaPAGPipeline:text_to_image",

@@ -1872,10 +1872,14 @@ class StudioExecutionSpecTests(unittest.TestCase):
         cogvideox_archive = json.loads(
             (root / "cogvideox-v2v-attention-compatibility.v1.json").read_text(encoding="utf-8")
         )
+        native_processor_archive = json.loads(
+            (root / "allegro-sana-i2v-attention-compatibility.v1.json").read_text(encoding="utf-8")
+        )
         role_field = ["diffusersRecipe", "attention_backend"]
         entries = [
             *archive["specifications"], *conditioned_archive["specifications"],
             *latte_archive["specifications"], *cogvideox_archive["specifications"],
+            *native_processor_archive["specifications"],
         ]
         for entry in entries:
             saved = entry["specification"]
@@ -1915,8 +1919,6 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertEqual([recipe["attention_backend"]["value"] for recipe in recipes], ["auto"])
 
         for model, mode in (
-            ("SanaImageToVideoPipeline", "image_to_video"),
-            ("AllegroPipeline", "text_to_video"),
             ("MochiPipeline", "text_to_video"),
         ):
             with self.subTest(untouched=model):

@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:e045981bbeb572a59b55298e9109feadd373ebcb93c1cc6fe419b37cd1f248de",
+  "contentHash": "sha256:065e8e5349aaab782cc699ceea4b0c0496b18f3be4266464eb565f75471ff21c",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:a33d511a3092b2be4c6f7025fe623713a2077713c6a8dc2fb2406417c82d20ef",
+      "contentHash": "sha256:1d042a4f20ae0f7968794ea1d493909abdedf79f970d5a52a34a7bee36a3d440",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:ad2d557d12f370069d5031d799034cf052b68783b824e7c608ca79d69a4e5beb"
+      "sha256": "sha256:608e5065eaa1ccfb18fea010a52bc3e4c9d77365f2c24829c8a382f0d672a381"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:5b1c652f6ad4f4bce5bda8e6eb43fa9e48ddb31efd583537fc47c2b4d7f1fb9a"
+      "sha256": "sha256:c78eac54557a2278bc711982367a200df8fafe8a4dbeaf797af99f72b9f25516"
     }
   },
   "specifications": [
@@ -42,7 +42,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/allegro-pipeline/text-to-video.json",
-        "sha256": "acc05da225bf77e85d83e08dc07869ba6f0be3765ba3db69112f80279cb6d2d5"
+        "sha256": "04f23888987663fabf605786156febf502098801ae9b38868a0f13dd69622cc1"
       },
       "canonicalWorkflowId": "AllegroPipeline:text_to_video",
       "claims": {
@@ -130,7 +130,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "acc05da225bf77e85d83e08dc07869ba6f0be3765ba3db69112f80279cb6d2d5",
+        "sourceGraphSha256": "04f23888987663fabf605786156febf502098801ae9b38868a0f13dd69622cc1",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -13812,7 +13812,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/sana-image-to-video-pipeline/image-to-video.json",
-        "sha256": "027ade4a9594743485b4176bc1a018871cd69ee69cf9ed029a00baee21c3ee46"
+        "sha256": "0da2261fe4a9c00a89f4c7cfba7d98ec9acb79508c470f39de0028a7025d6189"
       },
       "canonicalWorkflowId": "SanaImageToVideoPipeline:image_to_video",
       "claims": {
@@ -13905,7 +13905,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "027ade4a9594743485b4176bc1a018871cd69ee69cf9ed029a00baee21c3ee46",
+        "sourceGraphSha256": "0da2261fe4a9c00a89f4c7cfba7d98ec9acb79508c470f39de0028a7025d6189",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {

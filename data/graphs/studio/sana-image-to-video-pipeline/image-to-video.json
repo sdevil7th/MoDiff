@@ -531,7 +531,7 @@
               }
             ],
             "type": "string",
-            "value": "_native_math"
+            "value": "auto"
           },
           "attention_components": {
             "default": "",

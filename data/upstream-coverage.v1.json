@@ -100,7 +100,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "acc05da225bf77e85d83e08dc07869ba6f0be3765ba3db69112f80279cb6d2d5",
+      "graphHash": "04f23888987663fabf605786156febf502098801ae9b38868a0f13dd69622cc1",
       "graphPath": "studio/allegro-pipeline/text-to-video.json",
       "id": "AllegroPipeline:text_to_video",
       "mode": "text_to_video",
@@ -2045,7 +2045,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "027ade4a9594743485b4176bc1a018871cd69ee69cf9ed029a00baee21c3ee46",
+      "graphHash": "0da2261fe4a9c00a89f4c7cfba7d98ec9acb79508c470f39de0028a7025d6189",
       "graphPath": "studio/sana-image-to-video-pipeline/image-to-video.json",
       "id": "SanaImageToVideoPipeline:image_to_video",
       "mode": "image_to_video",
@@ -2714,7 +2714,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:deb82d12296afbaf1bcacd1ac2ded23801f399c30dd10d7500938d4bbc554b55",
+  "contentHash": "sha256:9507f348bb2eb601dc383ec6a09149cd89afd9b08e19a32d0b8b70e27908d43b",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
