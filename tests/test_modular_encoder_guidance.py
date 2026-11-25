@@ -5,7 +5,7 @@ from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
 import torch
-from diffusers import ClassifierFreeGuidance, FluxKontextModularPipeline, FluxModularPipeline, QwenImageModularPipeline, ZImageModularPipeline
+from diffusers import ClassifierFreeGuidance, Flux2ModularPipeline, FluxKontextModularPipeline, FluxModularPipeline, QwenImageModularPipeline, ZImageModularPipeline
 
 from modules.ModularDiffusers.embeddings import EncodePrompt
 from modules.ModularDiffusers.modular_utils import require_modiff_node_contract
@@ -36,6 +36,30 @@ def encoder_probe(pipeline_class):
     node._pipeline_class = pipeline_class
     node.record_generation_inputs = Mock()
     return node, blocks, config, pipeline, observed
+
+
+def test_flux2_dev_records_the_selected_encoder_sequence_default():
+    from diffusers.modular_pipelines.flux2.encoders import Flux2TextEncoderStep
+
+    node, _, config, pipeline, _ = encoder_probe(Flux2ModularPipeline)
+    declared = Flux2TextEncoderStep()
+    length = next(field.default for field in declared.inputs if field.name == "max_sequence_length")
+    blocks = SimpleNamespace(
+        component_names=declared.component_names,
+        input_names=declared.input_names,
+        inputs=declared.inputs,
+        init_pipeline=Mock(return_value=pipeline),
+    )
+    pipeline.side_effect = lambda **kwargs: SimpleNamespace(get_by_kwargs=lambda _: {"prompt_embeds": "encoded"})
+    with (
+        patch("modules.ModularDiffusers.embeddings.require_modiff_node_contract", return_value=(blocks, config)),
+        patch("modules.ModularDiffusers.embeddings.collect_model_ids", return_value=[]),
+    ):
+        result = node.execute(text_encoders={"repo_id": "black-forest-labs/FLUX.2-dev"}, prompt="exact prompt")
+
+    assert result == {"embeddings": {"prompt_embeds": "encoded"}}
+    assert pipeline.call_args.kwargs["max_sequence_length"] == length == 512
+    node.record_generation_inputs.assert_called_once_with(pipeline.call_args.kwargs)
 
 
 @pytest.mark.parametrize("pipeline_class,enabled", [

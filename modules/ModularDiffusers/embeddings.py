@@ -298,6 +298,14 @@ class EncodePrompt(NodeBase):
                     f"Blocks: {blocks}"
                 )
 
+        if repo_id == "black-forest-labs/FLUX.2-dev" and "max_sequence_length" not in node_kwargs:
+            # This recipe leaves the length to the pinned upstream encoder.
+            # Pass its declared default explicitly so the receipt can verify it.
+            for field in blocks.inputs:
+                if field.name == "max_sequence_length" and type(field.default) is int:
+                    node_kwargs[field.name] = field.default
+                    break
+
         # Snapshot what the encoder actually consumes, not the unused inline
         # prompt captured before the connected-input override. Preserve the
         # original socket identity for the graph ancestry receipt on cache hits.
