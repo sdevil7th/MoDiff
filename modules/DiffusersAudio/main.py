@@ -2,7 +2,9 @@ import inspect
 import hashlib
 import logging
 import os
+from contextlib import contextmanager
 from dataclasses import dataclass
+from functools import wraps
 from math import isfinite
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -26,6 +28,50 @@ from utils.huggingface import exact_cached_snapshot_path, local_files_only, vali
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
 logger = logging.getLogger("modiff")
+
+
+@contextmanager
+def _stable_audio_terminal_noise(scheduler):
+    """Keep the upstream solver and skip its unused zero-sigma noise sample."""
+    if scheduler is None:
+        yield
+        return
+
+    from diffusers import CosineDPMSolverMultistepScheduler
+
+    if not isinstance(scheduler, CosineDPMSolverMultistepScheduler):
+        yield
+        return
+
+    original_step = scheduler.step
+    instance_step = vars(scheduler).get("step")
+
+    @wraps(original_step)
+    def step(model_output, timestep, *args, **kwargs):
+        index = scheduler.step_index
+        final_index = len(scheduler.timesteps) - 1
+        if (index if index is not None else 0) != final_index or scheduler.sigmas[-1] != 0:
+            return original_step(model_output, timestep, *args, **kwargs)
+
+        # The first-order terminal update multiplies noise by zero. torchsde's
+        # Brownian tree can recurse when asked to sample outside its positive
+        # sigma interval, so supply the zero contribution without querying it.
+        previous_sampler = scheduler.noise_sampler
+        scheduler.noise_sampler = lambda _sigma, _next_sigma: model_output.new_zeros(model_output.shape)
+        try:
+            return original_step(model_output, timestep, *args, **kwargs)
+        finally:
+            scheduler.noise_sampler = previous_sampler
+
+    scheduler.step = step
+    try:
+        yield
+    finally:
+        if instance_step is None:
+            del scheduler.step
+        else:
+            scheduler.step = instance_step
+
 
 ACE_STEP_DEFAULT_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 STABLE_AUDIO_DEFAULT_REPO = "stabilityai/stable-audio-open-1.0"
@@ -2304,14 +2350,15 @@ class Generate(NodeBase):
         }
         self._record_audio_call_inputs(common_kwargs, invocation)
         if invocation.adapter.generation_kind == "stable_audio":
-            result = pipeline(
-                **common_kwargs,
-                audio_start_in_s=0,
-                audio_end_in_s=invocation.duration_seconds,
-                num_waveforms_per_prompt=int(invocation.controls["waveforms"]),
-                callback=callback,
-                callback_steps=1,
-            )
+            with _stable_audio_terminal_noise(getattr(pipeline, "scheduler", None)):
+                result = pipeline(
+                    **common_kwargs,
+                    audio_start_in_s=0,
+                    audio_end_in_s=invocation.duration_seconds,
+                    num_waveforms_per_prompt=int(invocation.controls["waveforms"]),
+                    callback=callback,
+                    callback_steps=1,
+                )
             vae = getattr(pipeline, "vae", None)
             vae_config = getattr(vae, "config", None)
             configured_rate = vae_config.get("sampling_rate") if hasattr(vae_config, "get") else None

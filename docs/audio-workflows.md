@@ -20,6 +20,12 @@ Splitting it into decorative Encode, Denoise and Decode nodes would not make its
 internal computation editable. MiniMax's semantic generation is an actual stage
 and must remain distinct from prompt encoding.
 
+Stable Audio uses its pinned Diffusers cosine scheduler. MoDiff supplies zero
+for the final noise term when the schedule ends at zero. The upstream update
+multiplies that term by zero, and a Brownian noise request outside the positive
+sigma interval can exhaust recursion in `torchsde`. Earlier sampler steps and
+the scheduler settings are preserved.
+
 Grouping is an explicit, undoable presentation change using the existing Block
 contract. Inspect implementation and Separate stages expose the original leaves.
 Flattened execution, connected values and model ownership stay authoritative.

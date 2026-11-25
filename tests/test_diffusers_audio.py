@@ -38,6 +38,7 @@ from modules.DiffusersAudio.main import (  # noqa: E402
     _resolve_audio_model_selection,
     _resolve_audio_loader_revision,
     _preflight_audio_invocation,
+    _stable_audio_terminal_noise,
     audio_to_numpy,
     audio_to_tensor,
     crop_tail,
@@ -47,6 +48,38 @@ from modiff.config import CONFIG  # noqa: E402
 from modiff.diffusers_profiles import public_execution_profiles  # noqa: E402
 from modiff.path_identifiers import resolve_runtime_input_path  # noqa: E402
 from modiff.server import WebServer, to_bytes  # noqa: E402
+
+
+class StableAudioTerminalNoiseTests(unittest.TestCase):
+    def test_only_zero_sigma_terminal_step_skips_the_brownian_sampler(self):
+        import torch
+        from diffusers import CosineDPMSolverMultistepScheduler
+
+        def run(steps, endpoint):
+            scheduler = CosineDPMSolverMultistepScheduler(final_sigmas_type=endpoint)
+            scheduler.set_timesteps(steps)
+            sample = torch.zeros((1, 2, 8))
+            calls = []
+
+            def draw(_sigma, next_sigma):
+                if next_sigma == 0:
+                    raise RecursionError("Brownian interval excludes the terminal zero")
+                calls.append(float(next_sigma))
+                return torch.zeros_like(sample)
+
+            target = "diffusers.schedulers.scheduling_cosine_dpmsolver_multistep.BrownianTreeNoiseSampler"
+            original = scheduler.step
+            with patch(target, return_value=draw), _stable_audio_terminal_noise(scheduler):
+                for timestep in scheduler.timesteps:
+                    sample = scheduler.step(torch.zeros_like(sample), timestep, sample).prev_sample
+            self.assertTrue(torch.isfinite(sample).all())
+            self.assertEqual(scheduler.step, original)
+            self.assertNotIn("step", vars(scheduler))
+            return calls
+
+        self.assertEqual(run(1, "zero"), [])
+        self.assertEqual(len(run(4, "zero")), 3)
+        self.assertEqual(len(run(4, "sigma_min")), 4)
 
 
 class FakeAceStepPipeline:
