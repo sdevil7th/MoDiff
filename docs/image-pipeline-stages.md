@@ -115,6 +115,11 @@ generic canvas keeps a matching 832×768 source at its original size and
 builds the expansion mask. This only seeds new workflows. Existing
 saved sizes, margins and connections are preserved.
 
+Chroma outpaint includes the full feather in the mask sent to its binary
+sampler. The final composite uses the original soft mask. This places the
+sampler's hard boundary beyond the blending region and preserves the source
+where the original mask is black.
+
 FLUX Kontext outpaint uses the connected canvas and mask dimensions when
 they match the requested output size. The backend disables the pipeline's
 automatic resize in that case so the preserved source crop stays aligned.

@@ -575,6 +575,28 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
         self.assertEqual((result["width_out"], result["height_out"]), (64, 48))
         self.assertEqual(len(pipeline.calls), 1)
 
+    def test_chroma_outpaint_samples_the_entire_feather_and_composites_with_the_original_mask(self):
+        source = Image.new("RGB", (64, 48), (0, 0, 0))
+        mask = Image.new("L", source.size, 0)
+        mask.putpixel((4, 8), 64)
+        mask.putpixel((5, 8), 255)
+        pipeline = _tag_chroma(ChromaInpaintPipeline(), "ChromaInpaintPipeline", "outpaint")
+
+        result = Inpaint("chroma-feathered-outpaint").execute(
+            pipeline=pipeline, image=source, mask_image=mask, prompt="extend the scene",
+            width=64, height=48,
+        )
+
+        sampled_mask = pipeline.calls[0]["mask_image"]
+        self.assertEqual(sampled_mask.getpixel((3, 8)), 0)
+        self.assertEqual(sampled_mask.getpixel((4, 8)), 255)
+        self.assertEqual(sampled_mask.getpixel((5, 8)), 255)
+        self.assertEqual(mask.getpixel((4, 8)), 64)
+        composited = result["images"][0]
+        self.assertEqual(composited.getpixel((3, 8)), (0, 0, 0))
+        self.assertEqual(composited.getpixel((4, 8)), (0, 32, 0))
+        self.assertEqual(composited.getpixel((5, 8)), (0, 128, 0))
+
     def test_chroma_portable_outpaint_defaults_keep_source_geometry(self):
         graph = Path(__file__).resolve().parents[1] / "data/graphs/studio/chroma-inpaint-pipeline/outpaint.json"
         values = {

@@ -174,6 +174,7 @@ class ImagePipelineAdapter:
     max_input_image_size: int | None = None
     resize_reference_to_output: bool = False
     preserve_explicit_outpaint_canvas: bool = False
+    expand_feathered_outpaint_sampling_mask: bool = False
     max_sequence_length: int = 512
     max_sequence_length_parameter: str = "max_sequence_length"
     max_reference_images: int = 1
@@ -477,6 +478,13 @@ class ImagePipelineAdapter:
                 if not supports_arg(pipeline, "_auto_resize"):
                     raise RuntimeError(f"{self.pipeline_class} did not expose its reviewed canvas resize control.")
                 target["_auto_resize"] = False
+        if self.expand_feathered_outpaint_sampling_mask and getattr(pipeline, "_modiff_image_mode", None) == "outpaint":
+            mask = target.get("mask_image")
+            if isinstance(mask, Image.Image):
+                # The native sampler binarizes its mask and restores source latents
+                # outside it. Sample through the feather so the sharp native
+                # boundary falls outside the final composite's generated region.
+                target["mask_image"] = mask.convert("L").point(lambda opacity: 255 if opacity else 0)
 
     @contextmanager
     def prompt_encoding_context(self, pipeline: Any):
@@ -1169,6 +1177,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         max_inference_steps=40,
         max_output_side=1024,
         max_sequence_length=512,
+        expand_feathered_outpaint_sampling_mask=True,
         # The exact 90b4 source declares true_cfg_scale but never reads it.
         # Keep the generic, functioning guidance_scale contract and reject a
         # stale graph that tries to target the inert upstream parameter.
