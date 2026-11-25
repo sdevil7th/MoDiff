@@ -504,7 +504,7 @@ def _run(command: list[str], *, cwd: Path = ROOT, env: dict[str, str] | None = N
 def _dependency_environment() -> dict[str, str]:
     """Build reviewed Git dependencies with canonical source line endings."""
     environment = os.environ.copy()
-    count = int(environment.get("GIT_CONFIG_COUNT", "0"))
+    count = int(environment.get("GIT_CONFIG_COUNT") or "0")
     for key, value in (("core.autocrlf", "false"), ("core.eol", "lf")):
         environment[f"GIT_CONFIG_KEY_{count}"] = key
         environment[f"GIT_CONFIG_VALUE_{count}"] = value

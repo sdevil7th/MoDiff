@@ -21,6 +21,19 @@ def test_dependency_environment_overrides_line_endings_without_changing_parent(m
     assert install.os.environ == before
 
 
+def test_dependency_environment_treats_an_empty_inherited_git_count_as_unset(monkeypatch):
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "")
+
+    environment = install._dependency_environment()
+
+    assert environment["GIT_CONFIG_COUNT"] == "2"
+    assert environment["GIT_CONFIG_KEY_0"] == "core.autocrlf"
+    assert environment["GIT_CONFIG_VALUE_0"] == "false"
+    assert environment["GIT_CONFIG_KEY_1"] == "core.eol"
+    assert environment["GIT_CONFIG_VALUE_1"] == "lf"
+    assert install.os.environ["GIT_CONFIG_COUNT"] == ""
+
+
 def test_reviewed_published_wheel_install_uses_the_dependency_lock(tmp_path):
     with mock.patch.object(install, "_run") as run:
         install._install_reviewed_diffusers("uv", tmp_path / "python")
