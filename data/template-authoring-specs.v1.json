@@ -14,7 +14,7 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:48a4f2cb7ee466d4fc08aa272cc2d2da8169cb2fa90a534162dd707172a83d7c",
+  "contentHash": "sha256:b0bf31f92c4ce8d4c6b474bf2668d9e80dc5a5b1ff465422b7a432a24c97f39a",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
@@ -18547,6 +18547,185 @@
         "cacheState": "must_be_rechecked_through_app_before_generation",
         "componentRequirements": [],
         "requiredArtifacts": [
+          "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/wan-image-to-video-pipeline/image-to-video.json",
+        "sha256": "6853f2742ae2f9cdcbfa34897d73a324b38cfa02801612cd58a3e4b8e5b5488e"
+      },
+      "canonicalWorkflowId": "WanImageToVideoPipeline:image_to_video",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "alpha_channel",
+            "role": "loadImage",
+            "value": "ignore"
+          },
+          {
+            "parameter": "fps",
+            "role": "videoExport",
+            "value": 16
+          },
+          {
+            "parameter": "conditioning_scale",
+            "role": "wanGenerate",
+            "value": 1
+          },
+          {
+            "parameter": "denoise_strength",
+            "role": "wanGenerate",
+            "value": 0.8
+          },
+          {
+            "parameter": "frame_rate",
+            "role": "wanGenerate",
+            "value": 16
+          },
+          {
+            "parameter": "guidance_scale",
+            "role": "wanGenerate",
+            "value": 3.5
+          },
+          {
+            "parameter": "guidance_scale_2",
+            "role": "wanGenerate",
+            "value": 3.5
+          },
+          {
+            "parameter": "height",
+            "role": "wanGenerate",
+            "value": 512
+          },
+          {
+            "parameter": "max_sequence_length",
+            "role": "wanGenerate",
+            "value": 512
+          },
+          {
+            "parameter": "num_frames",
+            "role": "wanGenerate",
+            "value": 81
+          },
+          {
+            "parameter": "num_inference_steps",
+            "role": "wanGenerate",
+            "value": 40
+          },
+          {
+            "parameter": "seed",
+            "role": "wanGenerate",
+            "value": {
+              "isRandom": false,
+              "value": 92021
+            }
+          },
+          {
+            "parameter": "strength",
+            "role": "wanGenerate",
+            "value": 0.8
+          },
+          {
+            "parameter": "use_guidance_scale_2",
+            "role": "wanGenerate",
+            "value": true
+          },
+          {
+            "parameter": "width",
+            "role": "wanGenerate",
+            "value": 768
+          }
+        ],
+        "requiresLockedSeedForGeneration": true,
+        "sourceGraphSha256": "6853f2742ae2f9cdcbfa34897d73a324b38cfa02801612cd58a3e4b8e5b5488e",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": true,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:WanImageToVideoPipeline:image_to_video",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "referenceImages",
+            "mediaKind": "image",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_image",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "video",
+      "mode": "image_to_video",
+      "modelFamily": "Wan Video",
+      "modelType": "WanImageToVideoPipeline",
+      "outputPlan": {
+        "mediaKinds": [
+          "video"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "expected_dimensions_duration_frame_rate_and_decodable_output",
+          "prompt_or_task_alignment",
+          "temporal_coherence_and_stable_subject_identity",
+          "no_flicker_camera_jumps_or_unrequested_text",
+          "source_identity_structure_and_unmasked_region_preservation"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": true,
+        "negativePrompt": {
+          "status": "drafted",
+          "value": "flicker, frame jitter, temporal inconsistency, warped motion, duplicate subjects, identity drift, camera jumps, watermark, illegible text, compression artifacts"
+        },
+        "prompt": "Animate the supplied image into a short cinematic shot with subtle camera movement, physically plausible subject motion, stable identity, coherent depth, and no sudden scene changes.",
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "drafted"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one video result for the exact Wan Video image to video workflow without changing its canonical graph contract.",
+      "replacementSourceTemplateId": "wan_22_i2v_seed_vault",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Wan Video — Image To Video [WanImageToVideoPipeline]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
           "nateraw/real-esrgan/RealESRGAN_x2plus.pth",
           "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
         ]
@@ -19210,16 +19389,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 131,
+    "authoringSpecCount": 132,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 43,
-      "draft_complete_input_selection_pending": 88
+      "draft_complete_input_selection_pending": 89
     },
-    "canonicalDefaultsCapturedCount": 131,
-    "generationPendingCount": 131,
-    "inputSelectionPendingCount": 88,
-    "promptDraftedCount": 111,
+    "canonicalDefaultsCapturedCount": 132,
+    "generationPendingCount": 132,
+    "inputSelectionPendingCount": 89,
+    "promptDraftedCount": 112,
     "promptNotApplicableCount": 20,
-    "rightsReviewPendingCount": 131
+    "rightsReviewPendingCount": 132
   }
 }

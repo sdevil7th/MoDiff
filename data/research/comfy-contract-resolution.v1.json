@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:fc396d2d8014f4d799988fee06943d5d9aa3b484829b4330235d00dd94721115",
+  "contentHash": "sha256:057b137ab76480591dc77be4f58011b3f6b9682fb52b73ae828f5916a3e50634",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -9187,7 +9187,7 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": null,
+        "authoringSpecId": "template-authoring:WanImageToVideoPipeline:image_to_video",
         "canonicalWorkflowId": "WanImageToVideoPipeline:image_to_video",
         "modelFamily": "Wan Video",
         "modelType": "WanImageToVideoPipeline",
@@ -12611,7 +12611,7 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": null,
+        "authoringSpecId": "template-authoring:WanImageToVideoPipeline:image_to_video",
         "canonicalWorkflowId": "WanImageToVideoPipeline:image_to_video",
         "modelFamily": "Wan Video",
         "modelType": "WanImageToVideoPipeline",
@@ -16665,9 +16665,9 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:48a4f2cb7ee466d4fc08aa272cc2d2da8169cb2fa90a534162dd707172a83d7c",
+      "contentHash": "sha256:b0bf31f92c4ce8d4c6b474bf2668d9e80dc5a5b1ff465422b7a432a24c97f39a",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:c366c237b2d1798058b80a9bee7739480044da6ae7255c8a745e1bd9d13a813b"
+      "sha256": "sha256:50c5ccc0927b30b3083d4bf73530d7cc463e354e8cdcf386cabc4ce59ef7d2c7"
     },
     "upstreamCoverage": {
       "contentHash": "sha256:faab619c91f3c6e5cab9101a3b0bcbcec70826278018bc63398083b22f1f2b91",
@@ -16731,7 +16731,7 @@
       "same_upstream_generation_different_partition_and_auxiliary": 8,
       "same_upstream_generation_requires_auxiliary_admission": 9
     },
-    "recordsWithHiddenAuthoringSpecOption": 55,
+    "recordsWithHiddenAuthoringSpecOption": 57,
     "recordsWithPublicTemplateOption": 55,
     "recordsWithRecommendedWorkflow": 110,
     "resolutionCount": 138,

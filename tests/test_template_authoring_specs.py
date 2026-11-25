@@ -53,17 +53,17 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 131,
-                "promptDraftedCount": 111,
+                "authoringSpecCount": 132,
+                "promptDraftedCount": 112,
                 "promptNotApplicableCount": 20,
-                "canonicalDefaultsCapturedCount": 131,
-                "inputSelectionPendingCount": 88,
-                "rightsReviewPendingCount": 131,
-                "generationPendingCount": 131,
+                "canonicalDefaultsCapturedCount": 132,
+                "inputSelectionPendingCount": 89,
+                "rightsReviewPendingCount": 132,
+                "generationPendingCount": 132,
                 "assetCount": 0,
                 "authoringStateCounts": {
                     "draft_complete_execution_pending": 43,
-                    "draft_complete_input_selection_pending": 88,
+                    "draft_complete_input_selection_pending": 89,
                 },
             },
         )
@@ -78,9 +78,14 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
 
     def test_every_hidden_candidate_has_one_original_authoring_spec(self):
         candidate_by_id = {row["canonicalWorkflowId"]: row for row in self.candidates["contracts"]}
-        specs_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["specifications"]}
+        specs_by_id = {
+            row["canonicalWorkflowId"]: row
+            for row in self.ledger["specifications"]
+            if "replacementSourceTemplateId" not in row
+        }
         self.assertEqual(set(specs_by_id), set(candidate_by_id))
-        self.assertEqual(len(specs_by_id), len(self.ledger["specifications"]))
+        all_spec_ids = {row["canonicalWorkflowId"] for row in self.ledger["specifications"]}
+        self.assertEqual(len(all_spec_ids), len(self.ledger["specifications"]))
         for workflow_id, specification in specs_by_id.items():
             candidate = candidate_by_id[workflow_id]
             with self.subTest(workflow=workflow_id):
@@ -95,6 +100,21 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
                 self.assertEqual(specification["publicationState"], "hidden_candidate")
                 self.assertEqual(specification["assetState"], "not_generated")
                 self.assertEqual(specification["assets"], [])
+
+    def test_wan_opening_video_replacement_has_an_independent_pending_authoring_record(self):
+        replacements = [row for row in self.ledger["specifications"] if "replacementSourceTemplateId" in row]
+        self.assertEqual(len(replacements), 1)
+        replacement = replacements[0]
+        workflow_id = "WanImageToVideoPipeline:image_to_video"
+        old = next(row for row in self.manifest["workflows"] if row["id"] == workflow_id)
+        self.assertEqual(replacement["canonicalWorkflowId"], workflow_id)
+        self.assertEqual(replacement["replacementSourceTemplateId"], "wan_22_i2v_seed_vault")
+        self.assertEqual(replacement["replacementSourceTemplateId"], old["sourceTemplateId"])
+        self.assertEqual(replacement["canonicalGraph"], {"path": old["graphPath"], "sha256": old["graphHash"]})
+        self.assertEqual(replacement["artifactPlan"]["requiredArtifacts"], old["requiredArtifacts"])
+        self.assertEqual(replacement["publicationState"], "hidden_candidate")
+        self.assertEqual(replacement["assets"], [])
+        self.assertFalse(any(replacement["claims"].values()))
 
     def test_experimental_canonical_candidates_have_hidden_authoring_specs(self):
         experimental = {row["id"]: row for row in self.manifest["experimentalWorkflows"]}
@@ -222,13 +242,20 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
 
     def test_input_plans_are_exact_and_keep_selection_and_rights_pending(self):
         candidate_by_id = {row["canonicalWorkflowId"]: row for row in self.candidates["contracts"]}
+        manifest_by_id = {row["id"]: row for row in self.manifest["workflows"]}
         media_keys = {
             "requiredImages": "image",
             "requiredVideos": "video",
             "requiredAudio": "audio",
         }
         for specification in self.ledger["specifications"]:
-            required_inputs = candidate_by_id[specification["canonicalWorkflowId"]]["requiredInputs"]
+            workflow_id = specification["canonicalWorkflowId"]
+            source = (
+                manifest_by_id[workflow_id]
+                if "replacementSourceTemplateId" in specification
+                else candidate_by_id[workflow_id]
+            )
+            required_inputs = source["requiredInputs"]
             expected = []
             if isinstance(required_inputs, dict):
                 minimum_counts = required_inputs.get("minimumCounts", {})

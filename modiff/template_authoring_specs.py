@@ -25,6 +25,9 @@ TEMPLATE_AUTHORING_SPEC_PATH = Path(__file__).resolve().parents[1] / "data" / "t
 
 _WORKFLOW_MANIFEST_PATH = "data/workflow-library-manifest.json"
 _CANDIDATE_PATH = "data/template-candidate-contracts.v1.json"
+_REVIEWED_REPLACEMENT_SOURCES = {
+    "WanImageToVideoPipeline:image_to_video": "wan_22_i2v_seed_vault",
+}
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _MEDIA_FIELDS = {
     "requiredImages": "image",
@@ -425,7 +428,7 @@ def _negative_prompt(media_kind: str, *, supported: bool) -> dict[str, Any]:
 
 
 def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
-    """Build original authoring drafts from exact hidden workflow contracts."""
+    """Build original authoring drafts and reviewed historical-recipe replacements."""
 
     root = root.resolve(strict=True)
     candidate, candidate_sha = _read_json(root, _CANDIDATE_PATH, label="template candidate ledger")
@@ -445,8 +448,20 @@ def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
     if len(manifest_by_id) != len(manifest_rows) or any(not isinstance(key, str) for key in manifest_by_id):
         raise TemplateAuthoringSpecError("Workflow manifest ids must be unique strings.")
 
+    contracts = _records(candidate.get("contracts"), label="template candidate contracts")
+    candidate_ids = {row.get("canonicalWorkflowId") for row in contracts}
+    for workflow_id, source_template_id in _REVIEWED_REPLACEMENT_SOURCES.items():
+        workflow = manifest_by_id.get(workflow_id)
+        if workflow is None or workflow.get("sourceTemplateId") != source_template_id:
+            raise TemplateAuthoringSpecError(f"Reviewed replacement source changed for {workflow_id}.")
+        if workflow_id in candidate_ids:
+            continue
+        # This recipe uses the same checked-in graph and pinned artifacts as the
+        # historical source. It starts with its own pending review and no assets.
+        contracts.append({**workflow, "canonicalWorkflowId": workflow_id})
+
     specifications = []
-    for contract in _records(candidate.get("contracts"), label="template candidate contracts"):
+    for contract in contracts:
         workflow_id = contract.get("canonicalWorkflowId")
         if not isinstance(workflow_id, str) or workflow_id not in manifest_by_id:
             raise TemplateAuthoringSpecError("Template candidate has no exact workflow manifest record.")
@@ -492,6 +507,11 @@ def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
                 "modelFamily": model_family,
                 "mode": mode,
                 "mediaKind": media_kind,
+                **(
+                    {"replacementSourceTemplateId": _REVIEWED_REPLACEMENT_SOURCES[workflow_id]}
+                    if workflow_id in _REVIEWED_REPLACEMENT_SOURCES
+                    else {}
+                ),
                 "title": f"{model_family} — {_humanize(mode)} [{model_type}]",
                 "purpose": (
                     f"Author and review one {media_kind} result for the exact {model_family} "

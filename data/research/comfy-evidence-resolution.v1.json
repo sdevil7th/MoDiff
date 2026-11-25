@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:ae87784e144a3cf82c8357154da01badd441e7c687cb3600b1710d2507d81319",
+  "contentHash": "sha256:e97e54dc948a535a7a8681f76fbe404eb366822d1ac7c42ea5e65c0d39ef098c",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -7554,9 +7554,9 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:48a4f2cb7ee466d4fc08aa272cc2d2da8169cb2fa90a534162dd707172a83d7c",
+      "contentHash": "sha256:b0bf31f92c4ce8d4c6b474bf2668d9e80dc5a5b1ff465422b7a432a24c97f39a",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:c366c237b2d1798058b80a9bee7739480044da6ae7255c8a745e1bd9d13a813b"
+      "sha256": "sha256:50c5ccc0927b30b3083d4bf73530d7cc463e354e8cdcf386cabc4ce59ef7d2c7"
     },
     "upstreamCoverage": {
       "contentHash": "sha256:faab619c91f3c6e5cab9101a3b0bcbcec70826278018bc63398083b22f1f2b91",
