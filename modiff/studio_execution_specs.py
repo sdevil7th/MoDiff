@@ -12138,7 +12138,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
             "capability": _mochi_capability(),
             "roles": _VIDEO_GRAPH_ROLES,
             "edges": _VIDEO_GRAPH_EDGES,
-            "bindings": _COGVIDEOX_GRAPH_BINDINGS,
+            "bindings": _with_authored_video_attention(_COGVIDEOX_GRAPH_BINDINGS),
         },
         "sana-video-480p:text-to-video:v1": {
             "modelType": "SanaVideoPipeline",
@@ -19045,6 +19045,15 @@ def _historical_studio_execution_spec(spec_id: str, content_hash: str) -> dict[s
         expected_bytes = 13796
         expected_sha256 = "3fdf7eecbc07474452ff6bd1653c2edb17cd503dca7a9a897969dc6adb202383"
         source_commit = "eb1fbea7b973743516e732acd49a3cb4ae360522"
+    elif (spec_id, content_hash) == ("mochi:text-to-video:v1", "studio-spec-v1-0bb6b251"):
+        video_attention_records = {
+            ("mochi:text-to-video:v1", "studio-spec-v1-0bb6b251"):
+                ("MochiPipeline", "text_to_video", "mochi:direct"),
+        }
+        archive_name = "mochi-attention-studio-spec-compatibility.v1.json"
+        expected_bytes = 6732
+        expected_sha256 = "b298c7f07dcfe8d9168eb75f331fcf47c78b1628514dacf864af902e7ace9443"
+        source_commit = "e7c419a59274650bcc7e0d32150f43312c0f4601"
     elif (spec_id, content_hash) in conditioned_attention_records:
         video_attention_records = conditioned_attention_records
         archive_name = "video-conditioned-attention-compatibility.v1.json"

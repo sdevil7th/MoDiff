@@ -4172,7 +4172,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
-      "graphHash": "840a2cf21e3489c69bebdc2fdccab1e8a71848a491467f31e78c070f0ba56f1d"
+      "graphHash": "0491f7bf1940f31ce2bf0752a3f005a3653ed25bc177aecba6ed6881abee4503"
     },
     {
       "id": "NucleusMoEImagePipeline:text_to_image",

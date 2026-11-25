@@ -1875,11 +1875,15 @@ class StudioExecutionSpecTests(unittest.TestCase):
         native_processor_archive = json.loads(
             (root / "allegro-sana-i2v-attention-compatibility.v1.json").read_text(encoding="utf-8")
         )
+        mochi_archive = json.loads(
+            (root / "mochi-attention-studio-spec-compatibility.v1.json").read_text(encoding="utf-8")
+        )
         role_field = ["diffusersRecipe", "attention_backend"]
         entries = [
             *archive["specifications"], *conditioned_archive["specifications"],
             *latte_archive["specifications"], *cogvideox_archive["specifications"],
             *native_processor_archive["specifications"],
+            *mochi_archive["specifications"],
         ]
         for entry in entries:
             saved = entry["specification"]
@@ -1917,13 +1921,6 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 recipes = [node["data"]["params"] for node in published["nodes"]
                            if node["data"].get("action") == "DiffusersExecutionRecipe"]
                 self.assertEqual([recipe["attention_backend"]["value"] for recipe in recipes], ["auto"])
-
-        for model, mode in (
-            ("MochiPipeline", "text_to_video"),
-        ):
-            with self.subTest(untouched=model):
-                spec = studio_execution_spec_for_pair(model, mode)
-                self.assertIn(tuple(role_field + ["nativeMath"]), spec["bindings"])
 
     def test_cosmos3_nano_specs_use_exact_official_nodes_and_remain_unqualified(self):
         expected = {

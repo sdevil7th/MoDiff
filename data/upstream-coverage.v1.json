@@ -1718,7 +1718,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "840a2cf21e3489c69bebdc2fdccab1e8a71848a491467f31e78c070f0ba56f1d",
+      "graphHash": "0491f7bf1940f31ce2bf0752a3f005a3653ed25bc177aecba6ed6881abee4503",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
       "id": "MochiPipeline:text_to_video",
       "mode": "text_to_video",
@@ -2714,7 +2714,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:9507f348bb2eb601dc383ec6a09149cd89afd9b08e19a32d0b8b70e27908d43b",
+  "contentHash": "sha256:faab619c91f3c6e5cab9101a3b0bcbcec70826278018bc63398083b22f1f2b91",
   "diffusersPipelines": [
     {
       "artifactReviews": [],

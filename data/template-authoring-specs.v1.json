@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:065e8e5349aaab782cc699ceea4b0c0496b18f3be4266464eb565f75471ff21c",
+  "contentHash": "sha256:48a4f2cb7ee466d4fc08aa272cc2d2da8169cb2fa90a534162dd707172a83d7c",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:1d042a4f20ae0f7968794ea1d493909abdedf79f970d5a52a34a7bee36a3d440",
+      "contentHash": "sha256:8d136ebdf202dca53a7563f3f1dffcf38a84b5a6245a3489bf43e28f72762baf",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:608e5065eaa1ccfb18fea010a52bc3e4c9d77365f2c24829c8a382f0d672a381"
+      "sha256": "sha256:d1f113dbe3d373a7abb8d99bef35e361252014cef9d3fb42372cb41af2193666"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:c78eac54557a2278bc711982367a200df8fafe8a4dbeaf797af99f72b9f25516"
+      "sha256": "sha256:1a0b999b0687f1bfb5c1e7d2513a93a907a689dc8c8971af0c2b54aa69805843"
     }
   },
   "specifications": [
@@ -11978,7 +11978,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/mochi-pipeline/text-to-video.json",
-        "sha256": "840a2cf21e3489c69bebdc2fdccab1e8a71848a491467f31e78c070f0ba56f1d"
+        "sha256": "0491f7bf1940f31ce2bf0752a3f005a3653ed25bc177aecba6ed6881abee4503"
       },
       "canonicalWorkflowId": "MochiPipeline:text_to_video",
       "claims": {
@@ -12066,7 +12066,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "840a2cf21e3489c69bebdc2fdccab1e8a71848a491467f31e78c070f0ba56f1d",
+        "sourceGraphSha256": "0491f7bf1940f31ce2bf0752a3f005a3653ed25bc177aecba6ed6881abee4503",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {

@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:1d042a4f20ae0f7968794ea1d493909abdedf79f970d5a52a34a7bee36a3d440",
+  "contentHash": "sha256:8d136ebdf202dca53a7563f3f1dffcf38a84b5a6245a3489bf43e28f72762baf",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -3791,7 +3791,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "840a2cf21e3489c69bebdc2fdccab1e8a71848a491467f31e78c070f0ba56f1d",
+      "graphHash": "0491f7bf1940f31ce2bf0752a3f005a3653ed25bc177aecba6ed6881abee4503",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "video",
@@ -5967,13 +5967,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:9507f348bb2eb601dc383ec6a09149cd89afd9b08e19a32d0b8b70e27908d43b",
+      "contentHash": "sha256:faab619c91f3c6e5cab9101a3b0bcbcec70826278018bc63398083b22f1f2b91",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:be798eca753e3333fb07fa7b5003d41bcecc95416c49652b61535f92eacf2ba6"
+      "sha256": "sha256:fa8ec238d6ac623aa33c864309167c5217fadf02743c22322dce963601e3f81d"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:c78eac54557a2278bc711982367a200df8fafe8a4dbeaf797af99f72b9f25516"
+      "sha256": "sha256:1a0b999b0687f1bfb5c1e7d2513a93a907a689dc8c8971af0c2b54aa69805843"
     }
   },
   "summary": {
