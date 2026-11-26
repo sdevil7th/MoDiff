@@ -53,17 +53,17 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 51,
-                "promptDraftedCount": 32,
+                "authoringSpecCount": 49,
+                "promptDraftedCount": 30,
                 "promptNotApplicableCount": 19,
-                "canonicalDefaultsCapturedCount": 51,
-                "inputSelectionPendingCount": 30,
-                "rightsReviewPendingCount": 51,
-                "generationPendingCount": 51,
+                "canonicalDefaultsCapturedCount": 49,
+                "inputSelectionPendingCount": 28,
+                "rightsReviewPendingCount": 49,
+                "generationPendingCount": 49,
                 "assetCount": 0,
                 "authoringStateCounts": {
                     "draft_complete_execution_pending": 21,
-                    "draft_complete_input_selection_pending": 30,
+                    "draft_complete_input_selection_pending": 28,
                 },
             },
         )
@@ -75,6 +75,14 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(row["requiredInputs"]["requiredAudio"], ["sourceAudio"])
         self.assertEqual(row["mediaKind"], "json")
         self.assertEqual(row["runtimeQualificationStatus"], "unqualified")
+
+    def test_published_flux_control_edits_have_no_duplicate_hidden_authoring_specs(self):
+        published = {
+            "FluxCannyPipeline:control_edit_image",
+            "FluxDepthPipeline:control_edit_image",
+        }
+        hidden = {row["canonicalWorkflowId"] for row in self.ledger["specifications"]}
+        self.assertTrue(published.isdisjoint(hidden))
 
     def test_every_hidden_candidate_has_one_original_authoring_spec(self):
         candidate_by_id = {row["canonicalWorkflowId"]: row for row in self.candidates["contracts"]}
@@ -308,7 +316,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             )
             captured_count += len(fields)
             self.assertTrue(forbidden_parameters.isdisjoint(item["parameter"] for item in fields))
-        self.assertEqual(captured_count, 262)
+        self.assertEqual(captured_count, 244)
 
     def test_frame_interpolation_authoring_stays_input_and_execution_pending(self):
         specification = next(
