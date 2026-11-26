@@ -344,8 +344,10 @@ The estimate includes the largest streamable shard, resident weights and a
 working reserve. Windows also needs enough available system commit for two
 shard mappings. On Linux with a shared ROCm memory pool, the host check reserves
 both the host and accelerator working sets. The live check and hardware inventory
-use the driver's local VRAM capacity to distinguish a shared aperture from a
-discrete GPU whose capacity approaches system RAM. Auto checks have separate RAM,
+match the visible accelerator to its Linux driver memory counters by PCI slot.
+When multiple GPUs make the match ambiguous, they budget both working sets in
+host RAM. A discrete GPU with confirmed local VRAM uses separate RAM and VRAM
+budgets. Auto checks have separate RAM,
 accelerator and Windows commit requirements. Execution rechecks current memory
 and source integrity. Cache reuse preserves the placement identity and still
 requires enough headroom for subsequent SSD reads.

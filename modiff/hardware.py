@@ -281,8 +281,8 @@ def _read_int_file(path: Path) -> int | None:
         return None
 
 
-def _linux_amd_memory_regions() -> list[dict[str, int | None]]:
-    """Return AMD DRM local/shared memory regions in stable card order.
+def _linux_amd_memory_regions() -> list[dict[str, int | str | None]]:
+    """Return AMD DRM local/shared memory regions with their PCI slots.
 
     ROCm exposes APUs through ``torch.cuda`` and may report the full GTT aperture
     as device memory.  The DRM driver separately exposes genuinely local VRAM
@@ -292,14 +292,18 @@ def _linux_amd_memory_regions() -> list[dict[str, int | None]]:
 
     if not sys.platform.startswith("linux"):
         return []
-    output: list[dict[str, int | None]] = []
+    output = []
     for device_dir in sorted(Path("/sys/class/drm").glob("card*/device")):
+        if not device_dir.parent.name.removeprefix("card").isdigit():
+            continue
         try:
             if (device_dir / "vendor").read_text(encoding="utf-8").strip().lower() != "0x1002":
                 continue
+            pci_slot = device_dir.resolve(strict=True).name.partition(".")[0]
         except OSError:
             continue
         output.append({
+            "pci_slot": pci_slot,
             "vram_total": _read_int_file(device_dir / "mem_info_vram_total"),
             "vram_used": _read_int_file(device_dir / "mem_info_vram_used"),
             "gtt_total": _read_int_file(device_dir / "mem_info_gtt_total"),
@@ -326,18 +330,32 @@ def _shared_memory_device(name: str, total: int | None, ram_total: int | None) -
     return integrated_name or near_system_capacity
 
 
-def rocm_uses_shared_memory(
-    name: str, runtime_total: int | None, ram_total: int | None, *, local_vram_total: int | None,
-) -> bool:
-    """Classify the ROCm aperture against local VRAM reported by the Linux driver."""
+def rocm_memory_topology(name, runtime_total, ram_total, properties, regions, visible_count):
+    """Match this logical ROCm device to its DRM card before budgeting physical memory."""
+    address = [getattr(properties, key, None) for key in ("pci_domain_id", "pci_bus_id", "pci_device_id")]
+    region = {}
+    if all(type(value) is int and value >= 0 for value in address) and any(row.get("pci_slot") for row in regions):
+        domain, bus, device = address
+        slot = f"{domain:04x}:{bus:02x}:{device:02x}"
+        matches = [row for row in regions if row.get("pci_slot") == slot]
+        if len(matches) == 1:
+            region = matches[0]
+    elif len(regions) == visible_count == 1:
+        region = regions[0]
+    integrated = getattr(properties, "is_integrated", None)
+    if integrated == 1 or (not region and (regions or visible_count != 1 or integrated is None)):
+        # Visibility masks can reorder or hide an arbitrary physical card.
+        # When the association is ambiguous, budget both working sets in RAM.
+        return region, True
+    local_vram_total = region.get("vram_total")
     if local_vram_total and runtime_total:
         if runtime_total >= local_vram_total * 2:
-            return True
+            return region, True
         if local_vram_total >= runtime_total:
             # A discrete MI300X can have nearly as much VRAM as host RAM.
             # A confirmed local capacity supersedes the capacity-only heuristic.
             ram_total = None
-    return _shared_memory_device(name, runtime_total, ram_total)
+    return region, _shared_memory_device(name, runtime_total, ram_total)
 
 
 def _probe_cuda(
@@ -404,14 +422,13 @@ def _probe_cuda(
                 device_errors["reserved"] = str(exc)
 
         runtime_total = property_total if property_total is not None else driver_total
-        region = amd_regions[index] if index < len(amd_regions) else {}
-        dedicated_total = _safe_int(region.get("vram_total")) if region else runtime_total
+        region, shared = {}, False
+        if hip_version:
+            region, shared = rocm_memory_topology(name, runtime_total, ram_total, properties, amd_regions, count)
+        dedicated_total = _safe_int(region.get("vram_total")) if region or shared else runtime_total
         dedicated_used = _safe_int(region.get("vram_used")) if region else None
         shared_total = _safe_int(region.get("gtt_total")) if region else None
         shared_used = _safe_int(region.get("gtt_used")) if region else None
-        shared = bool(hip_version and rocm_uses_shared_memory(
-            name, runtime_total, ram_total, local_vram_total=dedicated_total if region else None,
-        ))
         vram_total = dedicated_total if shared and dedicated_total else runtime_total
         dedicated_free = (
             max(0, dedicated_total - dedicated_used)

@@ -282,6 +282,32 @@ class HardwareSnapshotTests(unittest.TestCase):
         self.assertEqual(device["planning_memory_free"], 190 * GIB)
         self.assertEqual(device["shared_memory_total"], 120 * GIB)
 
+    def test_rocm_reordered_devices_match_pci_slots_before_reporting_memory(self):
+        names = ["Radeon 8060S Graphics", "AMD Instinct MI300X VF"]
+        properties = [
+            types.SimpleNamespace(pci_domain_id=0, pci_bus_id=197, pci_device_id=0, total_memory=48 * GIB),
+            types.SimpleNamespace(pci_domain_id=0, pci_bus_id=33, pci_device_id=0, total_memory=192 * GIB),
+        ]
+        cuda = types.SimpleNamespace(
+            is_available=lambda: True, device_count=lambda: 2, get_device_name=names.__getitem__,
+            get_device_properties=properties.__getitem__,
+            mem_get_info=lambda index: (20 * GIB, properties[index].total_memory),
+            memory_allocated=lambda _: 0, memory_reserved=lambda _: 0,
+        )
+        regions = [
+            {"pci_slot": "0000:21:00", "vram_total": 192 * GIB, "vram_used": 10 * GIB},
+            {"pci_slot": "0000:c5:00", "vram_total": 2 * GIB, "vram_used": GIB},
+        ]
+        with (
+            patch("modiff.hardware._linux_amd_memory_regions", return_value=regions),
+            patch("modiff.hardware.system_memory_snapshot", return_value={"total_bytes": 240 * GIB}),
+        ):
+            snapshot = get_hardware_snapshot(torch_module=_fake_torch(cuda=cuda, hip_version="7.14.0"))
+        self.assertEqual(
+            [(row["memory_kind"], row["dedicated_memory_free"]) for row in snapshot["devices"] if row["type"] == "cuda"],
+            [("shared", GIB), ("dedicated", 182 * GIB)],
+        )
+
     def test_snapshot_schema_has_stable_system_and_devices_shape(self):
         snapshot = get_hardware_snapshot(torch_module=None)
 

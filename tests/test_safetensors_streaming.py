@@ -1,6 +1,7 @@
 """Exercise original shard reads and native Accelerate hooks without downloads."""
 
 from hashlib import sha256
+from types import SimpleNamespace
 
 import pytest
 import torch
@@ -110,21 +111,30 @@ def test_manager_keeps_streamed_weights_until_final_collection_release(checkpoin
     assert not any(hasattr(module, "_hf_hook") for module in model.modules())
 
 
-@pytest.mark.parametrize("name,host_gib,device_gib,local_gib,shared", [
-    ("Integrated Graphics", 32, 24, None, True),
-    ("AMD Instinct MI300X VF", 240, 192, 192, False),
-    ("AMD Radeon 8060S Graphics", 128, 48, 2, True),
+@pytest.mark.parametrize("name,host_gib,device_gib,drm_cards,selected_bus,shared", [
+    ("Integrated Graphics", 32, 24, [], None, True),
+    ("AMD Instinct MI300X VF", 240, 192, [(0x21, 192)], None, False),
+    ("AMD Radeon 8060S Graphics", 128, 48, [(0xc5, 2)], None, True),
+    ("AMD Radeon 8060S Graphics", 128, 48, [(0x21, 192), (0xc5, 2)], 0xc5, True),
+    ("AMD Instinct MI300X VF", 240, 192, [(0xc5, 2), (0x21, 192)], 0x21, False),
+    ("AMD Radeon 8060S Graphics", 128, 48, [(0x21, 192), (0xc5, 2)], None, True),
+    ("AMD Radeon 8060S Graphics", 128, 48, [(0x21, 192)], 0xc5, True),
 ])
 def test_rocm_streaming_reserves_both_working_sets_only_for_shared_memory(
-        monkeypatch, name, host_gib, device_gib, local_gib, shared):
+        monkeypatch, name, host_gib, device_gib, drm_cards, selected_bus, shared):
     from modiff import hardware
     from modiff.safetensors_streaming import require_streaming_capacity
 
     gib = 1024**3
     memory = {"source": "/proc/meminfo", "available_bytes": 12 * gib, "total_bytes": host_gib * gib}
     monkeypatch.setattr(hardware, "system_memory_snapshot", lambda: memory)
-    regions = [{"vram_total": local_gib * gib}] if local_gib is not None else []
+    regions = [{"pci_slot": f"0000:{bus:02x}:00", "vram_total": size * gib} for bus, size in drm_cards]
     monkeypatch.setattr(hardware, "_linux_amd_memory_regions", lambda: regions)
+    if len(drm_cards) > 1:
+        monkeypatch.setenv("ROCR_VISIBLE_DEVICES", "1")
+    properties = SimpleNamespace(pci_domain_id=0, pci_bus_id=selected_bus, pci_device_id=0)
+    monkeypatch.setattr(torch.cuda, "get_device_properties", lambda _: properties)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
     monkeypatch.setattr(torch.version, "hip", "reviewed-shared-pool")
     monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
     monkeypatch.setattr(torch.cuda, "get_device_name", lambda _: name)
