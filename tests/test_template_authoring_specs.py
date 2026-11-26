@@ -53,16 +53,16 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 49,
-                "promptDraftedCount": 30,
-                "promptNotApplicableCount": 19,
-                "canonicalDefaultsCapturedCount": 49,
+                "authoringSpecCount": 45,
+                "promptDraftedCount": 28,
+                "promptNotApplicableCount": 17,
+                "canonicalDefaultsCapturedCount": 45,
                 "inputSelectionPendingCount": 28,
-                "rightsReviewPendingCount": 49,
-                "generationPendingCount": 49,
+                "rightsReviewPendingCount": 45,
+                "generationPendingCount": 45,
                 "assetCount": 0,
                 "authoringStateCounts": {
-                    "draft_complete_execution_pending": 21,
+                    "draft_complete_execution_pending": 17,
                     "draft_complete_input_selection_pending": 28,
                 },
             },
@@ -76,10 +76,14 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(row["mediaKind"], "json")
         self.assertEqual(row["runtimeQualificationStatus"], "unqualified")
 
-    def test_published_flux_control_edits_have_no_duplicate_hidden_authoring_specs(self):
+    def test_published_retained_recipes_have_no_duplicate_hidden_authoring_specs(self):
         published = {
             "FluxCannyPipeline:control_edit_image",
             "FluxDepthPipeline:control_edit_image",
+            "PixArtSigmaPipeline:text_to_image",
+            "PixArtSigmaPAGPipeline:text_to_image",
+            "DDPMPipeline:unconditional_image",
+            "ConsistencyModelPipeline:unconditional_image",
         }
         hidden = {row["canonicalWorkflowId"] for row in self.ledger["specifications"]}
         self.assertTrue(published.isdisjoint(hidden))
@@ -316,7 +320,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             )
             captured_count += len(fields)
             self.assertTrue(forbidden_parameters.isdisjoint(item["parameter"] for item in fields))
-        self.assertEqual(captured_count, 244)
+        self.assertEqual(captured_count, 219)
 
     def test_frame_interpolation_authoring_stays_input_and_execution_pending(self):
         specification = next(

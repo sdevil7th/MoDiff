@@ -546,7 +546,9 @@
       "id": "ConsistencyModelPipeline:unconditional_image",
       "mode": "unconditional_image",
       "modelType": "ConsistencyModelPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "consistency_64_technical_preview"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -583,7 +585,9 @@
       "id": "DDPMPipeline:unconditional_image",
       "mode": "unconditional_image",
       "modelType": "DDPMPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "ddpm_cifar32_technical_preview"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1900,7 +1904,9 @@
       "id": "PixArtSigmaPAGPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "PixArtSigmaPAGPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "pixart_sigma_pag_pink_mascot"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -1911,7 +1917,9 @@
       "id": "PixArtSigmaPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "PixArtSigmaPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "pixart_sigma_terracotta_herbs"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2887,7 +2895,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:aa422cccd66ddd9c25053cf7aff2bb78fd5aff9e8a0caa24c87a7daea83ea892",
+  "contentHash": "sha256:a323213eae55b54593062990eb1fefccfa2842f2b4e1bf9de686edebfdabaf63",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -8654,6 +8662,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "ConsistencyModelPipeline:unconditional_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "consistency_64_technical_preview",
+      "mode": "unconditional_image",
+      "modelType": "ConsistencyModelPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "PRXPipeline:text_to_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -8711,6 +8734,21 @@
       "id": "ddim_cifar10_preview",
       "mode": "unconditional_image",
       "modelType": "DDIMPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "DDPMPipeline:unconditional_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "ddpm_cifar32_technical_preview",
+      "mode": "unconditional_image",
+      "modelType": "DDPMPipeline",
       "readinessPolicy": "runnable",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
@@ -10733,6 +10771,36 @@
       "id": "persimmon_glaze",
       "mode": "text_to_image",
       "modelType": "SanaPAGPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "PixArtSigmaPAGPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "pixart_sigma_pag_pink_mascot",
+      "mode": "text_to_image",
+      "modelType": "PixArtSigmaPAGPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "PixArtSigmaPipeline:text_to_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "pixart_sigma_terracotta_herbs",
+      "mode": "text_to_image",
+      "modelType": "PixArtSigmaPipeline",
       "readinessPolicy": "runnable",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
       "reviewedGalleryExample": true,
@@ -12779,7 +12847,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "62535544b431322d7374301742e6cfbc9cd08788c342a32b4e52081060a55213",
+    "templateBundleSha256": "7318d10b12e549aae45c55fdba77200b2c7b837cff3a41dfe768754df528a15f",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -12827,8 +12895,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithPublicTemplates": 190,
-    "canonicalWorkflowsWithoutPublicTemplates": 35,
+    "canonicalWorkflowsWithPublicTemplates": 194,
+    "canonicalWorkflowsWithoutPublicTemplates": 31,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -12838,12 +12906,12 @@
       "research-blocked": 116,
       "unreviewed": 5
     },
-    "publicTemplateCount": 213,
-    "reviewedGalleryTemplateCount": 208,
+    "publicTemplateCount": 217,
+    "reviewedGalleryTemplateCount": 212,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
-      "executable": 202,
+      "executable": 206,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0
