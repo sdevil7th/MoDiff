@@ -38,7 +38,7 @@ def require_streaming_capacity(budget, device):
     """Recheck live resources before constructing or reusing a streaming owner."""
     import torch
 
-    from modiff.hardware import _shared_memory_device, system_memory_snapshot
+    from modiff.hardware import _linux_amd_memory_regions, rocm_uses_shared_memory, system_memory_snapshot
 
     if str(device) not in {"cuda", "cuda:0"} or not torch.cuda.is_available():
         raise ValueError("SSD streaming requires the primary CUDA or ROCm accelerator.")
@@ -46,10 +46,13 @@ def require_streaming_capacity(budget, device):
     free_gpu, total_gpu = torch.cuda.mem_get_info(device)
     available = {"systemRamBytes": memory["available_bytes"], "vramBytes": free_gpu}
     requirements = dict(budget)
-    if torch.version.hip and _shared_memory_device(torch.cuda.get_device_name(device), total_gpu, memory["total_bytes"]):
-        # An APU can satisfy each budget independently while still exhausting
-        # their shared pool. Reserve both working sets in physical memory.
-        requirements["systemRamBytes"] += budget["vramBytes"]
+    if torch.version.hip:
+        regions = _linux_amd_memory_regions()
+        local_total = regions[0].get("vram_total") if regions else None
+        if rocm_uses_shared_memory(torch.cuda.get_device_name(device), total_gpu, memory["total_bytes"],
+                                   local_vram_total=local_total):
+            # An APU must fit both working sets in the same physical pool.
+            requirements["systemRamBytes"] += budget["vramBytes"]
     if memory["source"] == "GlobalMemoryStatusEx":
         available["systemCommitBytes"] = memory["page_file_available_bytes"]
     else:

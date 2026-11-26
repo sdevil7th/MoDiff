@@ -110,22 +110,31 @@ def test_manager_keeps_streamed_weights_until_final_collection_release(checkpoin
     assert not any(hasattr(module, "_hf_hook") for module in model.modules())
 
 
-def test_rocm_shared_memory_reserves_both_working_sets(monkeypatch):
+@pytest.mark.parametrize("name,host_gib,device_gib,local_gib,shared", [
+    ("Integrated Graphics", 32, 24, None, True),
+    ("AMD Instinct MI300X VF", 240, 192, 192, False),
+    ("AMD Radeon 8060S Graphics", 128, 48, 2, True),
+])
+def test_rocm_streaming_reserves_both_working_sets_only_for_shared_memory(
+        monkeypatch, name, host_gib, device_gib, local_gib, shared):
     from modiff import hardware
     from modiff.safetensors_streaming import require_streaming_capacity
 
     gib = 1024**3
-    memory = {"source": "/proc/meminfo", "available_bytes": 12 * gib, "total_bytes": 32 * gib}
+    memory = {"source": "/proc/meminfo", "available_bytes": 12 * gib, "total_bytes": host_gib * gib}
     monkeypatch.setattr(hardware, "system_memory_snapshot", lambda: memory)
+    regions = [{"vram_total": local_gib * gib}] if local_gib is not None else []
+    monkeypatch.setattr(hardware, "_linux_amd_memory_regions", lambda: regions)
     monkeypatch.setattr(torch.version, "hip", "reviewed-shared-pool")
     monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
-    monkeypatch.setattr(torch.cuda, "get_device_name", lambda _: "Integrated Graphics")
-    monkeypatch.setattr(torch.cuda, "mem_get_info", lambda _: (20 * gib, 24 * gib))
+    monkeypatch.setattr(torch.cuda, "get_device_name", lambda _: name)
+    monkeypatch.setattr(torch.cuda, "mem_get_info", lambda _: (20 * gib, device_gib * gib))
     monkeypatch.setattr("sys.platform", "linux")
     reserve = {"systemRamBytes": 8 * gib, "vramBytes": 7 * gib, "systemCommitBytes": 12 * gib}
-    with pytest.raises(ValueError, match=f"{15 * gib} bytes of systemRamBytes"):
-        require_streaming_capacity(reserve, "cuda:0")
-    memory["available_bytes"] = 16 * gib
+    if shared:
+        with pytest.raises(ValueError, match=f"{15 * gib} bytes of systemRamBytes"):
+            require_streaming_capacity(reserve, "cuda:0")
+        memory["available_bytes"] = 16 * gib
     require_streaming_capacity(reserve, "cuda:0")
 
 

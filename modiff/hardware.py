@@ -326,6 +326,20 @@ def _shared_memory_device(name: str, total: int | None, ram_total: int | None) -
     return integrated_name or near_system_capacity
 
 
+def rocm_uses_shared_memory(
+    name: str, runtime_total: int | None, ram_total: int | None, *, local_vram_total: int | None,
+) -> bool:
+    """Classify the ROCm aperture against local VRAM reported by the Linux driver."""
+    if local_vram_total and runtime_total:
+        if runtime_total >= local_vram_total * 2:
+            return True
+        if local_vram_total >= runtime_total:
+            # A discrete MI300X can have nearly as much VRAM as host RAM.
+            # A confirmed local capacity supersedes the capacity-only heuristic.
+            ram_total = None
+    return _shared_memory_device(name, runtime_total, ram_total)
+
+
 def _probe_cuda(
     torch_module: Any,
     errors: dict[str, str],
@@ -395,19 +409,9 @@ def _probe_cuda(
         dedicated_used = _safe_int(region.get("vram_used")) if region else None
         shared_total = _safe_int(region.get("gtt_total")) if region else None
         shared_used = _safe_int(region.get("gtt_used")) if region else None
-        # A large discrete accelerator can have almost as much VRAM as host
-        # RAM (for example MI300X 192 GiB on a 240 GiB VM). Confirmed local
-        # DRM capacity takes precedence over that capacity-only APU heuristic.
-        # Explicit integrated names and a runtime aperture larger than local
-        # VRAM still identify shared devices below.
-        local_capacity_confirmed = bool(region and dedicated_total and runtime_total and dedicated_total >= runtime_total)
-        shared = bool(
-            hip_version
-            and (
-                (dedicated_total and runtime_total and runtime_total >= dedicated_total * 2)
-                or _shared_memory_device(name, runtime_total, None if local_capacity_confirmed else ram_total)
-            )
-        )
+        shared = bool(hip_version and rocm_uses_shared_memory(
+            name, runtime_total, ram_total, local_vram_total=dedicated_total if region else None,
+        ))
         vram_total = dedicated_total if shared and dedicated_total else runtime_total
         dedicated_free = (
             max(0, dedicated_total - dedicated_used)

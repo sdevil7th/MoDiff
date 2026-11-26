@@ -343,7 +343,9 @@ ordinary placement when running in BF16.
 The estimate includes the largest streamable shard, resident weights and a
 working reserve. Windows also needs enough available system commit for two
 shard mappings. On Linux with a shared ROCm memory pool, the host check reserves
-both the host and accelerator working sets. Auto checks have separate RAM,
+both the host and accelerator working sets. The live check and hardware inventory
+use the driver's local VRAM capacity to distinguish a shared aperture from a
+discrete GPU whose capacity approaches system RAM. Auto checks have separate RAM,
 accelerator and Windows commit requirements. Execution rechecks current memory
 and source integrity. Cache reuse preserves the placement identity and still
 requires enough headroom for subsequent SSD reads.
