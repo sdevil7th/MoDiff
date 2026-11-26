@@ -12,7 +12,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:48a23285a7df6843f777d4b6ece2538445d89a857113fc7b9092dee80077e634",
+  "contentHash": "sha256:ddba94c12f796e7dfd40c836b41b28137742e550bb7e367e0366c938a9293c4c",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -1640,96 +1640,6 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
-      "canonicalWorkflowId": "FluxCannyPipeline:control_edit_image",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "4aa3de024ee9b3fd6ea66f358ecb18be009edf437cb186b9c0402a8ff12f3028",
-      "graphPath": "studio/flux-canny-pipeline/control-edit-image.json",
-      "graphQualificationStatus": "graph-qualified",
-      "mediaKind": "image",
-      "mode": "control_edit_image",
-      "modelType": "FluxCannyPipeline",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "FluxControlImg2ImgPipeline",
-        "FluxControlInpaintPipeline",
-        "FluxControlPipeline"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "graph-qualified",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "black-forest-labs/FLUX.1-Canny-dev"
-      ],
-      "requiredInputs": {
-        "note": "Requires one source image and one prepared Canny control image.",
-        "requiredImages": [
-          "referenceImages",
-          "controlImage"
-        ]
-      },
-      "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
-        "inputExamples": "required",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
-      "canonicalWorkflowId": "FluxDepthPipeline:control_edit_image",
-      "comfyResearchRecords": [],
-      "evidenceState": {
-        "execution": "not_claimed",
-        "maximumClaim": "canonical_graph_binding_only",
-        "quality": "not_claimed",
-        "runtime": "not_claimed"
-      },
-      "graphHash": "f61e215dcc6809dd34579ec3c949327fc1f3d570e2fba8bc77f1795ceea15885",
-      "graphPath": "studio/flux-depth-pipeline/control-edit-image.json",
-      "graphQualificationStatus": "graph-qualified",
-      "mediaKind": "image",
-      "mode": "control_edit_image",
-      "modelType": "FluxDepthPipeline",
-      "optimizationQualificationStatus": "unqualified",
-      "pipelineClasses": [
-        "FluxControlImg2ImgPipeline",
-        "FluxControlInpaintPipeline",
-        "FluxControlPipeline"
-      ],
-      "publicationState": "hidden_candidate",
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "qualificationStatus": "graph-qualified",
-      "qualifiedRuntimeProfiles": [],
-      "requiredArtifacts": [
-        "black-forest-labs/FLUX.1-Depth-dev"
-      ],
-      "requiredInputs": {
-        "note": "Requires one source image and one prepared depth control image.",
-        "requiredImages": [
-          "referenceImages",
-          "controlImage"
-        ]
-      },
-      "runtimeQualificationStatus": "unqualified"
-    },
-    {
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": {
-        "defaults": "required",
-        "inputExamples": "required",
-        "prompt": "required_if_applicable",
-        "status": "authoring_required"
-      },
       "canonicalWorkflowId": "HunyuanVideoFramepackPipeline:image_to_video",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -2013,9 +1923,9 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:772f5b7a1b037b33e372aeb45cad613c9bd27d000ba815da906f18855c59e0d3",
+      "contentHash": "sha256:aa422cccd66ddd9c25053cf7aff2bb78fd5aff9e8a0caa24c87a7daea83ea892",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:4d2408e8f8b9b305a154d13fdee6ae92619a03c24a6e6019d9133f0e4e41f8e1"
+      "sha256": "sha256:86420f079bda9b3d0c67289fbb981825b291a2a9af31cd1e1333f335ab5e8f74"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -2023,20 +1933,20 @@
     }
   },
   "summary": {
-    "candidateContractCount": 48,
+    "candidateContractCount": 46,
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithExecutablePublicTemplates": 177,
-    "canonicalWorkflowsWithPublicTemplates": 188,
+    "canonicalWorkflowsWithExecutablePublicTemplates": 179,
+    "canonicalWorkflowsWithPublicTemplates": 190,
     "comfyMappingStatusCounts": {},
     "comfyResearchRecordCount": 0,
-    "contractsRequiringInputExamples": 28,
+    "contractsRequiringInputExamples": 26,
     "contractsWithComfyResearchRecords": 0,
     "mediaKindCounts": {
       "audio": 3,
-      "image": 35,
+      "image": 33,
       "json": 3,
       "video": 7
     },
-    "publicTemplateCount": 211
+    "publicTemplateCount": 213
   }
 }

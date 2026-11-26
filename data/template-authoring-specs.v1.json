@@ -14,14 +14,14 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:545b166aa7e0b465a13f7d09a8e8c6e94afd803955f754a1da0094e2e450dedf",
+  "contentHash": "sha256:cdca8cdd64a4c24c9599eb77866a0dcdd6e74922b0892b61b02c9ade4ecdeedc",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:48a23285a7df6843f777d4b6ece2538445d89a857113fc7b9092dee80077e634",
+      "contentHash": "sha256:ddba94c12f796e7dfd40c836b41b28137742e550bb7e367e0366c938a9293c4c",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:d70b83246af69347ee3d77c8157e0b5a1a2da632df24735e7799dbc78657d163"
+      "sha256": "sha256:68e108449f61b7c008b8e32db9f56bf5dafe695ada45e2bb32858a0147277a01"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -4599,326 +4599,6 @@
     {
       "artifactPlan": {
         "cacheState": "must_be_rechecked_through_app_before_generation",
-        "componentRequirements": [],
-        "requiredArtifacts": [
-          "black-forest-labs/FLUX.1-Canny-dev"
-        ]
-      },
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": "draft_complete_input_selection_pending",
-      "canonicalGraph": {
-        "path": "studio/flux-canny-pipeline/control-edit-image.json",
-        "sha256": "4aa3de024ee9b3fd6ea66f358ecb18be009edf437cb186b9c0402a8ff12f3028"
-      },
-      "canonicalWorkflowId": "FluxCannyPipeline:control_edit_image",
-      "claims": {
-        "assetGenerated": false,
-        "inputSelected": false,
-        "publicTemplate": false,
-        "qualityApproved": false,
-        "rightsApproved": false,
-        "workflowExecuted": false
-      },
-      "defaultsPlan": {
-        "fields": [
-          {
-            "parameter": "guidance_scale",
-            "role": "diffusersImageControlEdit",
-            "value": 30
-          },
-          {
-            "parameter": "height",
-            "role": "diffusersImageControlEdit",
-            "value": 1024
-          },
-          {
-            "parameter": "max_sequence_length",
-            "role": "diffusersImageControlEdit",
-            "value": 512
-          },
-          {
-            "parameter": "num_inference_steps",
-            "role": "diffusersImageControlEdit",
-            "value": 50
-          },
-          {
-            "parameter": "seed",
-            "role": "diffusersImageControlEdit",
-            "value": {
-              "isRandom": true,
-              "value": 42
-            }
-          },
-          {
-            "parameter": "strength",
-            "role": "diffusersImageControlEdit",
-            "value": 0.8
-          },
-          {
-            "parameter": "width",
-            "role": "diffusersImageControlEdit",
-            "value": 1024
-          },
-          {
-            "parameter": "alpha_channel",
-            "role": "loadControlImage",
-            "value": "ignore"
-          },
-          {
-            "parameter": "alpha_channel",
-            "role": "loadImage",
-            "value": "ignore"
-          }
-        ],
-        "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "4aa3de024ee9b3fd6ea66f358ecb18be009edf437cb186b9c0402a8ff12f3028",
-        "status": "canonical_defaults_captured_review_pending"
-      },
-      "generationPlan": {
-        "blockers": [
-          "reviewed_input_selection_and_rights_required",
-          "exact_model_cache_state_must_be_rechecked",
-          "exact_runtime_execution_receipt_required",
-          "resource_recipe_receipt_required",
-          "model_and_output_rights_review_required",
-          "generated_asset_and_human_quality_review_required"
-        ],
-        "requiresQualifiedAccelerator": true,
-        "status": "blocked_pending_external_evidence"
-      },
-      "id": "template-authoring:FluxCannyPipeline:control_edit_image",
-      "inputPlan": {
-        "items": [
-          {
-            "field": "referenceImages",
-            "mediaKind": "image",
-            "minimumCount": 1,
-            "rightsState": "review_required",
-            "selectionState": "pending_original_or_licensed_asset",
-            "technicalRequirements": [
-              "decodable_image",
-              "matches_exact_workflow_input_contract",
-              "contains_no_unreviewed_brand_or_personal_data"
-            ]
-          },
-          {
-            "field": "controlImage",
-            "mediaKind": "image",
-            "minimumCount": 1,
-            "rightsState": "review_required",
-            "selectionState": "pending_original_or_licensed_asset",
-            "technicalRequirements": [
-              "decodable_image",
-              "matches_exact_workflow_input_contract",
-              "contains_no_unreviewed_brand_or_personal_data"
-            ]
-          }
-        ],
-        "status": "selection_required"
-      },
-      "mediaKind": "image",
-      "mode": "control_edit_image",
-      "modelFamily": "FLUX Image",
-      "modelType": "FluxCannyPipeline",
-      "outputPlan": {
-        "mediaKinds": [
-          "image"
-        ],
-        "minimumAssetCount": 1,
-        "reviewCriteria": [
-          "expected_dimensions_and_decodable_output",
-          "prompt_or_task_alignment",
-          "coherent_geometry_lighting_and_materials",
-          "no_unrequested_text_watermark_or_duplicate_subject",
-          "source_identity_structure_and_unmasked_region_preservation"
-        ]
-      },
-      "promptPlan": {
-        "editableBeforeQualification": true,
-        "mustBeLockedInGenerationReceipt": true,
-        "negativePrompt": {
-          "status": "drafted",
-          "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
-        },
-        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly. Match lighting direction and add no extra subjects or text.",
-        "provenance": "original_modiff_mode_draft_v1",
-        "status": "drafted"
-      },
-      "publicationState": "hidden_candidate",
-      "purpose": "Author and review one image result for the exact FLUX Image control edit image workflow without changing its canonical graph contract.",
-      "rightsPlan": {
-        "inputMediaRights": "required",
-        "modelArtifactRights": "review_or_existing_catalog_decision_required",
-        "outputPublicationRights": "required",
-        "status": "review_required",
-        "thirdPartyBrandAndPersonalDataReview": "required"
-      },
-      "title": "FLUX Image — Control Edit Image [FluxCannyPipeline]"
-    },
-    {
-      "artifactPlan": {
-        "cacheState": "must_be_rechecked_through_app_before_generation",
-        "componentRequirements": [],
-        "requiredArtifacts": [
-          "black-forest-labs/FLUX.1-Depth-dev"
-        ]
-      },
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": "draft_complete_input_selection_pending",
-      "canonicalGraph": {
-        "path": "studio/flux-depth-pipeline/control-edit-image.json",
-        "sha256": "f61e215dcc6809dd34579ec3c949327fc1f3d570e2fba8bc77f1795ceea15885"
-      },
-      "canonicalWorkflowId": "FluxDepthPipeline:control_edit_image",
-      "claims": {
-        "assetGenerated": false,
-        "inputSelected": false,
-        "publicTemplate": false,
-        "qualityApproved": false,
-        "rightsApproved": false,
-        "workflowExecuted": false
-      },
-      "defaultsPlan": {
-        "fields": [
-          {
-            "parameter": "guidance_scale",
-            "role": "diffusersImageControlEdit",
-            "value": 30
-          },
-          {
-            "parameter": "height",
-            "role": "diffusersImageControlEdit",
-            "value": 1024
-          },
-          {
-            "parameter": "max_sequence_length",
-            "role": "diffusersImageControlEdit",
-            "value": 512
-          },
-          {
-            "parameter": "num_inference_steps",
-            "role": "diffusersImageControlEdit",
-            "value": 50
-          },
-          {
-            "parameter": "seed",
-            "role": "diffusersImageControlEdit",
-            "value": {
-              "isRandom": true,
-              "value": 42
-            }
-          },
-          {
-            "parameter": "strength",
-            "role": "diffusersImageControlEdit",
-            "value": 0.8
-          },
-          {
-            "parameter": "width",
-            "role": "diffusersImageControlEdit",
-            "value": 1024
-          },
-          {
-            "parameter": "alpha_channel",
-            "role": "loadControlImage",
-            "value": "ignore"
-          },
-          {
-            "parameter": "alpha_channel",
-            "role": "loadImage",
-            "value": "ignore"
-          }
-        ],
-        "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "f61e215dcc6809dd34579ec3c949327fc1f3d570e2fba8bc77f1795ceea15885",
-        "status": "canonical_defaults_captured_review_pending"
-      },
-      "generationPlan": {
-        "blockers": [
-          "reviewed_input_selection_and_rights_required",
-          "exact_model_cache_state_must_be_rechecked",
-          "exact_runtime_execution_receipt_required",
-          "resource_recipe_receipt_required",
-          "model_and_output_rights_review_required",
-          "generated_asset_and_human_quality_review_required"
-        ],
-        "requiresQualifiedAccelerator": true,
-        "status": "blocked_pending_external_evidence"
-      },
-      "id": "template-authoring:FluxDepthPipeline:control_edit_image",
-      "inputPlan": {
-        "items": [
-          {
-            "field": "referenceImages",
-            "mediaKind": "image",
-            "minimumCount": 1,
-            "rightsState": "review_required",
-            "selectionState": "pending_original_or_licensed_asset",
-            "technicalRequirements": [
-              "decodable_image",
-              "matches_exact_workflow_input_contract",
-              "contains_no_unreviewed_brand_or_personal_data"
-            ]
-          },
-          {
-            "field": "controlImage",
-            "mediaKind": "image",
-            "minimumCount": 1,
-            "rightsState": "review_required",
-            "selectionState": "pending_original_or_licensed_asset",
-            "technicalRequirements": [
-              "decodable_image",
-              "matches_exact_workflow_input_contract",
-              "contains_no_unreviewed_brand_or_personal_data"
-            ]
-          }
-        ],
-        "status": "selection_required"
-      },
-      "mediaKind": "image",
-      "mode": "control_edit_image",
-      "modelFamily": "FLUX Image",
-      "modelType": "FluxDepthPipeline",
-      "outputPlan": {
-        "mediaKinds": [
-          "image"
-        ],
-        "minimumAssetCount": 1,
-        "reviewCriteria": [
-          "expected_dimensions_and_decodable_output",
-          "prompt_or_task_alignment",
-          "coherent_geometry_lighting_and_materials",
-          "no_unrequested_text_watermark_or_duplicate_subject",
-          "source_identity_structure_and_unmasked_region_preservation"
-        ]
-      },
-      "promptPlan": {
-        "editableBeforeQualification": true,
-        "mustBeLockedInGenerationReceipt": true,
-        "negativePrompt": {
-          "status": "drafted",
-          "value": "low resolution, distorted geometry, duplicate subjects, malformed hands, inconsistent reflections, watermark, logo, illegible text, oversharpening, compression artifacts"
-        },
-        "prompt": "Restyle the source as a refined editorial photograph while preserving subject identity and composition and following the supplied control geometry exactly. Match lighting direction and add no extra subjects or text.",
-        "provenance": "original_modiff_mode_draft_v1",
-        "status": "drafted"
-      },
-      "publicationState": "hidden_candidate",
-      "purpose": "Author and review one image result for the exact FLUX Image control edit image workflow without changing its canonical graph contract.",
-      "rightsPlan": {
-        "inputMediaRights": "required",
-        "modelArtifactRights": "review_or_existing_catalog_decision_required",
-        "outputPublicationRights": "required",
-        "status": "review_required",
-        "thirdPartyBrandAndPersonalDataReview": "required"
-      },
-      "title": "FLUX Image — Control Edit Image [FluxDepthPipeline]"
-    },
-    {
-      "artifactPlan": {
-        "cacheState": "must_be_rechecked_through_app_before_generation",
         "componentRequirements": [
           {
             "id": "framepack-hunyuan-base-components",
@@ -6294,16 +5974,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 51,
+    "authoringSpecCount": 49,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 21,
-      "draft_complete_input_selection_pending": 30
+      "draft_complete_input_selection_pending": 28
     },
-    "canonicalDefaultsCapturedCount": 51,
-    "generationPendingCount": 51,
-    "inputSelectionPendingCount": 30,
-    "promptDraftedCount": 32,
+    "canonicalDefaultsCapturedCount": 49,
+    "generationPendingCount": 49,
+    "inputSelectionPendingCount": 28,
+    "promptDraftedCount": 30,
     "promptNotApplicableCount": 19,
-    "rightsReviewPendingCount": 51
+    "rightsReviewPendingCount": 49
   }
 }

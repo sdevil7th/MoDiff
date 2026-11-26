@@ -73,12 +73,12 @@ class TemplateCandidateContractTests(unittest.TestCase):
             self.ledger["summary"],
             {
                 "canonicalWorkflowCount": 225,
-                "publicTemplateCount": 211,
-                "canonicalWorkflowsWithPublicTemplates": 188,
-                "canonicalWorkflowsWithExecutablePublicTemplates": 177,
-                "candidateContractCount": 48,
-                "mediaKindCounts": {"audio": 3, "image": 35, "json": 3, "video": 7},
-                "contractsRequiringInputExamples": 28,
+                "publicTemplateCount": 213,
+                "canonicalWorkflowsWithPublicTemplates": 190,
+                "canonicalWorkflowsWithExecutablePublicTemplates": 179,
+                "candidateContractCount": 46,
+                "mediaKindCounts": {"audio": 3, "image": 33, "json": 3, "video": 7},
+                "contractsRequiringInputExamples": 26,
                 "contractsWithComfyResearchRecords": 0,
                 "comfyResearchRecordCount": 0,
                 "comfyMappingStatusCounts": {},
@@ -91,6 +91,8 @@ class TemplateCandidateContractTests(unittest.TestCase):
             "sd15_pag_mountain_lake_watercolor": "StableDiffusionPAGPipeline:edit_image",
             "sd15_pag_cobalt_studio_repair": "StableDiffusionPAGPipeline:inpaint",
             "spandrel_tram_shelter_video_2x": "SpandrelVideoUpscale:video_upscale",
+            "flux_canny_black_ink_cube": "FluxCannyPipeline:control_edit_image",
+            "flux_depth_marine_teal_bow_edit": "FluxDepthPipeline:control_edit_image",
         }
         expected = {
             "PixArtSigmaPAGPipeline:text_to_image",
@@ -141,11 +143,11 @@ class TemplateCandidateContractTests(unittest.TestCase):
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 
-        self.assertEqual(len(public_templates), 211)
+        self.assertEqual(len(public_templates), 213)
         experimental_public_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "contract-only"}
         self.assertEqual(len(experimental_public_ids), 11)
         self.assertTrue(experimental_public_ids <= set(contracts_by_id))
-        self.assertEqual(len(public_workflow_ids), 177)
+        self.assertEqual(len(public_workflow_ids), 179)
         self.assertIn("AceStepAudioPipeline:text_to_audio:ace_step_lyric_music_video", public_workflow_ids)
         self.assertIn("HuggingFaceSpeechRecognitionModel:speech_to_text", public_workflow_ids)
         self.assertIn("LatentConsistencyModelPipeline:edit_image", public_workflow_ids)
@@ -155,7 +157,7 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)
         self.assertFalse(set(contracts_by_id) & public_workflow_ids)
-        self.assertEqual(len(contracts_by_id), 48)
+        self.assertEqual(len(contracts_by_id), 46)
         experimental_public_pairs = {
             "flux2_dev_text_to_image": "Flux2ModularPipeline:text_to_image",
             "cosmos3_super_text_to_image": "Cosmos3OmniModularPipeline:text_to_image",

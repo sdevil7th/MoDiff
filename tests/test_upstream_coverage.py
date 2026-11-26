@@ -184,8 +184,8 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.ledger["summary"],
             {
                 "canonicalWorkflowCount": 225,
-                "canonicalWorkflowsWithPublicTemplates": 188,
-                "canonicalWorkflowsWithoutPublicTemplates": 37,
+                "canonicalWorkflowsWithPublicTemplates": 190,
+                "canonicalWorkflowsWithoutPublicTemplates": 35,
                 "diffusersPipelineSymbolCount": 340,
                 "pipelineStatusCounts": {
                     "contract-only": 5,
@@ -195,12 +195,12 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "research-blocked": 116,
                     "unreviewed": 5,
                 },
-                "publicTemplateCount": 211,
-                "reviewedGalleryTemplateCount": 206,
+                "publicTemplateCount": 213,
+                "reviewedGalleryTemplateCount": 208,
                 "templateStatusCounts": {
                     "contract-only": 11,
                     "equivalent": 0,
-                    "executable": 200,
+                    "executable": 202,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -491,9 +491,9 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(_canonical_json_sha256(graph_path), item["graphHash"], workflow_id)
 
         templates = self.ledger["publicTemplates"]
-        self.assertEqual(len({item["id"] for item in templates}), 211)
+        self.assertEqual(len({item["id"] for item in templates}), 213)
         self.assertTrue(all(item["canonicalWorkflowId"] in ledger_workflows for item in templates))
-        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 206)
+        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 208)
         for template_id in (
             "flux_lora_cinematic_octane_3d", "minimax_music3_chamber_pop", "wan_video_long_showcase",
         ):
@@ -501,8 +501,16 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertTrue(item["reviewedGalleryExample"])
             self.assertEqual(item["galleryVerificationStatus"], "reviewed")
             self.assertEqual(item["galleryExecutionCompatibility"], "historical_reference_requires_new_execution_evidence")
-        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 206)
-        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 188)
+        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 208)
+        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 190)
+        for template_id, workflow_id in (
+            ("flux_canny_black_ink_cube", "FluxCannyPipeline:control_edit_image"),
+            ("flux_depth_marine_teal_bow_edit", "FluxDepthPipeline:control_edit_image"),
+        ):
+            item = next(row for row in templates if row["id"] == template_id)
+            self.assertEqual(item["canonicalWorkflowId"], workflow_id)
+            self.assertEqual(item["galleryQualityReviewStatus"], "approved_reviewed")
+            self.assertIn(template_id, ledger_workflows[workflow_id]["publicTemplateIds"])
         contract_only = [item for item in templates if item["status"] == "contract-only"]
         self.assertEqual(len(contract_only), 11)
         self.assertEqual(sum(item["reviewedGalleryExample"] for item in contract_only), 11)
@@ -583,7 +591,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             sum({**supported, **experimental}[item["canonicalWorkflowId"]]["mediaKind"] == "image"
                 for item in templates),
-            148,
+            150,
         )
         for template_id, (workflow_id, profile_id) in experimental_public_pairs.items():
             item = public_by_id[template_id]
@@ -621,7 +629,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(source["mode"], "huggingface")
             self.assertRegex(source["revision"], r"^[0-9a-f]{40}$")
             self.assertRegex(source["assetSetId"], r"^sha256:canonical-json:[0-9a-f]{64}$")
-            self.assertEqual(len(ledger_gallery_ids), 206)
+            self.assertEqual(len(ledger_gallery_ids), 208)
 
     def test_remote_asset_build_requires_an_explicit_reviewed_gallery_manifest(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

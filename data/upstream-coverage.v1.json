@@ -903,7 +903,9 @@
       "id": "FluxCannyPipeline:control_edit_image",
       "mode": "control_edit_image",
       "modelType": "FluxCannyPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux_canny_black_ink_cube"
+      ],
       "qualificationStatus": "graph-qualified",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -940,7 +942,9 @@
       "id": "FluxDepthPipeline:control_edit_image",
       "mode": "control_edit_image",
       "modelType": "FluxDepthPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux_depth_marine_teal_bow_edit"
+      ],
       "qualificationStatus": "graph-qualified",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2883,7 +2887,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:772f5b7a1b037b33e372aeb45cad613c9bd27d000ba815da906f18855c59e0d3",
+  "contentHash": "sha256:aa422cccd66ddd9c25053cf7aff2bb78fd5aff9e8a0caa24c87a7daea83ea892",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -9214,6 +9218,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "FluxCannyPipeline:control_edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux_canny_black_ink_cube",
+      "mode": "control_edit_image",
+      "modelType": "FluxCannyPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "FluxCannyPipeline:control_inpaint",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -9296,6 +9315,21 @@
       "galleryVerificationStatus": "reviewed",
       "id": "flux_depth_marine_bow_repair",
       "mode": "control_inpaint",
+      "modelType": "FluxDepthPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "FluxDepthPipeline:control_edit_image",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux_depth_marine_teal_bow_edit",
+      "mode": "control_edit_image",
       "modelType": "FluxDepthPipeline",
       "readinessPolicy": "requires_input",
       "reason": "The public template resolves to an exact checked-in canonical workflow.",
@@ -12745,7 +12779,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "853d8250bffe7193a27b0c3ddedff4fef4ca62bf89bda6fe7de483b5f9f77591",
+    "templateBundleSha256": "62535544b431322d7374301742e6cfbc9cd08788c342a32b4e52081060a55213",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -12793,8 +12827,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithPublicTemplates": 188,
-    "canonicalWorkflowsWithoutPublicTemplates": 37,
+    "canonicalWorkflowsWithPublicTemplates": 190,
+    "canonicalWorkflowsWithoutPublicTemplates": 35,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -12804,12 +12838,12 @@
       "research-blocked": 116,
       "unreviewed": 5
     },
-    "publicTemplateCount": 211,
-    "reviewedGalleryTemplateCount": 206,
+    "publicTemplateCount": 213,
+    "reviewedGalleryTemplateCount": 208,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
-      "executable": 200,
+      "executable": 202,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0
