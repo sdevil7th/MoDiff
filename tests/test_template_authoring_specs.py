@@ -53,16 +53,16 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 45,
-                "promptDraftedCount": 28,
+                "authoringSpecCount": 44,
+                "promptDraftedCount": 27,
                 "promptNotApplicableCount": 17,
-                "canonicalDefaultsCapturedCount": 45,
+                "canonicalDefaultsCapturedCount": 44,
                 "inputSelectionPendingCount": 28,
-                "rightsReviewPendingCount": 45,
-                "generationPendingCount": 45,
+                "rightsReviewPendingCount": 44,
+                "generationPendingCount": 44,
                 "assetCount": 0,
                 "authoringStateCounts": {
-                    "draft_complete_execution_pending": 17,
+                    "draft_complete_execution_pending": 16,
                     "draft_complete_input_selection_pending": 28,
                 },
             },
@@ -84,6 +84,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             "PixArtSigmaPAGPipeline:text_to_image",
             "DDPMPipeline:unconditional_image",
             "ConsistencyModelPipeline:unconditional_image",
+            "ShapEPipeline:text_to_3d",
         }
         hidden = {row["canonicalWorkflowId"] for row in self.ledger["specifications"]}
         self.assertTrue(published.isdisjoint(hidden))
@@ -320,7 +321,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             )
             captured_count += len(fields)
             self.assertTrue(forbidden_parameters.isdisjoint(item["parameter"] for item in fields))
-        self.assertEqual(captured_count, 219)
+        self.assertEqual(captured_count, 214)
 
     def test_frame_interpolation_authoring_stays_input_and_execution_pending(self):
         specification = next(

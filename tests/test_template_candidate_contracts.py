@@ -73,11 +73,11 @@ class TemplateCandidateContractTests(unittest.TestCase):
             self.ledger["summary"],
             {
                 "canonicalWorkflowCount": 225,
-                "publicTemplateCount": 217,
-                "canonicalWorkflowsWithPublicTemplates": 194,
-                "canonicalWorkflowsWithExecutablePublicTemplates": 183,
-                "candidateContractCount": 42,
-                "mediaKindCounts": {"audio": 3, "image": 29, "json": 3, "video": 7},
+                "publicTemplateCount": 218,
+                "canonicalWorkflowsWithPublicTemplates": 195,
+                "canonicalWorkflowsWithExecutablePublicTemplates": 184,
+                "candidateContractCount": 41,
+                "mediaKindCounts": {"audio": 3, "image": 29, "json": 3, "video": 6},
                 "contractsRequiringInputExamples": 26,
                 "contractsWithComfyResearchRecords": 0,
                 "comfyResearchRecordCount": 0,
@@ -97,6 +97,7 @@ class TemplateCandidateContractTests(unittest.TestCase):
             "pixart_sigma_pag_pink_mascot": "PixArtSigmaPAGPipeline:text_to_image",
             "ddpm_cifar32_technical_preview": "DDPMPipeline:unconditional_image",
             "consistency_64_technical_preview": "ConsistencyModelPipeline:unconditional_image",
+            "shap_e_traffic_cone_turntable": "ShapEPipeline:text_to_3d",
         }
         expected = {
             "BuiltinAudioOperation:audio_trim",
@@ -146,11 +147,11 @@ class TemplateCandidateContractTests(unittest.TestCase):
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 
-        self.assertEqual(len(public_templates), 217)
+        self.assertEqual(len(public_templates), 218)
         experimental_public_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "contract-only"}
         self.assertEqual(len(experimental_public_ids), 11)
         self.assertTrue(experimental_public_ids <= set(contracts_by_id))
-        self.assertEqual(len(public_workflow_ids), 183)
+        self.assertEqual(len(public_workflow_ids), 184)
         self.assertIn("AceStepAudioPipeline:text_to_audio:ace_step_lyric_music_video", public_workflow_ids)
         self.assertIn("HuggingFaceSpeechRecognitionModel:speech_to_text", public_workflow_ids)
         self.assertIn("LatentConsistencyModelPipeline:edit_image", public_workflow_ids)
@@ -160,7 +161,7 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)
         self.assertFalse(set(contracts_by_id) & public_workflow_ids)
-        self.assertEqual(len(contracts_by_id), 42)
+        self.assertEqual(len(contracts_by_id), 41)
         experimental_public_pairs = {
             "flux2_dev_text_to_image": "Flux2ModularPipeline:text_to_image",
             "cosmos3_super_text_to_image": "Cosmos3OmniModularPipeline:text_to_image",
