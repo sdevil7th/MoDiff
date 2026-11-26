@@ -2244,7 +2244,9 @@
       "id": "ShapEPipeline:text_to_3d",
       "mode": "text_to_3d",
       "modelType": "ShapEPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "shap_e_traffic_cone_turntable"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
@@ -2895,7 +2897,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:c6efc7b975a93f26550427408646b2c47916647953e611ccf73428e929f8bc18",
+  "contentHash": "sha256:b0a85898d86c861bf7ee4e614d0532b6643137fed0b01a7a54b48c738b636700",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -12042,6 +12044,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "ShapEPipeline:text_to_3d",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": true,
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "shap_e_traffic_cone_turntable",
+      "mode": "text_to_3d",
+      "modelType": "ShapEPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "HuggingFaceTextGenerationModel:text_generation",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -12847,7 +12864,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "71c2a6ed27d3f2d1b66a865eda485b0c250420e0466b3fccab86a6fd7847b969",
+    "templateBundleSha256": "5b8c6f99fb75f5f894afbe603d341c186f889957d1e00e6ed5f6615ba654e063",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -12895,8 +12912,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 225,
-    "canonicalWorkflowsWithPublicTemplates": 194,
-    "canonicalWorkflowsWithoutPublicTemplates": 31,
+    "canonicalWorkflowsWithPublicTemplates": 195,
+    "canonicalWorkflowsWithoutPublicTemplates": 30,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -12906,12 +12923,12 @@
       "research-blocked": 116,
       "unreviewed": 5
     },
-    "publicTemplateCount": 217,
-    "reviewedGalleryTemplateCount": 212,
+    "publicTemplateCount": 218,
+    "reviewedGalleryTemplateCount": 213,
     "templateStatusCounts": {
       "contract-only": 11,
       "equivalent": 0,
-      "executable": 206,
+      "executable": 207,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

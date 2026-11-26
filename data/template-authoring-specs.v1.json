@@ -14,14 +14,14 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:816df75c828be7c06c3e873d643140b275b718237fe37a7504e2ebe403f9e1b0",
+  "contentHash": "sha256:aeb27a51913d2d9551a762a747288a2c3bbf2e38449a194144a603d3f37e7e2c",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:9fe0970ed5de4740ea984668be9aaa1862da10bd06a33ca9e104a24515da1abd",
+      "contentHash": "sha256:8943e0a534b25fe7b6a194918ac2d9267ee95bd3207a176cfeb342adbc406b4e",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:fbc8ffdf82d1dc731866c69b36f9af888efb22c100941805177b2d749e981ad2"
+      "sha256": "sha256:662b92130743fa610294d2d8d8eb5aef656db19e50e61a4ecf55b39520fe2b02"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -4791,119 +4791,6 @@
         "cacheState": "must_be_rechecked_through_app_before_generation",
         "componentRequirements": [],
         "requiredArtifacts": [
-          "openai/shap-e"
-        ]
-      },
-      "assetState": "not_generated",
-      "assets": [],
-      "authoringState": "draft_complete_execution_pending",
-      "canonicalGraph": {
-        "path": "studio/shap-e-pipeline/text-to-3d.json",
-        "sha256": "202eee9cfc1c2f18465c7e6eb1155ed56c3042bc14deadc339cb305cb4d70aba"
-      },
-      "canonicalWorkflowId": "ShapEPipeline:text_to_3d",
-      "claims": {
-        "assetGenerated": false,
-        "inputSelected": false,
-        "publicTemplate": false,
-        "qualityApproved": false,
-        "rightsApproved": false,
-        "workflowExecuted": false
-      },
-      "defaultsPlan": {
-        "fields": [
-          {
-            "parameter": "frame_size",
-            "role": "diffusersThreeDGenerate",
-            "value": 256
-          },
-          {
-            "parameter": "guidance_scale",
-            "role": "diffusersThreeDGenerate",
-            "value": 15
-          },
-          {
-            "parameter": "num_inference_steps",
-            "role": "diffusersThreeDGenerate",
-            "value": 64
-          },
-          {
-            "parameter": "seed",
-            "role": "diffusersThreeDGenerate",
-            "value": {
-              "isRandom": true,
-              "value": 42
-            }
-          },
-          {
-            "parameter": "fps",
-            "role": "videoExport",
-            "value": 12
-          }
-        ],
-        "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "202eee9cfc1c2f18465c7e6eb1155ed56c3042bc14deadc339cb305cb4d70aba",
-        "status": "canonical_defaults_captured_review_pending"
-      },
-      "generationPlan": {
-        "blockers": [
-          "exact_model_cache_state_must_be_rechecked",
-          "exact_runtime_execution_receipt_required",
-          "resource_recipe_receipt_required",
-          "model_and_output_rights_review_required",
-          "generated_asset_and_human_quality_review_required"
-        ],
-        "requiresQualifiedAccelerator": true,
-        "status": "blocked_pending_external_evidence"
-      },
-      "id": "template-authoring:ShapEPipeline:text_to_3d",
-      "inputPlan": {
-        "items": [],
-        "status": "not_applicable"
-      },
-      "mediaKind": "video",
-      "mode": "text_to_3d",
-      "modelFamily": "Shap-E",
-      "modelType": "ShapEPipeline",
-      "outputPlan": {
-        "mediaKinds": [
-          "video"
-        ],
-        "minimumAssetCount": 1,
-        "reviewCriteria": [
-          "expected_dimensions_duration_frame_rate_and_decodable_output",
-          "prompt_or_task_alignment",
-          "temporal_coherence_and_stable_subject_identity",
-          "no_flicker_camera_jumps_or_unrequested_text"
-        ]
-      },
-      "promptPlan": {
-        "editableBeforeQualification": true,
-        "mustBeLockedInGenerationReceipt": true,
-        "negativePrompt": {
-          "status": "not_supported_by_canonical_graph",
-          "value": null
-        },
-        "prompt": "A compact mid-century table radio with rounded corners, a large tuning dial, woven speaker grille, four rubber feet, and clean watertight geometry suitable for a neutral turntable preview. No text or extra parts.",
-        "provenance": "original_modiff_mode_draft_v1",
-        "status": "drafted"
-      },
-      "publicationState": "hidden_candidate",
-      "purpose": "Author and review one video result for the exact Shap-E text to 3d workflow without changing its canonical graph contract.",
-      "rightsPlan": {
-        "inputMediaRights": "not_applicable",
-        "modelArtifactRights": "review_or_existing_catalog_decision_required",
-        "outputPublicationRights": "required",
-        "status": "review_required",
-        "thirdPartyBrandAndPersonalDataReview": "required"
-      },
-      "title": "Shap-E — Text To 3d [ShapEPipeline]"
-    },
-    {
-      "artifactPlan": {
-        "cacheState": "must_be_rechecked_through_app_before_generation",
-        "componentRequirements": [],
-        "requiredArtifacts": [
           "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
         ]
       },
@@ -5497,16 +5384,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 45,
+    "authoringSpecCount": 44,
     "authoringStateCounts": {
-      "draft_complete_execution_pending": 17,
+      "draft_complete_execution_pending": 16,
       "draft_complete_input_selection_pending": 28
     },
-    "canonicalDefaultsCapturedCount": 45,
-    "generationPendingCount": 45,
+    "canonicalDefaultsCapturedCount": 44,
+    "generationPendingCount": 44,
     "inputSelectionPendingCount": 28,
-    "promptDraftedCount": 28,
+    "promptDraftedCount": 27,
     "promptNotApplicableCount": 17,
-    "rightsReviewPendingCount": 45
+    "rightsReviewPendingCount": 44
   }
 }

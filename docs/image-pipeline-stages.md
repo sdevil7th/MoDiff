@@ -132,6 +132,14 @@ assembles the tiled result in float32, which would promote the concatenated
 noise and cause a dtype mismatch in the denoiser. Text-only and untiled calls
 keep their native input handling. The edit keeps the saved VAE tiling setting.
 
+The four DreamLite workflows can qualify for the noncommercial research scope
+with previews withheld. The release checker revalidates the original task, model
+revision, graph, source binding for edits, and output, then matches them against
+the exact review in the client’s `config/preview-free-research-workflows.v1.json`.
+The report identifies these four recipes under `previewFreeResearchWorkflows` and
+records whether each run used canonical defaults. The existing artifact review
+still limits model use and controls Auto and Gallery admission.
+
 ### Cached weights and runtime kernels
 
 AuraFlow v0.3 publishes its FP16 transformer shards under the legacy
