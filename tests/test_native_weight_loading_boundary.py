@@ -8,7 +8,8 @@ from modiff.execution_input_provenance import build_resolved_execution_inputs, c
 
 
 @pytest.mark.parametrize('field,value', [('weight_loading_mode', 'cpu'),
-                                       ('weight_loading_mode', 'cuda'), ('inpaint_compatibility', 'native')])
+                                       ('weight_loading_mode', 'cuda'), ('weight_loading_mode', 'ssd_stream'),
+                                       ('inpaint_compatibility', 'native')])
 def test_sparse_owner_identity_preserves_explicit_inspected_controls(field, value):
     from modiff.workflow_auto_values import inspect_native_runtime_controls
 
@@ -33,6 +34,25 @@ def test_shared_generic_loading_control_survives_real_runtime_hint_boundary(tmp_
     assert receipt == before
 
 
+@pytest.mark.parametrize('devices,compatibility', [(['cpu'], 'incompatible'), (['cuda:0'], 'compatible')])
+def test_live_streaming_option_keeps_saved_choices_separate(tmp_path, monkeypatch, devices, compatibility):
+    from modiff.server import WebServer
+
+    server = WebServer(modules={}, work_dir=str(tmp_path), data_dir=str(tmp_path))
+    monkeypatch.setattr(server, '_available_runtime_devices', lambda: devices)
+    server._runtime_choice_capabilities_cache = {'dtypes': {'bfloat16': True}}
+    field = 'weight_loading_mode'
+    old = {field: {'type': 'string', 'options': ['cpu', 'cuda'], 'default': 'cpu'}}
+    assert 'runtimeOptions' not in server.describe_node_params(old)[field]
+    live = {field: {**old[field], 'options': ['cpu', 'cuda', 'ssd_stream']}}
+    exposed = server.describe_node_params(live)[field]
+    assert exposed['runtimeOptions'] == 'choices'
+    assert exposed['default'] == 'cpu'
+    assert exposed['options'][-1]['label'] == 'Stream weights from SSD'
+    assert exposed['options'][-1]['compatibility'] == compatibility
+    assert old[field]['options'] == ['cpu', 'cuda']
+
+
 @pytest.mark.parametrize('field', ['weight_loading_mode_extra', 'prompt', {}, []])
 def test_shared_loading_control_does_not_admit_other_or_malformed_fields(tmp_path, field):
     from modiff.server import WebServer
@@ -45,7 +65,7 @@ def test_shared_loading_control_does_not_admit_other_or_malformed_fields(tmp_pat
         server._coerce_runtime_hints({'workflowAutoPlan': receipt})
 
 
-@pytest.mark.parametrize('mode', ['cpu', 'cuda'])
+@pytest.mark.parametrize('mode', ['cpu', 'cuda', 'ssd_stream'])
 def test_consumed_loading_mode_is_captured_in_output_ancestry(mode):
     loader = {'module': 'modules.ModularDiffusers', 'action': 'ModelsLoader',
               'params': {'weight_loading_mode': {'value': 'cpu'}}}

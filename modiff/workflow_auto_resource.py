@@ -22,6 +22,7 @@ from modiff.auto_resource import READY_PROOF_STATUSES, build_auto_resource_plan,
 from modiff.artifact_weight_memory import native_cpu_parameter_phase, native_cpu_parameter_residency, native_disk_lora_loading_floor, native_gpu_parameter_residency, native_primary_cuda_parameter_owner, native_parameter_conversion_reserve
 from modiff.native_image_auto_placement import declared_image_owner
 from modiff.native_weight_loading import declared_cuda_weight_loaders, native_disk_lora_conversion_reserve, normalize_weight_loading_mode
+from modiff.safetensors_streaming import SSD_STREAM, streaming_weight_budget, supports_streaming_profile
 from modiff.runtime_environment import diffusers_parallel_loading_enabled
 from modiff.diffusers_profiles import resolve_execution_profiles_for_loader
 from modiff.studio_execution_specs import studio_capability_definition
@@ -53,7 +54,7 @@ def _declared_image_owner(profile, repository, mode):
 
 
 def _native_weight_loading_candidates(candidates, *, node, profile, repository, mode, form, hardware):
-    """Declare CUDA cold loading only through an existing ordinary control.
+    """Declare reviewed native weight placement through the ordinary control.
 
     Legacy graphs have no such control and remain CPU loading. The first CUDA
     contract excludes mutation targets, quantization and external components.
@@ -63,16 +64,45 @@ def _native_weight_loading_candidates(candidates, *, node, profile, repository, 
         return candidates
     selected = normalize_weight_loading_mode(form["weight_loading_mode"])
     result = []
-    unsupported = any(
-        param.get("sourceId") or param.get("value") is not None
+    bindings = {field: param
         for field in ("lora_list", "unet", "vae", "controlnet", "quant_config")
         if (param := node["params"].get(field))
+    }
+    unsupported = any(param.get("sourceId") or param.get("value") is not None for param in bindings.values())
+    streaming_unsupported = any(param.get("sourceId") or (
+        param.get("value") is not None and (field != "lora_list" or param["value"] != [])
+    ) for field, param in bindings.items())
+    accelerator = hardware.get("accelerator", {})
+    streaming_device = (
+        accelerator.get("backend") == "cuda" and accelerator.get("memoryKind") == "dedicated"
+        or hardware.get("platform") == "linux" and accelerator.get("backend") == "rocm"
+        and accelerator.get("memoryKind") in {"dedicated", "shared"}
     )
     for candidate in candidates:
         cpu = {**candidate, "weight_loading_mode": "cpu"}
-        if not control.get("sourceId") or selected == "cpu":
+        if selected != SSD_STREAM and (not control.get("sourceId") or selected == "cpu"):
             result.append(cpu)
         bound, reserve = candidate.get("parameterStorageLowerBound"), candidate.get("parameterConversionReserve")
+        if (not streaming_unsupported and candidate.get("offloadMode") == "group_disk"
+                and candidate.get("artifactFormat") == "native"
+                and candidate.get("quantizationMode", "none") == candidate.get("loadedQuantization", "none") == "none"
+                and not candidate.get("optimizationQualification")
+                and supports_streaming_profile(profile.model_type, repository, form.get("workflowId"), form["dtype"])
+                and streaming_device
+                and str(form["device"]) in {"cuda", "cuda:0"}
+                and 0 < form.get("width", 0) <= 1024 and 0 < form.get("height", 0) <= 1024
+                and form.get("batchSize", 1) == 1
+                and (not control.get("sourceId") or selected == SSD_STREAM)):
+            budget = streaming_weight_budget(reserve)
+            if budget:
+                result.append({
+                    **candidate, "id": candidate["id"] + "-ssd-stream",
+                    "placementAlternativeOf": candidate.get("placementAlternativeOf") or candidate["id"],
+                    "weight_loading_mode": SSD_STREAM,
+                    "requirements": {**budget, "diskFreeBytes": 0},
+                })
+        if selected == SSD_STREAM:
+            continue
         if (unsupported or candidate.get("offloadMode") != "group_disk"
                 or candidate.get("artifactFormat") != "native"
                 or candidate.get("quantizationMode", "none") != "none"
@@ -895,6 +925,7 @@ def _build_workflow_auto_plan(
                 form['revision'] = values['revision']
             if "weight_loading_mode" in nodes[loader_id]["params"]:
                 form["weight_loading_mode"] = normalize_weight_loading_mode(values["weight_loading_mode"])
+                form["workflowId"] = values.get("workflow_id")
             device = str(form["device"])
             kind = hardware.get("accelerator", {}).get("kind")
             if device != "cpu" and kind and (device.split(":", 1)[0] != kind or (":" in device and device.rsplit(":", 1)[1] != "0")):
@@ -976,6 +1007,9 @@ def _build_workflow_auto_plan(
                 candidate.get("weight_loading_mode", "cpu") != form.get("weight_loading_mode", "cpu"),
             ))
             if not candidates:
+                if form.get("weight_loading_mode") == SSD_STREAM:
+                    raise ValueError("The exact checkpoint or workload has no reviewed SSD-streaming recipe. "
+                                     "Choose another weight-loading mode or restore supported settings.")
                 batch_reason = (
                     f"No accepted recipe covers batchSize={form['batchSize']:g}. "
                     "Use a covered batch size or select Expert."
@@ -1043,7 +1077,7 @@ def _build_workflow_auto_plan(
                 offload_mode=candidate.get("offloadMode", "none"), device=form["device"], dtype=form["dtype"],
             ) if (candidate.get('quantizationMode', 'none') == 'none'
                   and candidate.get('loadedQuantization', 'none') == 'none'
-                  and native_image) else {}
+                  and native_image and candidate.get("weight_loading_mode") != SSD_STREAM) else {}
             parameter_phase = native_cpu_parameter_phase(
                 offload_mode=candidate.get("offloadMode", "none"), device=form["device"],
             ) if parameter_residency else None
@@ -1452,10 +1486,12 @@ def _build_workflow_auto_plan(
     managed_ids = {owner['nodeId'] for owner in planned
                    if nodes[owner['nodeId']]['module'] == 'modules.ModularDiffusers'
                    and nodes[owner['nodeId']]['action'] in {'ModelsLoader', 'AutoModelLoader'}}
+    streamed_owners = {owner['nodeId'] for owner in planned if owner['settings'].get('weight_loading_mode') == SSD_STREAM}
     managed_intervals = [owner for owner in schedule['owners'] if owner['ownerId'] in managed_ids]
     mixed_pairs = [(first, second) for first in managed_intervals for second in managed_intervals
                    if nodes[first['ownerId']]['action'] == 'ModelsLoader'
-                   and first['offloadMode'] == 'model_cpu' and second['offloadMode'] == 'none']
+                   and first['offloadMode'] == 'model_cpu' and (second['offloadMode'] == 'none'
+                       or second['ownerId'] in streamed_owners)]
     mixed_overlap = any(first['first'] <= second['last'] and second['first'] <= first['last']
                         for first, second in mixed_pairs)
     mixed_release_required = bool(mixed_pairs) and not mixed_overlap and not custom_nodes and bool(schedule['releases'])
@@ -1484,6 +1520,16 @@ def _build_workflow_auto_plan(
         total = {**total, **schedule["peak"]}
         total['diskFreeBytes'] = retained_total['diskFreeBytes']
         reused = []  # The scheduled executor starts from an empty model cache.
+    if hardware.get("platform") == "windows" and streamed_owners:
+        # Keep a conservative commit demand across owners even when physical
+        # storage is scheduled or cached. Streaming schedules still read SSD
+        # mappings every time the model runs.
+        total["systemCommitBytes"] = sum(
+            owner["requirements"].get("systemCommitBytes", owner["requirements"]["systemRamBytes"])
+            for owner in planned
+        ) + sum(adapter["systemRamBytes"] * len(adapter["loaderIds"]) for adapter in adapters)
+        retained_total["systemCommitBytes"] = total["systemCommitBytes"]
+        available["systemCommitBytes"] = system.get("pageFileAvailableBytes")
     memory_required = (schedule["sharedPeakBytes"] if shared and use_schedule else total["systemRamBytes"] + (total["vramBytes"] if shared else 0))
     demand = {**total, "systemRamBytes": memory_required}
     memory_issues = [key for key, required in demand.items()
@@ -1538,7 +1584,8 @@ def _build_workflow_auto_plan(
     if requires_cache_preparation:
         total, demand, reused = cold_total, cold_demand, []
         memory_issues = []
-    labels = {"systemRamBytes": "System RAM", "vramBytes": "Accelerator memory", "diskFreeBytes": "Offload disk space"}
+    labels = {"systemRamBytes": "System RAM", "vramBytes": "Accelerator memory", "diskFreeBytes": "Offload disk space",
+              "systemCommitBytes": "Windows commit"}
     def format_bytes(value):
         return f"{int(value)} bytes" if value < 1024 ** 2 else f"{value / 1024 ** 3:.2f} GiB"
     for key in memory_issues:
@@ -1689,7 +1736,7 @@ def build_workflow_auto_plan(graph, **kwargs):
             if result['canAutoRun']:
                 return result
             if (diagnostic.get('resourceOnly') and diagnostic.get('mayExplore')
-                    and set(diagnostic['resourceIssueKeys']) <= {'systemRamBytes', 'vramBytes'}
+                    and set(diagnostic['resourceIssueKeys']) <= {'systemRamBytes', 'vramBytes', 'systemCommitBytes'}
                     and score(result, diagnostic) < score(best, best_state)):
                 best, best_state, best_choices = result, diagnostic, proposal
         current, state, choices = best, best_state, best_choices

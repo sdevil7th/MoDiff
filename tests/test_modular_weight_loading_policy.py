@@ -30,7 +30,7 @@ def test_native_descriptor_exposes_explicit_advanced_loading_mode_with_cpu_defau
     value = ast.literal_eval(field)
     assert value['type'] == 'string'
     assert value['default'] == 'cpu'
-    assert value['options'] == ['cpu', 'cuda']
+    assert value['options'] == ['cpu', 'cuda', 'ssd_stream']
     assert value['fieldOptions']['controlTier'] == 'advanced'
 
 
@@ -55,7 +55,7 @@ def test_loading_policy_rejects_undeclared_values(value):
         normalize_modular_runtime_policy(weight_loading_mode=value)
 
 
-@pytest.mark.parametrize('mode', ['cpu', 'cuda'])
+@pytest.mark.parametrize('mode', ['cpu', 'cuda', 'ssd_stream'])
 def test_actual_consumed_loader_input_projection_records_loading_mode_separately_from_sparse_policy(mode):
     from modiff.execution_input_provenance import capture_generation_inputs
 

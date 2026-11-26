@@ -21,8 +21,10 @@ CUDA_WEIGHT_LOADING_COMPONENTS = frozenset(REVIEWED_CUDA_WEIGHT_LOADER_COMPONENT
 
 
 def normalize_weight_loading_mode(value="cpu") -> str:
-    if type(value) is not str or value not in {"cpu", "cuda"}:
-        raise ValueError("Weight loading mode must be cpu or cuda.")
+    from modiff.safetensors_streaming import SSD_STREAM
+
+    if type(value) is not str or value not in {"cpu", "cuda", SSD_STREAM}:
+        raise ValueError("Weight loading mode must be cpu, cuda, or ssd_stream.")
     return value
 
 

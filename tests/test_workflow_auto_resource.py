@@ -1310,6 +1310,62 @@ def parameter_residency_candidate(candidate, hardware):
     return g
 
 
+@pytest.mark.parametrize('commit_gib,expected_mode', [(20, 'ssd_stream'), (5, None)])
+def test_windows_ssd_streaming_is_an_exact_auto_fallback(setup, monkeypatch, commit_gib, expected_mode):
+    plan, candidate, hardware, _ = setup
+    gib = 1024**3
+    profile = SimpleNamespace(id='test:qwen-stream', model_type='QwenImageModularPipeline',
+        modes=('text_to_image',), loader_module='modules.ModularDiffusers', loader_action='ModelsLoader',
+        execution_path='modular-diffusers')
+    monkeypatch.setattr(planner, 'resolve_execution_profiles_for_loader',
+        lambda module, action, values: ((profile,), None) if action == 'ModelsLoader' else ((), None))
+    g = parameter_residency_candidate(candidate, hardware)
+    repo = 'Qwen/Qwen-Image'
+    candidate.update(executionProfileId=profile.id, modelType=profile.model_type, modelRepo=repo,
+        offloadMode='group_disk', artifactRevision='a' * 40, artifactFormat='native',
+        requirements={'systemRamBytes': 38 * gib, 'vramBytes': 6 * gib, 'diskFreeBytes': 0})
+    hardware.update(platform='windows')
+    hardware['accelerator'].update(backend='cuda')
+    hardware['offloadDisk']['freeBytes'] = 100 * gib
+    hardware['systemMemory']['pageFileAvailableBytes'] = commit_gib * gib
+    g['nodes']['load']['params'].update(model_type={'value': profile.model_type}, workflow_id={'value': 'text2image'},
+        revision={'value': 'a' * 40}, repo_id={'value': {'source': 'hub', 'value': repo}},
+        offload_mode={'value': 'group_disk'}, weight_loading_mode={'value': 'cpu'})
+    layouts = {'text_encoder': ('transformers', 'Qwen2_5_VLForConditionalGeneration'),
+               'transformer': ('diffusers', 'QwenImageTransformer2DModel'),
+               'vae': ('diffusers', 'AutoencoderKLQwenImage')}
+
+    make_census = same_dtype_conversion_reserve
+
+    def exact_census(bound):
+        census = make_census(bound)
+        for name, (library, cls) in layouts.items():
+            record = census['components'][name]
+            record.update(loaderLibrary=library, loaderClass=cls,
+                          largestSourceShardBytes=min(4 * gib, record['requestedPayloadBytes']))
+        return census
+
+    monkeypatch.setattr(__import__(__name__), 'same_dtype_conversion_reserve', exact_census)
+    before = deepcopy(g)
+    result = plan(g)
+    assert g == before
+    if expected_mode is None:
+        assert not result['canAutoRun'] and result['patches'] == []
+        g['nodes']['load']['params']['weight_loading_mode']['value'] = 'ssd_stream'
+        limited = plan(g)
+        assert not limited['canAutoRun']
+        assert 'Windows commit' in ' '.join(limited['issues'])
+    else:
+        assert result['canAutoRun'], result['issues']
+        assert result['loaders'][0]['settings']['weight_loading_mode'] == expected_mode
+        assert result['requirements']['systemCommitBytes'] > result['requirements']['systemRamBytes']
+        assert result['patches'] == [{'nodeId': 'load', 'field': 'weight_loading_mode', 'value': expected_mode}]
+        hardware['systemMemory'].update(totalBytes=80 * gib, availableBytes=60 * gib)
+        ordinary = plan(g)
+        assert ordinary['canAutoRun'] and ordinary['patches'] == []
+        assert ordinary['loaders'][0]['settings']['weight_loading_mode'] == 'cpu'
+
+
 @pytest.mark.parametrize('targets,unknown', [
     (('transformer', 'text_encoder'), None), ((), 'targets'),
     (('missing',), 'headers'), (('transformer',), 'quantization'),

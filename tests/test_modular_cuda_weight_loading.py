@@ -100,7 +100,7 @@ def loader(tmp_path, monkeypatch):
     tree = ast.parse(SOURCE.read_text(encoding='utf-8'))
     nodes = [node for node in tree.body if isinstance(node, (ast.FunctionDef, ast.ClassDef))
              and (node.name.startswith('_cuda_weight_loading') or node.name in {
-                 '_prepare_cuda_weight_loading', '_validate_cuda_weight_loading_specs',
+                 '_prepare_cuda_weight_loading', '_reviewed_weight_loading_census', '_validate_cuda_weight_loading_specs',
                  '_assert_cuda_weight_loading_capacity', 'load_components_strict',
                  'component_load_kwargs_for', 'RequiredComponentLoadError', '_reject_duplicate_pipeline_index_keys',
                  '_reject_nonfinite_pipeline_index_number', '_validate_reviewed_json_shape'})]

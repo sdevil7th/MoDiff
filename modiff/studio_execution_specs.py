@@ -19709,6 +19709,8 @@ def _execution_spec_role_params(
                                    if choice != 'WanTI2VImageToVideoPipeline']
     if node_key == "modules.HuggingFaceTransformers.LoadImageTextToTextModel":
         _omit_unbound_recipe_fields(public, node_key, params, ("quantization_mode",))
+    if node_key in {"modules.HuggingFaceTransformers.LoadTextGenerationModel", "modules.ModularDiffusers.AutoModelLoader"}:
+        _omit_unbound_recipe_fields(public, node_key, params, ("weight_loading_mode",))
     if node_key == "modules.HuggingFaceTransformers.GenerateImageVideoText":
         from modules.HuggingFaceTransformers.main import PROMPT_ENHANCEMENT_RECIPE_FIELDS
         # This output is an observed-cache diagnostic, never an execution-role
@@ -19793,6 +19795,11 @@ def _execution_spec_role_params(
         # Storage choices are opt-in metadata of exact new recipes. Adding
         # this loader control must not rewrite existing immutable Blocks.
         _omit_unbound_recipe_fields(public, node_key, params, ("weight_format",))
+        if "weight_loading_mode" in params:
+            # Streaming is a runtime placement choice. Existing fixed recipes
+            # retain the selector contract under which they were registered.
+            selector = params["weight_loading_mode"]
+            selector["options"] = [option for option in selector["options"] if option != "ssd_stream"]
     node_type = _MODULAR_NODE_TYPES.get(node_key)
     if public["executionPath"] != "modular-diffusers" or node_type is None:
         return params

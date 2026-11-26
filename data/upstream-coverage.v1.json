@@ -2895,7 +2895,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:a323213eae55b54593062990eb1fefccfa2842f2b4e1bf9de686edebfdabaf63",
+  "contentHash": "sha256:c6efc7b975a93f26550427408646b2c47916647953e611ccf73428e929f8bc18",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -12847,7 +12847,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "7318d10b12e549aae45c55fdba77200b2c7b837cff3a41dfe768754df528a15f",
+    "templateBundleSha256": "71c2a6ed27d3f2d1b66a865eda485b0c250420e0466b3fccab86a6fd7847b969",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -13037,7 +13037,7 @@
             "PredictDepth"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "8133b52efa4d93f58900c38a98e914d240975ce17ddee784a26074ae9d85e8ee"
+          "sha256": "9cd907f146ba1881396902e9477013c04f4a13cde772f82838a4f3c66de2d82f"
         }
       ],
       "nodeKeys": [
@@ -13120,7 +13120,7 @@
             "LoadTextGenerationModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "8133b52efa4d93f58900c38a98e914d240975ce17ddee784a26074ae9d85e8ee"
+          "sha256": "9cd907f146ba1881396902e9477013c04f4a13cde772f82838a4f3c66de2d82f"
         }
       ],
       "nodeKeys": [
@@ -13201,7 +13201,7 @@
             "LoadImageTextToTextModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "8133b52efa4d93f58900c38a98e914d240975ce17ddee784a26074ae9d85e8ee"
+          "sha256": "9cd907f146ba1881396902e9477013c04f4a13cde772f82838a4f3c66de2d82f"
         }
       ],
       "nodeKeys": [
@@ -13303,7 +13303,7 @@
             "LoadAnyToAnyModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "8133b52efa4d93f58900c38a98e914d240975ce17ddee784a26074ae9d85e8ee"
+          "sha256": "9cd907f146ba1881396902e9477013c04f4a13cde772f82838a4f3c66de2d82f"
         }
       ],
       "nodeKeys": [

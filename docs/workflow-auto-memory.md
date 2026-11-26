@@ -313,6 +313,43 @@ ownership, disk placeholders and logical tensor sizes cannot establish that
 exception. A changed loading mode changes ownership identity; release schedules
 and dispatch-time free-memory checks retain the full cold requirements.
 
+### Stream weights from SSD
+
+Auto can offer `weight_loading_mode=ssd_stream` when an ordinary native
+placement lacks headroom and a reviewed streaming placement fits. Expert users
+can select **Stream weights from SSD** in Model Setup and enable **SSD group
+offload**. A workflow without the existing loading control keeps its saved
+behavior. Fixed registered Blocks retain their original definitions. The live
+client can show the choice on a saved control that maps to a current loader.
+
+The loader verifies the exact installed Hub snapshot and the safetensors index.
+It builds an empty model and uses Hugging Face Accelerate to read weights from the
+original shards as layers execute. The large components avoid a full CPU copy
+and a second set of offload files. Small components with separate entry points,
+such as the image decoder, keep their declared resident placement. Reads can
+make sampling substantially slower than the ordinary placement.
+
+Auto can select streaming for eligible native dense BF16 text-to-image recipes
+for Qwen Image, Qwen Image 2512 and FLUX.2 Klein 4B. It checks the
+output size and batch against the streaming envelope without changing the
+requested workload. The standalone denoiser and
+text generation loaders can also use the reader for exact reviewed artifacts.
+Support follows the installed component class and checkpoint layout. Adapter
+mutation, converted or quantized weights, local or custom pipelines, and
+unreviewed video, audio and 3D component sets retain their original placements.
+The reviewed Z-Image Turbo checkpoint stores its transformer in FP32 and uses
+ordinary placement when running in BF16.
+
+The estimate includes the largest streamable shard, resident weights and a
+working reserve. Windows also needs enough available system commit for two
+shard mappings. On Linux with a shared ROCm memory pool, the host check reserves
+both the host and accelerator working sets. Auto checks have separate RAM,
+accelerator and Windows commit requirements. Execution rechecks current memory
+and source integrity. Cache reuse preserves the placement identity and still
+requires enough headroom for subsequent SSD reads.
+
+Implementation uses the [Accelerate large-model placement APIs](https://huggingface.co/docs/accelerate/package_reference/big_modeling).
+
 Native image disk LoRAs require private reviewed component targets matching the
 installed pipeline's official `_lora_loadable_modules`. The loader offloads other
 components first, loads all adapter targets last, calls the official LoRA loading,

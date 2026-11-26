@@ -66,7 +66,7 @@ def test_opaque_string_metadata_is_rejected_without_executing_its_methods(census
     reserve, bound = inspect()
     reserve["components"]["transformer"]["loaderClass"] = OpaqueString("ZImageTransformer2DModel")
     assert contract.declared_cuda_weight_loaders(reserve, bound) is False
-    with pytest.raises(ValueError, match="must be cpu or cuda"):
+    with pytest.raises(ValueError, match="must be cpu, cuda, or ssd_stream"):
         contract.normalize_weight_loading_mode(OpaqueString("cuda"))
 
 
@@ -136,7 +136,7 @@ def test_a_declared_class_is_separate_from_full_reserve_identity_validation(cens
     ) == {}
 
 
-@pytest.mark.parametrize("value", ["cpu", "cuda"])
+@pytest.mark.parametrize("value", ["cpu", "cuda", "ssd_stream"])
 def test_only_supported_loading_enum_is_normalized(value):
     assert contract.normalize_weight_loading_mode(value) == value
     assert contract.normalize_weight_loading_mode() == "cpu"
@@ -144,7 +144,7 @@ def test_only_supported_loading_enum_is_normalized(value):
 
 @pytest.mark.parametrize("value", [None, False, True, 0, 1, {}, [], "", "CPU", "CUDA", "auto", " cuda", "cpu "])
 def test_unknown_or_unhashable_loading_mode_has_an_actionable_error(value):
-    with pytest.raises(ValueError, match="must be cpu or cuda"):
+    with pytest.raises(ValueError, match="must be cpu, cuda, or ssd_stream"):
         contract.normalize_weight_loading_mode(value)
 
 

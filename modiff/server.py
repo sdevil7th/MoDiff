@@ -2872,6 +2872,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         capabilities = self._runtime_choice_capabilities()
         normalized_field = str(field_name or "").strip().lower()
         normalized_value = str(value or "").strip()
+        if normalized_field == "weight_loading_mode" and normalized_value == "ssd_stream":
+            if "cuda:0" not in self._available_runtime_devices() or (capabilities.get("dtypes") or {}).get("bfloat16") is False:
+                return False, "SSD streaming requires a primary CUDA or ROCm device with BF16 support."
         if normalized_field == "attention_backend":
             if normalized_value == "auto":
                 return True, None
@@ -2945,7 +2948,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             descriptor = {
                 "schemaVersion": 1,
                 "value": option_value,
-                "label": self._option_label(option, option_value),
+                "label": ("Stream weights from SSD" if field_name == "weight_loading_mode" and option_value == "ssd_stream"
+                          else self._option_label(option, option_value)),
                 "compatibility": "compatible" if compatible else "incompatible",
                 "availability": "installed" if compatible else "unavailable",
                 "installationState": "installed" if compatible else "unavailable",
@@ -2995,6 +2999,12 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 if "optionsSource" not in field_definition:
                     normalized = str(field_name or "").strip().lower()
                     if self._runtime_device_field(field_name):
+                        field_definition["runtimeOptions"] = "choices"
+                    elif normalized == "weight_loading_mode" and any(
+                        option.get("value") == "ssd_stream" for option in option_descriptors if isinstance(option, dict)
+                    ):
+                        # Fixed recipes still ship their authored choices. A
+                        # live loader can offer the additional runtime mode.
                         field_definition["runtimeOptions"] = "choices"
                     elif normalized in {
                         "dtype", "compute_dtype", "bnb_4bit_compute_dtype",

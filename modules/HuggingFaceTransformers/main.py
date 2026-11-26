@@ -310,9 +310,14 @@ def _load_model(
     device_value: Any,
     task: str,
     quantization_value: Any = "none",
+    weight_loading_mode: str = "cpu",
 ):
     import transformers
+    from modiff.native_weight_loading import normalize_weight_loading_mode
 
+    loading_mode = normalize_weight_loading_mode(weight_loading_mode)
+    if loading_mode == "cuda":
+        raise ValueError("Use the Device control for ordinary Transformers placement.")
     selection = _model_selection(selection_value)
     revision = _model_revision(selection, revision_value)
     dtype_name, dtype = _normalized_dtype(dtype_value)
@@ -328,6 +333,17 @@ def _load_model(
     quantization_mode = str(quantization_value or "none").strip().casefold()
     if quantization_mode not in {"none", "bnb_4bit"}:
         raise ValueError("Transformers quantization must be exactly none or bnb_4bit.")
+    if loading_mode == "ssd_stream":
+        from modiff.safetensors_streaming import prepare_standalone_streaming
+
+        if (task != "text-generation" or selection["source"] != "hub"
+                or selection["value"] != SMOLLM2_135M_INSTRUCT_REPO or revision != SMOLLM2_135M_INSTRUCT_REVISION
+                or dtype_name != "bfloat16" or quantization_mode != "none"):
+            raise ValueError("SSD streaming requires a reviewed dense BF16 text-generation checkpoint.")
+        selected_snapshot = prepare_standalone_streaming(
+            selection["value"], revision, None, "transformers", "LlamaForCausalLM", device,
+        )
+        source = str(selected_snapshot)
     quantization_config = None
     image_text_quantization = None
     if quantization_mode == "bnb_4bit":
@@ -405,13 +421,17 @@ def _load_model(
         )
         vision_attention_policy = image_text_vision_attention_policy(
             selection, revision, dtype_name, device, quantization_mode)
-    model = auto_model.from_pretrained(
-        source,
-        **model_kwargs,
-    )
+    if loading_mode == "ssd_stream":
+        from modiff.safetensors_streaming import load_streamed_component
+
+        model = load_streamed_component(
+            selected_snapshot, None, transformers.LlamaForCausalLM, "transformers", dtype, device,
+        )
+    else:
+        model = auto_model.from_pretrained(source, **model_kwargs)
     if task == 'image-video-to-text':
         apply_image_text_vision_attention_policy(model, vision_attention_policy)
-    if quantization_config is None:
+    if quantization_config is None and loading_mode != "ssd_stream":
         model.to(device)
     elif image_text_quantization is not None:
         from modiff.transformers_image_text_resources import validate_image_text_nf4_model
@@ -437,6 +457,7 @@ def _load_model(
                 "modelClass": _class_name(model),
                 "modelType": model_type,
                 "architectures": architectures,
+                **({"weightLoadingMode": loading_mode} if loading_mode == "ssd_stream" else {}),
                 "quantization": (
                     {
                         "mode": "bnb_4bit",
@@ -1298,8 +1319,25 @@ class LoadTextGenerationModel(NodeBase):
             "options": ["none", "bnb_4bit"],
             "default": "none",
         },
+        "weight_loading_mode": {
+            "label": "Weight Loading", "type": "string", "default": "cpu",
+            "options": ["cpu", "ssd_stream"], "fieldOptions": {"controlTier": "advanced"},
+            "description": "Stream supported exact BF16 text models directly from SSD.",
+        },
         "receipt": {"label": "Model Receipt", "display": "output", "type": "object"},
     }
+
+    def _cache_params_equal(self, previous, current):
+        if not super()._cache_params_equal(previous, current):
+            return False
+        if current.get("weight_loading_mode") == "ssd_stream":
+            from modiff.safetensors_streaming import prepare_standalone_streaming
+
+            selection = _model_selection(current["model_id"])
+            revision = _model_revision(selection, current.get("revision"))
+            prepare_standalone_streaming(selection["value"], revision, None, "transformers", "LlamaForCausalLM",
+                                         _normalized_device(current["device"]))
+        return True
 
     def execute(self, **kwargs):
         if kwargs.get("pipeline_class", "AutoModelForCausalLM") != "AutoModelForCausalLM":
@@ -1311,6 +1349,7 @@ class LoadTextGenerationModel(NodeBase):
             device_value=kwargs.get("device"),
             task="text-generation",
             quantization_value=kwargs.get("quantization_mode"),
+            **({"weight_loading_mode": kwargs["weight_loading_mode"]} if "weight_loading_mode" in kwargs else {}),
         )
         return {"model": model, "receipt": receipt}
 

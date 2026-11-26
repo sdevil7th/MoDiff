@@ -41,8 +41,8 @@ def normalize_modular_runtime_policy(
     from modiff.native_weight_loading import normalize_weight_loading_mode
 
     # Missing/default CPU loading keeps historical ownership identities.
-    if normalize_weight_loading_mode(weight_loading_mode) == 'cuda':
-        policy['weight_loading_mode'] = 'cuda'
+    if normalize_weight_loading_mode(weight_loading_mode) != 'cpu':
+        policy['weight_loading_mode'] = weight_loading_mode
     return policy
 
 

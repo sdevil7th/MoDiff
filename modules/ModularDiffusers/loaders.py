@@ -1155,6 +1155,8 @@ def _component_runtime_policy(name, policy):
 
     if policy.get('weight_loading_mode') == 'cuda' and name in CUDA_WEIGHT_LOADING_COMPONENTS:
         result['weight_loading_mode'] = 'cuda'
+    if policy.get('weight_loading_mode') == 'ssd_stream':
+        result['weight_loading_mode'] = 'ssd_stream'
     if name == 'transformer' and 'weight_format_identity' in policy:
         result['weight_format_identity'] = policy['weight_format_identity']
     if name == 'transformer' and policy.get('weight_format_execution_mode') is not None:
@@ -1409,6 +1411,7 @@ def reusable_standalone_component(
     offload_mode,
     device,
     node_id=None,
+    weight_loading_mode='cpu',
 ):
     """Return a compatible resident standalone model, if one already exists."""
 
@@ -1417,6 +1420,8 @@ def reusable_standalone_component(
     for component_id in sorted(manager._lookup_ids(name=name, load_id=load_id)):
         component = manager.get_one(component_id=component_id)
         if not isinstance(component, torch.nn.Module):
+            continue
+        if bool(getattr(component, '_modiff_ssd_streamed', False)) != (weight_loading_mode == 'ssd_stream'):
             continue
         if component_reuse_compatible(
             component,
@@ -1509,7 +1514,7 @@ def _cuda_weight_loading_controls(*, model_type, offload_mode, device, dtype, lo
         raise ValueError('CUDA weight loading requires built-in dense BF16 group_disk on cuda:0, without adapters, quantization, variants or component overrides.')
 
 
-def _cuda_weight_loading_census(snapshot, repository, revision):
+def _reviewed_weight_loading_census(snapshot, repository, revision, *, policy):
     from modiff.auto_resource import artifact_revision_cache_status
     from modiff.artifact_weight_memory import artifact_parameter_conversion_reserve, artifact_parameter_lower_bound
     from utils.huggingface import get_local_models
@@ -1525,14 +1530,63 @@ def _cuda_weight_loading_census(snapshot, repository, revision):
         record.get('complete') is True and Path(record.get('path', '')).absolute() == snapshot
         for record in status.get('snapshots', ())
     ):
-        raise ValueError('CUDA weight loading requires the complete exact cached primary snapshot.')
+        raise ValueError(f'{policy} weight loading requires the complete exact cached primary snapshot.')
     bound = artifact_parameter_lower_bound(status, revision, 'bfloat16')
     reserve = artifact_parameter_conversion_reserve(status, revision, 'bfloat16')
+    return bound, reserve
+
+
+def _cuda_weight_loading_census(snapshot, repository, revision):
     from modiff.native_weight_loading import declared_cuda_weight_loaders
 
+    bound, reserve = _reviewed_weight_loading_census(snapshot, repository, revision, policy='CUDA')
     if not declared_cuda_weight_loaders(reserve, bound):
         raise ValueError('CUDA weight loading requires reviewed uniform component classes and validated Safetensors headers.')
     return bound, reserve
+
+
+def _prepare_ssd_weight_loading(model_type, repository, revision, index_filename, workflow_id, controls):
+    from modiff.safetensors_streaming import (
+        STREAMABLE_CLASSES, require_streaming_capacity, streaming_weight_budget, supports_streaming_profile,
+    )
+
+    device = controls.get('device')
+    dtype = str(controls.get('dtype')).removeprefix('torch.')
+    if (not supports_streaming_profile(model_type, repository, workflow_id, dtype)
+            or controls.get('offload_mode') != OFFLOAD_MODE_GROUP_DISK
+            or controls.get('auto_offload', True) is not True
+            or controls.get('weight_format', 'native') != 'native'
+            or controls.get('lora_list') not in (None, [])
+            or any(controls.get(key) is not None for key in ('quant_config', 'unet', 'vae', 'controlnet'))):
+        raise ValueError('SSD streaming requires a reviewed native BF16 checkpoint, SSD group offload, and no component overrides or adapters.')
+    snapshot = exact_cached_snapshot_path(repository, revision, index_filename).absolute()
+    _, census = _reviewed_weight_loading_census(snapshot, repository, revision, policy='SSD-streamed')
+    budget = streaming_weight_budget(census)
+    if budget is None:
+        raise ValueError('SSD streaming requires complete, supported safetensors component metadata.')
+    require_streaming_capacity(budget, device)
+    weighted = census['components']
+    streamed = {name for name, item in weighted.items()
+                if (item['loaderLibrary'], item['loaderClass']) in STREAMABLE_CLASSES}
+    return {'snapshot': snapshot, 'repository': repository, 'revision': revision, 'device': device,
+            'weighted': weighted, 'streamed': streamed, 'resident': set(weighted) - streamed, 'budget': budget}
+
+
+def _validate_ssd_weight_loading_specs(pipeline, context):
+    if getattr(pipeline._components_manager, '_auto_offload_enabled', False):
+        raise ValueError('Release the active global CPU offload owner before loading streamed components.')
+    actual = {name for name, spec in pipeline._component_specs.items()
+              if isinstance(getattr(spec, 'type_hint', None), type) and issubclass(spec.type_hint, torch.nn.Module)}
+    if actual != set(context['weighted']):
+        raise ValueError('SSD-streaming component inventory differs from the installed checkpoint.')
+    for name, item in context['weighted'].items():
+        spec = pipeline._component_specs[name]
+        official = getattr(importlib.import_module(item['loaderLibrary']), item['loaderClass'])
+        if (spec.type_hint is not official or spec.pretrained_model_name_or_path != context['repository']
+                or spec.revision != context['revision'] or spec.subfolder != name
+                or spec.default_creation_method != 'from_pretrained' or spec.variant is not None
+                or spec.config is not None):
+            raise ValueError(f'SSD streaming cannot preserve the native component declaration for {name}.')
 
 
 def _prepare_cuda_weight_loading(*, model_type, repository, revision, index_filename):
@@ -1717,6 +1771,7 @@ def load_components_strict(
     deferred_group_offload_components=(),
     cuda_weight_loading=None,
     weight_format_binding=None,
+    ssd_weight_loading=None,
 ):
     if names is None:
         names = [
@@ -1735,7 +1790,8 @@ def load_components_strict(
     if incremental_group_offload:
         resident = set(incremental_group_offload.get('resident_components', ()))
         for name in names:
-            if name in GROUP_OFFLOAD_COMPONENTS and name in pipeline._component_specs and name not in resident:
+            if (name in GROUP_OFFLOAD_COMPONENTS and name in pipeline._component_specs and name not in resident
+                    and name not in (ssd_weight_loading or {}).get('streamed', ())):
                 declared_type = getattr(pipeline._component_specs[name], 'type_hint', None)
                 if getattr(declared_type, '_supports_group_offloading', True) is False:
                     raise RuntimeError(f'{name} does not support group offloading in its official library. '
@@ -1769,6 +1825,8 @@ def load_components_strict(
                 or not set(cuda_weight_loading['bound']['components']) <= set(components_to_load)):
             raise ValueError('CUDA weight loading requires fresh unmodified components and immediate disk hooks.')
         _validate_cuda_weight_loading_specs(pipeline, cuda_weight_loading)
+    if ssd_weight_loading is not None:
+        _validate_ssd_weight_loading_specs(pipeline, ssd_weight_loading)
     components_to_load = ([name for name in components_to_load if name not in deferred]
                           + [name for name in components_to_load if name in deferred])
     unknown_names = [name for name in names if name not in pipeline._component_specs]
@@ -1843,13 +1901,23 @@ def load_components_strict(
                             "load_id": pipeline._component_specs[source_name].load_id,
                         }
                 try:
-                    component = spec.load(**load_kwargs)
+                    if name in (ssd_weight_loading or {}).get('streamed', ()):
+                        from modiff.safetensors_streaming import load_streamed_component
+
+                        item = ssd_weight_loading['weighted'][name]
+                        component = load_streamed_component(
+                            ssd_weight_loading['snapshot'], name, spec.type_hint, item['loaderLibrary'],
+                            load_kwargs['torch_dtype'], ssd_weight_loading['device'],
+                        )
+                        component._diffusers_load_id = spec.load_id
+                    else:
+                        component = spec.load(**load_kwargs)
                 except Exception as initial_error:
                     # An ordinary online load gets the first opportunity to fetch
                     # its own config. Retry once only when that attempt establishes
                     # a NEW exact-pin Hub negative marker; transport/access/parse
                     # failures with unknown or present config retain normal errors.
-                    if staged or "config" in load_kwargs or config_cache_state != "unknown":
+                    if staged or ssd_weight_loading is not None or "config" in load_kwargs or config_cache_state != "unknown":
                         raise
                     cache_state_after = _processor_model_config_cache_state(spec, model_id=model_id, load_kwargs=load_kwargs)
                     if cache_state_after != "absent":
@@ -1871,7 +1939,7 @@ def load_components_strict(
                         "traceback": traceback.format_exc(),
                     }
                     component = spec.load(**load_kwargs)
-                if text_nf4 is not None:
+                if text_nf4 is not None or ssd_weight_loading is not None:
                     created[name] = component
                 if weight_format_binding is not None and name == "transformer":
                     weight_format_binding.assert_current()
@@ -1925,7 +1993,8 @@ def load_components_strict(
             loaded_components[name] = component
             diagnostics.setdefault("components_loaded", []).append(name)
 
-            if incremental_group_offload and name in GROUP_OFFLOAD_COMPONENTS and name not in deferred:
+            if (incremental_group_offload and name in GROUP_OFFLOAD_COMPONENTS and name not in deferred
+                    and name not in (ssd_weight_loading or {}).get('streamed', ())):
                 result = apply_component_group_offload(
                     pipeline,
                     component_names=[name],
@@ -1973,8 +2042,19 @@ def load_components_strict(
                 diagnostics['text_encoder_cleanup_failure'] = str(cleanup_error)
                 _clear_nf4_failure_tracebacks(cleanup_error)
                 logger.exception('Failed fresh parent NF4 owner cleanup')
+        if ssd_weight_loading is not None and created:
+            diagnostics['ssd_streaming_loading_failure'] = traceback.format_exc()
+            try:
+                pipeline.unload_components(names=[name for name, model in created.items()
+                                                 if getattr(pipeline, name, None) is model])
+            except Exception:
+                logger.exception('Failed to release a partial SSD streaming owner')
         raise
     finally:
+        if ssd_weight_loading is not None and not succeeded:
+            component = None
+            loaded_components.clear()
+            created.clear()
         if text_nf4 is not None:
             # Even a caller retaining RequiredComponentLoadError must not keep
             # the pending CUDA owner through this still-visible frame.
@@ -2476,6 +2556,11 @@ class AutoModelLoader(NodeBase):
         "device": {"label": "Device", "type": "string", "value": DEFAULT_DEVICE, "options": DEVICE_LIST},
         "auto_offload": {"label": "Enable Auto Offload", "type": "boolean", "value": True},
         "offload_mode": offload_mode_param(),
+        "weight_loading_mode": {
+            "label": "Weight Loading", "type": "string", "default": "cpu",
+            "options": ["cpu", "ssd_stream"], "fieldOptions": {"controlTier": "advanced"},
+            "description": "Stream a reviewed dense BF16 denoiser with SSD group offload.",
+        },
         "model": {
             "label": "Model",
             "display": "output",
@@ -2504,6 +2589,11 @@ class AutoModelLoader(NodeBase):
             expected_issuer=self._standalone_component_issuer,
             expected_reviewed_identity=current.get("_reviewed_component_identity"),
         )
+        if current.get('weight_loading_mode') == 'ssd_stream':
+            from modiff.safetensors_streaming import prepare_standalone_streaming
+
+            _, repository, revision, subfolder, class_name, _ = current['_reviewed_component_identity']
+            prepare_standalone_streaming(repository, revision, subfolder, 'diffusers', class_name, current['device'])
         return True
 
     def __call__(self, **kwargs):
@@ -2574,6 +2664,7 @@ class AutoModelLoader(NodeBase):
         revision=None,
         component_class=None,
         _reviewed_component_identity=None,
+        weight_loading_mode='cpu',
     ):
         logger.debug(f"AutoModelLoader ({self.node_id}) received parameters:")
         logger.debug(f"  model_type: '{model_type}'")
@@ -2618,6 +2709,28 @@ class AutoModelLoader(NodeBase):
             auto_offload=bool(auto_offload),
             device=device,
         )
+        from modiff.native_weight_loading import normalize_weight_loading_mode
+        from modiff.safetensors_streaming import STREAMABLE_CLASSES, STREAMABLE_PROFILES
+
+        weight_loading_mode = normalize_weight_loading_mode(weight_loading_mode)
+        streaming_snapshot = None
+        if weight_loading_mode == 'ssd_stream':
+            from modiff.safetensors_streaming import prepare_standalone_streaming
+
+            if (model_type != 'transformer' or subfolder != 'transformer'
+                    or ('diffusers', class_name) not in STREAMABLE_CLASSES
+                    or _source != 'hub'
+                    or not any(real_model_id in repos for repos in STREAMABLE_PROFILES.values())
+                    or revision != require_catalog_revision(real_model_id)
+                    or dtype != torch.bfloat16 or variant is not None
+                    or normalized_offload_mode != OFFLOAD_MODE_GROUP_DISK
+                    or getattr(components, '_auto_offload_enabled', False)):
+                raise ValueError('Standalone SSD streaming needs a reviewed BF16 denoiser with SSD group offload and no global CPU hooks.')
+            streaming_snapshot = prepare_standalone_streaming(
+                real_model_id, revision, subfolder, 'diffusers', class_name, device,
+            )
+        elif weight_loading_mode != 'cpu':
+            raise ValueError('This component supports ordinary or SSD-streamed weight loading.')
         assert_components_manager_offload_ownership(
             components, mode=normalized_offload_mode, device=device, node_id=self.node_id, configure_global=False,
         )
@@ -2637,6 +2750,7 @@ class AutoModelLoader(NodeBase):
             offload_mode=normalized_offload_mode,
             device=device,
             node_id=self.node_id,
+            weight_loading_mode=weight_loading_mode,
         )
         if reusable and not standalone_component_reuse_is_bound(
             manager_model_id=reusable[0],
@@ -2659,7 +2773,15 @@ class AutoModelLoader(NodeBase):
                 message=f"Loading {model_type} weights from {real_model_id}",
             )
             with self.diffusers_loading_progress():
-                model = spec.load(**component_load_kwargs_for(model_type, {"torch_dtype": dtype}))
+                if streaming_snapshot is not None:
+                    from modiff.safetensors_streaming import load_streamed_component
+
+                    model = load_streamed_component(
+                        streaming_snapshot, subfolder, component_class, 'diffusers', dtype, device,
+                    )
+                    model._diffusers_load_id = spec.load_id
+                else:
+                    model = spec.load(**component_load_kwargs_for(model_type, {"torch_dtype": dtype}))
             # This spec.load branch owns the new component. Stabilize its
             # default ROCm vision attention before placement or publication;
             # resident components above remain owned by their source loader.
@@ -2680,7 +2802,7 @@ class AutoModelLoader(NodeBase):
                 device=device,
                 node_id=self.node_id,
                 scope="modular-auto-model",
-            )
+            ) if streaming_snapshot is None else None
             model._modiff_offload_mode = normalized_offload_mode
             model._modiff_execution_device = str(torch.device(device))
             model._modiff_offload_node_id = (
@@ -2818,7 +2940,7 @@ class ModelsLoader(NodeBase):
             modes=[OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
         ),
         "weight_loading_mode": {
-            "label": "Weight Loading", "type": "string", "default": "cpu", "options": ["cpu", "cuda"],
+            "label": "Weight Loading", "type": "string", "default": "cpu", "options": ["cpu", "cuda", "ssd_stream"],
             "fieldOptions": {"controlTier": "advanced"},
             "description": "Load weights on CPU or CUDA before disk offload. CUDA loading needs room for a complete component and is available only for supported models.",
         },
@@ -2921,6 +3043,8 @@ class ModelsLoader(NodeBase):
                 "reviewed, task-scoped authorization and isolated content-addressed execution path."
             )
         if model_type == CUSTOM_PIPELINE_MODEL_TYPE:
+            if kwargs.get('weight_loading_mode') == 'ssd_stream':
+                raise ValueError('SSD streaming requires a reviewed built-in pipeline.')
             if kwargs.get('weight_format', 'native') != 'native':
                 raise ValueError('Custom pipelines have no reviewed single-file weight format.')
             identity_value = kwargs.get(CUSTOM_PIPELINE_IDENTITY_FIELD)
@@ -2961,6 +3085,18 @@ class ModelsLoader(NodeBase):
             revision=kwargs.get("revision"),
         )
         source, repository, reviewed_revision, index_filename, index_document = reviewed_selection
+        if kwargs.get('weight_loading_mode') == 'ssd_stream':
+            if source != 'hub' or getattr(self, '_selected_component_lora_context', None) is not None:
+                raise ValueError('SSD streaming requires a reviewed Hub checkpoint without mutable component bindings.')
+            streaming = _prepare_ssd_weight_loading(
+                model_type, repository, reviewed_revision, index_filename, kwargs['workflow_id'], kwargs,
+            )
+            kwargs['_reviewed_stream_identity'] = (
+                str(streaming['snapshot']),
+                tuple(sorted((name, item['layoutSha256']) for name, item in streaming['weighted'].items())),
+            )
+        elif kwargs.get('_reviewed_stream_identity') is not None:
+            raise ValueError('SSD-streaming identity requires the corresponding weight-loading mode.')
         from modiff.joint_av_model_adapters import (
             required_joint_av_adapter, prepare_required_model_adapter, require_applied_model_adapter,
             require_owned_model_components,
@@ -3434,6 +3570,7 @@ class ModelsLoader(NodeBase):
         weight_format='native',
         _reviewed_weight_format_identity=None,
         _required_model_adapter_identity=None,
+        _reviewed_stream_identity=None,
     ):
         from modiff.artifact_verification import artifact_verification_for_loader
         verification = getattr(self, '_active_artifact_verification', None)
@@ -3752,6 +3889,27 @@ class ModelsLoader(NodeBase):
         cuda_weight_loading = _prepare_cuda_weight_loading(
             model_type=model_type, repository=real_repo_id, revision=revision, index_filename=reviewed_index_filename,
         ) if weight_loading_mode == 'cuda' else None
+        ssd_weight_loading = None
+        if weight_loading_mode == 'ssd_stream':
+            if _source != 'hub' or weight_variant is not None or component_context is not None or required_adapter is not None:
+                raise ValueError('SSD streaming cannot remap mutable components or alternate weight files.')
+            ssd_weight_loading = _prepare_ssd_weight_loading(
+                model_type, real_repo_id, revision, reviewed_index_filename, reviewed_workflow_id,
+                {**generation_inputs, 'weight_format': weight_format, 'lora_list': lora_list,
+                 'unet': unet, 'vae': vae, 'controlnet': controlnet},
+            )
+            witness = (str(ssd_weight_loading['snapshot']), tuple(sorted(
+                (name, item['layoutSha256']) for name, item in ssd_weight_loading['weighted'].items()
+            )))
+            if _reviewed_stream_identity not in (None, witness):
+                raise ValueError('SSD-streaming checkpoint changed after cache validation.')
+            component_modes = {**component_modes, **dict.fromkeys(ssd_weight_loading['resident'], 'none')}
+            runtime_policy['component_offload_modes'] = component_modes
+            group_entrypoint_kwargs['resident_components'] = tuple(sorted(ssd_weight_loading['resident']))
+            self._loader_diagnostics['weight_loading'] = {
+                'mode': weight_loading_mode, 'budget': ssd_weight_loading['budget'],
+                'streamed_components': sorted(ssd_weight_loading['streamed']),
+            }
         if cuda_weight_loading is not None:
             self._loader_diagnostics['weight_loading'] = {
                 'mode': 'cuda', 'parallel_loading': cuda_weight_loading['parallel'],
@@ -3760,6 +3918,20 @@ class ModelsLoader(NodeBase):
         if component_context is not None and getattr(component_context.placement, 'mode', None) == 'model_cpu':
             from modiff.flux3_lora_placement import assert_manager_placement_scope
             assert_manager_placement_scope(components, self.node_id)
+        if ssd_weight_loading is not None and getattr(components, '_auto_offload_enabled', False):
+            # The manager's global hook would replace Accelerate's layer hooks.
+            # An exclusively owned previous policy can be retired on a switch.
+            configure_components_manager_offload(components, mode=OFFLOAD_MODE_NONE,
+                                                 device=device, node_id=self.node_id)
+        if offload_mode == OFFLOAD_MODE_MODEL_CPU and self.loader is not None:
+            prior_streams = [component_id for component_id in components.collections.get(self.node_id, ())
+                             if getattr(components.components[component_id], '_modiff_ssd_streamed', False)]
+            if prior_streams:
+                assert_components_manager_offload_ownership(
+                    components, mode=offload_mode, device=device, node_id=self.node_id,
+                )
+                for component_id in prior_streams:
+                    components.remove_from_collection(component_id, self.node_id)
         configure_components_manager_offload(components, mode=offload_mode, device=device, node_id=self.node_id)
 
         if custom_binding is not None:
@@ -3936,6 +4108,7 @@ class ModelsLoader(NodeBase):
                 deferred_group_offload_components=deferred_disk_targets,
                 cuda_weight_loading=cuda_weight_loading,
                 weight_format_binding=weight_binding,
+                ssd_weight_loading=ssd_weight_loading,
             )
         self.loader.update_components(**components_to_update)
 
@@ -3962,7 +4135,8 @@ class ModelsLoader(NodeBase):
             try:
                 offload_result = apply_component_group_offload(
                     self.loader,
-                    component_names=[name for name in DEFAULT_GROUP_COMPONENTS if name not in deferred_disk_targets],
+                    component_names=[name for name in DEFAULT_GROUP_COMPONENTS if name not in deferred_disk_targets
+                                     and name not in (ssd_weight_loading or {}).get('streamed', ())],
                     device=device,
                     mode=offload_mode,
                     node_id=self.node_id,
@@ -3971,14 +4145,15 @@ class ModelsLoader(NodeBase):
                     **({"offload_root": component_context.placement.disk_root}
                        if selected_group_placement and component_context.placement.disk_root is not None else {}),
                 )
-                if not offload_result.applied and not deferred_disk_targets:
+                if not offload_result.applied and not deferred_disk_targets and ssd_weight_loading is None:
                     raise RuntimeError("No compatible Modular Diffusers component was available to offload.")
                 self._loader_diagnostics["offload"].update(
                     {
                         "mode": offload_result.mode,
-                        "method": offload_result.method,
+                        "method": "safetensors_stream" if ssd_weight_loading is not None else offload_result.method,
                         "components": sorted(
                             set(self._loader_diagnostics["offload"].get("components", []) + offload_result.components)
+                            | (ssd_weight_loading or {}).get('streamed', set())
                         ),
                         "disk_path": offload_result.disk_path,
                         "detail": offload_result.detail,

@@ -24,7 +24,19 @@ from .modular_utils import (
 
 
 MESSAGE_DURATION = 5000
-components = ComponentsManager()
+
+
+class _MoDiffComponentsManager(ComponentsManager):
+    def remove(self, component_id=None):
+        component = self.components.get(component_id)
+        if getattr(component, '_modiff_ssd_streamed', False):
+            from modiff.safetensors_streaming import dispose_streamed_component
+
+            dispose_streamed_component(component)
+        return super().remove(component_id)
+
+
+components = _MoDiffComponentsManager()
 
 
 # Global singleton registry instance for the package

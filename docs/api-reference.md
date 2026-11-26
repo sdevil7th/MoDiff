@@ -2748,6 +2748,14 @@ ordinary advanced control are preserved without an inserted field. See
 [Workflow Auto memory contracts](workflow-auto-memory.md) for eligibility,
 source-conversion, disk-LoRA and pool-specific credit rules.
 
+`weight_loading_mode: "ssd_stream"` is the exact-weight SSD streaming choice.
+Auto may add it as a placement alternative when the original recipe and the
+installed checkpoint layout support streaming. On Windows the plan also reports
+the required and available `systemCommitBytes`. An explicit streaming selection
+is refused when its exact artifact, requested operation or memory budget is
+unsupported. The resolved execution inputs record the consumed loading mode.
+See [SSD streaming coverage](workflow-auto-memory.md#stream-weights-from-ssd).
+
 For these declared native image profiles, candidates may also include existing
 CUDA placement alternatives. `placementAlternativeOf` identifies the unchanged
 original candidate; each alternative has a stable placement suffix. Alternatives
