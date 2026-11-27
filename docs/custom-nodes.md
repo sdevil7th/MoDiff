@@ -5,9 +5,9 @@
 Use a **reusable Block** to keep a group of canvas nodes, their settings and
 configured inputs/outputs for another workflow. Select nodes and choose **Create
 block**, or use **Save as reusable Block…** on a compact stage group. **Expand
-block** shows a saved Block's contents for ordinary canvas editing. **Edit stages** on a
-compact stage group exposes its individual nodes through the existing separation
-action; Undo restores the group. Common exposed controls remain editable directly.
+block** shows a saved Block's contents for ordinary canvas editing. **Edit stages** opens the operations inside a compact stage. Choose **Done editing**
+to return to the same stage with your changes. Use **Convert to independent nodes…**
+only when you want to remove the stage grouping.
 
 Use a **custom Python node** when you need new executable behavior. Add/Load/Reload
 authorizes that source; saving or opening a Block does not grant new code
@@ -16,8 +16,8 @@ and dependency approvals. See the [client authoring guide](https://github.com/sd
 
 ## Add a Python node
 
-Choose **Nodes → Add custom node**. The full-width yellow button opens three
-sources: **Local**, **Hugging Face**, and **Git**. Adding code does not replace
+In the **Nodes** panel header, choose **+ Custom**, then **Local**, **Hugging Face**,
+or **Git**. Adding code does not replace
 your workflow. Intentional Add/Load imports and enables it in one action.
 
 - Local: select **Choose Python file**, review the selected filename, then select

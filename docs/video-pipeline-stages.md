@@ -5,8 +5,8 @@ Fresh selected video graphs use ordinary
 the actual sampler and decoder when their ownership and connections allow it.
 Source preparation and optional upscaling remain independently visible. The stage
 cards expose the settings and connections of their underlying executor nodes.
-Use **Inspect implementation** to see those nodes, or **Edit stages** to separate
-them on the canvas. Optional upscaling, separate soundtrack generation,
+Use **Inspect implementation** to see those nodes. Choose **Edit stages** to wire
+their operations, then **Done editing** to return to the stage. Optional upscaling, separate soundtrack generation,
 audio fitting and delivery remain visible operations when a template needs them.
 Four stages is a starting shape, not a limit.
 
