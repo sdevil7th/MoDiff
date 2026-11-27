@@ -72,6 +72,7 @@ def actual_layer():
     return layer, torch.randn((2, 3, 32), generator=generator).bfloat16()
 
 
+@pytest.mark.usefixtures('portable_cpu_bfloat16_math')
 def test_owned_fallback_preserves_exact_class_storage_and_official_values():
     from modiff.bfl_fp8_compatibility import install_owned_fallback
     layer, inputs = actual_layer()
@@ -85,7 +86,9 @@ def test_owned_fallback_preserves_exact_class_storage_and_official_values():
     assert receipt['mode'] == MODE and receipt['computeDtypes'] == ['bfloat16']
     assert receipt['layers'] == 1 and receipt['weightStorage'] == 'float8_e4m3fn'
     assert type(layer) is original_type and layer.weight is original_weight and layer.weight_scale is original_scale
-    assert torch.equal(layer(inputs), expected)
+    actual = layer(inputs)
+    assert actual.dtype == expected.dtype == torch.bfloat16
+    assert torch.isfinite(actual).all() and torch.equal(actual, expected)
     assert torch.equal(layer.weight.detach().view(torch.uint8), weight_bytes)
     assert torch.equal(layer.weight_scale.view(torch.uint8), scale_bytes)
     assert install_owned_fallback(owner, owner=owner, mode=MODE) == receipt

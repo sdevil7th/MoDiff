@@ -266,6 +266,7 @@ def test_bfl_context_free_updater_cannot_borrow_loaded_quantized_owner(runtime, 
 
 
 @pytest.mark.parametrize('scheme', ['fp8r', 'nvfp4'])
+@pytest.mark.usefixtures('portable_cpu_bfloat16_math')
 def test_bfl_bf16_compute_and_actual_adapter_dtype(runtime, tmp_path, scheme):
     source = graph(PAIRS[0], scheme)
     source['nodes']['models']['params']['dtype']['value'] = 'bfloat16'
