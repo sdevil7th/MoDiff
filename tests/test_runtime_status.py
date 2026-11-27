@@ -397,6 +397,34 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(snapshot["activitySource"], "windows-physical-disk")
         self.assertEqual(snapshot["kind"], "ssd")
         self.assertEqual(snapshot["detectionSource"], "linux-sysfs")
+        self.assertEqual(set(snapshot["destinations"]), {"modelCache", "outputs", "offload"})
+        for destination in snapshot["destinations"].values():
+            self.assertTrue(Path(destination["path"]).is_absolute())
+            self.assertEqual(destination["freeBytes"], 80 * GIB)
+
+    def test_destination_capacity_uses_download_root_and_isolates_unavailable_volumes(self):
+        work = Path(self.temp_dir.name)
+        cache = work / "cache-volume"
+        cache.mkdir()
+        offload = work / "offload-volume"
+        offload.mkdir()
+        def usage(path):
+            if Path(path) == offload:
+                raise OSError("volume unavailable")
+            return SimpleNamespace(total=100, used=90, free=41 if Path(path) == cache else 10)
+        with (
+            patch("modiff.server.model_download_cache_root", return_value=cache / "hub"),
+            patch("modiff.server.default_offload_root", return_value=offload / "diffusers"),
+            patch("modiff.server.shutil.disk_usage", side_effect=usage),
+            patch.object(self.server, "_storage_kind_for_path", return_value=("unknown", None)),
+            patch.object(self.server._runtime_disk_activity_sampler, "sample", return_value=(None, None)) as sample,
+        ):
+            storage = self.server._runtime_storage_snapshot()
+        self.assertFalse((cache / "hub").exists())
+        self.assertEqual(storage["destinations"]["modelCache"], {"path": str(cache / "hub"), "freeBytes": 41})
+        self.assertIsNone(storage["destinations"]["offload"]["freeBytes"])
+        self.assertEqual(storage["destinations"]["outputs"]["freeBytes"], 10)
+        sample.assert_called_once()
 
     def test_runtime_resources_preserve_authoritative_memory_topology(self):
         torch = SimpleNamespace(version=SimpleNamespace(hip="test-rocm"))

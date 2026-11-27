@@ -81,7 +81,7 @@ def _directory_identity(path):
     return info.st_dev, info.st_ino, getattr(info, "st_birthtime_ns", None)
 
 
-def _offload_root():
+def default_offload_root():
     # Resolve the explicit working directory once, then reject indirection in
     # the dedicated cache hierarchy rather than following graph-supplied paths.
     return Path.cwd().resolve(strict=True) / "data" / "offload" / "diffusers"
@@ -89,7 +89,7 @@ def _offload_root():
 
 def _explicit_offload_root(value):
     if value is None:
-        return _offload_root()
+        return default_offload_root()
     root = Path(value)
     if not root.is_absolute() or ".." in root.parts:
         raise ValueError("Selected offload storage requires an explicit absolute plain directory.")
@@ -192,7 +192,7 @@ def _new_disk_offload_lease(module, *, node_id, scope, component_name, offload_r
 def release_disk_offload_cache():
     """Explicit global cleanup after ownership release, preserving live leases."""
     with _DISK_LEASE_LOCK:
-        root = _offload_root()
+        root = default_offload_root()
         try:
             root.lstat()
         except FileNotFoundError:

@@ -281,6 +281,20 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(status["missingFiles"], [])
         self.assertIn("direct weight files", status["reason"])
 
+    def test_metadata_only_snapshots_are_distinct_from_active_or_complete_downloads(self):
+        repo = "unit/inventory"
+        revision = "a" * 40
+        with tempfile.TemporaryDirectory() as cache_dir:
+            snapshot = self._repo_cache_path(cache_dir, repo) / "snapshots" / revision
+            snapshot.mkdir(parents=True)
+            (snapshot / "model_index.json").write_text("{}", encoding="utf-8")
+            record = [{"id": repo, "cache_dir": cache_dir, "revisions": [{"hash": revision}]}]
+            self.assertTrue(artifact_cache_status(repo, record)["metadataOnly"])
+            self._write_active_download_marker(cache_dir, repo)
+            self.assertFalse(artifact_cache_status(repo, record)["metadataOnly"])
+            self._write_complete_snapshot(cache_dir, repo, revision)
+            self.assertTrue(artifact_cache_status(repo, record)["complete"])
+
     def test_artifact_cache_status_exposes_the_installed_revision_and_file_selection(self):
         repo = "unit/exact-selection"
         revision = "a" * 40

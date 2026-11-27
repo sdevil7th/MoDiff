@@ -226,6 +226,18 @@ Unsupported or inaccessible activity counters return `null` rather than
 substituting capacity used. `GET /runtime/options` returns the live node option descriptors after
 device and package compatibility filtering. Both are observations, not proof
 that a real model workload completed.
+The optional `storage.destinations` map reports the configured Hub download cache
+(`modelCache`), managed Studio output directory (`outputs`), and default Diffusers
+disk-offload root (`offload`). Each entry contains its path and free bytes on its
+backing volume, or null when the measurement is unavailable. Several destinations
+can share one device. Reading capacity does not create the target directory.
+
+The local Hub inventory exposes `metadata_only` when snapshot inspection finds
+no model weights in any checked snapshot and no active download. A partial
+or damaged weight download is reported as incomplete. Snapshot size alone
+does not establish completeness or runtime compatibility.
+
+
 
 Current registry fields may include `runtimeOptions: "availability"` for
 server-owned precision, attention and quantization status, or `"choices"` for

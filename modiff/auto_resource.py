@@ -753,6 +753,7 @@ def _validate_snapshot_shards(snapshot_dir: Path, expected_files: list[dict[str,
     )
     return {
         "complete": bool(has_weight_file),
+        "metadataOnly": not has_weight_file,
         "reason": "No shard index files found; direct weight files are present." if has_weight_file else "No local weight files were found in the snapshot.",
         "missingFiles": [],
         "corruptFiles": [],
@@ -892,6 +893,9 @@ def _artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | No
         "installed": True,
         "complete": False,
         "repairRequired": True,
+        "metadataOnly": bool(checked) and not active_files and all(
+            result.get("metadataOnly") is True for result in checked
+        ),
         "reason": first_reason,
         "missingFiles": missing_files[:25],
         "corruptFiles": corrupt_files[:25],

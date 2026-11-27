@@ -454,6 +454,7 @@ def byte_range_response(request, body, *, content_type, charset=None, filename=N
 from modiff.config import CONFIG
 from modiff.controlled_artifacts import controlled_artifact_receipts_from_graph
 from modiff.diffusers_offload import (
+    default_offload_root,
     OFFLOAD_MODE_GROUP_CPU,
     OFFLOAD_MODE_GROUP_DISK,
     OFFLOAD_MODE_MODEL_CPU,
@@ -583,6 +584,7 @@ from utils.huggingface import (
     get_cache_diagnostics,
     get_local_models,
     plan_hub_model_download,
+    model_download_cache_root,
     search_hub,
     validate_hf_repo_id,
 )
@@ -12096,6 +12098,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     "installed": bool(status.get("complete")),
                     "complete": bool(status.get("complete")),
                     "repair_required": bool(status.get("repairRequired")),
+                    "metadata_only": bool(status.get("metadataOnly")),
                     "install_reason": status.get("reason"),
                     "active_files": status.get("activeFiles") or [],
                     "missing_files": status.get("missingFiles") or [],
@@ -12172,6 +12175,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                         "complete",
                         "repair_required",
                         "install_reason",
+                        "metadata_only",
                         "active_files",
                         "missing_files",
                         "corrupt_files",
@@ -14081,12 +14085,31 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         total = int(usage.total)
         free = int(usage.free)
         used = int(usage.used)
+        destinations = {}
+        # Only probe server-configured destinations. Sampling capacity must
+        # neither create the directory nor start a second disk activity probe.
+        for role, target in (
+            ("modelCache", model_download_cache_root()),
+            ("offload", default_offload_root()),
+            ("outputs", self._studio_outputs_dir()),
+        ):
+            destination = target.absolute()
+            free_bytes = None
+            try:
+                for parent in (destination, *destination.parents):
+                    if parent.exists():
+                        free_bytes = int(shutil.disk_usage(parent).free)
+                        break
+            except OSError:
+                pass
+            destinations[role] = {"path": str(destination), "freeBytes": free_bytes}
         return {
             "path": str(existing_path.resolve()),
             "totalBytes": total,
             "freeBytes": free,
             "usedBytes": used,
             "percent": (used / total * 100.0) if total > 0 else None,
+            "destinations": destinations,
             "activePercent": active_percent,
             "activitySource": activity_source,
             "kind": kind,

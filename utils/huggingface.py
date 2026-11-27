@@ -277,9 +277,13 @@ def validate_hf_repo_id(repo_id: str):
     return repo_id
 
 
+def model_download_cache_root(cache_dir=None):
+    return Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()
+
+
 def _repo_cache_dir(repo_id: str, cache_dir: str | None = None):
     validate_hf_repo_id(repo_id)
-    root = Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()
+    root = model_download_cache_root(cache_dir)
     candidate = root / f"models--{repo_id.replace('/', '--')}"
     try:
         candidate.resolve(strict=False).relative_to(root.resolve(strict=False))
@@ -756,7 +760,7 @@ def _download_progress_snapshot(
     if not path_obj.exists():
         return {
             'path': str(path_obj),
-            'cache_dir': str(Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()),
+            'cache_dir': str(model_download_cache_root(cache_dir)),
             'downloaded_bytes': 0,
             'file_count': 0,
             'completed_file_count': 0,
@@ -793,7 +797,7 @@ def _download_progress_snapshot(
         )
     return {
         'path': str(path_obj),
-        'cache_dir': str(Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()),
+        'cache_dir': str(model_download_cache_root(cache_dir)),
         'downloaded_bytes': downloaded_bytes,
         'file_count': summary.get('file_count', 0),
         'completed_file_count': snapshot_status.get('completed_file_count', 0),
@@ -991,7 +995,7 @@ def plan_hub_model_download(
     requested_files = [str(name) for name in (allow_patterns or []) if str(name).strip()]
     revision = resolve_model_revision(model_id, revision)
     plan = _repo_download_plan(model_id, requested_files, revision)
-    cache_root = Path(CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()
+    cache_root = model_download_cache_root()
     cache_root.mkdir(parents=True, exist_ok=True)
     disk = shutil.disk_usage(cache_root)
     snapshot = _download_progress_snapshot(model_id, str(cache_root), plan)
@@ -1070,7 +1074,7 @@ def _stage_verified_cached_lfs_blobs(repo_id: str, cache_dir: str | None, plan: 
             return {'files': [], 'bytes': 0}
         snapshot_dir.mkdir(parents=True, exist_ok=True)
 
-    cache_root = Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()
+    cache_root = model_download_cache_root(cache_dir)
     blobs_dir = repo_path / 'blobs'
     blobs_dir.mkdir(parents=True, exist_ok=True)
     staged_files = []
@@ -1240,7 +1244,7 @@ def _repair_validation_summary(repo_id: str, cache_dir: str | None, plan: dict |
         # Invalid selected paths must not reach telemetry's directory/config scan.
         # Keep the same keys, with conservative counts instead of borrowed bytes.
         snapshot = {'path': str(_repo_cache_dir(repo_id, cache_dir)),
-                    'cache_dir': str(Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()),
+                    'cache_dir': str(model_download_cache_root(cache_dir)),
                     'downloaded_bytes': 0, 'file_count': 0, 'completed_file_count': 0,
                     'completed_bytes': 0, 'active_files': [], 'current_file': None}
     else:
@@ -1469,7 +1473,7 @@ def _repair_from_verified_source(
     if not missing:
         return []
 
-    cache_root = Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()
+    cache_root = model_download_cache_root(cache_dir)
     staging_root = cache_root / '.modiff-repair-staging'
     staging_root.mkdir(parents=True, exist_ok=True)
     staging_dir = Path(tempfile.mkdtemp(prefix='verified-source-', dir=staging_root))
