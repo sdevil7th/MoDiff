@@ -20,6 +20,10 @@ These rules apply to AI-assisted work in this repository. `CONTRIBUTING.md` is t
 
 ## Generic Workflow Stages
 
+- Use content-aware initial sizes for new ordinary and custom nodes. Preserve explicit manual sizes and saved layouts. Check the editable body after the header and port tray are measured, including after model metadata arrives.
+- Put an enabling switch before the fields it controls. Hide settings that the active operation ignores and preserve their values and connected inputs. Keep the primary model selector labelled and distinguish edit-in-place from conversion to independent nodes.
+- Base filtered model choices and category showcases on actual available recipes and their approved media. Search long single- and multi-select lists, and resolve wire suggestions against the selected model's real socket contract.
+
 - Keep search metadata with the backend visual stage catalog. Add modes, action names, familiar aliases and typed roles to an existing stage first. Verify name and action searches, click and wire insertion, model switching and saved graph export before adding another public stage.
 
 - Reuse a task- or modality-generic node for the same user-visible job across models and workflows. Put model-specific execution and schema differences in the declared backend adapter.

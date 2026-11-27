@@ -2015,9 +2015,11 @@ def validate_block_instance_v2(payload: Any) -> BlockInstanceV2:
         presentation,
         "BlockInstanceV2.presentation",
         required={"expanded", "position", "size", "internalLayout"},
-        optional={"internalLayoutMode", "collapsedContainerNodeIds", "removedControlBindings"},
+        optional={"internalLayoutMode", "collapsedContainerNodeIds", "removedControlBindings", "stageEditorOpen"},
     )
     _bool(presentation["expanded"], "BlockInstanceV2.presentation.expanded")
+    if "stageEditorOpen" in presentation:
+        _bool(presentation["stageEditorOpen"], "BlockInstanceV2.presentation.stageEditorOpen")
     if "removedControlBindings" in presentation:
         _validate_removed_control_bindings(presentation["removedControlBindings"])
     position = _object(presentation["position"], "BlockInstanceV2.presentation.position")

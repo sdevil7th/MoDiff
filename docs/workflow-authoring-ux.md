@@ -380,3 +380,13 @@ These private contracts do not publish a model/profile, grant Auto admission,
 authorize owner release or issue a proposal Apply receipt. Parent media sources
 retain their actual order; successful decoding and normalized consumed media must
 still be verified separately. Purpose metadata never authorizes global cleanup.
+
+## Editing the operations in a stage
+
+Use **Edit stages** to see and wire the operations inside a generated stage. **Done
+editing** returns to the same node and preserves edits. The workflow instance can
+carry the optional boolean `presentation.stageEditorOpen` so an explicit editor can
+reopen on reload. The executor ignores presentation when resolving inputs and
+operators. A legacy expanded flag on its own opens the normal single stage.
+**Convert to independent nodes** previews the affected operations and requires a
+separate confirmation before removing their wrapper.

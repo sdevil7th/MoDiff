@@ -170,6 +170,17 @@ class BlockRouteSelectionV1Tests(unittest.TestCase):
         self.assertEqual(modular_container_node_ids_v2(graph), [parent["nodeId"]])
         self.assertEqual(validate_block_instance_v2(instance), instance)
 
+    def test_stage_editor_is_presentation_only_and_must_be_explicit(self):
+        instance = route_selection_fixture()
+        original_hash = instance["effectiveGraph"]["graphHash"]
+        instance["presentation"].update(expanded=True, stageEditorOpen=True)
+        validated = validate_block_instance_v2(instance)
+        self.assertIs(validated["presentation"]["stageEditorOpen"], True)
+        self.assertEqual(validated["effectiveGraph"]["graphHash"], original_hash)
+        instance["presentation"]["stageEditorOpen"] = "yes"
+        with self.assertRaisesRegex(ValueError, "stageEditorOpen"):
+            validate_block_instance_v2(instance)
+
 
 if __name__ == "__main__":
     unittest.main()
