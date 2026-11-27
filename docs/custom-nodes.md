@@ -20,7 +20,9 @@ Choose **Nodes → Add custom node**. The full-width yellow button opens three
 sources: **Local**, **Hugging Face**, and **Git**. Adding code does not replace
 your workflow. Intentional Add/Load imports and enables it in one action.
 
-- Local: drop a structured `.py` node onto the canvas (or Choose Python file).
+- Local: select **Choose Python file**, review the selected filename, then select
+  **Add node** to send the source to the backend and enable it. You can also
+  drop a structured `.py` node onto the canvas.
   One registered node is inserted at the drop position; multiple definitions
   offer a node dropdown. Alternatively place a file/package in backend `custom/`;
   it appears in the permanent Custom nodes category without executing. Choose
