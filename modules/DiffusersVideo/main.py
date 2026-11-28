@@ -2554,8 +2554,8 @@ class LoadPipeline(WanVACELoadPipeline):
         # Mochi's transformer and its text pooler call Torch SDPA directly.
         pipeline.transformer._modiff_direct_torch_math = True
         apply_execution_recipe_to_pipeline(pipeline, recipe)
-        # The specialized graph keeps its generic VAE-tiling switch off so the
-        # reviewed pipeline requirement cannot be disabled by users.
+        # Mandatory for this adapter even if an older or shared recipe requests
+        # untiled decoding. Its public capability declares this effective state.
         enable_vae_tiling()
         self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
         apply_pipeline_offload(pipeline, mode=offload_mode, device=device, node_id=self.node_id, scope=adapter.id)

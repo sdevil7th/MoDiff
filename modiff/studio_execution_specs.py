@@ -11401,6 +11401,7 @@ def _mochi_capability() -> dict[str, Any]:
         "defaultRepo": MOCHI_REPO,
         "artifactLabel": "Official Apache-2.0 BF16 safetensors Diffusers repo",
         "downloadFiles": MOCHI_DIFFUSERS_FILES,
+        "requiresVaeTiling": True,
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 848, "height": 480, "aspectRatio": "16:9"},
         "recommendedSteps": 64,

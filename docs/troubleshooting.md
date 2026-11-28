@@ -425,6 +425,11 @@ an adapter defect; changing drivers, the prompt, or the generation settings
 will not repair it. The indexed T5 selection, BF16 variant, and original
 offload policy remain part of the reviewed route.
 
+Model Setup displays VAE tiling as required and on for this loader. A saved
+recipe can still contain its original off value. Disconnecting the loader
+restores that editable fallback. When a recipe is shared with another model,
+the switch controls the models that accept optional tiling.
+
 For the existing Mochi math-attention recipe, the transformer and its text
 pooler call Torch SDPA directly. MoDiff applies the selected math backend
 inside that transformer call. Switching back to Auto clears the override
