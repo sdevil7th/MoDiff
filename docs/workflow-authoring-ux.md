@@ -14,6 +14,12 @@ or second soundtrack has its own editable connection.
 Search for a specialist such as Gaussian Blur or Decode Latents when you need
 its precise controls or an intermediate result. Dragging from a port offers
 compatible specialists. **Show implementation nodes** opens the broader library.
+When an output has no compatible destination, the picker can offer another
+output on the same node and name a destination for it. For example, a native
+depth map can offer its preview image for an image processor. **Use … output**
+switches the starting socket. Choose a destination to add the node and wire,
+or press Escape to leave the workflow as it was. A search with no results
+can be cleared to recover the matching destinations for the original socket.
 On an empty canvas, **Include catalog Blocks** adds prebuilt compositions to the
 unfiltered picker. A matching name or compatible wire also finds them. Saved
 Blocks stay accessible under their authored names.

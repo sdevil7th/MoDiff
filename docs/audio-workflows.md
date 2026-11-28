@@ -20,6 +20,11 @@ Splitting it into decorative Encode, Denoise and Decode nodes would not make its
 internal computation editable. MiniMax's semantic generation is an actual stage
 and must remain distinct from prompt encoding.
 
+When the built-in execution recipe supplies audio placement, Model Setup presents
+its Runtime Offload and Execution Device under **Device and offload**. The loader
+retains its saved fallbacks for use when the recipe is disconnected. This display
+order does not change the inputs passed to the audio pipeline.
+
 Stable Audio uses its pinned Diffusers cosine scheduler. MoDiff supplies zero
 for the final noise term when the schedule ends at zero. The upstream update
 multiplies that term by zero, and a Brownian noise request outside the positive
