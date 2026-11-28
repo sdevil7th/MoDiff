@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from source_contract_helpers import source_sha256
+from modiff.source_text import canonical_python_source
 
 
 def test_source_hash_allows_checkout_newlines_but_detects_changed_code(tmp_path):
@@ -19,6 +20,14 @@ def test_source_hash_allows_checkout_newlines_but_detects_changed_code(tmp_path)
     assert source_sha256(source) == expected
     source.write_bytes(b"VALUE = 2\r\n")
     assert source_sha256(source) != expected
+
+
+def test_production_python_source_contracts_allow_only_checkout_newline_changes():
+    source = b"VALUE = 1\n"
+    assert canonical_python_source(source.replace(b"\n", b"\r\n")) == source
+    assert canonical_python_source(b"VALUE = 2\r\n") != source
+    with pytest.raises(UnicodeDecodeError):
+        canonical_python_source(b"\xff")
 
 
 def test_required_catalog_snapshots_are_present_and_not_ignored():

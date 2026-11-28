@@ -164,6 +164,7 @@ _SEALED_BINDING_SOURCES = {
     "controlnetWeightVariant",
     "controlnetRouteVariant",
     "controlnetLoadClass",
+    "controlnetOffloadMode",
     "ipAdapterRepo",
     "ipAdapterRevision",
     "ipAdapterWeightName",
@@ -225,6 +226,7 @@ _REQUIRED_COMPONENT_EDGES = {
     "workflow_denoise": {("models", "pipeline_components", "denoise", "pipeline_components")},
     "workflow_audio_decoder": {("models", "pipeline_components", "decode", "pipeline_components")},
     "workflow_text_encoder": {("models", "pipeline_components", "prompt", "pipeline_components")},
+    'workflow_prepare_images': {('models', 'pipeline_components', 'beforeEncode', 'pipeline_components')},
     "workflow_image_encoder": {("models", "pipeline_components", "imageEncode", "pipeline_components")},
     "workflow_video_image_encoder": {("models", "pipeline_components", "imageEncode", "pipeline_components")},
     "workflow_video_encoder": {("models", "pipeline_components", "videoEncode", "pipeline_components")},
@@ -276,6 +278,11 @@ _REQUIRED_COMPONENT_EDGES = {
     "workflow_minimax_h3_vae_encoder": {("models", "pipeline_components", "imageEncode", "pipeline_components")},
     "workflow_minimax_h3_denoise": {("models", "pipeline_components", "denoise", "pipeline_components")},
     "workflow_minimax_h3_decoder": {("models", "pipeline_components", "decode", "pipeline_components")},
+    "workflow_joint_av_before_encode": {("models", "pipeline_components", "beforeEncode", "pipeline_components")},
+    "workflow_joint_av_text_encoder": {("models", "pipeline_components", "prompt", "pipeline_components")},
+    "workflow_joint_av_vae_encoder": {("models", "pipeline_components", "imageEncode", "pipeline_components")},
+    "workflow_joint_av_denoise": {("models", "pipeline_components", "denoise", "pipeline_components")},
+    "workflow_joint_av_decoder": {("models", "pipeline_components", "decode", "pipeline_components")},
     "workflow_ltx25_text_encoder": {("models", "pipeline_components", "prompt", "pipeline_components")},
     "workflow_ltx25_duration": {("models", "pipeline_components", "duration", "pipeline_components")},
     "workflow_ltx25_vae_encoder": {("models", "pipeline_components", "imageEncode", "pipeline_components")},
@@ -900,7 +907,18 @@ REVIEWED_CLUSTER_EXECUTION_CANDIDATES += (
     },
 )
 
+REVIEWED_CLUSTER_EXECUTION_CANDIDATES += tuple({
+    'pipelineClass': 'MiniMaxH3ImageModularPipeline', 'workflowId': workflow,
+    'adapterSource': 'workflow', 'adapterId': 'official_top_level_blocks',
+    'studioMode': task, 'studioSpecId': f'minimax-h3-image:modular-{task.replace("_", "-")}:v1',
+    'executionRoute': 'official_modular_workflow',
+} for workflow, task in (('text2image', 'text_to_image'), ('image_conditioned', 'edit_image')))
+
 _WORKFLOW_REPOSITORIES = {
+    'MiniMaxH3ImageModularPipeline': frozenset({
+        ('text2image', 'MiniMaxAI/MiniMax-H3-Image'),
+        ('image_conditioned', 'MiniMaxAI/MiniMax-H3-Image'),
+    }),
     "Cosmos3DistilledModularPipeline": frozenset(
         {
             ("text2image", "nvidia/Cosmos3-Super-Text2Image-4Step"),
@@ -1011,9 +1029,11 @@ def _audit_candidate(
     if studio_definition is None:
         reasons.append(_reason("unknown_studio_spec", "The declared Studio execution specification is absent."))
     else:
+        candidate_profile = studio_definition.get('profile')
         public_spec = studio_execution_spec_for_pair(
             str(studio_definition.get("modelType") or ""),
             str(studio_definition.get("mode") or ""),
+            execution_profile_id=candidate_profile.get('id') if isinstance(candidate_profile, Mapping) else None,
         )
         if public_spec is None or public_spec.get("id") != studio_spec_id:
             reasons.append(
@@ -1331,6 +1351,7 @@ def _audit_candidate(
             "controlnetWeightVariant": "" if union_controlnet else "fp16",
             "controlnetRouteVariant": "union" if union_controlnet else "ordinary",
             "controlnetLoadClass": "ControlNetUnionModel" if union_controlnet else "",
+            "controlnetOffloadMode": "none",
             "ipAdapterRepo": ip_adapter_dependency.get("repo") if ip_adapter_dependency else None,
             "ipAdapterRevision": ip_adapter_dependency.get("revision") if ip_adapter_dependency else None,
             "ipAdapterWeightName": ip_adapter_pin.get("weightName") if isinstance(ip_adapter_pin, Mapping) else None,

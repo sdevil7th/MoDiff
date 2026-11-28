@@ -1,36 +1,82 @@
 # Troubleshooting
 
-Start with the backend preflight. It checks the runtime without importing every model node:
+Start with the backend preflight. It checks the runtime without importing every
+model node. From a native NVIDIA backend checkout, this command works in Linux
+shells and Windows PowerShell without repository scripts:
 
-```bash
-./scripts/with-runtime-env.sh ./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
+```text
+uv run --extra cuda python -m modiff.preflight --json --check-port 8088 --fail-on-error
 ```
 
-On Windows, use `.\.venv\Scripts\python.exe` in place of `./.venv/bin/python`.
+Keep the accelerator extra used during setup: choose `--extra cpu` or
+`--extra xpu` for those native profiles, or omit the extra on Apple Silicon.
+To inspect the existing Windows environment directly without synchronizing it:
+
+```powershell
+.\.venv\Scripts\python.exe -m modiff.preflight --json --check-port 8088 --fail-on-error
+```
+
+Specialized AMD/vendor-wheel environments use their documented profile
+environment instead; do not run a generic CPU/CUDA sync over a reviewed stack.
+See [Developer setup](developer-setup.md) and
+[Accelerator installation](accelerator-installation.md) for that distinction.
 
 For a human-readable summary, omit `--json`. Do not treat a successful preflight as proof that a particular model is installed, licensed, compatible with the host, or able to finish a generation.
 
-If preflight reports `runtimeProfile.status: repair-required` with
-`runtime-contract-drift`, the checked profile requirements, `pyproject.toml`,
-or accelerator manifest changed after `.venv` was installed. Run the exact
-`runtimeProfile.repair_command` shown in the report, then rerun preflight. Do
-not edit `modiff-profile.json` or use a generic resolver to silence the check;
-the installer recreates and validates the saved contract atomically.
+If preflight reports missing or incompatible base packages, run its reported
+`runtimeProfile.repair_command`. Native installations use `uv sync` with the same
+accelerator extra; specialized AMD/vendor-wheel profiles use their guided repair
+command. Native installs do not require a historical installer receipt. Avoid
+replacing a working ROCm stack with a CPU/CUDA sync.
+
+## Run is blocked
+
+Open the Run readiness summary to review every issue. Use the action beside the
+specific problem instead of changing unrelated settings:
+
+- **Choose supported task** or **Choose supported model** opens that selector.
+  The current choice stays unchanged until you select another one. Expert does
+  not make an unsupported backend capability available.
+- **Edit setting** reveals the control, including a closed Advanced generation
+  or conditioning section. Correct the value there; merely opening it does not
+  change the workflow.
+- **Review runtime** opens the required Setup entry. Read its platform and
+  compatibility status before choosing an offered Install, Repair or Activate
+  action. Some requirements are unavailable on the connected platform.
+  Transformers and PEFT belong to ordinary base setup, not a separate optional
+  activation. Missing core packages need the matching base-environment repair.
+- **Review Auto options** opens Workflow resources. **Check Auto execution
+  plan** inspects the current graph without starting a run or changing its
+  settings. A memory shortfall stays blocked until a supported configuration
+  fits; a successful check does not qualify another recipe or platform.
+- **Inspect node** selects the relevant node and its available field controls.
+  Supply missing inputs or review model requirements there. Model installation
+  and resource-setting changes remain separate explicit actions.
+
+If the workflow changes while the dialog is open, close it and check the current
+issues again. Actions from an older document cannot install or change settings
+for the newly selected workflow. Leaving a recovery panel cancels its pending
+focus request, so late metadata does not reopen or focus an old target.
 
 ## The backend does not start
 
 1. Confirm Python 3.12 and the active executable reported by preflight.
-2. Repair the managed environment, then verify its installed packages:
+2. Repair the native environment and check its packages:
 
    ```bash
-   ./install.sh --accelerator auto --backend-only --repair
+   uv sync --extra cuda
    uv pip check --python .venv/bin/python
    ```
 
-   On Windows, run `.\install.ps1 -Accelerator auto -BackendOnly -Repair`, then point `uv pip check --python` at `.venv/Scripts/python.exe`.
+   Choose `--extra cpu` or `--extra xpu` as appropriate; on Apple Silicon omit the
+   extra. Windows uses `.venv/Scripts/python.exe` in explicit pip commands.
+   For specialized AMD stacks, run the reported guided repair instead.
 
-3. Look at the first error in the backend console. MoDiff logs to the console by default.
-4. If an optional node package fails, follow that feature's documented managed-package guidance and restart so registry discovery runs again. Do not repair an accelerator profile with a generic `uv sync`.
+3. Read the first error in the backend console. Transformers and PEFT must be
+   present after setup; they do not require an optional Activate step.
+4. Additional optional packages retain their own install/repair action and
+   worker-replacement status. Wait for verified readiness before running a
+   requiring workflow. Viewing a graph or refreshing never installs packages.
 
 ### Port 8088 is already in use
 
@@ -119,8 +165,19 @@ The presence of some weight files alone does not establish a complete model.
 
 If CUDA reports an illegal memory access or poisoned context, clearing the cache may not be enough. Stop work and restart the backend process before retrying with a safer resource plan.
 
-The normal `./run.sh` or `.\run.ps1` entrypoint keeps a lightweight supervisor outside
-the model-owning worker. Stop first requests cooperative cancellation and
+The normal `./run.sh`, `.\run.ps1`, or `uv run --extra <accelerator> python main.py`
+entrypoint keeps a lightweight supervisor outside the model-owning worker.
+`GET /health` advertises its actual address in `workerControl`; a custom
+`MODIFF_SUPERVISOR_CONTROL_PORT` is reflected there. An explicit `--worker`
+launch or an embedded server has no supervisor and advertises
+`{available: false, address: null}`. The browser skips emergency control-port
+polling for those workers and sends Stop to the worker directly; forced worker
+replacement requires the supervised entrypoint. If a supervisor queue request
+fails, the client retains the last verified address and backs off retries.
+Check that address and the supervisor log instead of assuming that the
+backend's next port has a listener.
+
+Stop first requests cooperative cancellation and
 removes queued runs. If a third-party model call does not return within the
 bounded grace period, the worker is replaced so the operating system releases
 its RAM/VRAM before another run is accepted. If a native model runtime exits
@@ -177,15 +234,21 @@ For supported Intel graphics on x86-64 Linux or Windows, install or repair the p
 - Open model/cache diagnostics and confirm the selected repository and revision are complete.
 - Check `[huggingface] online_status`; `Offline` prevents missing files from being fetched.
 - For gated repositories, accept the model's terms on Hugging Face and configure a read token.
-- The token saved through the UI is plaintext in ignored `config.ini`. Do not paste it into logs or issues.
+- The Models UI saves its token in the ignored plaintext `.env` file. Keep token values out of logs and issues.
 - Set `[huggingface] cache_dir`, `HF_HOME`, or `HF_HUB_CACHE` to a writable volume with sufficient free space. A configured `cache_dir` is exported as `HF_HUB_CACHE` by the backend.
 - Avoid pointing multiple applications at partially compatible cache layouts unless you understand how snapshots and revisions are resolved.
 
 Exact snapshot lookup checks the same cache roots as Model Manager, preferring
 the configured cache before secondary locations. Audio pipeline loading uses the
-resolved immutable local snapshot. Selecting a cache for new downloads does not
-hide an existing reviewed snapshot in another discovered cache, and inference
-does not download missing files or substitute another revision.
+resolved immutable local snapshot. Built-in Modular Diffusers loaders also use
+cached components, including the tokenizer and processor. A gated repository
+can require sign-in during Install or Repair in Model Manager. Once the
+selected snapshot is complete, the loader can use it without a separate Hub
+CLI login. Selecting a cache for new downloads does not hide an existing
+reviewed snapshot in another discovered cache. Normal app startup disables Hub
+SDK telemetry by default so a cache-only file lookup can stay local on a fresh
+machine. An explicit operator setting for HF_HUB_DISABLE_TELEMETRY takes
+precedence.
 
 ACE-Step reads lyric embeddings and condition tensors outside ordinary model
 forward calls. Its group offload uses leaf hooks for the text encoder; its
@@ -232,11 +295,32 @@ solely to switch transports.
 
 Cleanup can release MoDiff's node cache, managed Diffusers components, memory-manager entries, and accelerator cache. It cannot free memory owned by another process, and it does not guarantee that the same workflow fits afterward.
 
+With one visible, initialized ROCm device, the existing cleanup callback also
+synchronizes and releases Torch's reusable BLAS workspaces before clearing unused allocator
+blocks, but only when no task or cached node remains. A small workspace can pin
+a larger split allocator block. The compiled workspace cleanup is feature-detected;
+if it is absent, ordinary allocator cleanup remains available. Cleanup failures
+are reported by the existing best-effort cleanup response. This does not change
+offload selection, safety floors or model-fit qualification, and does not release
+workspaces belonging to an active task or surviving cached owner. CPU, NVIDIA
+and MPS cleanup retain their existing behavior. Multiple visible accelerators
+keep the previous cleanup path: the compiled primitive clears global workspaces,
+while synchronization here covers the current device only.
+
 Automatic planning refreshes available host RAM between runs, including after
 cache release. Runtime identity remains cached separately from this capacity
 sample. During active inference, planning retains the existing non-blocking
 snapshot behavior; it does not enter accelerator probes from that control path.
 Available memory and a resident model alone do not qualify a resource recipe.
+
+Workflow Auto recognizes compatible cached loaders and counts their measured
+weight storage once. It reserves additional inference memory instead of asking
+for a second copy of the same weights. If the previous cache must be released,
+Auto releases it and checks actual free memory before loading another model.
+This cannot reclaim another application's memory or relax the inference safety
+floor. A `Combined systemRamBytes` failure concerns host RAM, including shared
+accelerator memory where applicable; it is not necessarily a dedicated VRAM
+failure.
 
 ## A run is taking much longer than expected
 
@@ -341,6 +425,26 @@ an adapter defect; changing drivers, the prompt, or the generation settings
 will not repair it. The indexed T5 selection, BF16 variant, and original
 offload policy remain part of the reviewed route.
 
+Model Setup displays VAE tiling as required and on for this loader. A saved
+recipe can still contain its original off value. Disconnecting the loader
+restores that editable fallback. When a recipe is shared with another model,
+the switch controls the models that accept optional tiling.
+
+For the existing Mochi math-attention recipe, the transformer and its text
+pooler call Torch SDPA directly. MoDiff applies the selected math backend
+inside that transformer call. Switching back to Auto clears the override
+while preserving the offload hook. For a full 64-step clip, sampling time
+depends on the device and component placement.
+
+## Short SANA-Video clips with an opening image
+
+Set **Frames** on the existing Generate stage to a value from 33 through 81
+in increments of four. The opening-image route uses the pinned VAE's
+four-frame temporal stride plus the first frame. The standard workflow starts
+at 81 frames. The text-to-video route continues to require 81 frames.
+The verified 33-frame example used 24 steps and Auto attention, with the
+opening image at the workflow's native 832×480 resolution.
+
 ## GLM-Image rejects unequal prompt embedding shapes
 
 GLM glyph encoding can produce a long positive sequence and a one-token empty
@@ -352,14 +456,14 @@ call-scoped dtype adapter requests the diffusion transformer's dtype from
 restored on success or failure. Prompts and embeddings are neither truncated
 nor padded to satisfy the public precomputed-embedding check.
 
-
 ### Missing Modular conditional companion snapshot
 
 If a reviewed block reports `Cannot load conditional snapshot`, restore
 `data/modular-conditional-contracts.json` using
-`scripts/generate_modular_conditional_contracts.py` in the pinned optional
-Diffusers runtime. This is a no-weight structural generator. Its coverage comes
-from the validated reviewed workflow snapshot, preserving constructor configs;
+`scripts/generate_modular_conditional_contracts.py` in the reviewed runtime
+containing the pinned Diffusers revision. This is a no-weight structural
+generator. Its coverage comes from the validated reviewed workflow snapshot,
+preserving constructor configs;
 routing registry promotions must not remove classes from this companion.
 The generator validates hashes, branch truth tables and execution traces against
 the existing resolved snapshots. Run its `--check` mode and the conditional

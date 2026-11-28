@@ -28,10 +28,18 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(first_response.status, 200)
         self.assertEqual(second_response.status, 200)
-        self.assertEqual(second["schemaVersion"], 6)
+        self.assertEqual(second["schemaVersion"], 7)
         self.assertEqual(second["providers"], ["diffusers", "transformers"])
-        self.assertEqual(len(second["definitions"]), 135)
-        self.assertEqual(len(second["blockDefinitions"]), 560)
+        self.assertEqual(len(second["definitions"]), 144)
+        self.assertEqual(len(second["blockDefinitions"]), 630)
+        stage_blocks = [block for block in second["blockDefinitions"]
+                        if block["description"] in {
+                            f"Existing MoDiff node modules.DiffusersImage.{action} used by this reviewed standard Diffusers composite."
+                            for action in ("EncodeInputs", "Denoise", "DecodeLatents")
+                        }]
+        self.assertEqual({block["className"] for block in stage_blocks}, {"EncodeInputs", "Denoise", "DecodeLatents"})
+        self.assertEqual(len(stage_blocks), 3)
+        self.assertEqual(len(second["blockDefinitions"]) - len(stage_blocks), 627)
         self.assertEqual(len(second["blockRoleAdapters"]), 322)
         self.assertEqual(len(second["containerStateAdapters"]), 9)
         self.assertNotEqual(second["definitions"][0]["label"], "Changed by caller")
@@ -40,8 +48,8 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
         admissions = [
             admission for definition in second["definitions"] for admission in definition["executionAdmissions"]
         ]
-        self.assertEqual(len(admissions), 122)
-        self.assertEqual(sum(admission["status"] == "admitted" for admission in admissions), 122)
+        self.assertEqual(len(admissions), 124)
+        self.assertEqual(sum(admission["status"] == "admitted" for admission in admissions), 124)
         self.assertTrue(all(admission["executable"] is False for admission in admissions))
 
     async def test_registered_interfaces_match_every_compiled_boundary_and_are_detached(self):
@@ -125,16 +133,19 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
         first_response = await server.huggingface_modular_conditionals(None)
         first = json.loads(first_response.text)
         first["pipelines"][0]["pipelineClass"] = "ChangedByCaller"
+        first['sourceSupplements'][0]['pipelines'][0]['pipelineClass'] = 'ChangedSupplement'
 
         second_response = await server.huggingface_modular_conditionals(None)
         second = json.loads(second_response.text)
 
         self.assertEqual(first_response.status, 200)
         self.assertEqual(second_response.status, 200)
-        self.assertEqual(second["schemaVersion"], 1)
-        self.assertEqual(len(second["pipelines"]), 34)
-        self.assertEqual(sum(len(item["conditionals"]) for item in second["pipelines"]), 73)
+        self.assertEqual(second["schemaVersion"], 2)
+        self.assertEqual(len(second["pipelines"]), 36)
+        self.assertEqual(sum(len(item["conditionals"]) for item in second["pipelines"]), 77)
         self.assertNotEqual(second["pipelines"][0]["pipelineClass"], "ChangedByCaller")
+        self.assertEqual(second['sourceSupplements'][0]['pipelines'][0]['pipelineClass'], 'PikaH3FlexModularPipeline')
+        self.assertEqual(second['sourceSupplements'][0]['schemaVersion'], 1)
 
     async def test_expert_runtime_qualification_endpoint_returns_backend_receipt(self):
         class Request:

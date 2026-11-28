@@ -20,6 +20,7 @@ from modiff.huggingface_cluster_runtime import (
     qualify_huggingface_cluster_expert_runtime,
 )
 from modiff.huggingface_node_library import build_huggingface_node_library
+from modiff.registered_block_v2_catalog import registered_block_v2_catalog_entry
 
 
 WAN_REPO = "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers"
@@ -41,7 +42,7 @@ QWEN_IMAGE_REVISION = "75e0b4be04f60ec59a75f475837eced720f823b6"
 GIB = 1024**3
 
 
-def registered_v2_instance(definition, admission):
+def registered_v2_instance(definition, admission, additional_controls=()):
     graph = {
         "nodes": [
             {
@@ -72,7 +73,7 @@ def registered_v2_instance(definition, admission):
                 ("quantizationMode", "string", "none"),
                 ("autoOffload", "bool", False),
                 ("offloadMode", "string", "none"),
-            )
+            ) + tuple(additional_controls)
         )
     ]
     boundary = {
@@ -242,6 +243,7 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
             client_studio / "registeredBlockV2AudioRoutes.ts",
             client_studio / "registeredBlockV2ImageRoutes.ts",
             client_studio / "registeredBlockV2OrdinaryFluxRoutes.ts",
+            client_studio / "registeredBlockV2SourceRoutes.ts",
         ]
         if any(not path.is_file() for path in route_files):
             self.skipTest("Sibling MoDiff-client checkout is required for the registered V2 pin parity gate.")
@@ -265,8 +267,67 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
             for pattern in patterns
             for admission_id, content_hash, canonical_sha256 in pattern.findall(source)
         }
-        self.assertEqual(len(client_pins), 122)
+        self.assertEqual(len(client_pins), 124)
         self.assertEqual(dict(REGISTERED_BLOCK_V2_DEFINITION_PINS), client_pins)
+
+    def test_helios_video_ports_keep_exact_saved_auto_authority(self):
+        for pipeline in ("Helios", "HeliosPyramid", "HeliosPyramidDistilled"):
+            for task in ("image2video", "video2video"):
+                with self.subTest(pipeline=pipeline, task=task):
+                    route = f"{pipeline}ModularPipeline:{task}"
+                    admission = f"diffusers.cluster-admission:{route}:workflow:official_top_level_blocks"
+                    entry = registered_block_v2_catalog_entry(f"diffusers.modular:{route}", admission)
+                    self.assertIsNotNone(entry)
+                    definition = entry["definition"]
+                    outputs = definition["boundary"]["outputs"]
+                    self.assertEqual([output["portId"] for output in outputs], ["height", "width", "videos"])
+                    self.assertEqual(outputs[-1]["valueType"], "video")
+                    self.assertEqual(outputs[-1]["binding"], {"nodeId": "videoExport", "fieldOrPortId": "file"})
+                    historical = copy.deepcopy(definition)
+                    historical["boundary"]["outputs"].pop()
+                    altered = copy.deepcopy(historical)
+                    altered["boundary"]["outputs"][0]["label"] = "Different output label"
+                    for snapshot, failure in (
+                        (definition, "the authority form is missing"),
+                        (historical, "the authority form is missing"),
+                        (altered, "backend-pinned compiler output"),
+                    ):
+                        graph = snapshot["graph"]
+                        content_hash = block_definition_content_hash_v2(snapshot)
+                        instance = {
+                            "schemaVersion": 2,
+                            "instanceId": "saved-helios",
+                            "definitionRef": {"definitionId": admission, "contentHash": content_hash},
+                            "definitionSnapshot": {**snapshot, "contentHash": content_hash},
+                            "effectiveGraph": graph,
+                            "values": entry["values"],
+                            "customization": {
+                                "state": "unchanged",
+                                "baseGraphHash": graph["graphHash"],
+                                "effectiveGraphHash": graph["graphHash"],
+                            },
+                            "presentation": {
+                                "expanded": False,
+                                "position": {"x": 0, "y": 0},
+                                "size": {"width": 360, "height": 320},
+                                "internalLayout": entry["internalLayout"],
+                                "internalLayoutMode": entry["internalLayoutMode"],
+                            },
+                            "previewStates": [
+                                {"binding": preview, "status": "idle"} for preview in snapshot["previews"]
+                            ],
+                            "authorities": [],
+                        }
+                        # Reach the normal form checks after accepting the exact graph and
+                        # interface pins. No planner or fabricated resource fixture is needed.
+                        with self.assertRaisesRegex(ValueError, failure):
+                            qualify_huggingface_cluster_auto_authority(
+                                {"schemaVersion": 1, "instance": instance, "form": None},
+                                library={},
+                                runtime_fingerprint={},
+                                local_models=None,
+                                data_dir=str(self.cache_dir),
+                            )
 
     def test_transformers_composite_receipt_joins_direct_profile_and_optional_runtime(self):
         snapshot = (
@@ -432,6 +493,48 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
         # same attachment the browser performs before submitting /graph.
         validated = validate_block_instance_v2({**instance, "authorities": [receipt]})
         self.assertEqual(validated["authorities"], [receipt])
+
+        # Native file uploads store one-file lists. Scalar planner media fields
+        # must preserve that file without changing the instance or authority hash.
+        audio = "@data/audio/authored-speech.wav"
+        media_instance = registered_v2_instance(
+            definition, admission, (("sourceAudio", "string", audio),)
+        )
+        media_instance["values"]["sourceAudio"] = [audio]
+        media_payload = {
+            **payload, "instance": media_instance, "form": {**payload["form"], "sourceAudio": audio}
+        }
+        media_pins = {
+            admission["id"]: (
+                media_instance["definitionSnapshot"]["contentHash"],
+                block_definition_canonical_sha256_v2(media_instance["definitionSnapshot"]),
+            )
+        }
+        with patch(
+            "modiff.huggingface_cluster_runtime.build_auto_resource_plan",
+            return_value={"canAutoRun": True, "selectedCandidate": candidate},
+        ):
+            media_receipt = qualify_huggingface_cluster_auto_authority(
+                media_payload, library=library, runtime_fingerprint=runtime_fingerprint(),
+                local_models=local_models, data_dir=str(self.cache_dir),
+                registered_definition_pins=media_pins,
+            )
+            self.assertEqual(media_receipt["executionParameterHash"], block_execution_parameter_hash_v2(media_instance))
+            self.assertEqual(media_instance["values"]["sourceAudio"], [audio])
+            for field, value in (
+                ("sourceAudio", [audio, "@data/audio/another.wav"]),
+                ("sourceAudio", ["@data/audio/substituted.wav"]),
+                ("dtype", ["float32"]),
+            ):
+                with self.subTest(field=field, value=value):
+                    changed = copy.deepcopy(media_payload)
+                    changed["instance"]["values"][field] = value
+                    with self.assertRaisesRegex(ValueError, f"form field {field}"):
+                        qualify_huggingface_cluster_auto_authority(
+                            changed, library=library, runtime_fingerprint=runtime_fingerprint(),
+                            local_models=local_models, data_dir=str(self.cache_dir),
+                            registered_definition_pins=media_pins,
+                        )
 
         collision_pin = {
             admission["id"]: (

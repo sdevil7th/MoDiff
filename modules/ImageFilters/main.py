@@ -1,6 +1,7 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 from modiff.NodeBase import NodeBase
 from utils.torch_utils import ImageToTensor, TensorToImage
+import math
 
 class Canny(NodeBase):
     def execute(self, **kwargs):
@@ -12,9 +13,17 @@ class Canny(NodeBase):
         image = kwargs.get("image")
         low_threshold = kwargs.get("low_threshold", 0.1)
         high_threshold = kwargs.get("high_threshold", 0.2)
-        low_threshold = min(low_threshold, high_threshold)
-        high_threshold = max(low_threshold, high_threshold)
+        low_threshold, high_threshold = (
+            min(low_threshold, high_threshold),
+            max(low_threshold, high_threshold),
+        )
         device = kwargs.get("device")
+        from modiff.builtin_media_evidence import begin_media_capture
+
+        capture = begin_media_capture(self, {
+            "low_threshold": low_threshold, "high_threshold": high_threshold,
+            "output_mode": output_mode, "device": device,
+        }, inputs={"image": image})
 
         image = ImageToTensor(image)
         image = image if isinstance(image, list) else [image]
@@ -34,6 +43,7 @@ class Canny(NodeBase):
         if output_mode == "RGB":
             output = [image.convert("RGB") for image in output]
 
+        capture.finish({"output": output})
         return { "output": output }
 
 
@@ -42,7 +52,15 @@ class UnsharpMask(NodeBase):
         from kornia.filters import unsharp_mask
 
         image = kwargs.get("image")
-        radius = kwargs.get("radius", 3)
+        try:
+            radius = float(kwargs.get("radius", 3))
+            if not math.isfinite(radius) or not radius.is_integer() or not 1 <= radius <= 63:
+                raise ValueError("invalid radius")
+        except (TypeError, ValueError, OverflowError) as error:
+            raise ValueError("Unsharp Mask radius must be a whole number between 1 and 63.") from error
+        # Existing graphs publish this control as a float. Kornia requires an
+        # actual integer kernel even when its authored value is integral.
+        radius = int(radius)
         # radius must be an odd number
         if radius % 2 == 0:
             radius += 1

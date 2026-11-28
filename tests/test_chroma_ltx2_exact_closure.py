@@ -1,6 +1,7 @@
 from source_contract_helpers import source_sha256
 
 import ast
+import json
 from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
@@ -28,6 +29,7 @@ from modules.DiffusersImage.main import (
     IMAGE_PIPELINE_ADAPTERS,
     Edit,
     Inpaint,
+    OutpaintCanvas,
     LoadPipeline as LoadImagePipeline,
     _tag_image_pipeline,
     image_pipeline_contract,
@@ -40,9 +42,9 @@ from modules.DiffusersVideo.main import (
 )
 
 
-CHROMA_IMG2IMG_SOURCE_SHA256 = "bbc16648f48afd78a96ad182ecbeece21ac2e140fa114394921abfb9d88c514e"
-CHROMA_INPAINT_SOURCE_SHA256 = "3c94ca463088fa648711adc5110f3babf31194ea94ae9c24d61bf13c0d667112"
-LTX2_SOURCE_SHA256 = "39aa535e809492eaa49a5e8161c05d82674c54b8ab14e77a8899c848a37562e8"
+CHROMA_IMG2IMG_SOURCE_SHA256 = "af14d8c4ce8e0527b0d1f755f826edbe1081994709624416a3a6c334d19db9d2"
+CHROMA_INPAINT_SOURCE_SHA256 = "7ef4c53ad0e11dfd760ed25ad2861b70feedf15dbdf4d8f41ec3040adc6fd954"
+LTX2_SOURCE_SHA256 = "00a973e8f3629d8cd0aae06ef984c75317110e59e450dc2e45ea6ab73d9fbf6b"
 CHROMA_REVISION = "0e0c60ece1e82b17cb7f77342d765ba5024c40c0"
 LTX2_REPO = "Lightricks/LTX-2"
 LTX2_REVISION = "47da56e2ad66ce4125a9922b4a8826bf407f9d0a"
@@ -236,9 +238,11 @@ class LTX2Pipeline:
 class ChromaLTX2ExactClosureTests(unittest.TestCase):
     def test_exact_pinned_sources_and_call_surfaces_are_preserved(self):
         import diffusers
+        import inspect
+        from modiff.upstream_coverage import reviewed_diffusers_source
 
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
-        root = Path(diffusers.__file__).resolve().parent / "pipelines"
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941")
+        root = reviewed_diffusers_source() / "pipelines"
         cases = (
             (
                 root / "chroma" / "pipeline_chroma_img2img.py",
@@ -295,6 +299,8 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
             with self.subTest(pipeline=class_name):
                 self.assertTrue(source_path.is_file())
                 self.assertEqual(source_sha256(source_path), digest)
+                installed = getattr(diffusers, class_name)
+                self.assertTrue(required_parameters.issubset(inspect.signature(installed.__call__).parameters))
                 self.assertTrue(
                     required_parameters.issubset(_parameter_names(_pinned_call_node(source_path, class_name)))
                 )
@@ -341,7 +347,62 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
         )
 
     def test_exact_hidden_candidate_specs_reuse_artifacts_and_generic_contracts(self):
-        self.assertEqual(len(validate_studio_execution_specs(module_registry.MODULE_MAP)), 278)
+        specifications = validate_studio_execution_specs(module_registry.MODULE_MAP)
+        public_flux3_spec_ids = {
+            "flux3-klein-base:official-provider:v1:edit-image:v1",
+            "flux3-klein-base:official-provider:v1:text-to-image:v1",
+            "flux3-klein:official-provider:v1:edit-image:v1",
+            "flux3-klein:official-provider:v1:text-to-image:v1",
+        }
+        kandinsky_ids = {
+            f'{variant}:{mode}:v1'
+            for variant in ('kandinsky6-av', 'kandinsky6-distilled-av')
+            for mode in ('text_to_video', 'image_to_video', 'text_to_video_with_audio', 'image_to_video_with_audio')
+        }
+        self.assertEqual(len(specifications), 304)
+        self.assertEqual({row['id'] for row in specifications if row['id'].startswith('kandinsky6-')}, kandinsky_ids)
+        self.assertEqual(
+            {specification["id"] for specification in specifications
+             if specification["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
+            public_flux3_spec_ids,
+        )
+        # Three Pika source-supplement specs extend the previous 282. H3's
+        # replacement preserves its three old contracts in the private archive.
+        pika_ids = {
+            "pika-h3-flex:modular-text-to-video-with-audio:v1",
+            "pika-h3-flex:modular-first-last-frame-to-video-with-audio:v1",
+            "pika-h3-flex:modular-reference-to-video-with-audio:v1",
+        }
+        self.assertEqual(
+            {specification["id"].removeprefix("") for specification in specifications
+             if specification["pipelineClass"] == "PikaH3FlexModularPipeline"}, pika_ids,
+        )
+        self.assertEqual(
+            {specification['id'] for specification in specifications
+             if specification['pipelineClass'] == 'WanTI2VImageToVideoPipeline'},
+            {'wan-22-ti2v-5b:image-to-video:v1'},
+        )
+        h3_image_ids = {
+            'minimax-h3-image:modular-text-to-image:v1',
+            'minimax-h3-image:modular-edit-image:v1',
+            'minimax-h3-image:modular-multi-image-reference-edit:v1',
+        }
+        self.assertEqual(
+            {specification['id'].removeprefix('') for specification in specifications
+             if specification['pipelineClass'] == 'MiniMaxH3ImageModularPipeline'}, h3_image_ids,
+        )
+        qwen_turbo_ids = {f"qwen-image-21-turbo:{task}:v1"
+                          for task in ("text-to-image", "edit-image", "multi-image-reference-edit")}
+        self.assertEqual(
+            {specification["id"] for specification in specifications
+             if specification["pipelineClass"] == "QwenImage21TurboPipeline"},
+            qwen_turbo_ids,
+        )
+        self.assertEqual(
+            sum(specification["id"] not in qwen_turbo_ids | public_flux3_spec_ids | pika_ids | h3_image_ids | kandinsky_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
+                for specification in specifications),
+            282,
+        )
         capabilities = studio_capability_definitions()
         cases = {
             ("ChromaImg2ImgPipeline", "edit_image"): (
@@ -394,6 +455,18 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
                 all(parameter != "true_cfg_scale" for _role, parameter, _source in specification["bindings"])
             )
         self.assertIn(("outpaintCanvas", "mask_image", "diffusersImageInpaint", "mask_image"), outpaint["edges"])
+        self.assertEqual(
+            capabilities["ChromaInpaintPipeline"]["outpaintDefaults"],
+            {
+                "width": 1024,
+                "height": 768,
+                "aspectRatio": "4:3",
+                "outpaintLeft": 96,
+                "outpaintRight": 96,
+                "outpaintOverlap": 48,
+                "outpaintFeather": 16,
+            },
+        )
 
         ltx2 = studio_execution_spec_for_pair("LTX2Pipeline", "text_to_video")
         ltx2_capability = capabilities["LTX2Pipeline"]
@@ -501,6 +574,51 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
 
         self.assertEqual((result["width_out"], result["height_out"]), (64, 48))
         self.assertEqual(len(pipeline.calls), 1)
+
+    def test_chroma_outpaint_samples_the_entire_feather_and_composites_with_the_original_mask(self):
+        source = Image.new("RGB", (64, 48), (0, 0, 0))
+        mask = Image.new("L", source.size, 0)
+        mask.putpixel((4, 8), 64)
+        mask.putpixel((5, 8), 255)
+        pipeline = _tag_chroma(ChromaInpaintPipeline(), "ChromaInpaintPipeline", "outpaint")
+
+        result = Inpaint("chroma-feathered-outpaint").execute(
+            pipeline=pipeline, image=source, mask_image=mask, prompt="extend the scene",
+            width=64, height=48,
+        )
+
+        sampled_mask = pipeline.calls[0]["mask_image"]
+        self.assertEqual(sampled_mask.getpixel((3, 8)), 0)
+        self.assertEqual(sampled_mask.getpixel((4, 8)), 255)
+        self.assertEqual(sampled_mask.getpixel((5, 8)), 255)
+        self.assertEqual(mask.getpixel((4, 8)), 64)
+        composited = result["images"][0]
+        self.assertEqual(composited.getpixel((3, 8)), (0, 0, 0))
+        self.assertEqual(composited.getpixel((4, 8)), (0, 32, 0))
+        self.assertEqual(composited.getpixel((5, 8)), (0, 128, 0))
+
+    def test_chroma_portable_outpaint_defaults_keep_source_geometry(self):
+        graph = Path(__file__).resolve().parents[1] / "data/graphs/studio/chroma-inpaint-pipeline/outpaint.json"
+        values = {
+            node["data"]["action"]: {key: field.get("value") for key, field in node["data"]["params"].items()}
+            for node in json.loads(graph.read_text(encoding="utf-8"))["nodes"]
+        }
+        defaults = studio_capability_definitions()["ChromaInpaintPipeline"]["outpaintDefaults"]
+        fields = {
+            "width": "width", "height": "height", "left": "outpaintLeft", "right": "outpaintRight",
+            "overlap": "outpaintOverlap", "feather": "outpaintFeather",
+        }
+        self.assertEqual({key: values["OutpaintCanvas"][key] for key in fields},
+                         {key: defaults[source] for key, source in fields.items()})
+        self.assertEqual((values["Inpaint"]["width"], values["Inpaint"]["height"]), (1024, 768))
+        self.assertEqual(values["Inpaint"]["strength"], 1.0)
+        source = Image.new("RGB", (832, 768), (177, 96, 42))
+        result = OutpaintCanvas("chroma-starter-canvas").execute(
+            image=source, **{key: values["OutpaintCanvas"][key] for key in fields}
+        )
+        self.assertEqual(result["canvas"].crop((96, 0, 928, 768)).tobytes(), source.tobytes())
+        self.assertEqual(result["mask_image"].getpixel((512, 384)), 0)
+        self.assertEqual(result["mask_image"].getpixel((0, 384)), 255)
 
     def test_chroma_loaders_use_exact_pin_and_safe_serialization_without_downloads(self):
         for pipeline_class, mode in (

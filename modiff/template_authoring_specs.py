@@ -25,6 +25,11 @@ TEMPLATE_AUTHORING_SPEC_PATH = Path(__file__).resolve().parents[1] / "data" / "t
 
 _WORKFLOW_MANIFEST_PATH = "data/workflow-library-manifest.json"
 _CANDIDATE_PATH = "data/template-candidate-contracts.v1.json"
+_REVIEWED_REPLACEMENT_SOURCES = {
+    "WanImageToVideoPipeline:image_to_video": "wan_22_i2v_seed_vault",
+    "WanTI2VPipeline:text_to_video": "wan_22_ti2v_5b_seed_vault",
+    "WanVACEPipeline:video_inpaint": "wan_vace_masked_object_replace",
+}
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _MEDIA_FIELDS = {
     "requiredImages": "image",
@@ -180,6 +185,7 @@ _MODE_PROMPTS = {
     "graph_utility": "Primary branch: the repaired footbridge is ready for the morning crossing.",
     "text_select": "Wide establishing shot at dawn\nClose detail of hands fitting the replacement plank\nMedium shot of neighbors testing the repaired footbridge\nQuiet final view as the river passes beneath the completed span",
     "text_to_3d": "A compact mid-century table radio with rounded corners, a large tuning dial, woven speaker grille, four rubber feet, and clean watertight geometry suitable for a neutral turntable preview. No text or extra parts.",
+    "video_inpaint": "Replace the object inside the supplied moving mask with one translucent amber glass vessel. Keep the rim and corners rigid, follow the camera and timing of the source clip, and preserve the tabletop and background.",
     "video_to_video": "Restyle the supplied video as a restrained cinematic documentary while preserving timing, camera motion, subject identity, scene layout, and temporal continuity.",
 }
 
@@ -253,6 +259,25 @@ def _prompt_for(workflow_id: str, mode: str) -> str | None:
 
 def _canonical_graph_hash(value: Mapping[str, Any]) -> str:
     return _sha256_bytes(_stable_json(value).encode("utf-8"))
+
+
+def read_graph_authoring_defaults(
+    root: Path, workflow_id: str, graph_path: Any, graph_hash: Any,
+) -> tuple[list[dict[str, Any]], bool]:
+    """Read authoring defaults from the exact shipped canonical graph."""
+    if not isinstance(graph_path, str) or not isinstance(graph_hash, str) or _SHA256.fullmatch(graph_hash) is None:
+        raise TemplateAuthoringSpecError(f"Template candidate {workflow_id} has an invalid graph binding.")
+    graphs = (root / "data" / "graphs").resolve()
+    path = (graphs / graph_path).resolve()
+    if not path.is_relative_to(graphs):
+        raise TemplateAuthoringSpecError(f"Canonical graph path escaped the catalogue for {workflow_id}.")
+    try:
+        graph = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise TemplateAuthoringSpecError(f"Canonical graph is unavailable for {workflow_id}.") from error
+    if not isinstance(graph, dict) or _canonical_graph_hash(graph) != graph_hash:
+        raise TemplateAuthoringSpecError(f"Canonical graph hash drifted for {workflow_id}.")
+    return _graph_default_snapshot(graph)
 
 
 def _graph_default_snapshot(graph: Mapping[str, Any]) -> tuple[list[dict[str, Any]], bool]:
@@ -406,7 +431,7 @@ def _negative_prompt(media_kind: str, *, supported: bool) -> dict[str, Any]:
 
 
 def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
-    """Build original authoring drafts from exact hidden workflow contracts."""
+    """Build original authoring drafts and reviewed historical-recipe replacements."""
 
     root = root.resolve(strict=True)
     candidate, candidate_sha = _read_json(root, _CANDIDATE_PATH, label="template candidate ledger")
@@ -417,27 +442,36 @@ def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
     if candidate != validated_candidate:
         raise TemplateAuthoringSpecError("The template candidate ledger failed exact validation.")
     manifest, manifest_sha = _read_json(root, _WORKFLOW_MANIFEST_PATH, label="workflow manifest")
-    manifest_rows = _records(manifest.get("workflows"), label="workflow manifest records")
+    # Both sections supply hidden authoring drafts; neither grants runtime or publication evidence.
+    manifest_rows = [
+        *_records(manifest.get("workflows"), label="workflow manifest records"),
+        *_records(manifest.get("experimentalWorkflows", []), label="experimental workflow manifest records"),
+    ]
     manifest_by_id = {row.get("id"): row for row in manifest_rows}
     if len(manifest_by_id) != len(manifest_rows) or any(not isinstance(key, str) for key in manifest_by_id):
         raise TemplateAuthoringSpecError("Workflow manifest ids must be unique strings.")
 
+    contracts = _records(candidate.get("contracts"), label="template candidate contracts")
+    candidate_ids = {row.get("canonicalWorkflowId") for row in contracts}
+    for workflow_id, source_template_id in _REVIEWED_REPLACEMENT_SOURCES.items():
+        workflow = manifest_by_id.get(workflow_id)
+        if workflow is None or workflow.get("sourceTemplateId") != source_template_id:
+            raise TemplateAuthoringSpecError(f"Reviewed replacement source changed for {workflow_id}.")
+        if workflow_id in candidate_ids:
+            continue
+        # This recipe uses the same checked-in graph and pinned artifacts as the
+        # historical source. It starts with its own pending review and no assets.
+        contracts.append({**workflow, "canonicalWorkflowId": workflow_id})
+
     specifications = []
-    for contract in _records(candidate.get("contracts"), label="template candidate contracts"):
+    for contract in contracts:
         workflow_id = contract.get("canonicalWorkflowId")
         if not isinstance(workflow_id, str) or workflow_id not in manifest_by_id:
             raise TemplateAuthoringSpecError("Template candidate has no exact workflow manifest record.")
         workflow = manifest_by_id[workflow_id]
         graph_path = contract.get("graphPath")
         graph_hash = contract.get("graphHash")
-        if not isinstance(graph_path, str) or not isinstance(graph_hash, str) or _SHA256.fullmatch(graph_hash) is None:
-            raise TemplateAuthoringSpecError(f"Template candidate {workflow_id} has an invalid graph binding.")
-        try:
-            graph = json.loads((root / "data" / "graphs" / graph_path).read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as error:
-            raise TemplateAuthoringSpecError(f"Canonical graph is unavailable for {workflow_id}.") from error
-        if not isinstance(graph, dict) or _canonical_graph_hash(graph) != graph_hash:
-            raise TemplateAuthoringSpecError(f"Canonical graph hash drifted for {workflow_id}.")
+        defaults, has_negative_prompt = read_graph_authoring_defaults(root, workflow_id, graph_path, graph_hash)
 
         model_type = contract.get("modelType")
         mode = contract.get("mode")
@@ -446,7 +480,6 @@ def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
         if any(not isinstance(value, str) or not value for value in (model_type, mode, media_kind, model_family)):
             raise TemplateAuthoringSpecError(f"Template candidate identity is invalid for {workflow_id}.")
         prompt = _prompt_for(workflow_id, mode)
-        defaults, has_negative_prompt = _graph_default_snapshot(graph)
         inputs = _input_items(contract.get("requiredInputs"), mode=mode)
         required_artifacts = contract.get("requiredArtifacts")
         if not isinstance(required_artifacts, list) or any(
@@ -477,6 +510,11 @@ def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
                 "modelFamily": model_family,
                 "mode": mode,
                 "mediaKind": media_kind,
+                **(
+                    {"replacementSourceTemplateId": _REVIEWED_REPLACEMENT_SOURCES[workflow_id]}
+                    if workflow_id in _REVIEWED_REPLACEMENT_SOURCES
+                    else {}
+                ),
                 "title": f"{model_family} — {_humanize(mode)} [{model_type}]",
                 "purpose": (
                     f"Author and review one {media_kind} result for the exact {model_family} "

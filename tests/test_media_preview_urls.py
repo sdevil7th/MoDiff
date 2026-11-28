@@ -1,4 +1,6 @@
+import hashlib
 import json
+import subprocess
 import tempfile
 import unittest
 from concurrent.futures import ThreadPoolExecutor
@@ -10,9 +12,14 @@ import numpy as np
 from PIL import Image
 from scipy.io import wavfile
 from unittest.mock import patch
+from urllib.parse import unquote, urlsplit
+
+from aiohttp import web
+from aiohttp.test_utils import TestClient, TestServer
 
 from modiff import media_io, server as server_module
 from modiff.media_io import export_media_file
+from modiff.NodeBase import NodeBase
 from modiff.server import (
     WebServer,
     audio_download_filename,
@@ -21,9 +28,20 @@ from modiff.server import (
     parse_audio_download_sample_rate,
     resample_wav_bytes,
 )
+from modules.Image.main import Save
 
 
 class MediaPreviewUrlTests(unittest.TestCase):
+    def test_cache_url_preserves_ascii_and_encodes_each_identity_once(self):
+        self.assertEqual(server_module.cache_media_url("preview", "images", 0), "/cache/preview/images/0")
+        node, field = "visual-output/stage-preview %2F?#", "images/output %?#"
+        url = server_module.cache_media_url(node, field, 2)
+        parts = urlsplit(url).path.split("/")
+        self.assertEqual(len(parts), 5)
+        self.assertEqual([unquote(parts[2]), unquote(parts[3]), parts[4]], [node, field, "2"])
+        self.assertEqual(urlsplit(url).query, "")
+        self.assertEqual(urlsplit(url).fragment, "")
+
     def test_file_backed_media_uses_file_route(self):
         url = file_backed_media_preview("audio/source track.wav")
 
@@ -109,6 +127,108 @@ class MediaPreviewUrlTests(unittest.TestCase):
         self.assertEqual(len({result[0] for result in results}), 1)
         self.assertEqual(encode.call_count, 1)
         self.assertEqual(leftovers, [])
+
+
+class GeneratedCacheUrlTests(unittest.IsolatedAsyncioTestCase):
+    async def test_saved_image_gallery_copy_preserves_exact_pixels_after_release(self):
+        # High-frequency, non-gray pixels expose WebP's loss even at quality 100.
+        pixels = np.random.default_rng(14).integers(0, 256, (19, 23, 3), dtype=np.uint8)
+        image = Image.fromarray(pixels)
+        definition = {"modules.Image": {"Save": {"params": Save.params}}}
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "saved.png"
+            server = WebServer(modules=definition, work_dir=directory, data_dir=directory)
+            server.current_task = {"task_id": "save-png-run", "attempt_index": 0}
+            messages = []
+            server.queue_message = lambda message, *_args, **_kwargs: messages.append(message)
+            with patch("modiff.NodeBase._module_map", return_value=definition), patch("modiff.NodeBase._server", return_value=server):
+                server.node_cache["save-png"] = Save("save-png")
+                server.execute_node("save-png", {"module": "modules.Image", "action": "Save", "params": {
+                    "image": {"value": image}, "filename": {"value": str(target)},
+                    "saved_images": {"display": "ui_image", "sourceKey": "saved_image_data"},
+                }}, "test", quiet=True)
+            message = next(m for m in messages if m.get("type") == "update_value")
+            self.assertTrue(message["backend_persisted"])
+            output = next(row for row in server._read_studio_output_state()["outputs"] if row["id"] == message["output_id"])
+            item = output["mediaItems"][0]
+            app = web.Application()
+            app.router.add_get("/cache/{node}/{field}/{index}", server.cache)
+            app.router.add_get("/file", server.fileGet)
+            async with TestClient(TestServer(app)) as client:
+                async with client.get(message["value"][0]) as response:
+                    self.assertEqual(response.status, 200)
+                    body = await response.read()
+                with Image.open(BytesIO(body)) as preview:
+                    self.assertEqual(preview.format, "PNG")
+                    np.testing.assert_array_equal(np.array(preview), pixels)
+                self.assertEqual(item["mediaHash"], "sha256:bytes:" + hashlib.sha256(body).hexdigest())
+                server.node_cache.clear()
+                async with client.get(item["url"]) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual(await response.read(), body)
+            with Image.open(target) as saved:
+                np.testing.assert_array_equal(np.array(saved), pixels)
+
+    def dispatch(self, directory, node_id, field, value, data_type, display, *, task=False):
+        class Preview(NodeBase):
+            def execute(self):
+                return {field: [value]}
+
+        module = ".".join(Preview.__module__.split(".")[:-1])
+        definition = {module: {"Preview": {"params": {
+            field: {"type": data_type, "display": "output"},
+            "preview": {"type": "url", "display": display, "fieldOptions": {"format": "PNG"}},
+        }}}}
+        server = WebServer(modules=definition, work_dir=directory, data_dir=directory)
+        messages = []
+        server.queue_message = lambda message, *_args, **_kwargs: messages.append(message)
+        if task:
+            server.current_task = {"task_id": "cache-url-run", "attempt_index": 0}
+        with patch("modiff.NodeBase._module_map", return_value=definition), patch("modiff.NodeBase._server", return_value=server):
+            server.node_cache[node_id] = Preview(node_id)
+            server.execute_node(node_id, {"module": module, "action": "Preview", "params": {
+                "preview": {"display": display, "sourceKey": field},
+            }}, "test", quiet=True)
+        message = next(message for message in messages if message.get("type") == "update_value")
+        return server, message
+
+    async def test_all_cache_url_branches_preserve_reserved_node_and_field_characters(self):
+        cases = [("image", "ui_image", Image.new("RGB", (2, 3), "navy")),
+                 ("audio", "ui_audio", {"samples": [], "sample_rate": 8000}),
+                 ("string", "ui_text", "text")]
+        with tempfile.TemporaryDirectory() as directory:
+            for data_type, display, value in cases:
+                with self.subTest(display=display):
+                    node, field = "visual-output/stage-preview %?#", "output/field %?#"
+                    _server, message = self.dispatch(directory, node, field, value, data_type, display)
+                    url = message["value"][0]
+                    parts = urlsplit(url).path.split("/")
+                    self.assertEqual(len(parts), 5)
+                    self.assertEqual([unquote(parts[2]), unquote(parts[3])], [node, field])
+
+    async def test_slash_id_image_serves_and_persists_after_cache_is_cleared(self):
+        with tempfile.TemporaryDirectory() as directory:
+            server, message = self.dispatch(directory, "visual-output/stage-preview", "images/output %?#",
+                                            Image.new("RGB", (2, 3), "navy"), "image", "ui_image", task=True)
+            url = message["value"][0]
+            self.assertIn("visual-output%2Fstage-preview", url)
+            self.assertTrue(message["backend_persisted"])
+            output = next(row for row in server._read_studio_output_state()["outputs"] if row["id"] == message["output_id"])
+            item = output["mediaItems"][0]
+            self.assertIn("backendPath", item)
+            app = web.Application()
+            app.router.add_get("/cache/{node}/{field}/{index}", server.cache)
+            app.router.add_get("/file", server.fileGet)
+            async with TestClient(TestServer(app)) as client:
+                async with client.get(url) as response:
+                    self.assertEqual(response.status, 200)
+                    body = await response.read()
+                self.assertEqual(Image.open(BytesIO(body)).size, (2, 3))
+                self.assertEqual("sha256:bytes:" + hashlib.sha256(body).hexdigest(), item["mediaHash"])
+                server.node_cache.clear()
+                async with client.get(item["url"]) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual(await response.read(), body)
 
 
 class WorkspaceFileRouteTests(unittest.IsolatedAsyncioTestCase):
@@ -215,6 +335,61 @@ class SeparateDataRootUploadTests(unittest.IsolatedAsyncioTestCase):
 
     def tearDown(self):
         self.temporary.cleanup()
+
+    def _video_fixture(self, *, audio):
+        path = self.root / ("soundtrack.mp4" if audio else "silent.mp4")
+        command = [media_io.get_ffmpeg_exe(), "-y", "-v", "error", "-nostdin",
+                   "-f", "lavfi", "-i", "color=c=blue:s=32x32:r=4:d=1"]
+        if audio:
+            command += ["-f", "lavfi", "-i", "sine=frequency=440:duration=1", "-c:a", "aac"]
+        command += ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-shortest", str(path)]
+        subprocess.run(command, check=True, capture_output=True, timeout=15)
+        return path
+
+    async def _upload_bytes(self, name, body, kind):
+        class UploadRequest:
+            async def post(self):
+                return {"file": SimpleNamespace(filename=name, file=BytesIO(body)), "type": kind}
+
+        return await self.server.filePost(UploadRequest())
+
+    async def test_audio_upload_preserves_av_source_and_previews_its_soundtrack(self):
+        source = self._video_fixture(audio=True)
+        original = source.read_bytes()
+        response = await self._upload_bytes("soundtrack.mp4", original, "audio")
+        self.assertEqual(response.status, 200, response.text)
+        payload = json.loads(response.text)
+        self.assertEqual(payload["path"], "@data/audio/soundtrack.mp4")
+        self.assertEqual(payload["media"]["kind"], "video")
+        self.assertEqual(payload["media"]["sha256"], hashlib.sha256(original).hexdigest())
+        stored = self.data / "audio" / "soundtrack.mp4"
+        self.assertEqual(stored.read_bytes(), original)
+        preview = await self.server.media_preview(
+            SimpleNamespace(query={"file": payload["path"], "media_kind": "audio"})
+        )
+        self.assertEqual(preview.status, 200)
+        self.assertEqual(preview.content_type, "audio/mpeg")
+        self.assertEqual(stored.read_bytes(), original)
+        strict_probe = await self.server.media_probe(
+            SimpleNamespace(query={"file": payload["path"], "media_kind": "audio"})
+        )
+        self.assertEqual(strict_probe.status, 422)
+
+    async def test_audio_upload_rejects_silent_video_and_renamed_image_without_retaining_files(self):
+        silent = self._video_fixture(audio=False).read_bytes()
+        image = BytesIO()
+        Image.new("RGB", (2, 2), "blue").save(image, format="PNG")
+        for name, body in (("silent.mp4", silent), ("renamed.mp4", image.getvalue())):
+            with self.subTest(name=name):
+                response = await self._upload_bytes(name, body, "audio")
+                self.assertEqual(response.status, 400)
+                self.assertFalse((self.data / "audio" / name).exists())
+
+    async def test_other_upload_kinds_still_reject_av_as_an_image(self):
+        original = self._video_fixture(audio=True).read_bytes()
+        response = await self._upload_bytes("renamed.png", original, "images")
+        self.assertEqual(response.status, 400)
+        self.assertFalse((self.data / "images" / "renamed.png").exists())
 
     async def test_upload_returns_data_root_identifier_and_every_file_route_resolves_it(self):
         encoded = BytesIO()

@@ -1,5 +1,7 @@
 import copy
 import hashlib
+import json
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
@@ -16,6 +18,10 @@ from modiff.huggingface_cluster_promotions import (
 from modiff.huggingface_cluster_runtime import REGISTERED_BLOCK_V2_DEFINITION_PINS
 from modiff.huggingface_node_library import reviewed_huggingface_node_library
 
+
+QWEN_COMPILER_FIXTURE = json.loads(
+    (Path(__file__).parent / "fixtures/qwen_post_promotion_compiler_identity.v1.json").read_text(encoding="utf-8")
+)
 
 QWEN_ADMISSION_ID = (
     "diffusers.cluster-admission:QwenImageModularPipeline:text2image:mode:text_to_image"
@@ -115,16 +121,8 @@ class HuggingFaceClusterPromotionTests(unittest.TestCase):
     @staticmethod
     def qwen_post_promotion_identity():
         return {
-            "post_promotion_block_definition": {
-                "definitionId": QWEN_ADMISSION_ID,
-                "contentHash": "block-definition-v2-74cfc64c",
-                "canonicalSha256": (
-                    "sha256:c0661cfc7442e5abb25c960b16773166d716fb9144ea9e99ca11939ebb08bef7"
-                ),
-            },
-            "post_promotion_manifest_content_hash": (
-                "sha256:04426a29429af2b7cfbe65adce9d1d67f342fbbbf5e7397a3ce7dc0ec94378ef"
-            ),
+            "post_promotion_block_definition": copy.deepcopy(QWEN_COMPILER_FIXTURE["postPromotionBlockDefinition"]),
+            "post_promotion_manifest_content_hash": QWEN_COMPILER_FIXTURE["postPromotionManifestContentHash"],
         }
 
     def test_checked_in_v1_approvals_are_preserved_but_non_authorizing(self):
@@ -260,7 +258,7 @@ class HuggingFaceClusterPromotionTests(unittest.TestCase):
         )
 
         self.assertEqual(repeated, receipt)
-        self.assertEqual(receipt["blockDefinition"]["contentHash"], "block-definition-v2-74cfc64c")
+        self.assertEqual(receipt["blockDefinition"]["contentHash"], QWEN_COMPILER_FIXTURE["postPromotionBlockDefinition"]["contentHash"])
         self.assertEqual(receipt["evidence"]["mediaSha256"], hashlib.sha256(media).hexdigest())
         self.assertEqual(ledger["receipts"], [receipt])
         self.assertEqual(ledger["contentHash"], canonical_content_hash(ledger))
@@ -333,12 +331,12 @@ class HuggingFaceClusterPromotionTests(unittest.TestCase):
         self.assertFalse(current_admission["publication"]["liveProof"])
         self.assertEqual(
             current_definition["contentHash"],
-            "sha256:49cb50671b41cf2c03b22387cfe2cf1b37f16b2996961791505aef830817c393",
+            QWEN_COMPILER_FIXTURE["currentManifestContentHash"],
         )
         self.assertTrue(candidate_admission["publication"]["liveProof"])
         self.assertEqual(
             candidate_definition["contentHash"],
-            "sha256:04426a29429af2b7cfbe65adce9d1d67f342fbbbf5e7397a3ce7dc0ec94378ef",
+            QWEN_COMPILER_FIXTURE["postPromotionManifestContentHash"],
         )
         self.assertEqual(reviewed_cluster_promotion_receipts()["receipts"], [])
 

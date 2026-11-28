@@ -2,7 +2,7 @@ import unittest
 
 from modiff.server import STUDIO_MODEL_CAPABILITIES, studio_download_files_for_repo
 from modiff.studio_execution_specs import (
-    ANIMATEDIFF_MOTION_FP16_FILES,
+    ANIMATEDIFF_MOTION_FILES,
     ANIMATEDIFF_MOTION_REPO,
     ANIMATELCM_MOTION_FP16_FILES,
     ANIMATELCM_MOTION_REPO,
@@ -27,7 +27,7 @@ class AuxiliaryDownloadSelectionTests(unittest.TestCase):
     CASES = {
         ("AnimateDiffPipeline", "text_to_video"): (
             ANIMATEDIFF_MOTION_REPO,
-            ANIMATEDIFF_MOTION_FP16_FILES,
+            ANIMATEDIFF_MOTION_FILES,
             1_815_334_485,
         ),
         ("AnimateLCMPipeline", "text_to_video"): (
@@ -105,7 +105,8 @@ class AuxiliaryDownloadSelectionTests(unittest.TestCase):
 
         self.assertIn("diffusion_pytorch_model.safetensors", SD15_CONTROLNET_CANNY_FILES)
         self.assertNotIn("diffusion_pytorch_model.fp16.safetensors", SD15_CONTROLNET_CANNY_FILES)
-        self.assertIn("diffusion_pytorch_model.fp16.safetensors", ANIMATEDIFF_MOTION_FP16_FILES)
+        self.assertIn("diffusion_pytorch_model.safetensors", ANIMATEDIFF_MOTION_FILES)
+        self.assertNotIn("diffusion_pytorch_model.fp16.safetensors", ANIMATEDIFF_MOTION_FILES)
         self.assertIn("diffusion_pytorch_model.fp16.safetensors", ANIMATELCM_MOTION_FP16_FILES)
         self.assertIn("AnimateLCM_sd15_t2v_lora.safetensors", ANIMATELCM_MOTION_FP16_FILES)
 

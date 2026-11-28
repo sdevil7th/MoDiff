@@ -64,8 +64,8 @@ class ComfyContractResolutionTests(unittest.TestCase):
         self.assertEqual(self.ledger["summary"]["sourceProposalCount"], 138)
         self.assertEqual(self.ledger["summary"]["resolutionCount"], 138)
         self.assertEqual(self.ledger["summary"]["recordsWithRecommendedWorkflow"], 110)
-        self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 30)
-        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 80)
+        self.assertEqual(self.ledger["summary"]["recordsWithPublicTemplateOption"], 105)
+        self.assertEqual(self.ledger["summary"]["recordsWithHiddenAuthoringSpecOption"], 8)
         self.assertEqual(self.ledger["summary"]["pinnedSourceReviewCount"], 138)
         self.assertEqual(
             self.ledger["summary"]["pinnedSourceReviewDecisionCounts"],
@@ -666,9 +666,9 @@ class ComfyContractResolutionTests(unittest.TestCase):
                 row["recommendedWorkflow"]["canonicalWorkflowId"],
                 "WanImage2VideoModularPipeline:image_to_video",
             )
+            self.assertIsNone(row["recommendedWorkflow"]["authoringSpecId"])
             self.assertEqual(
-                row["recommendedWorkflow"]["authoringSpecId"],
-                "template-authoring:WanImage2VideoModularPipeline:image_to_video",
+                row["recommendedWorkflow"]["publicTemplateIds"], ["wan_flf_blue_hour_at_the_tram_shelter"]
             )
             self.assertEqual(
                 row["sourceReview"]["comparison"]["state"],

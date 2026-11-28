@@ -412,7 +412,7 @@
               }
             ],
             "type": "string",
-            "value": ""
+            "value": []
           },
           "dtype": {
             "default": "bfloat16",
@@ -683,7 +683,7 @@
               }
             ],
             "type": "string",
-            "value": "_native_math"
+            "value": "auto"
           },
           "attention_components": {
             "default": "",
@@ -827,7 +827,7 @@
               }
             ],
             "type": "string",
-            "value": false
+            "value": "none"
           },
           "device": {
             "default": "cuda:0",

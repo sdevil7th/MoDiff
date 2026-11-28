@@ -33,11 +33,12 @@ class VideoDownloadSelectionTests(unittest.TestCase):
             and capability.get("defaultRepo")
             and capability.get("artifactInstallRequired", True)
             and not capability.get("downloadFiles")
+            and not capability.get("artifactSelections")
         }
 
         self.assertEqual(
             unbounded,
-            {"LTX2Pipeline", "MiniMaxH3ModularPipeline", "WanAnimatePipeline"},
+            {"LTX2Pipeline", "WanAnimatePipeline"},
         )
 
         builtin = capabilities["BuiltinVideoOperation"]

@@ -263,6 +263,7 @@ def _preview(files):
                 "label": statement.name,
                 "category": "Custom",
                 "description": ast.get_docstring(statement) or "",
+                "searchTerms": [],
                 "params": {},
             }
             for field in statement.body:
@@ -285,6 +286,12 @@ def _preview(files):
     if len(nodes) > 256:
         raise ExtensionError("An extension may declare at most 256 nodes.")
     for action, node in nodes.items():
+        terms = node.pop("searchTerms")
+        if (not isinstance(terms, list) or len(terms) > 32
+                or any(not isinstance(term, str) or not term.strip() or len(term) > 96 for term in terms)):
+            raise ExtensionError("searchTerms must be a list of up to 32 nonempty terms of at most 96 characters.")
+        if terms:
+            node["searchTerms"] = list(dict.fromkeys(term.strip() for term in terms))
         if not isinstance(node["label"], str) or not node["label"]:
             node["label"] = action
         if not isinstance(node["params"], dict) or len(node["params"]) > 256:
@@ -539,13 +546,16 @@ class ExtensionStore:
                     files[relative] = git("-C", str(checkout), "cat-file", "blob", object_id)
                     total += size
             elif kind == "hub":
-                from huggingface_hub import snapshot_download
+                from huggingface_hub import constants, snapshot_download
                 from huggingface_hub.utils import validate_repo_id
 
                 validate_repo_id(source)
+                # Even exact commits can trigger an upstream tree lookup.
+                # Offline staging must explicitly request cached files only.
                 snapshot = Path(
                     snapshot_download(
-                        source, revision=revision, allow_patterns=["*.py", "*.json", "*.toml", "*.txt", "*.md"]
+                        source, revision=revision, local_files_only=constants.HF_HUB_OFFLINE,
+                        allow_patterns=["*.py", "*.json", "*.toml", "*.txt", "*.md"]
                     )
                 )
                 if (
@@ -658,6 +668,11 @@ class ExtensionStore:
                 raise ExtensionError(f"{action} must be a NodeBase subclass exported from main.py.")
             if not callable(getattr(klass, "execute", None)):
                 raise ExtensionError(f"{action} must implement execute() returning its declared outputs.")
+            terms = item["preview"]["nodes"].get(action, {}).get("searchTerms")
+            if terms:
+                registry[action]["searchTerms"] = terms
+            else:
+                registry[action].pop("searchTerms", None)
         json.dumps(registry, allow_nan=False)
         return registry
 

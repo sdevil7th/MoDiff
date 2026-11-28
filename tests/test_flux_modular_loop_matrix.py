@@ -10,7 +10,8 @@ from modiff.huggingface_node_library import reviewed_huggingface_node_library
 def admissions():
     return [item for item in reviewed_huggingface_node_library()["definitions"]
             if item.get("pipelineClass", "").startswith("Flux")
-            and item.get("definitionKind") == "modular_pipeline_workflow"]
+            and item.get("definitionKind") == "modular_pipeline_workflow"
+            and item.get("executionAdmissions")]
 
 
 @pytest.mark.skipif(importlib.util.find_spec("transformers") is None, reason="Optional model runtime not active")

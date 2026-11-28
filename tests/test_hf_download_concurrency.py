@@ -726,7 +726,7 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
             "guoyww/animatediff-motion-adapter-v1-5-2": (
                 "6167b88ffe39b4441fdf2113e77b99a6f56b7906",
                 4,
-                "diffusion_pytorch_model.safetensors",
+                "diffusion_pytorch_model.fp16.safetensors",
             ),
             "wangfuyun/AnimateLCM": (
                 "3d4d00fc113225e1040f4d3bec504b6ec750c10c",

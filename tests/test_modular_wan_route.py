@@ -742,9 +742,7 @@ class WanRouteStateTests(unittest.TestCase):
             with self.subTest(vae_bad_last=type(bad_last).__name__), self.assertRaises(ValueError):
                 issue_wan_vae_route_state(**vae_base, resized_last_image=bad_last)
 
-    def test_flf_crop_resize_preflight_matches_pinned_torchvision_axis_order(self):
-        from torchvision.transforms.functional import center_crop
-
+    def test_flf_crop_resize_preflight_uses_resolved_first_frame_dimensions(self):
         image = Image.new("RGB", (1200, 600))
         last_image = Image.new("RGB", (400, 300))
         preflight = preflight_wan_image_encoder_inputs(
@@ -754,18 +752,14 @@ class WanRouteStateTests(unittest.TestCase):
             width=832,
         )
         self.assertEqual(preflight[3:5], (432, 880))
-        self.assertEqual(preflight[7], (660, 880))
-        # Pinned Wan passes [computed_width, computed_height] to torchvision,
-        # whose API interprets the pair as [height, width].
-        actual = center_crop(last_image, [880, 660])
-        self.assertEqual(actual.size, preflight[7])
+        self.assertEqual(preflight[7], (880, 432))
         values = _issue_image_route(
             image=image,
             last_image=last_image,
             height=480,
             width=832,
         )
-        self.assertEqual(values["preflight"][7], actual.size)
+        self.assertEqual(values["preflight"][7], (880, 432))
         second = preflight_wan_vae_route_state(
             values["route"],
             binding=values["binding"],
@@ -778,9 +772,37 @@ class WanRouteStateTests(unittest.TestCase):
             vae_component=_WanVae(),
         )
         self.assertEqual(second[3:5], (432, 864))
-        self.assertEqual(second[10], (648, 864))
-        actual_second = center_crop(last_image, [864, 648])
-        self.assertEqual(actual_second.size, second[10])
+        self.assertEqual(second[10], (864, 432))
+
+    def test_flf_native_encoders_keep_landscape_last_frame_without_padding(self):
+        from diffusers import WanImage2VideoModularPipeline
+        from diffusers.modular_pipelines import PipelineState
+        from diffusers.modular_pipelines.wan.encoders import WanImageCropResizeStep
+        from modules.ModularDiffusers.native_blocks import prepare_native_pipeline_blocks
+
+        pipeline = WanImage2VideoModularPipeline()
+        prepared = prepare_native_pipeline_blocks(type(pipeline), pipeline.blocks)
+        original = WanImage2VideoModularPipeline().blocks
+        first = Image.new("RGB", (768, 512), (1, 2, 3))
+        for owner in ("image_encoder", "vae_encoder"):
+            baseline = original.sub_blocks[owner].sub_blocks
+            variants = prepared.sub_blocks[owner].sub_blocks
+            branch = f"flf2v_{owner}"
+            single_frame = f"image2video_{owner}"
+            self.assertIs(type(baseline[branch].sub_blocks["last_image_resize"]), WanImageCropResizeStep)
+            self.assertIs(type(variants[single_frame]), type(baseline[single_frame]))
+            fit = variants[branch].sub_blocks["last_image_resize"]
+            for source_size in ((768, 512), (400, 600)):
+                with self.subTest(owner=owner, source_size=source_size):
+                    last = Image.new("RGB", source_size, (181, 75, 23))
+                    state = PipelineState()
+                    state.set("resized_image", first)
+                    state.set("last_image", last)
+                    _, updated = fit(None, state)
+                    output = updated.get("resized_last_image")
+                    self.assertEqual(output.size, first.size)
+                    self.assertEqual(output.getextrema(), ((181, 181), (75, 75), (23, 23)))
+                    self.assertIs(updated.get("last_image"), last)
 
 
 class WanSchemaTruthTests(unittest.TestCase):

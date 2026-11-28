@@ -49,6 +49,13 @@ reuse/resource, service-export and platform evidence. Generated inventory hashes
 and route counts do not promote live execution or public asset approval.
 A bounded installed-model Windows test is not an all-model release gate.
 
+A workflow may count within an explicitly reviewed private scope while its
+preview stays withheld. Revalidate the retained request, native task, selected
+revisions and exact delivered bytes against the current workflow. For an approved
+variant, bind the authorized controls and input hashes to the original route.
+Track private execution independently of public Gallery approval, browser
+interaction and resource qualification. Keep the evidence archive outside Git.
+
 ## Required integrated journeys
 
 - Create fresh text-to-image, image-to-image and edit workflows. Required media

@@ -2,7 +2,6 @@ import json
 import logging
 from typing import Any
 
-from modiff.config import CONFIG
 from modiff.NodeBase import NodeBase
 from modiff.diffusers_offload import (
     OFFLOAD_MODE_MODEL_CPU,
@@ -10,7 +9,7 @@ from modiff.diffusers_offload import (
     offload_mode_param,
 )
 from modiff.model_artifact_catalog import resolve_model_revision
-from utils.huggingface import local_files_only
+from utils.huggingface import exact_cached_snapshot_path, local_files_only
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
 logger = logging.getLogger("modiff")
@@ -255,18 +254,16 @@ class WanVACELoadPipeline(NodeBase):
 
         logger.info("Loading Wan VACE pipeline: %s", model_id)
         self.progress(-1, phase="loading", message="Loading Wan VACE pipeline")
+        load_target = model_id if model_source == "local" else exact_cached_snapshot_path(model_id, revision)
         offline = local_files_only(model_id)
         component_load_kwargs = {
             "revision": revision,
             "local_files_only": offline,
             "use_safetensors": True,
         }
-        if CONFIG.hf.get("cache_dir"):
-            component_load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]
-
         self.progress(-1, phase="loading", message="Loading Wan VACE VAE in float32")
         vae = AutoencoderKLWan.from_pretrained(
-            model_id,
+            load_target,
             subfolder="vae",
             torch_dtype=torch.float32,
             **component_load_kwargs,
@@ -278,7 +275,7 @@ class WanVACELoadPipeline(NodeBase):
             **component_load_kwargs,
             **recipe_load_kwargs,
         }
-        pipeline = WanVACEPipeline.from_pretrained(model_id, **load_kwargs)
+        pipeline = WanVACEPipeline.from_pretrained(load_target, **load_kwargs)
         apply_execution_recipe_to_pipeline(pipeline, recipe)
 
         self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
@@ -371,6 +368,9 @@ class WanVACEGenerate(NodeBase):
         "frames_out": {"label": "Frames", "display": "output", "type": "int"},
     }
 
+    def _invoke_pipeline(self, pipeline, values):
+        return pipeline(**values)
+
     def execute(self, **kwargs):
         import torch
 
@@ -440,7 +440,7 @@ class WanVACEGenerate(NodeBase):
             values["generator"] = torch.Generator(device=device).manual_seed(chunk_seed)
             self._active_pipeline = pipeline
             try:
-                result = pipeline(**values)
+                result = self._invoke_pipeline(pipeline, values)
             finally:
                 self._active_pipeline = None
             frames = getattr(result, "frames", result)

@@ -62,6 +62,26 @@ class RuntimeOptionCatalogTests(unittest.TestCase):
                         malformed.append(f"{module}.{action}.{field_name}")
         self.assertEqual(malformed, [])
 
+    def test_runtime_option_scope_is_server_owned_and_keeps_dynamic_providers_separate(self):
+        params = {
+            "device": {"type": "string", "options": ["cpu"]},
+            "dtype": {"type": "string", "options": ["float32", "float16"]},
+            "attention_backend": {"options": ["auto", "_native_efficient"]},
+            "model": {"options": ["first"], "runtimeOptions": "choices"},
+            "empty": {"runtimeOptions": "choices"},
+            "provided": {"options": ["first"], "optionsSource": {}, "runtimeOptions": "choices"},
+        }
+        with patch.object(self.server, "_available_runtime_devices", return_value=["cpu", "cuda:0"]):
+            described = self.server.describe_node_params(params)
+        self.assertEqual(described["device"]["runtimeOptions"], "choices")
+        self.assertEqual(described["dtype"]["runtimeOptions"], "availability")
+        self.assertEqual(described["attention_backend"]["runtimeOptions"], "availability")
+        self.assertNotIn("runtimeOptions", described["model"])
+        self.assertNotIn("runtimeOptions", described["empty"])
+        self.assertNotIn("runtimeOptions", described["provided"])
+        self.assertEqual(params["model"]["runtimeOptions"], "choices")
+        self.assertEqual([row["value"] for row in described["device"]["options"]], ["cpu", "cuda:0"])
+
 
 if __name__ == "__main__":
     unittest.main()

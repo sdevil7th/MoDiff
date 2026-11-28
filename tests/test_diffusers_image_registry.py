@@ -123,6 +123,30 @@ def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revisi
 
 
 class DiffusersImageRegistryTests(unittest.TestCase):
+    def test_inactive_conditioning_model_has_explicit_readiness_metadata(self):
+        from modules.DiffusersImage.main import image_loader_field_params
+
+        auxiliary = LoadPipeline.params["conditioning_model_id"]
+        self.assertIs(auxiliary["fieldOptions"].get("modelReferenceInactiveWhenHidden"), True)
+        self.assertNotIn("modelReferenceInactiveWhenHidden", LoadPipeline.params["model_id"]["fieldOptions"])
+        self.assertTrue(image_loader_field_params(IMAGE_PIPELINE_ADAPTERS["FluxFillPipeline"])
+                        ["conditioning_model_id"]["hidden"])
+        self.assertFalse(image_loader_field_params(IMAGE_PIPELINE_ADAPTERS["StableDiffusionControlNetPipeline"])
+                         ["conditioning_model_id"]["hidden"])
+
+    def test_missing_base_transformers_quantization_error_requests_setup_repair(self):
+        from modules.DiffusersImage.main import build_qwen_pipeline_quantization_config
+
+        with patch('importlib.util.find_spec', side_effect=lambda name: None if name == 'transformers' else object()):
+            with self.assertRaises(RuntimeError) as raised:
+                build_qwen_pipeline_quantization_config(
+                    components=['text_encoder'], quantization_mode='bnb_4bit', compute_dtype='bfloat16')
+        message = str(raised.exception)
+        self.assertIn('required', message)
+        self.assertIn('repair', message.lower())
+        self.assertNotIn('optional runtime', message)
+        self.assertNotIn('activate', message.lower())
+
     def test_prequantized_transformer_is_an_optional_loader_input(self):
         # Ordinary pipelines load their own transformer. Graph repair must not
         # invent a connection to an unrelated `any` output for this override.
@@ -986,6 +1010,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                         expected_fields | ({"guidance_scale_2", "use_guidance_scale_2"}
                                            if adapter.secondary_guidance_parameter else set())
                         | set(PIPELINE_CALL_INPUTS.get(adapter.load_pipeline_class, ()))
+                        | ({"num_inference_steps"} if adapter.checkpoint_sample_sigmas else set())
                         | ({'output_type', 'latents_out'} if adapter.load_pipeline_class in PIPELINE_CALL_INPUTS
                            and adapter.load_pipeline_class != 'FluxReduxPipeline' else set()),
                     )
@@ -1825,6 +1850,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("JoyImageEditPipeline", "text_to_image", Generate, {}),
             ("JoyImageEditPipeline", "edit_image", Edit, {"image": image}),
             ("JoyImageEditPlusPipeline", "edit_image", Edit, {"image": image}),
+            ("JoyImageEditPlusPipeline", "multi_image_reference_edit", Edit,
+             {"image": [image, Image.new("RGB", image.size, "orange")]}),
             ("DreamLitePipeline", "text_to_image", Generate, {}),
             ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
             ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
@@ -1890,6 +1917,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     {"_execution_device": "cpu", "__call__": call},
                 )
                 pipeline = tag_test_image_pipeline(fake_type(), pipeline_name, mode)
+                if adapter.resize_reference_to_output:
+                    from diffusers.image_processor import VaeImageProcessor
+                    pipeline.image_processor = VaeImageProcessor(vae_scale_factor=8)
                 # This is a signature fixture, not a model proof. Mirror the
                 # explicit mixed-dtype encoder boundary used by current adapters.
                 if adapter.prompt_embedding_dtype_component is not None:
@@ -1982,6 +2012,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     action_class(f"signature-{pipeline_name}").execute(**values)
 
                 self.assertEqual(set(received), expected_keys)
+                if pipeline_name == "JoyImageEditPlusPipeline":
+                    references = action_inputs["image"]
+                    self.assertIsInstance(received["images"], list)
+                    self.assertEqual(received["images"],
+                                     references if isinstance(references, list) else [references])
                 if adapter.use_resolution_binning is not None:
                     self.assertIs(received["use_resolution_binning"], adapter.use_resolution_binning)
                 if adapter.guidance_parameter is not None:
@@ -2613,6 +2648,33 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     self.assertEqual(contract["fieldParams"]["guidance_scale"]["max"], 30.0)
                     with self.assertRaisesRegex(ValueError, "between 0.0 and 30.0"):
                         preflight_image_action(pipeline, action, {**inputs, "guidance_scale": 30.1})
+
+    def test_control_inpaint_evidence_distinguishes_three_native_roles_and_composited_output(self):
+        from modiff.builtin_media_evidence import media_identity
+        from modules.DiffusersImage.main import ControlInpaint
+
+        class Pipeline:
+            _execution_device = "cpu"
+
+            def __call__(self, **arguments):
+                self.arguments = arguments
+                return SimpleNamespace(images=[Image.new("RGB", (32, 32), "blue")])
+
+        pipeline = tag_test_image_pipeline(Pipeline(), "FluxControlInpaintPipeline", "control_inpaint", repo=FLUX_CANNY_REPO)
+        source = Image.new("RGB", (32, 32), "red")
+        mask = Image.new("L", (32, 32), 0)
+        mask.paste(255, (8, 8, 16, 16))
+        guide = Image.new("RGB", (32, 32), "white")
+        action = ControlInpaint("captured-controlled-inpaint")
+        with patch.dict("os.environ", {"MODIFF_CAPTURE_BUILTIN_MEDIA": "1"}):
+            result = action.execute(pipeline=pipeline, image=source, mask_image=mask, control_image=guide)
+        evidence = action._execution_input_record["mediaEvidence"]
+        self.assertEqual(evidence["status"], "complete")
+        for role in ("image", "mask_image", "control_image"):
+            self.assertEqual(evidence["inputs"][role], [media_identity(pipeline.arguments[role])])
+        self.assertEqual(evidence["outputs"]["images"], [media_identity(result["images"][0])])
+        self.assertEqual(result["images"][0].getpixel((0, 0)), (255, 0, 0))
+        self.assertEqual(result["images"][0].getpixel((9, 9)), (0, 0, 255))
 
     def test_control_guidance_bound_update_accepts_exact_saved_contract_only(self):
         from copy import deepcopy
@@ -3369,6 +3431,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
     def test_auraflow_loads_only_the_pinned_fp16_partition_and_bounds_native_recipe(self):
         loaded = {}
+        verified_transformer = object()
 
         class AuraFlowPipeline:
             @classmethod
@@ -3387,6 +3450,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 "modules.DiffusersImage.main.pipeline_class_from_name",
                 return_value=AuraFlowPipeline,
             ),
+            patch(
+                "modules.DiffusersImage.main.load_legacy_cached_image_transformer",
+                return_value=verified_transformer,
+            ) as load_transformer,
             patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
             patch("modules.DiffusersImage.main.apply_pipeline_offload"),
         ):
@@ -3405,6 +3472,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(loaded["kwargs"]["torch_dtype"], "float16")
         self.assertTrue(loaded["kwargs"]["use_safetensors"])
         self.assertEqual(loaded["kwargs"]["variant"], "fp16")
+        load_transformer.assert_called_once()
+        selected_adapter, selected_repo, _ = load_transformer.call_args.args
+        self.assertEqual(selected_adapter.pipeline_class, "AuraFlowPipeline")
+        self.assertEqual(selected_repo, AURAFLOW_V03_REPO)
+        self.assertIs(loaded["kwargs"]["transformer"], verified_transformer)
         self.assertNotIn("trust_remote_code", loaded["kwargs"])
         for field, value in (("width", 1552), ("height", 1552)):
             with self.subTest(field=field), self.assertRaisesRegex(ValueError, "between 16 and 1536"):
@@ -4025,6 +4097,56 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 )
             self.assertEqual(loaded[-1][2].text_encoder.to_calls, expected_calls)
 
+    def test_joyimage_plus_patch_barrier_is_scoped_to_the_reviewed_hip_projection(self):
+        import torch
+
+        class JoyImageEditPlusPipeline:
+            @classmethod
+            def from_pretrained(cls, _repo, **_kwargs):
+                pipeline = cls()
+                pipeline.transformer = SimpleNamespace(img_in=Mock())
+                return pipeline
+
+        for platform, device, hip, version, architecture, expected in (
+            ("linux", "cuda:0", "7.2.26015", "2.9.1+rocm7.2.0.git7e1940d4", "gfx1151:xnack+", True),
+            ("linux", "cuda:0", "7.2.26015", "2.9.1+rocm7.2.0.git7e1940d4", "gfx1100", False),
+            ("linux", "cuda:0", "7.3.0", "2.10.0+rocm7.3.0", "gfx1151", False),
+            ("win32", "cuda:0", None, "2.11.0+cu128", "", False),
+            ("linux", "cpu", "7.2.26015", "2.9.1+rocm7.2.0.git7e1940d4", "gfx1151", False),
+        ):
+            with self.subTest(platform=platform, device=device, architecture=architecture, version=version):
+                node = LoadPipeline("joy-plus-hip-projection-test")
+                node.progress = Mock()
+                node.mm_add = Mock()
+                with (
+                    patch("modules.DiffusersImage.main.pipeline_class_from_name", return_value=JoyImageEditPlusPipeline),
+                    patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+                    patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
+                    patch.object(sys, "platform", platform),
+                    patch.object(torch.version, "hip", hip),
+                    patch.object(torch, "__version__", version),
+                    patch.object(torch.cuda, "get_device_properties", return_value=SimpleNamespace(gcnArchName=architecture)),
+                    patch.object(torch.cuda, "synchronize") as synchronize,
+                ):
+                    result = node.execute(
+                        model_id=JOYIMAGE_EDIT_PLUS_REPO, pipeline_class="JoyImageEditPlusPipeline", mode="edit_image",
+                        revision=catalog_revision(JOYIMAGE_EDIT_PLUS_REPO), dtype="bfloat16", device=device,
+                        offload_mode="none", auto_offload=False,
+                    )
+                    projection = result["pipeline"].transformer.img_in
+                    if not expected:
+                        projection.register_forward_pre_hook.assert_not_called()
+                        synchronize.assert_not_called()
+                        continue
+                    projection.register_forward_pre_hook.assert_called_once()
+                    hook = projection.register_forward_pre_hook.call_args.args[0]
+                    for dtype, input_device in ((torch.float16, "cuda:0"), (torch.bfloat16, "cpu")):
+                        hook(projection, (SimpleNamespace(dtype=dtype, device=torch.device(input_device)),))
+                    synchronize.assert_not_called()
+                    patch_tensor = SimpleNamespace(dtype=torch.bfloat16, device=torch.device("cuda:0"))
+                    hook(projection, (patch_tensor,))
+                    synchronize.assert_called_once_with(patch_tensor.device)
+
     def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):
         loaded = {}
 
@@ -4108,6 +4230,31 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 guidance_scale=1.0,
             )
 
+    def test_dreamlite_tiled_and_untiled_edit_latents_reach_the_denoiser_in_the_requested_dtype(self):
+        import torch
+
+        def prepare_image_latents(image, dtype, device):
+            # AutoencoderTiny returns a float32 composite for tiled BF16 encodes.
+            encoded_dtype = torch.float32 if use_tiling else dtype
+            return torch.ones(1, 4, 2, 2, dtype=encoded_dtype, device=device)
+
+        for model in ("DreamLitePipeline", "DreamLiteMobilePipeline"):
+            adapter = IMAGE_PIPELINE_ADAPTERS[model]
+            for use_tiling in (True, False):
+                with self.subTest(model=model, use_tiling=use_tiling):
+                    pipeline = SimpleNamespace(
+                        vae=SimpleNamespace(use_tiling=use_tiling),
+                        _modiff_image_mode="edit_image",
+                        prepare_image_latents=prepare_image_latents,
+                    )
+                    noise = torch.zeros(1, 4, 2, 2, dtype=torch.bfloat16)
+                    with adapter.edit_latent_dtype_context(pipeline):
+                        latents = pipeline.prepare_image_latents(None, dtype=noise.dtype, device=noise.device)
+                        conditioning = torch.cat((noise, latents), dim=3)
+                        self.assertEqual(conditioning.dtype, noise.dtype)
+                        self.assertTrue(torch.equal(conditioning[..., 2:], torch.ones_like(noise)))
+                    self.assertIs(pipeline.prepare_image_latents, prepare_image_latents)
+
     def test_sdxl_instruct_pix2pix_loads_safetensors_and_enforces_image_guidance(self):
         loaded = {}
 
@@ -4164,9 +4311,14 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         class FakeTransformer:
             def __init__(self):
                 self.backends = []
+                self.processor = SimpleNamespace(_attention_backend=None)
+
+            def modules(self):
+                return [self]
 
             def set_attention_backend(self, backend):
                 self.backends.append(backend)
+                self.processor._attention_backend = backend
 
         class FakePipeline:
             def __init__(self):
@@ -4588,6 +4740,61 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             catalog_revision(SD15_CONTROLNET_CANNY_REPO),
         )
 
+    def test_streamed_resident_image_pipeline_places_the_supplied_controlnet(self):
+        class ControlNet:
+            def __init__(self):
+                self.device = "cpu"
+
+            def to(self, device):
+                self.device = str(device)
+                return self
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                return cls()
+
+        class Pipeline:
+            def __init__(self, controlnet, device_map):
+                self.controlnet = controlnet
+                self.hf_device_map = device_map
+                self.offload_device = None
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                return cls(kwargs["controlnet"], kwargs.get("device_map"))
+
+            def enable_model_cpu_offload(self, device):
+                self.offload_device = str(device)
+
+        classes = {"ControlNetModel": ControlNet, "StableDiffusionControlNetPipeline": Pipeline}
+        node = LoadPipeline("sd15-resident-controlnet")
+        node.progress = Mock()
+        node.mm_add = Mock()
+        with (
+            patch("modules.DiffusersImage.main.pipeline_class_from_name", side_effect=classes.__getitem__),
+            patch("modules.DiffusersRuntime.main.enable_parallel_weight_loading"),
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline", return_value={}),
+        ):
+            for offload_mode, expected_device in [("none", "cuda:0"), ("model_cpu", "cpu")]:
+                with self.subTest(offload_mode=offload_mode):
+                    result = node.execute(
+                        model_id=SD15_BASE_REPO,
+                        pipeline_class="StableDiffusionControlNetPipeline",
+                        mode="control_image",
+                        conditioning_kind="controlnet",
+                        conditioning_model_id=SD15_CONTROLNET_CANNY_REPO,
+                        dtype="float32",
+                        device="cuda:0",
+                        auto_offload=offload_mode != "none",
+                        offload_mode=offload_mode,
+                    )
+                    pipeline = result["pipeline"]
+                    self.assertEqual(pipeline.controlnet.device, expected_device)
+                    if offload_mode == "none":
+                        self.assertEqual(pipeline.hf_device_map, "cuda")
+                    else:
+                        self.assertEqual(pipeline.offload_device, "cuda:0")
+
     def test_sdxl_conditioned_loader_uses_only_pinned_fp16_safetensors_variants(self):
         calls = {}
 
@@ -4986,6 +5193,59 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(calls["prior"]["prompt_embeds_scale"], [1.0, 0.2])
         self.assertEqual(calls["prior"]["pooled_prompt_embeds_scale"], [1.0, 0.2])
 
+    def test_flux_redux_legacy_denoising_strength_is_not_forwarded_to_prior_or_base(self):
+        import torch
+
+        calls = []
+
+        class Prior:
+            def __call__(self, **kwargs):
+                calls.append(("prior", kwargs))
+                return SimpleNamespace(
+                    prompt_embeds=torch.ones(1, 1, 2), pooled_prompt_embeds=torch.ones(1, 2)
+                )
+
+        class Base:
+            def __call__(self, **kwargs):
+                calls.append(("base", kwargs))
+                return SimpleNamespace(images=[Image.new("RGB", (8, 8))])
+
+        images = [Image.new("RGB", (8, 8)), Image.new("RGB", (8, 8))]
+        bundle = FluxReduxPipelineBundle(Prior(), Base())
+        for strength in (0.1, 0.9):
+            bundle(image=images, strength=strength, reference_strength=0.25)
+        for role, kwargs in calls:
+            self.assertNotIn("strength", kwargs, role)
+            if role == "prior":
+                self.assertEqual(kwargs["prompt_embeds_scale"], [1.0, 0.25])
+                self.assertEqual(kwargs["pooled_prompt_embeds_scale"], [1.0, 0.25])
+
+    def test_reference_edit_strength_is_filtered_using_the_reviewed_upstream_signature(self):
+        import inspect
+        import diffusers
+
+        for model_type in ("FluxKontextPipeline", "Flux2KleinPipeline"):
+            with self.subTest(model_type=model_type):
+                call = getattr(diffusers, model_type).__call__
+                self.assertNotIn("strength", inspect.signature(call).parameters)
+                # Inspect the actual callable without constructing a pipeline
+                # or loading weights. This is the normal argument adapter.
+                pipeline = SimpleNamespace(__call__=call)
+                for strength in (0.1, 0.9):
+                    target = {}
+                    IMAGE_PIPELINE_ADAPTERS[model_type].apply_generation_parameters(
+                        pipeline, {"num_inference_steps": 4, "strength": strength}, target
+                    )
+                    self.assertNotIn("strength", target)
+
+        call = diffusers.FluxImg2ImgPipeline.__call__
+        self.assertIn("strength", inspect.signature(call).parameters)
+        target = {}
+        IMAGE_PIPELINE_ADAPTERS["FluxImg2ImgPipeline"].apply_generation_parameters(
+            SimpleNamespace(__call__=call), {"num_inference_steps": 4, "strength": 0.8}, target
+        )
+        self.assertEqual(target["strength"], 0.8)
+
     def test_flux_kontext_stitches_multiple_references_through_generic_edit(self):
         received = {}
 
@@ -5132,6 +5392,36 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         self.assertEqual(result["images"][0].getpixel((0, 0)), (10, 20, 30))
         self.assertEqual(result["images"][0].getpixel((3, 1)), (200, 210, 220))
+
+    def test_kontext_outpaint_keeps_a_matching_canvas_and_mask_at_requested_size(self):
+        class Pipeline:
+            _execution_device = "cpu"
+
+            def __call__(self, *, image, mask_image, width, height, _auto_resize=True, **_kwargs):
+                self.received = (image.size, mask_image.size, width, height, _auto_resize)
+                output_size = (1328, 800) if _auto_resize else image.size
+                return SimpleNamespace(images=[Image.new("RGB", output_size, "green")])
+
+        requested_size = (1344, 768)
+        for mode, canvas_size, keep_size in (
+            ("outpaint", requested_size, True),
+            ("outpaint", (1024, 768), False),
+            ("inpaint", requested_size, False),
+        ):
+            with self.subTest(mode=mode, canvas_size=canvas_size):
+                canvas = Image.new("RGB", canvas_size, "blue")
+                mask = Image.new("L", canvas_size, 0)
+                mask.paste(255, (0, 0, 256, canvas_size[1]))
+                pipeline = tag_test_image_pipeline(Pipeline(), "FluxKontextInpaintPipeline", mode)
+                result = Inpaint("kontext-canvas-probe").execute(
+                    pipeline=pipeline, image=canvas, mask_image=mask, prompt="Extend the lake",
+                    width=requested_size[0], height=requested_size[1], num_inference_steps=1,
+                )
+                self.assertEqual(pipeline.received, (canvas_size, canvas_size, *requested_size, not keep_size))
+                if keep_size:
+                    self.assertEqual(result["images"][0].size, requested_size)
+                    self.assertEqual(result["images"][0].getpixel((256, 0)), (0, 0, 255))
+                    self.assertEqual(result["images"][0].getpixel((0, 0)), (0, 128, 0))
 
     def test_generic_step_callback_propagates_interrupt_to_pipeline(self):
         class FakePipeline:

@@ -376,10 +376,15 @@ for _cosmos3_omni_workflow, _cosmos3_omni_required_inputs in (
         [
             "workflow_cosmos3_omni_denoise",
             "workflow_cosmos3_omni_decoder",
-            "workflow_cosmos3_omni_after_decode",
         ]
     )
-    _cosmos3_omni_blocks.extend(["denoise", "decode", "after_decode"])
+    _cosmos3_omni_blocks.extend(["denoise", "decode"])
+    # Cosmos3ActionOutputStep returns action=None for text2image. Safety is
+    # enforced by TextEncode and Decode, so fresh image graphs need no action
+    # side output. Preserve every video/action adapter and the saved-node API.
+    if _cosmos3_omni_workflow != "text2image":
+        _cosmos3_omni_actions.append("workflow_cosmos3_omni_after_decode")
+        _cosmos3_omni_blocks.append("after_decode")
     PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS[("Cosmos3OmniModularPipeline", _cosmos3_omni_workflow)] = _sequential_adapter(
         _cosmos3_omni_required_inputs,
         _cosmos3_omni_actions,
@@ -424,6 +429,35 @@ PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS.update(
 )
 
 
+# Newer-source supplements are intentionally separate from the historical
+# catalog's pinned adapter inventory. Their schema/source audit is independent.
+SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS = {}
+for _image_workflow in ('text2image', 'image_conditioned'):
+    _image_actions = ['workflow_text_encoder', 'workflow_image_denoise', 'workflow_image_decoder']
+    _image_blocks = ['text_encoder', 'denoise', 'decode']
+    if _image_workflow == 'image_conditioned':
+        _image_actions = ['workflow_prepare_images', 'workflow_text_encoder', 'workflow_image_encoder',
+                          'workflow_image_denoise', 'workflow_image_decoder']
+        _image_blocks = ['before_encode', 'text_encoder', 'vae_encoder', 'denoise', 'decode']
+    SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS[('MiniMaxH3ImageModularPipeline', _image_workflow)] = (
+        _sequential_adapter(['prompt'] + (['image'] if _image_workflow == 'image_conditioned' else []),
+                            _image_actions, _image_blocks)
+    )
+for _joint_pipeline in ("MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline"):
+    for _joint_workflow in ("t2va", "fl2va", "ref2va"):
+        _joint_blocks = (["text_encoder", "denoise", "decode"] if _joint_workflow == "t2va" else
+                         ["before_encode", "text_encoder", "vae_encoder", "denoise", "decode"])
+        _joint_actions = ["workflow_joint_av_" + {"text_encoder": "text_encoder", "decode": "decoder"}.get(block, block)
+                          for block in _joint_blocks]
+        _joint_required = ["prompt"]
+        if _joint_workflow == "ref2va":
+            _joint_required += ["num_frames", "references"]
+        if _joint_pipeline == "MiniMaxH3ModularPipeline":
+            _joint_required += ["num_inference_steps"]
+        SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS[(_joint_pipeline, _joint_workflow)] = _sequential_adapter(
+            _joint_required, _joint_actions, _joint_blocks)
+
+
 def _validate_contracts() -> None:
     for (pipeline_class, workflow_id), contract in PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS.items():
         actions = contract.get("actionSequence")
@@ -462,8 +496,34 @@ def reviewed_whole_workflow_graph_adapter(
     workflow_id: str,
 ) -> dict[str, Any] | None:
     contract = PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS.get((pipeline_class, workflow_id))
+    if contract is None:
+        contract = SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS.get((pipeline_class, workflow_id))
     return deepcopy(contract) if contract is not None else None
 
 
+def reviewed_whole_workflow_action_adapter(
+    pipeline_class: str, workflow_id: str, action_key: str,
+) -> dict[str, Any] | None:
+    """Resolve existing executable actions without restoring fresh no-op stages."""
+    supplemental = SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS.get((pipeline_class, workflow_id))
+    if supplemental and action_key in supplemental["actionSequence"]:
+        return deepcopy(supplemental)
+    if (pipeline_class, workflow_id, action_key) == (
+        "Cosmos3OmniModularPipeline", "text2image", "workflow_cosmos3_omni_after_decode",
+    ):
+        # Saved image graphs can still call the original action side output.
+        # Its immutable upstream implementation and preceding Decode contract
+        # remain reviewed, although new image authoring no longer includes it.
+        return _sequential_adapter(
+            ["num_inference_steps", "prompt"],
+            ["workflow_cosmos3_omni_text_encoder", "workflow_cosmos3_omni_denoise",
+             "workflow_cosmos3_omni_decoder", "workflow_cosmos3_omni_after_decode"],
+            ["text_encoder", "denoise", "decode", "after_decode"],
+        )
+    return reviewed_whole_workflow_graph_adapter(pipeline_class, workflow_id)
+
+
 def reviewed_whole_workflow_model_types() -> frozenset[str]:
-    return frozenset(pipeline_class for pipeline_class, _workflow_id in PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS)
+    return frozenset(pipeline_class for pipeline_class, _workflow_id in (
+        PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS.keys() | SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS.keys()
+    ))

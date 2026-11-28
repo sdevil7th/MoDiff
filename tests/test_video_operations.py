@@ -121,9 +121,12 @@ class VideoOperationTests(unittest.TestCase):
                 writer.close()
 
             result = FrameExtract().execute(video=str(path), mode="first_last")
+            timed = FrameExtract().execute(video=str(path), mode="timecodes", timecodes="0.5", fps=16)
 
         self.assertEqual(result["selected_indices"], [0, 2])
         self.assertEqual(len(result["frames"]), 2)
+        self.assertEqual(timed["selected_indices"], [1])
+        self.assertEqual(timed["timestamps"], [0.5])
 
     def test_trim_concatenate_reverse_and_crossfade_have_exact_frame_counts(self):
         red = solid("red", 4)

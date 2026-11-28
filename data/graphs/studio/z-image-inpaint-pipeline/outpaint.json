@@ -576,7 +576,7 @@
             "min": 0,
             "step": 0.01,
             "type": "float",
-            "value": 0.85
+            "value": 1
           },
           "use_en_prompt": {
             "default": false,

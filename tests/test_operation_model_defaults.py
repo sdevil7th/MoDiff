@@ -39,6 +39,18 @@ def test_profile_starter_uses_reviewed_values_without_constructing_models(
     assert MODULE_MAP["modules.DiffusersImage"] == original
 
 
+@pytest.mark.parametrize("task,height", [("inpaint", 1024), ("outpaint", 768)])
+def test_chroma_starter_seeds_geometry_for_the_selected_task(contracts, task, height):
+    starter = resolve_operation_starter(MODULE_MAP, contracts, {
+        "pipelineClass": "ChromaInpaintPipeline",
+        "task": task,
+        "executionProfileId": "chroma1-hd-inpaint:direct",
+    })
+    edit = next(node for node in starter["nodes"] if node["action"] == "Inpaint")
+    assert (edit["values"]["width"], edit["values"]["height"]) == (1024, height)
+    assert (edit["params"]["width"]["value"], edit["params"]["height"]["value"]) == (1024, height)
+
+
 def test_individually_resolved_lcm_node_uses_same_reviewed_defaults(contracts):
     result = resolve_operation(MODULE_MAP, contracts, {
         "pipelineClass": "LatentConsistencyModelPipeline", "task": "text_to_image",
@@ -157,9 +169,9 @@ def test_selected_defaults_do_not_copy_unrelated_model_capabilities(contracts):
     target = {"defaultDtype": "float32", "recommendedSteps": 4, "recommendedGuidance": 8.5,
               "defaultSize": {"width": 512, "height": 512}}
     definitions = {
-        "old": {"modelType": "LatentConsistencyModelPipeline", "capability": {"recommendedSteps": 1}},
-        "other": {"modelType": "UnrelatedModel", "capability": UnrelatedCapability()},
-        "selected": {"modelType": "LatentConsistencyModelPipeline", "capability": target},
+        "old": {"profile": {"id": "old"}, "modelType": "LatentConsistencyModelPipeline", "capability": {"recommendedSteps": 1}},
+        "other": {"profile": {"id": "other"}, "modelType": "UnrelatedModel", "capability": UnrelatedCapability()},
+        "selected": {"profile": {"id": "selected"}, "modelType": "LatentConsistencyModelPipeline", "capability": target},
     }
     with patch("modiff.studio_execution_specs.STUDIO_EXECUTION_SPEC_DEFINITIONS", definitions):
         node = resolve_operation(MODULE_MAP, contracts, {
@@ -279,7 +291,7 @@ def test_video_and_three_d_operations_initialize_from_reviewed_defaults(contract
             "pipelineClass": pipeline, "task": task, "executionProfileId": profile,
         })
     loader = next(n for n in starter["nodes"] if n["action"] == "LoadPipeline")
-    generate = next(n for n in starter["nodes"] if n["action"] != "LoadPipeline")
+    generate = next(n for n in starter["nodes"] if n["action"] in ("Generate", "Denoise", "GenerateRenderedArtifact"))
     assert loader["params"]["dtype"]["value"] == dtype
     for key, value in values.items():
         assert generate["params"][key]["value"] == value

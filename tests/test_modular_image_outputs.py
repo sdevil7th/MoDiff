@@ -448,7 +448,7 @@ class ModularImageOutputTests(unittest.TestCase):
 
         self.assertEqual(flatten_pil_image_collection([[first], (second,)]), [first, second])
         self.assertEqual(
-            Preview.execute(object(), image=[[first], (second,)], export="", vae=None, device="cpu"),
+            Preview().execute(image=[[first], (second,)], export="", vae=None, device="cpu"),
             {"output": [first, second], "filtered": [first, second]},
         )
 

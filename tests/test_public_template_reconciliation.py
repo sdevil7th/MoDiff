@@ -7,6 +7,7 @@ from modiff.public_template_reconciliation import (
     BUCKET_CURRENT,
     BUCKET_NEVER,
     BUCKET_STALE,
+    BUCKET_UNMAPPED,
     PublicTemplateReconciliationError,
     build_public_template_reconciliation,
     classify_public_template,
@@ -42,6 +43,57 @@ def _template(
 
 
 class PublicTemplateReconciliationTests(unittest.TestCase):
+    def test_unmapped_historical_template_remains_held_without_a_canary(self):
+        template = _template(
+            "held_template",
+            workflow=None,
+            historical={"status": "no_canonical_workflow", "reasons": ["canonical_workflow"]},
+            missing=["graph_hash", "successful_real_run_receipt"],
+        )
+        ledger = build_public_template_reconciliation(
+            ROOT,
+            release_contract={
+                "templates": [template],
+                "coverage": {"currentHistoricalEvidenceCount": 0, "historicalEvidenceCount": 1},
+            },
+        )
+        item = ledger["items"][0]
+        self.assertEqual(item["bucket"], "canonical_workflow_required")
+        self.assertEqual(item["action"], "establish_canonical_workflow_before_canary")
+        self.assertIsNone(item["canonicalWorkflowId"])
+        self.assertFalse(item["releaseEligible"])
+        self.assertTrue(item["doNotRerunHere"])
+        self.assertEqual(ledger["summary"]["canonicalWorkflowRequiredCount"], 1)
+        self.assertEqual(ledger["summary"]["currentKeepCount"], 0)
+        self.assertEqual(ledger["summary"]["staleCanaryCount"], 0)
+
+    def test_unmapped_template_rejects_contradictory_or_malformed_authority(self):
+        valid = _template(
+            "held_template",
+            workflow=None,
+            historical={"status": "no_canonical_workflow", "reasons": ["canonical_workflow"]},
+            missing=["graph_hash"],
+        )
+        for changes in (
+            {"releaseEligible": True},
+            {"lastSuccessfulRealRun": {"capturedAt": "2026-11-03"}},
+            {"missingReleaseEvidence": []},
+            {"canonicalWorkflowId": ""},
+            {"canonicalWorkflowId": 42},
+            {"historicalEvidence": {"status": "current"}},
+            {"canonicalWorkflowId": "FluxPipeline:text_to_image"},
+        ):
+            with self.subTest(changes=changes), self.assertRaises(PublicTemplateReconciliationError):
+                classify_public_template({**valid, **changes})
+
+    def test_unmapped_first_example_is_held_and_missing_key_is_not_authority(self):
+        template = _template("new_template", workflow=None, missing=["graph_hash"])
+        item = classify_public_template(template)
+        self.assertEqual(item["bucket"], BUCKET_UNMAPPED)
+        del template["canonicalWorkflowId"]
+        with self.assertRaisesRegex(PublicTemplateReconciliationError, "missing canonicalWorkflowId"):
+            classify_public_template(template)
+
     def test_classifies_current_stale_and_never_had_example(self):
         current = classify_public_template(
             _template(
@@ -82,6 +134,46 @@ class PublicTemplateReconciliationTests(unittest.TestCase):
             )
         )
         self.assertEqual(current["bucket"], BUCKET_CURRENT)
+
+    def test_reviewed_retained_proof_keeps_the_registered_example(self):
+        scope = "current_reviewed_retained_recipe"
+        graph = "sha256:workflow-graph-v1:" + "a" * 64
+        template = {
+            **_template("retained_example", eligible=True),
+            "graphHash": graph,
+            "qualificationReceiptScope": scope,
+            "reviewedExampleReleaseApproved": True,
+            "lastSuccessfulRealRun": {
+                "proofKind": "reviewed_retained_template_execution",
+                "templateId": "retained_example",
+                "evidenceMatch": scope,
+                "canonicalWorkflowHash": graph,
+                "qualityReviewStatus": "approved_reviewed",
+            },
+        }
+        with TemporaryDirectory() as directory:
+            ledger = build_public_template_reconciliation(
+                Path(directory),
+                release_contract={
+                    "templates": [template],
+                    "coverage": {"currentHistoricalEvidenceCount": 1, "historicalEvidenceCount": 0},
+                },
+            )
+        self.assertEqual(ledger["items"][0]["action"], "keep_reviewed_retained_example")
+        self.assertEqual(ledger["summary"]["currentKeepCount"], 1)
+        self.assertEqual(ledger["summary"]["neverHadExampleCount"], 0)
+        for changes in (
+            {"qualificationReceiptScope": None},
+            {"lastSuccessfulRealRun": None},
+            {"graphHash": "different"},
+            {"reviewedExampleReleaseApproved": False},
+            {"releaseEligible": False},
+            {"missingReleaseEvidence": ["approved_gallery_example"]},
+        ):
+            with self.subTest(changes=changes), self.assertRaisesRegex(
+                PublicTemplateReconciliationError, "inconsistent reviewed retained Gallery evidence",
+            ):
+                classify_public_template({**template, **changes})
 
     def test_ledger_counts_and_refuses_to_rerun(self):
         with TemporaryDirectory() as directory:
@@ -124,6 +216,7 @@ class PublicTemplateReconciliationTests(unittest.TestCase):
                     "currentKeepCount": 1,
                     "staleCanaryCount": 1,
                     "neverHadExampleCount": 1,
+                    "canonicalWorkflowRequiredCount": 0,
                     "staleReasonCounts": {"canonical_workflow_node_contract_mismatch": 1},
                     "localTechnicalReceiptOverlapCount": 0,
                 },
@@ -174,10 +267,20 @@ class PublicTemplateReconciliationLiveLedgerTests(unittest.TestCase):
         # these counts legitimately. Verify every classification against its
         # actual source instead of hard-coding one machine's older inventory.
         templates = json.loads(path.read_text(encoding="utf-8"))["templates"]
-        expected = {BUCKET_CURRENT: set(), BUCKET_STALE: set(), BUCKET_NEVER: set()}
+        expected = {BUCKET_CURRENT: set(), BUCKET_STALE: set(), BUCKET_NEVER: set(), BUCKET_UNMAPPED: set()}
         for template in templates:
             evidence = template.get("historicalEvidence")
-            if evidence is None:
+            if template["canonicalWorkflowId"] is None:
+                self.assertIsNone(template["lastSuccessfulRealRun"])
+                self.assertFalse(template["releaseEligible"])
+                self.assertIn("graph_hash", template["missingReleaseEvidence"])
+                expected[BUCKET_UNMAPPED].add(template["id"])
+            elif template.get("qualificationReceiptScope") == "current_reviewed_retained_recipe":
+                self.assertTrue(template["releaseEligible"])
+                self.assertTrue(template["reviewedExampleReleaseApproved"])
+                self.assertEqual(template["lastSuccessfulRealRun"]["proofKind"], "reviewed_retained_template_execution")
+                expected[BUCKET_CURRENT].add(template["id"])
+            elif evidence is None:
                 expected[BUCKET_NEVER].add(template["id"])
             elif evidence["status"] == "stale":
                 expected[BUCKET_STALE].add(template["id"])
@@ -191,6 +294,7 @@ class PublicTemplateReconciliationLiveLedgerTests(unittest.TestCase):
             (BUCKET_CURRENT, "currentKeepCount"),
             (BUCKET_STALE, "staleCanaryCount"),
             (BUCKET_NEVER, "neverHadExampleCount"),
+            (BUCKET_UNMAPPED, "canonicalWorkflowRequiredCount"),
         ):
             self.assertEqual(ledger["summary"][count_key], len(expected[bucket]))
             self.assertEqual(

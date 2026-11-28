@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from modiff.local_review_receipts import canonical_content_hash
+from modiff.template_authoring_specs import read_graph_authoring_defaults
 
 
 SCHEMA_VERSION = 1
@@ -910,38 +911,36 @@ def brief_for(*, workflow_id: str, mode: str) -> dict[str, Any] | None:
     }
 
 
-def _authoring_defaults() -> dict[tuple[str, str], dict[str, int | float]]:
-    path = Path(__file__).resolve().parents[1] / AUTHORING_SPEC_PATH
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    defaults: dict[tuple[str, str], dict[str, int | float]] = {}
-    for spec in payload.get("specifications") or []:
-        if not isinstance(spec, dict):
+def _authoring_defaults(model_type: str, mode: str) -> dict[str, int | float]:
+    root = Path(__file__).resolve().parents[1]
+    payload = json.loads((root / AUTHORING_SPEC_PATH).read_text(encoding="utf-8"))
+    fields = [
+        field
+        for spec in payload.get("specifications", [])
+        if isinstance(spec, dict) and (spec.get("modelType"), spec.get("mode")) == (model_type, mode)
+        for field in (spec.get("defaultsPlan") or {}).get("fields") or []
+    ]
+    if not fields:
+        # Gallery registration retires the hidden draft while its canonical graph remains.
+        manifest = json.loads((root / "data/workflow-library-manifest.json").read_text(encoding="utf-8"))
+        workflow_id = f"{model_type}:{mode}"
+        workflow = next((row for row in manifest["workflows"] if row["id"] == workflow_id), None)
+        if workflow:
+            fields, _ = read_graph_authoring_defaults(root, workflow_id, workflow["graphPath"], workflow["graphHash"])
+
+    captured: dict[str, int | float] = {}
+    for field in fields:
+        if not isinstance(field, dict):
             continue
-        model_type = spec.get("modelType")
-        mode = spec.get("mode")
-        if not isinstance(model_type, str) or not isinstance(mode, str):
-            continue
-        fields = (spec.get("defaultsPlan") or {}).get("fields") or []
-        captured: dict[str, int | float] = {}
-        for field in fields:
-            if not isinstance(field, dict):
-                continue
-            parameter = field.get("parameter")
-            value = field.get("value")
-            if parameter == "num_inference_steps" and isinstance(value, int) and value > 0:
-                captured["steps"] = value
-            elif parameter in {"width", "height"} and isinstance(value, int) and value > 0:
-                captured[parameter] = value
-            elif (
-                parameter == "guidance_scale"
-                and not isinstance(value, bool)
-                and isinstance(value, (int, float))
-                and value >= 0
-            ):
-                captured["guidanceScale"] = value
-        if captured:
-            defaults[(model_type, mode)] = captured
-    return defaults
+        parameter = field.get("parameter")
+        value = field.get("value")
+        if parameter == "num_inference_steps" and type(value) is int and value > 0:
+            captured["steps"] = value
+        elif parameter in {"width", "height"} and type(value) is int and value > 0:
+            captured[parameter] = value
+        elif parameter == "guidance_scale" and type(value) in (int, float) and value >= 0:
+            captured["guidanceScale"] = value
+    return captured
 
 
 _SHARED_MEMORY_T2I_CAP_FAMILIES = (
@@ -999,7 +998,7 @@ def param_overlay_for(mode: str, model_type: str) -> dict[str, Any]:
     if "acestep" in family or "longcataudio" in family:
         # Native flash SDPA rejects ACE-Step / LongCat AudioDiT attention masks.
         overlay["attentionBackend"] = "_native_math"
-    native = _authoring_defaults().get((model_type, mode), {})
+    native = _authoring_defaults(model_type, mode)
     if "steps" in native and isinstance(overlay.get("steps"), int):
         overlay["steps"] = min(overlay["steps"], native["steps"])
     if "width" in native:

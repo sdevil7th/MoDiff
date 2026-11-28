@@ -1,10 +1,11 @@
 import hashlib
 import json
 import unittest
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 from modiff.model_artifact_catalog import catalog_repository_pin, catalog_revision
+from modiff.studio_execution_specs import studio_execution_spec_for_pair
 
 
 GRAPH_ROOT = Path(__file__).resolve().parents[1] / "data" / "graphs"
@@ -12,10 +13,15 @@ WORKFLOW_MANIFEST = GRAPH_ROOT.parent / "workflow-library-manifest.json"
 OUTPUT_NODE_KEYS = {
     ("modules.Audio", "Export"),
     ("modules.Image", "Preview"),
+    ("modules.Image", "Save"),
     ("modules.Primitive", "DataViewer"),
     ("modules.Primitive", "ExportData"),
     ("modules.Video", "Export"),
+    ("modules.Video", "ExportAsset"),
     ("modules.Video", "ExportWithAudio"),
+    # Unlike frame-list Concatenate, this operation writes an encoded retained
+    # asset and exposes its file preview. It is the film's final exporter.
+    ("modules.Video", "ConcatenateAssets"),
 }
 DIFFUSERS_PIPELINE_MODULES = {
     "modules.DiffusersAudio",
@@ -58,6 +64,32 @@ def _is_curated_loader(node):
 def _node_key(node):
     data = (node or {}).get("data", {})
     return data.get("module"), data.get("action")
+
+
+def _declared_sdk_terminal_node_ids(graph, specification):
+    """Recognize side-output terminals only in the exact declared SDK graph."""
+    if not specification or not specification.get("auxiliaryTerminalRoles"):
+        return set()
+    nodes = graph.get("nodes", [])
+    roles = specification["roles"]
+    if len(nodes) != len(roles):
+        return set()
+    role_ids = {}
+    for role, node_key, _x, _y in roles:
+        matching = [node for node in nodes if _node_key(node) == tuple(node_key.rsplit(".", 1))]
+        if len(matching) != 1 or matching[0].get("data", {}).get("uiState", {}).get("disabled") is True:
+            return set()
+        role_ids[role] = matching[0]["id"]
+    if len(set(role_ids.values())) != len(roles):
+        return set()
+    declared = {(role_ids[source], output, role_ids[target], input_) for source, output, target, input_ in specification["edges"]}
+    actual = [(edge.get("source"), edge.get("sourceHandle"), edge.get("target"), edge.get("targetHandle")) for edge in graph.get("edges", [])]
+    if len(actual) != len(declared) or set(actual) != declared:
+        return set()
+    terminals = specification["auxiliaryTerminalRoles"]
+    if any(role not in role_ids or any(edge[0] == role for edge in specification["edges"]) for role in terminals):
+        return set()
+    return {role_ids[role] for role in terminals}
 
 
 def _intentional_disabled_managed_fallback_node_ids(graph):
@@ -167,7 +199,8 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                 checked += 1
                 self.assertEqual(shift.get("min"), 0.1, graph_path.name)
                 self.assertGreater(float(shift.get("value")), 0, graph_path.name)
-        self.assertEqual(checked, 6)
+        # The published nine-scene Moonflower composition has its own ACE owner.
+        self.assertEqual(checked, 7)
 
     def test_curated_graphs_exclude_runtime_and_machine_state(self):
         node_runtime_fields = {"measured", "selected", "dragging"}
@@ -235,12 +268,17 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                     f"{graph_path.relative_to(GRAPH_ROOT)}: Hub adapter must use safetensors",
                 )
         self.assertGreater(checked["modules.DiffusersAudio"], 0)
-        self.assertEqual(checked["modules.DiffusersImage"], 11)
+        # Image adapters now use the generic modular Lora stage. Their complete
+        # reviewed roster, including exact weight hashes, is verified below.
+        self.assertEqual(checked["modules.DiffusersImage"], 0)
 
     def test_hub_modular_lora_graphs_pin_the_generic_auxiliary_identity(self):
-        expected_revisions = {
-            "lightx2v/Qwen-Image-Edit-2511-Lightning": "d74eba145674fd7e31b949324e148e21e7118abd",
-        }
+        reviewed = json.loads(
+            (Path(__file__).parent / "fixtures" / "curated-image-adapter-pins.v1.json").read_text(encoding="utf-8")
+        )["adapters"]
+        expected = {(row["graphPath"], row["repository"]): row for row in reviewed}
+        self.assertEqual(len(reviewed), 15)
+        self.assertEqual(len(expected), 15)
         manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))
         manifest_workflows = {
             workflow["graphPath"]: workflow
@@ -249,7 +287,7 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                 *manifest.get("experimentalWorkflows", []),
             ]
         }
-        checked = 0
+        checked = []
         for graph_path in sorted(GRAPH_ROOT.rglob("*.json")):
             graph = json.loads(graph_path.read_text(encoding="utf-8"))
             for node in graph.get("nodes", []):
@@ -260,14 +298,17 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                 selection = (params.get("model") or {}).get("value")
                 if not isinstance(selection, dict) or selection.get("source") != "hub":
                     continue
-                checked += 1
                 label = str(graph_path.relative_to(GRAPH_ROOT))
                 manifest_label = graph_path.relative_to(GRAPH_ROOT).as_posix()
                 repository = str(selection.get("value") or "")
                 revision = str((params.get("revision") or {}).get("value") or "")
                 digest = str((params.get("expected_sha256") or {}).get("value") or "")
                 weight_name = str((params.get("weight_name") or {}).get("value") or "")
-                self.assertEqual(revision, expected_revisions[repository], label)
+                pin = expected[(manifest_label, repository)]
+                self.assertEqual(revision, pin["revision"], label)
+                self.assertEqual(digest, pin["sha256"], label)
+                self.assertEqual(weight_name, pin["filename"], label)
+                checked.append((manifest_label, repository))
                 self.assertRegex(digest, r"^[0-9a-f]{64}$", label)
                 self.assertTrue(weight_name.endswith(".safetensors"), label)
                 self.assertNotIn("filter", (params.get("model") or {}).get("fieldOptions", {}), label)
@@ -277,7 +318,7 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                     manifest_workflows[manifest_label].get("requiredArtifacts", []),
                     f"{label}: workflow manifest omits its mandatory Hub LoRA",
                 )
-        self.assertEqual(checked, 2)
+        self.assertEqual(Counter(checked), Counter(expected.keys()))
 
     def test_hub_modular_component_graphs_pin_and_manifest_their_artifact(self):
         manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))
@@ -371,6 +412,21 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
 
         def node_for_role(graph, role):
             matches = [node for node in graph.get("nodes", []) if node.get("data", {}).get("studioRole") == role]
+            if role == "wanGenerate" and not matches:
+                # Sampling is owned by the real denoise stage. VACE's native
+                # continuity adapter renders/decodes each window inside Generate;
+                # its reviewed operation is still typed as the denoise stage.
+                matches = [
+                    node
+                    for node in graph.get("nodes", [])
+                    if _node_key(node) in {
+                        ("modules.DiffusersVideo", "Denoise"),
+                        ("modules.DiffusersVideo", "Generate"),
+                    }
+                    and node.get("data", {}).get("studioRole") == "denoise"
+                    and node.get("data", {}).get("operationAuthoring", {}).get("operation", {}).get("nodeType")
+                    == "denoise"
+                ]
             self.assertEqual(len(matches), 1, f"{role} must be unique")
             return matches[0]
 
@@ -397,7 +453,9 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
         for workflow_id, expected_guidance in guidance_by_workflow.items():
             with self.subTest(workflow=workflow_id, control="true_cfg_scale"):
                 generate = params_for(graph_for(workflow_id), "wanGenerate")
-                self.assertNotIn("value", generate["true_cfg_scale"])
+                # A stage that does not expose this inactive shared-node field
+                # also cannot persist an effective true-CFG override.
+                self.assertNotIn("value", generate.get("true_cfg_scale", {}))
                 self.assertEqual(generate["guidance_scale"].get("value"), expected_guidance)
 
         # LTX and Wan I2V do not accept a scheduler override. Wan TI2V does and
@@ -424,13 +482,12 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                     77,
                 )
 
+        # Preserved whole-operation starters retain their recorded explicit
+        # attention choice. Fresh ordinary stage recipes follow the authored
+        # Auto default instead; this is not an execution-equivalence claim.
         native_flash_migrations = {
-            "WanVACEPipeline:control_to_video",
             "WanVACEPipeline:text_to_video",
             "WanVACEPipeline:video_inpaint",
-            "WanVACEPipeline:video_outpaint",
-            "WanVideoPipeline:video_color_edit",
-            "WanVideoPipeline:video_to_video",
         }
         for workflow_id in native_flash_migrations:
             with self.subTest(workflow=workflow_id, control="attention_backend"):
@@ -438,6 +495,21 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                 self.assertEqual(recipe["device"].get("value"), "cuda:0")
                 self.assertEqual(recipe["attention_backend"].get("value"), "_native_flash")
                 self.assertEqual(recipe["attention_components"].get("value"), "transformer")
+
+        for workflow_id in {
+            "WanVACEPipeline:control_to_video",
+            "WanVACEPipeline:video_outpaint",
+            "WanVideoPipeline:video_color_edit",
+            "WanVideoPipeline:video_to_video",
+        }:
+            with self.subTest(workflow=workflow_id, control="authored_attention_backend"):
+                graph = graph_for(workflow_id)
+                self.assertTrue(any(_node_key(node) == ("modules.DiffusersVideo", "EncodeInputs")
+                                    for node in graph["nodes"]))
+                recipe = params_for(graph, "diffusersRecipe")
+                self.assertEqual(recipe["device"].get("value"), "cuda:0")
+                self.assertEqual(recipe["attention_backend"].get("value"), "auto")
+                self.assertEqual(recipe["attention_components"].get("value"), "")
 
         model_cpu_migrations = {
             "AceStepAudioPipeline:audio_continuation",
@@ -500,9 +572,36 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
         }
         for workflow_id in inactive_quantization_migrations:
             with self.subTest(workflow=workflow_id, control="quantization_components"):
-                quantization = params_for(graph_for(workflow_id), "diffusersQuantization")
-                self.assertEqual(quantization["backend"].get("value"), "none")
-                self.assertEqual(quantization["components"].get("value"), ["transformer"])
+                graph = graph_for(workflow_id)
+                quantizers = [
+                    node
+                    for node in graph["nodes"]
+                    if node.get("data", {}).get("studioRole") == "diffusersQuantization"
+                ]
+                if quantizers:
+                    quantization = params_for(graph, "diffusersQuantization")
+                    self.assertEqual(quantization["backend"].get("value"), "none")
+                    self.assertEqual(quantization["components"].get("value"), ["transformer"])
+                else:
+                    # An unconnected optional modular quant_config is disabled;
+                    # no legacy config node or inactive target list is executed.
+                    loaders = [
+                        node
+                        for node in graph["nodes"]
+                        if _node_key(node) == ("modules.ModularDiffusers", "ModelsLoader")
+                    ]
+                    self.assertEqual(len(loaders), 1)
+                    loader = loaders[0]
+                    config = loader["data"]["params"]["quant_config"]
+                    self.assertEqual(config.get("display"), "input")
+                    self.assertNotIn("value", config)
+                    self.assertIsNone(config.get("default"))
+                    self.assertFalse(
+                        any(
+                            edge.get("target") == loader["id"] and edge.get("targetHandle") == "quant_config"
+                            for edge in graph["edges"]
+                        )
+                    )
 
         layered = params_for(
             graph_for("QwenImageLayeredModularPipeline:layer_decomposition"),
@@ -561,9 +660,48 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
             set(),
         )
 
+    def test_declared_sdk_terminals_require_the_exact_connected_graph(self):
+        # Saved image graphs retain the exact reviewed historical declaration.
+        # Reconstruct its structural witness without relying on a fresh catalog
+        # graph that intentionally no longer contains the action-only terminal.
+        spec = studio_execution_spec_for_pair(
+            "Cosmos3OmniModularPipeline", "text_to_image", content_hash="studio-spec-v1-91ed105d",
+        )
+        graph = {
+            "nodes": [
+                {"id": role, "data": {"module": key.rsplit(".", 1)[0], "action": key.rsplit(".", 1)[1]}}
+                for role, key, _x, _y in spec["roles"]
+            ],
+            "edges": [
+                {"source": source, "sourceHandle": output, "target": target, "targetHandle": input_}
+                for source, output, target, input_ in spec["edges"]
+            ],
+        }
+        terminal = next(node for node in graph["nodes"] if node["data"]["action"] == "WorkflowCosmos3OmniAfterDecode")
+        self.assertEqual(_declared_sdk_terminal_node_ids(graph, spec), {terminal["id"]})
+        mutations = (
+            lambda candidate: candidate["edges"].pop(),
+            lambda candidate: candidate["edges"][0].update(source="foreign-owner"),
+            lambda candidate: candidate["edges"].append(candidate["edges"][0].copy()),
+            lambda candidate: next(node for node in candidate["nodes"] if node["id"] == terminal["id"])["data"].update(action="UnreviewedTerminal"),
+            lambda candidate: next(node for node in candidate["nodes"] if node["id"] == terminal["id"])["data"].update(uiState={"disabled": True}),
+        )
+        for index, mutate in enumerate(mutations):
+            with self.subTest(mutation=index):
+                candidate = json.loads(json.dumps(graph))
+                mutate(candidate)
+                self.assertEqual(_declared_sdk_terminal_node_ids(candidate, spec), set())
+        self.assertEqual(_declared_sdk_terminal_node_ids(graph, None), set())
+        self.assertEqual(_declared_sdk_terminal_node_ids(
+            graph, studio_execution_spec_for_pair("Cosmos3OmniModularPipeline", "text_to_image"),
+        ), set())
+        self.assertEqual(_declared_sdk_terminal_node_ids(graph, studio_execution_spec_for_pair("Flux2ModularPipeline", "text_to_image")), set())
+
     def test_every_catalog_node_contributes_to_a_visible_or_exported_output(self):
         graph_paths = sorted(GRAPH_ROOT.rglob("*.json"))
         self.assertGreater(len(graph_paths), 0)
+        manifest = json.loads(WORKFLOW_MANIFEST.read_text())
+        workflows = {row["graphPath"]: row for row in [*manifest["workflows"], *manifest["experimentalWorkflows"]]}
 
         for graph_path in graph_paths:
             with self.subTest(graph=graph_path.relative_to(GRAPH_ROOT)):
@@ -590,8 +728,11 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                 ]
                 self.assertTrue(outputs, "graph has no preview, export, or data output")
 
-                used = set(outputs)
-                pending = list(outputs)
+                workflow = workflows.get(graph_path.relative_to(GRAPH_ROOT).as_posix())
+                specification = studio_execution_spec_for_pair(workflow["modelType"], workflow["mode"]) if workflow else None
+                terminals = _declared_sdk_terminal_node_ids(graph, specification)
+                used = set(outputs) | terminals
+                pending = list(used)
                 while pending:
                     node_id = pending.pop()
                     for source_id in incoming[node_id]:
@@ -614,7 +755,7 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                 ]
                 self.assertEqual(disabled, [], f"disabled execution nodes: {disabled}")
                 self.assertEqual(isolated, [], f"isolated nodes: {isolated}")
-                self.assertEqual(unreachable, [], f"nodes outside every output path: {unreachable}")
+                self.assertEqual(unreachable, [], f"nodes outside every output or declared SDK terminal path: {unreachable}")
 
 
 if __name__ == "__main__":

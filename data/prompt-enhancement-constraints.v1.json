@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "version": "authored-layout-byte-prefix-v1",
+  "status": "contract_only",
+  "operation": "enhance_prompt_constrained_authored_v1",
+  "layoutPolicy": "constrained-authored-table-v1",
+  "adapterId": "transformers-prompt-enhancement-v1",
+  "repository": "black-forest-labs/flux-3-image-klein-pup",
+  "revision": "3f3edb52b2c55de0d49feab28598b68f7f8e4830",
+  "transformersVersion": "5.18.0",
+  "tokenizersVersion": "0.23.2",
+  "tokenizerClass": "Qwen3_5Tokenizer",
+  "ordinaryVocabularyTokens": 248044,
+  "ordinaryVocabularySha256": "sha256:13431bd652cdbd32f84568d0c2b9945ba506071178fdb527d40c4ece256f8b39",
+  "tokenizerSemanticSha256": "sha256:40ebf1d8462c42c3b781b870aaa28884b24f86234bc0b49d54d2bbcf5ddc404a",
+  "sourcePreTokenizerSha256": "sha256:d730489d91319a99960af82e8fed44be8533ca92615198807b41c29dda5556fc",
+  "effectivePreTokenizerSha256": "sha256:4cba7e5c03fddf4af78a44f283740fd19687522c60cc36ee271b655f634a7af3",
+  "reservedAddedTokenIds": [248044,248045,248046,248047,248048,248049,248050,248051,248052,248053,248054,248055,248056,248057,248058,248059,248060,248061,248062,248063,248064,248065,248066,248067,248068,248069,248070,248071,248072,248073,248074,248075,248076],
+  "trueSpecialTokenIds": [248044,248045,248046,248047,248048,248049,248050,248051,248052,248053,248054,248055,248056,248057,248070,248071,248072,248073,248074,248075,248076],
+  "configuredEosTokenIds": [248046,248044],
+  "effectiveEosTokenIds": [248046],
+  "padTokenId": 248044,
+  "preparationRamBytes": 268435456,
+  "deadlineSeconds": 1800,
+  "artifacts": [
+    {"path":"tokenizer.json","byteSize":19989325,"sha256":"06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"},
+    {"path":"tokenizer_config.json","byteSize":1164,"sha256":"7488550a894dcf741616126e322ea31d66cf9457b59ec5825f4c7efdced421f8"},
+    {"path":"generation_config.json","byteSize":163,"sha256":"e92258e3c39afbaa73fd53a98640c56f6d42fb091e1664697bd5396a1dcbb761"}
+  ]
+}

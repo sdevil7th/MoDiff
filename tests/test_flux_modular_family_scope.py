@@ -65,3 +65,45 @@ def test_saved_flux2_fallback_loader_retains_its_explicit_profile_without_reappe
         assert profiles[0].pipeline_class == "Flux2Pipeline"
     assert legacy_id not in {profile["id"] for profile in public_execution_profiles()}
     assert studio_execution_spec_for_pair("Flux2ModularPipeline", "text_to_image")["loaderAction"] == "ModelsLoader"
+
+
+def test_future_flux3_discovery_is_separate_from_published_native_matrix():
+    import gzip
+    import json
+    from pathlib import Path
+
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, public_execution_profiles
+
+    from tests.test_flux_modular_loop_matrix import admissions as loop_admissions
+
+    future_names = {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}
+    library = reviewed_huggingface_node_library()
+    future = [item for item in library["definitions"] if item["pipelineClass"] in future_names]
+    assert {(item["pipelineClass"], item["workflowId"]) for item in future} == {
+        (name, workflow) for name in future_names for workflow in ("text2image", "image_conditioned")
+    }
+    assert all(not item["executionAdmissions"] and item["executionClaim"] == "discovery_only" for item in future)
+    assert not future_names & {item["pipelineClass"] for item in loop_admissions()}
+    public = public_execution_profiles()
+    legacy_ids = {'flux3-klein:modular', 'flux3-klein-base:modular'}
+    public_ids = {'flux3-klein:official-provider:v1', 'flux3-klein-base:official-provider:v1'}
+    declared_public = {item['id']: item for item in public if item['model_type'] in future_names}
+    assert set(declared_public) == public_ids
+    assert not legacy_ids & {item['id'] for item in public}
+    profiles = {item.id: item for item in DIFFUSERS_EXECUTION_PROFILES.values() if item.model_type in future_names}
+    assert set(profiles) == legacy_ids | public_ids
+    for identity, profile in profiles.items():
+        assert profile.public is (identity in public_ids)
+        assert profile.live_proof is False and profile.expert_quantization_modes == ()
+        if identity in legacy_ids:
+            assert profile.required_diffusers_provider is None
+        else:
+            assert profile.required_diffusers_provider == 'huggingface-diffusers-flux3-7ecb1e1'
+            assert profile.replaces_private_authoring_profile == identity.replace(':official-provider:v1', ':modular')
+            requirement = declared_public[identity]['optionalRuntimeRequirement']
+            assert requirement['requiredNow'] is True and requirement['state'] != 'active'
+    catalog = json.loads(gzip.decompress((Path(__file__).resolve().parents[1] /
+                                       "modiff/registered_block_v2_catalog.v1.json.gz").read_bytes()))
+    assert not {item["id"] for item in future} & {
+        item["definition"]["source"]["manifestDefinitionId"] for item in catalog["entries"]
+    }

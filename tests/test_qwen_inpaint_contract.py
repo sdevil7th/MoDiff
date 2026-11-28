@@ -64,6 +64,33 @@ class QwenInpaintContractTests(unittest.TestCase):
         self.assertEqual(result["mask_image"].getpixel((0, 0)), 255)
         self.assertEqual(result["mask_image"].getpixel((32, 16)), 0)
 
+    def test_outpaint_seam_overlap_only_reaches_expanded_edges(self):
+        source = Image.new("RGB", (96, 96), (30, 90, 160))
+        for width, height, left, top in ((128, 96, 32, 0), (96, 128, 0, 32)):
+            with self.subTest(left=left, top=top):
+                result = OutpaintCanvas("canvas-test").execute(
+                    image=source, width=width, height=height,
+                    left=left, right=0, top=top, bottom=0, overlap=16, feather=4,
+                )
+                mask = result["mask_image"]
+                self.assertEqual(mask.getpixel((0, 0)), 255)
+                self.assertGreater(mask.getpixel((left + 2, top + 2)), 0)
+                self.assertEqual(mask.getpixel((width - 1, height - 1)), 0)
+                unexpanded_edge = (left + 48, 0) if left else (0, top + 48)
+                self.assertEqual(mask.getpixel(unexpanded_edge), 0)
+                generated = Image.new("RGB", (width, height), "white")
+                output = composite_masked_pil_outputs(generated, result["canvas"], mask)[0]
+                self.assertEqual(output.getpixel(unexpanded_edge), source.getpixel((0, 0)))
+
+    def test_outpaint_mask_includes_a_one_pixel_expansion(self):
+        result = OutpaintCanvas("canvas-test").execute(
+            image=Image.new("RGB", (63, 64), "white"), width=64, height=64,
+            left=0, right=1, top=0, bottom=0, overlap=0, feather=0,
+        )
+        mask = result["mask_image"]
+        self.assertEqual(mask.getpixel((62, 32)), 0)
+        self.assertEqual(mask.getpixel((63, 32)), 255)
+
 
 if __name__ == "__main__":
     unittest.main()

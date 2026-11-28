@@ -15,7 +15,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, Callable
 
 from modiff.auxiliary_lora import controlled_lora_receipts_from_graph
 from modiff.model_artifact_catalog import resolve_model_revision
@@ -112,19 +112,29 @@ def _exact_weight_name(value: Any) -> str:
     return value
 
 
-def _sha256_file(path: Path) -> str:
+def _sha256_file(path: Path, *, _verification_callback: Callable[[int, int, bool], None] | None = None) -> str:
     try:
         before = path.stat()
         digest = hashlib.sha256()
+        completed = 0
+        if _verification_callback is not None:
+            _verification_callback(0, before.st_size, False)
         with path.open("rb") as handle:
             for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
                 digest.update(chunk)
+                completed += len(chunk)
+                if _verification_callback is not None:
+                    _verification_callback(completed, before.st_size, False)
         after = path.stat()
+    except InterruptedError:
+        raise
     except OSError as error:
         raise FileNotFoundError("Controlled artifact bytes could not be read.") from error
     identity_fields = ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")
     if any(getattr(before, field, None) != getattr(after, field, None) for field in identity_fields):
         raise ValueError("Controlled artifact bytes changed while their SHA-256 was being verified.")
+    if _verification_callback is not None:
+        _verification_callback(completed, before.st_size, True)
     return digest.hexdigest()
 
 
@@ -139,6 +149,7 @@ def _canonical_digest(value: dict[str, Any]) -> str:
 
 
 def _managed_hub_file(repository: str, revision: str, weight_name: str) -> Path:
+    from modiff.hf_cache_layout import resolve_snapshot_cache_file
     from utils import huggingface as huggingface_utils
 
     cached = huggingface_utils.cached_file_path(repository, weight_name, revision=revision)
@@ -148,17 +159,21 @@ def _managed_hub_file(repository: str, revision: str, weight_name: str) -> Path:
     if not cached_path.is_absolute():
         raise ValueError("Installed controlled Hub cache entries must use absolute paths.")
 
-    configured_root = huggingface_utils.CONFIG.hf["cache_dir"] or huggingface_utils.HUGGINGFACE_HUB_CACHE
-    lexical_root = Path(os.path.abspath(Path(configured_root).expanduser()))
     lexical_alias = Path(os.path.abspath(cached_path))
-    expected_alias = (
-        lexical_root
-        / f"models--{repository.replace('/', '--')}"
-        / "snapshots"
-        / revision
-        / Path(*PurePosixPath(weight_name).parts)
-    )
-    if os.path.normcase(str(lexical_alias)) != os.path.normcase(str(expected_alias)):
+    # Match lookup's approved roots without resolving the alias first: an
+    # escaping snapshot link must not select a different authorized cache.
+    for _label, location in huggingface_utils._hf_cache_locations():
+        lexical_root = Path(os.path.abspath(Path(location).expanduser()))
+        expected_alias = (
+            lexical_root
+            / f"models--{repository.replace('/', '--')}"
+            / "snapshots"
+            / revision
+            / Path(*PurePosixPath(weight_name).parts)
+        )
+        if os.path.normcase(str(lexical_alias)) == os.path.normcase(str(expected_alias)):
+            break
+    else:
         raise ValueError("Controlled Hub cache lookup did not preserve the exact repository snapshot alias.")
     try:
         cache_root = lexical_root.resolve(strict=True)
@@ -171,8 +186,9 @@ def _managed_hub_file(repository: str, revision: str, weight_name: str) -> Path:
         alias = snapshot_root.joinpath(*PurePosixPath(weight_name).parts)
         if alias.parent.resolve(strict=True) != alias.parent or not alias.is_file():
             raise ValueError("Controlled Hub snapshot subdirectories cannot redirect the artifact alias.")
-        resolved = huggingface_utils.resolve_managed_hf_cache_file(alias)
-        resolved.relative_to(repo_root)
+        resolved = resolve_snapshot_cache_file(
+            alias, snapshot=snapshot_root, cache_root=cache_root, repository=repository,
+        )
     except (OSError, RuntimeError, ValueError) as error:
         raise ValueError("Installed controlled Hub artifact is outside its exact managed snapshot.") from error
     return resolved

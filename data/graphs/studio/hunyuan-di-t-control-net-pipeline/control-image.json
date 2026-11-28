@@ -311,8 +311,8 @@
             "disabled": false,
             "hidden": false,
             "label": "Height",
-            "max": 1024,
-            "min": 1024,
+            "max": 2048,
+            "min": 512,
             "step": 32,
             "type": "int",
             "value": 1024
@@ -422,8 +422,8 @@
                 },
                 "height": {
                   "hidden": false,
-                  "max": 1024,
-                  "min": 1024,
+                  "max": 2048,
+                  "min": 512,
                   "step": 32
                 },
                 "image_guidance_scale": {
@@ -463,8 +463,8 @@
                 },
                 "width": {
                   "hidden": false,
-                  "max": 1024,
-                  "min": 1024,
+                  "max": 2048,
+                  "min": 512,
                   "step": 32
                 }
               },
@@ -675,8 +675,8 @@
             "disabled": false,
             "hidden": false,
             "label": "Width",
-            "max": 1024,
-            "min": 1024,
+            "max": 2048,
+            "min": 512,
             "step": 32,
             "type": "int",
             "value": 1024

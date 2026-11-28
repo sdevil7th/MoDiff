@@ -8,6 +8,8 @@ import unittest
 
 from modiff.template_candidate_contracts import (
     TemplateCandidateContractError,
+    _coverage_partition,
+    _workflow_records,
     build_template_candidate_contract_ledger,
     render_template_candidate_contract_ledger,
     validate_template_candidate_contract_ledger,
@@ -70,29 +72,34 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 200,
-                "publicTemplateCount": 78,
-                "canonicalWorkflowsWithPublicTemplates": 52,
-                "candidateContractCount": 148,
-                "mediaKindCounts": {"audio": 6, "image": 100, "json": 9, "video": 33},
-                "contractsRequiringInputExamples": 93,
-                "contractsWithComfyResearchRecords": 11,
-                "comfyResearchRecordCount": 14,
-                "comfyMappingStatusCounts": {"existing_contract_candidate": 14},
+                "canonicalWorkflowCount": 225,
+                "publicTemplateCount": 218,
+                "canonicalWorkflowsWithPublicTemplates": 195,
+                "canonicalWorkflowsWithExecutablePublicTemplates": 184,
+                "candidateContractCount": 41,
+                "mediaKindCounts": {"audio": 3, "image": 29, "json": 3, "video": 6},
+                "contractsRequiringInputExamples": 26,
+                "contractsWithComfyResearchRecords": 0,
+                "comfyResearchRecordCount": 0,
+                "comfyMappingStatusCounts": {},
             },
         )
 
-    def test_newly_admitted_workflows_are_exact_hidden_zero_asset_contracts(self):
+    def test_previously_admitted_workflows_keep_their_exact_public_or_candidate_binding(self):
+        registered = {
+            "hunyuan_pag_burgundy_knight": "HunyuanDiTPAGPipeline:text_to_image",
+            "sd15_pag_mountain_lake_watercolor": "StableDiffusionPAGPipeline:edit_image",
+            "sd15_pag_cobalt_studio_repair": "StableDiffusionPAGPipeline:inpaint",
+            "spandrel_tram_shelter_video_2x": "SpandrelVideoUpscale:video_upscale",
+            "flux_canny_black_ink_cube": "FluxCannyPipeline:control_edit_image",
+            "flux_depth_marine_teal_bow_edit": "FluxDepthPipeline:control_edit_image",
+            "pixart_sigma_terracotta_herbs": "PixArtSigmaPipeline:text_to_image",
+            "pixart_sigma_pag_pink_mascot": "PixArtSigmaPAGPipeline:text_to_image",
+            "ddpm_cifar32_technical_preview": "DDPMPipeline:unconditional_image",
+            "consistency_64_technical_preview": "ConsistencyModelPipeline:unconditional_image",
+            "shap_e_traffic_cone_turntable": "ShapEPipeline:text_to_3d",
+        }
         expected = {
-            "HuggingFaceImageTextToTextModel:image_to_text",
-            "HuggingFaceTextGenerationModel:text_generation",
-            "HunyuanDiTPAGPipeline:text_to_image",
-            "LatentConsistencyModelPipeline:edit_image",
-            "PixArtSigmaPAGPipeline:text_to_image",
-            "SanaPAGPipeline:text_to_image",
-            "StableDiffusionPAGPipeline:edit_image",
-            "StableDiffusionPAGPipeline:inpaint",
-            "SpandrelVideoUpscale:video_upscale",
             "BuiltinAudioOperation:audio_trim",
             "BuiltinAudioOperation:audio_join",
             "BuiltinAudioOperation:audio_loudness_match",
@@ -103,7 +110,13 @@ class TemplateCandidateContractTests(unittest.TestCase):
             "BuiltinImageOperation:image_stitch",
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
+        public_by_id = {row["id"]: row for row in self.coverage["publicTemplates"]}
 
+        for template_id, workflow_id in registered.items():
+            self.assertNotIn(workflow_id, contracts_by_id)
+            template = public_by_id[template_id]
+            self.assertEqual(template["canonicalWorkflowId"], workflow_id)
+            self.assertTrue(template["reviewedGalleryExample"])
         self.assertTrue(expected <= contracts_by_id.keys())
         for workflow_id in expected:
             contract = contracts_by_id[workflow_id]
@@ -112,26 +125,78 @@ class TemplateCandidateContractTests(unittest.TestCase):
             self.assertEqual(contract["assets"], [])
             self.assertEqual(contract["evidenceState"]["maximumClaim"], "canonical_graph_binding_only")
 
-    def test_candidates_are_the_exact_complement_of_public_template_workflows(self):
-        manifest_by_id = {row["id"]: row for row in self.manifest["workflows"]}
+    def test_experimental_public_media_cannot_reseal_an_executable_coverage_claim(self):
+        records, supported = _workflow_records(ROOT, self.manifest)
+        for field in ("publicTemplates", "canonicalWorkflows"):
+            changed = copy.deepcopy(self.coverage)
+            target = next(row for row in changed[field] if row["status"] == "contract-only")
+            target["status"] = "executable"
+            _reseal(changed)
+            with self.subTest(field=field), self.assertRaises(TemplateCandidateContractError):
+                _coverage_partition(changed, records, supported)
+
+    def test_candidates_are_the_exact_complement_of_executable_public_template_workflows(self):
+        manifest_by_id = {
+            row["id"]: row
+            for row in [*self.manifest["workflows"], *self.manifest["experimentalWorkflows"]]
+        }
         public_templates = self.coverage["publicTemplates"]
-        public_workflow_ids = {row["canonicalWorkflowId"] for row in public_templates}
+        public_workflow_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "executable"}
         coverage_public_workflow_ids = {
-            row["id"] for row in self.coverage["canonicalWorkflows"] if row["publicTemplateIds"]
+            row["id"] for row in self.coverage["canonicalWorkflows"] if row["publicTemplateIds"] and row["status"] == "executable"
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 
-        self.assertEqual(len(public_templates), 78)
-        self.assertEqual(len(public_workflow_ids), 52)
+        self.assertEqual(len(public_templates), 218)
+        experimental_public_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "contract-only"}
+        self.assertEqual(len(experimental_public_ids), 11)
+        self.assertTrue(experimental_public_ids <= set(contracts_by_id))
+        self.assertEqual(len(public_workflow_ids), 184)
+        self.assertIn("AceStepAudioPipeline:text_to_audio:ace_step_lyric_music_video", public_workflow_ids)
+        self.assertIn("HuggingFaceSpeechRecognitionModel:speech_to_text", public_workflow_ids)
+        self.assertIn("LatentConsistencyModelPipeline:edit_image", public_workflow_ids)
+        self.assertIn("SanaSprintPipeline:edit_image", public_workflow_ids)
+        self.assertIn("SanaPAGPipeline:text_to_image", public_workflow_ids)
         self.assertEqual(public_workflow_ids, coverage_public_workflow_ids)
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)
         self.assertFalse(set(contracts_by_id) & public_workflow_ids)
+        self.assertEqual(len(contracts_by_id), 41)
+        experimental_public_pairs = {
+            "flux2_dev_text_to_image": "Flux2ModularPipeline:text_to_image",
+            "cosmos3_super_text_to_image": "Cosmos3OmniModularPipeline:text_to_image",
+        }
+        public_by_id = {row["id"]: row for row in public_templates}
+        sana = public_by_id["sana_sprint_monochrome_tiger"]
+        self.assertEqual(sana["canonicalWorkflowId"], "SanaSprintPipeline:edit_image")
+        self.assertEqual(sana["status"], "executable")
+        for template_id, workflow_id in experimental_public_pairs.items():
+            self.assertEqual(public_by_id[template_id]["canonicalWorkflowId"], workflow_id)
+            self.assertNotIn(workflow_id, contracts_by_id)
+
 
         for workflow_id, contract in contracts_by_id.items():
             manifest = manifest_by_id[workflow_id]
             for field in ("modelType", "mode", "mediaKind", "graphPath", "graphHash", *MANIFEST_BINDING_FIELDS):
                 self.assertEqual(contract[field], manifest[field], f"{workflow_id} field {field}")
+
+    def test_public_ctc_recipe_keeps_canonical_runtime_qualification_unchanged(self):
+        workflow_id = "HuggingFaceCTCSpeechRecognitionModel:speech_to_text"
+        template = next(row for row in self.coverage["publicTemplates"] if row["id"] == "wav2vec2_station_announcement")
+        self.assertEqual(template["canonicalWorkflowId"], workflow_id)
+        self.assertEqual(template["status"], "executable")
+        self.assertEqual(template["readinessPolicy"], "requires_input")
+        self.assertEqual(template["mode"], "speech_to_text")
+        self.assertTrue(template["reviewedGalleryExample"])
+        self.assertFalse(any(row["canonicalWorkflowId"] == workflow_id for row in self.ledger["contracts"]))
+        manifest = next(row for row in self.manifest["workflows"] if row["id"] == workflow_id)
+        self.assertEqual(manifest["mediaKind"], "json")
+        self.assertEqual(manifest["pipelineClasses"], ["AutoModelForCTC"])
+        self.assertEqual(manifest["requiredArtifacts"], ["facebook/wav2vec2-base-960h"])
+        self.assertEqual(manifest["requiredInputs"]["requiredAudio"], ["sourceAudio"])
+        self.assertEqual(manifest["runtimeQualificationStatus"], "unqualified")
+        self.assertEqual(manifest["optimizationQualificationStatus"], "unqualified")
+        self.assertEqual(manifest["qualifiedRuntimeProfiles"], [])
 
     def test_authoring_assets_publication_and_evidence_remain_pending(self):
         self.assertEqual(
@@ -147,6 +212,7 @@ class TemplateCandidateContractTests(unittest.TestCase):
                 "comfyMappingMeaning": "semantic_comparison_candidate_only",
                 "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
                 "maximumEvidenceClaim": "canonical_graph_binding_only",
+                "publicPreviewsQualifyCanonicalGraphs": False,
             },
         )
         forbidden_claim_fields = {
@@ -158,7 +224,10 @@ class TemplateCandidateContractTests(unittest.TestCase):
             "qualityEvidence",
             "publicTemplateIds",
         }
-        manifest_by_id = {row["id"]: row for row in self.manifest["workflows"]}
+        manifest_by_id = {
+            row["id"]: row
+            for row in [*self.manifest["workflows"], *self.manifest["experimentalWorkflows"]]
+        }
         for contract in self.ledger["contracts"]:
             self.assertTrue(forbidden_claim_fields.isdisjoint(contract))
             self.assertEqual(contract["publicationState"], "hidden_candidate")
@@ -206,8 +275,8 @@ class TemplateCandidateContractTests(unittest.TestCase):
             rows.sort(key=lambda item: (item["recordType"], item["id"]))
         actual = {row["canonicalWorkflowId"]: row["comfyResearchRecords"] for row in self.ledger["contracts"]}
         self.assertEqual(actual, expected)
-        self.assertEqual(sum(bool(rows) for rows in actual.values()), 11)
-        self.assertEqual(sum(len(rows) for rows in actual.values()), 14)
+        self.assertEqual(sum(bool(rows) for rows in actual.values()), 0)
+        self.assertEqual(sum(len(rows) for rows in actual.values()), 0)
 
         forbidden_keys = {"edges", "graph", "links", "nodes", "workflow"}
 
@@ -258,10 +327,12 @@ class TemplateCandidateContractTests(unittest.TestCase):
         ]
         mutations.append(public_overlap)
 
-        comfy_omission = copy.deepcopy(self.ledger)
-        mapped = next(row for row in comfy_omission["contracts"] if row["comfyResearchRecords"])
-        mapped["comfyResearchRecords"].pop()
-        mutations.append(comfy_omission)
+        unrelated_comfy_record = copy.deepcopy(self.ledger)
+        reference = self.comfy["templates"][0]
+        unrelated_comfy_record["contracts"][0]["comfyResearchRecords"].append(
+            {"recordType": "template", "id": reference["id"], "mappingStatus": reference["mappingStatus"]}
+        )
+        mutations.append(unrelated_comfy_record)
 
         source_hash = copy.deepcopy(self.ledger)
         source_hash["sources"]["workflowManifest"]["sha256"] = "sha256:" + "0" * 64

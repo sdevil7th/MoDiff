@@ -18,6 +18,7 @@ from modules import MODULE_MAP
 from modules.ModularDiffusers.modular_utils import (
     REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES,
     get_all_model_types,
+    declared_optional_pipeline_configs,
     get_modular_guider_options,
     get_modular_layer_block_options,
     get_modular_node_action_options,
@@ -70,6 +71,18 @@ requires_transformers = unittest.skipUnless(
     "requires the staged optional Transformers runtime",
 )
 _NO_EXPLICIT_GUIDER = object()
+
+
+def _installed_pipeline(model_type):
+    pipeline = getattr(diffusers, model_type, None)
+    if pipeline is None:
+        # Base-runtime checks still validate the exact optional declaration;
+        # installed-provider tests separately construct the real source class.
+        assert model_type in declared_optional_pipeline_configs(), model_type
+        profiles = [p for p in public_execution_profiles() if p['model_type'] == model_type]
+        assert len(profiles) == 1 and profiles[0]['required_diffusers_provider']
+        assert profiles[0]['optionalRuntimeRequirement']['requiredNow'] is True
+    return pipeline
 
 
 class ReviewedIndexCacheRootsTest(unittest.TestCase):
@@ -685,6 +698,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "FluxModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "FluxKontextModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "Flux2ModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
+            "Flux3ModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
+            "Flux3DistilledModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "Flux2KleinModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "Flux2KleinBaseModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "ZImageModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
@@ -716,16 +731,20 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 "Cosmos3DistilledModularPipeline",
                 "HunyuanVideo15ModularPipeline",
                 "MiniMaxH3ModularPipeline",
+                "MiniMaxH3ImageModularPipeline",
+                "PikaH3FlexModularPipeline",
             },
         )
         self.assertEqual(registered, set(expected))
 
         actions = {"controlnet", "decoder", "denoise", "image_encoder", "ip_adapter", "text_encoder", "vae_encoder"}
         for model_type, supported_actions in expected.items():
-            pipeline_class = getattr(diffusers, model_type)
+            pipeline_class = _installed_pipeline(model_type)
             metadata = get_model_type_metadata(model_type)
             actual_actions = {name for name, config in metadata["node_params"].items() if config is not None}
             self.assertEqual(actual_actions, supported_actions)
+            if pipeline_class is None:
+                continue
 
             for action in actions:
                 with self.subTest(model_type=model_type, action=action):
@@ -866,6 +885,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
         for model_type in sorted(set(get_all_model_types()) - {"", "DummyCustomPipeline"}):
             metadata = get_model_type_metadata(model_type)
+            if _installed_pipeline(model_type) is None:
+                continue
             for action in ("vae_encoder", "image_encoder"):
                 if metadata["node_params"].get(action) is None:
                     continue
@@ -908,6 +929,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         for model_type in sorted(registered):
             with self.subTest(model_type=model_type):
                 metadata = get_model_type_metadata(model_type)
+                if _installed_pipeline(model_type) is None:
+                    continue
                 if metadata["node_params"].get("denoise") is None:
                     self.assertIn(model_type, REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES)
                     with self.assertRaisesRegex(ValueError, "does not support the generic Denoise"):
@@ -931,10 +954,22 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         self.assertIn("vae", wan_config["model_input_names"])
         self.assertTrue(wan_config["params"]["vae"]["label"].endswith(" *"))
 
-        self.assertEqual(
-            set(get_model_type_metadata("FluxModularPipeline")["node_params"]["denoise"]["model_input_names"]),
-            {"unet", "scheduler"},
-        )
+        # The pinned upstream Flux blueprints have no CFG component. MoDiff's
+        # reviewed adapter adds only exact, initially disabled CFG to these two
+        # families; it must not modify their upstream class-level blueprints.
+        for model_type in ("FluxModularPipeline", "FluxKontextModularPipeline"):
+            with self.subTest(app_owned_guidance=model_type):
+                pipeline_class = getattr(diffusers, model_type)
+                upstream = pipeline_class().blocks.sub_blocks["denoise"]
+                self.assertNotIn("guider", upstream.component_names)
+                blocks, config = require_modiff_node_contract(pipeline_class, "denoise")
+                self.assertEqual(set(blocks.component_names), {*upstream.component_names, "guider"})
+                self.assertEqual(set(config["model_input_names"]), {"unet", "guider", "scheduler"})
+                self.assertFalse(config["params"]["guider"].get("hidden", False))
+                guider_spec = next(spec for spec in blocks.expected_components if spec.name == "guider")
+                self.assertIs(guider_spec.type_hint, diffusers.ClassifierFreeGuidance)
+                self.assertEqual(dict(guider_spec.config), {"enabled": False, "guidance_scale": 1.0})
+                self.assertNotIn("guider", pipeline_class().blocks.sub_blocks["denoise"].component_names)
         self.assertEqual(
             set(get_model_type_metadata("WanModularPipeline")["node_params"]["denoise"]["model_input_names"]),
             {"unet", "guider", "scheduler"},
@@ -1420,7 +1455,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
     def test_every_split_node_publishes_its_registry_derived_signal_compatibility(self):
         expected = {}
-        for model_type in set(get_all_model_types()) - {"", "DummyCustomPipeline"}:
+        from modules.ModularDiffusers.modular_utils import declared_optional_pipeline_configs
+        model_types = (set(get_all_model_types()) | set(declared_optional_pipeline_configs())) - {"", "DummyCustomPipeline"}
+        for model_type in model_types:
             metadata = get_model_type_metadata(model_type)
             for action, action_config in metadata["node_params"].items():
                 if isinstance(action_config, dict):
@@ -1470,7 +1507,10 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         expected = {
             **{model_type: all_options for model_type in full_models},
             **{model_type: non_layer_options for model_type in non_layer_models},
+            "FluxModularPipeline": ["ClassifierFreeGuidance"],
+            "FluxKontextModularPipeline": ["ClassifierFreeGuidance"],
             "Flux2KleinBaseModularPipeline": ["ClassifierFreeGuidance"],
+            "Flux3ModularPipeline": ["ClassifierFreeGuidance"],
         }
 
         self.assertEqual(get_modular_guider_options(), expected)
@@ -1485,6 +1525,8 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         for model_type in sorted(registered):
             with self.subTest(model_type=model_type):
                 metadata = get_model_type_metadata(model_type)
+                if _installed_pipeline(model_type) is None:
+                    continue
                 if metadata["node_params"].get("denoise") is None:
                     self.assertIn(model_type, REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES)
                     self.assertNotIn(model_type, expected)
@@ -1521,9 +1563,11 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             self.assertTrue(scheduler_type.__module__.startswith("diffusers."))
 
         for model_type in set(get_all_model_types()) - {"", "DummyCustomPipeline"}:
-            pipeline_class = getattr(diffusers, model_type)
+            pipeline_class = _installed_pipeline(model_type)
             with self.subTest(model_type=model_type):
                 metadata = get_model_type_metadata(model_type)
+                if _installed_pipeline(model_type) is None:
+                    continue
                 if metadata["node_params"].get("denoise") is None:
                     self.assertIn(model_type, REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES)
                     self.assertNotIn(model_type, expected)
@@ -1618,7 +1662,26 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
                 node.updateNode({"guider": "SkipLayerGuidance"}, None)
 
-        for model_type in (None, {}, "FluxModularPipeline", "FutureModularPipeline"):
+        for model_type in ("FluxModularPipeline", "FluxKontextModularPipeline"):
+            with (
+                self.subTest(model_type=model_type),
+                patch.object(Guider, "get_signal_value", return_value=model_type),
+            ):
+                node.send_node_definition.reset_mock()
+                node.updateNode({"guider": "ClassifierFreeGuidance"}, None)
+                node.send_node_definition.assert_called_once_with({})
+                output = node.execute("ClassifierFreeGuidance", enabled=False, guidance_scale=1.0)
+                self.assertIs(type(output["guider_out"]), diffusers.ClassifierFreeGuidance)
+                self.assertFalse(output["guider_out"].get_state()["enabled"])
+                self.assertEqual(output["guider_out"].guidance_scale, 1.0)
+                for unsupported in ("SkipLayerGuidance", "AdaptiveProjectedMixGuidance", "MagnitudeAwareGuidance"):
+                    with self.subTest(unsupported=unsupported):
+                        with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
+                            node.updateNode({"guider": unsupported}, None)
+                        with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
+                            node.execute(unsupported)
+
+        for model_type in (None, {}, "Flux2ModularPipeline", "FutureModularPipeline"):
             with (
                 self.subTest(model_type=model_type),
                 patch.object(

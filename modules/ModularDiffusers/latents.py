@@ -7,14 +7,20 @@ import torch
 from PIL import Image
 from diffusers.modular_pipelines import PipelineState
 
-from modiff.NodeBase import NodeBase
+from modiff.NodeBase import NodeBase, _node_message_identity
 
-from . import MESSAGE_DURATION, MODULAR_DECODER_OPTIONS, MODULAR_VAE_ENCODER_OPTIONS, components
+from . import MESSAGE_DURATION, MODULAR_DECODER_OPTIONS, MODULAR_VAE_ENCODER_OPTIONS, components, qwen_t2i_bundle_input_param
+from .component_bundle import normalize_component_bundle_inputs
+from .reference_conditioning import (
+    REFERENCE_BINDING, declares_reference_binding, issue_reference_binding, require_reference_binding,
+    snapshot_reference_sources, reference_summary,
+)
 from .modular_utils import (
     modular_generator_from_seed,
     normalize_modular_runtime_params,
     normalize_modular_seed,
     pipeline_class_from_model_type,
+    pipeline_authoring_identity,
     pipeline_class_from_runtime_inputs,
     reject_undeclared_modular_generator,
     require_modiff_node_contract,
@@ -135,35 +141,52 @@ def prepare_image_for_vae_pipeline(image, pipeline_class):
     return image
 
 
-# YiYi Notes: this is not working for qwen/flux as latents needs to be unpacked first
 class LatentsPreview(NodeBase):
+    """Show a fast color approximation of one four-channel spatial latent."""
+
     label = "Latents Preview"
     category = "image"
     resizable = True
     params = {
-        "latents": {"label": "Latents", "display": "input", "type": "latent"},
+        "latents": {
+            "label": "Latents",
+            "display": "input",
+            "type": "latent",
+            "description": "Single four-channel spatial latent, with or without a batch dimension of size 1.",
+        },
         "image": {"label": "Image", "display": "output", "type": "image", "hidden": True},
         "preview": {"display": "ui_image", "dataSource": "image"},
     }
 
     def execute(self, latents):
+        if latents is None:
+            return {"image": None}
+        if (
+            not isinstance(latents, torch.Tensor)
+            or latents.ndim not in (3, 4)
+            or (latents.ndim == 4 and latents.shape[0] != 1)
+            or latents.shape[-3] != 4
+            or min(latents.shape[-2:]) == 0
+            or latents.layout != torch.strided
+            or latents.device.type == "meta"
+        ):
+            raise ValueError(
+                "Preview Latents requires a single four-channel spatial latent shaped (4, H, W) or (1, 4, H, W). "
+                "For other layouts, use a compatible Decode Latents node followed by Preview Image."
+            )
+
         latent_rgb_factors = [
             [0.3920, 0.4054, 0.4549],
             [-0.2634, -0.0196, 0.0653],
             [0.0568, 0.1687, -0.0755],
             [-0.3112, -0.2359, -0.2076],
         ]
-
-        image = None
-
-        if latents is not None:
-            latent_rgb_factors = torch.tensor(latent_rgb_factors, dtype=latents.dtype).to(device=latents.device)
-            latent_image = latents.squeeze(0).permute(1, 2, 0) @ latent_rgb_factors
-            latents_ubyte = ((latent_image + 1.0) / 2.0).clamp(0, 1).mul(0xFF)
-            denoised_image = latents_ubyte.byte().cpu().numpy()
-            image = Image.fromarray(denoised_image)
-            image = image.resize((image.width * 2, image.height * 2), resample=Image.Resampling.BICUBIC)
-
+        latent_rgb_factors = torch.tensor(latent_rgb_factors, dtype=latents.dtype).to(device=latents.device)
+        latent_image = latents.squeeze(0).permute(1, 2, 0) @ latent_rgb_factors
+        latents_ubyte = ((latent_image + 1.0) / 2.0).clamp(0, 1).mul(0xFF)
+        denoised_image = latents_ubyte.byte().cpu().numpy()
+        image = Image.fromarray(denoised_image)
+        image = image.resize((image.width * 2, image.height * 2), resample=Image.Resampling.BICUBIC)
         return {"image": image}
 
 
@@ -174,6 +197,7 @@ class DecodeLatents(NodeBase):
     skipParamsCheck = True
     node_type = "decoder"
     params = {
+        "pipeline_components": qwen_t2i_bundle_input_param("decoder"),
         "vae": {
             "label": "VAE *",
             "display": "input",
@@ -198,6 +222,7 @@ class DecodeLatents(NodeBase):
         equal = route_cache_params_equal(previous, current, fallback=super()._cache_params_equal)
         if not equal or not isinstance(current, dict):
             return equal
+        current = normalize_component_bundle_inputs(current, node_type=self.node_type, component_manager=components)
         route_state = current.get(ROUTE_STATE_INPUT)
         if self._pipeline_class is None:
             return route_state is None
@@ -268,7 +293,7 @@ class DecodeLatents(NodeBase):
 
     def update_node(self, values, ref):
         node_params = {}
-        model_type = self.get_signal_value("vae")
+        model_type = self.get_signal_value("vae") or self.get_signal_value("pipeline_components")
 
         if self._model_type == model_type:
             if not model_type or self._pipeline_class is None:
@@ -289,7 +314,7 @@ class DecodeLatents(NodeBase):
             self.send_node_definition(node_params)
             return None
         try:
-            self._pipeline_class = pipeline_class_from_model_type(model_type)
+            self._pipeline_class = pipeline_authoring_identity(model_type, class_resolver=pipeline_class_from_model_type)
             _, node_config = require_modiff_node_contract(
                 self._pipeline_class,
                 self.node_type,
@@ -308,7 +333,7 @@ class DecodeLatents(NodeBase):
         self.send_node_definition(node_params)
 
     def execute(self, **kwargs):
-        kwargs = dict(kwargs)
+        kwargs = normalize_component_bundle_inputs(dict(kwargs), node_type=self.node_type, component_manager=components)
         require_route_state_shape_before_identity_resolution(kwargs)
         reject_route_reserved_inputs_before_identity_resolution(kwargs)
         identity_kwargs = {name: value for name, value in kwargs.items() if name != ROUTE_STATE_INPUT}
@@ -483,6 +508,10 @@ class DecodeLatents(NodeBase):
             if "mask_overlay_kwargs" not in blocks.input_names:
                 raise ValueError("The selected Modular decoder does not expose the routed mask overlay input.")
             node_kwargs["mask_overlay_kwargs"] = route_values["mask_overlay_kwargs"]
+        if route_values is not None and route_values.get("qwen_inpaint_compatibility_state") is not None:
+            if "qwen_inpaint_compatibility_state" not in blocks.input_names:
+                raise ValueError("The selected Modular decoder does not expose the reviewed Qwen compatibility input.")
+            node_kwargs["qwen_inpaint_compatibility_state"] = route_values["qwen_inpaint_compatibility_state"]
         if route_values is not None and route_values["decode_inputs"] is not None:
             for name, value in route_values["decode_inputs"].items():
                 if name not in blocks.input_names:
@@ -604,6 +633,10 @@ class ImageEncode(NodeBase):
     skipParamsCheck = True
     node_type = "vae_encoder"
     params = {
+        "layout_reference_summary": {
+            "label": "Bound Reference Summary", "type": "string", "display": "output", "hidden": True,
+            "description": "Display-only ordered reference identities and actual preprocessing sizes from this image encoding cache.",
+        },
         "vae": {
             "label": "VAE *",
             "display": "input",
@@ -636,6 +669,13 @@ class ImageEncode(NodeBase):
         self._pipeline_class = None
 
     def _cache_params_equal(self, previous, current):
+        if isinstance(current, dict) and self.output.get(REFERENCE_BINDING) is not None:
+            try:
+                require_reference_binding(self.output[REFERENCE_BINDING], component=current.get("vae"), role="vae",
+                                          manager=components, images=current.get("image"),
+                                          latents=self.output.get("image_cond_latents"))
+            except ValueError:
+                return False
         equal = route_cache_params_equal(previous, current, fallback=super()._cache_params_equal)
         if not equal or not isinstance(current, dict) or self._pipeline_class is None:
             return equal
@@ -751,7 +791,7 @@ class ImageEncode(NodeBase):
             self.send_node_definition(node_params)
             return None
         try:
-            self._pipeline_class = pipeline_class_from_model_type(model_type)
+            self._pipeline_class = pipeline_authoring_identity(model_type, class_resolver=pipeline_class_from_model_type)
             _, node_config = require_modiff_node_contract(
                 self._pipeline_class,
                 self.node_type,
@@ -787,6 +827,15 @@ class ImageEncode(NodeBase):
         model_type = getattr(self._pipeline_class, "__name__", "")
         route_contract = route_contract_for_model_type(model_type)
         route_binding = None
+        compatibility = "native"
+        if "inpaint_compatibility" in kwargs:
+            from .qwen_inpaint_compatibility import validate_compatibility
+
+            compatibility = validate_compatibility(kwargs["inpaint_compatibility"])
+            if compatibility == "whole_v1" and (
+                model_type != "QwenImageEditModularPipeline" or kwargs.get("mask_image") is None
+            ):
+                raise ValueError("Qwen whole_v1 compatibility requires the Qwen Edit inpainting image/mask route.")
         if route_contract == "wan_i2v":
             route_binding = require_component_binding(
                 kwargs.get("vae"),
@@ -802,6 +851,15 @@ class ImageEncode(NodeBase):
         # 1. Get node config
         blocks, node_config = require_modiff_node_contract(self._pipeline_class, self.node_type)
         validate_route_field_contract(kwargs, node_config)
+
+        reference_snapshot = None
+        reference_vae = None
+        if REFERENCE_BINDING in node_config["output_names"]:
+            if not declares_reference_binding(node_config, output=True):
+                raise ValueError("The selected image encoder has an invalid reference binding contract.")
+            require_component_binding(kwargs.get("vae"), label="Reference VAE", expected_role="vae")
+            reference_vae = resolve_managed_component_by_id(components, kwargs.get("vae"), label="Reference VAE")
+            reference_snapshot = snapshot_reference_sources(kwargs.get("image"))
 
         # 2. Create pipeline
         repo_id = None
@@ -875,6 +933,11 @@ class ImageEncode(NodeBase):
                     height=kwargs.get("height"),
                     width=kwargs.get("width"),
                 )
+            elif route_contract == "qwen" and model_type == "QwenImageEditModularPipeline" and compatibility == "whole_v1":
+                from .qwen_inpaint_compatibility import require_compatible_vae_owner
+
+                preinit_vae = resolve_managed_component_by_id(components, vae, label="Encode VAE")
+                require_compatible_vae_owner(preinit_vae, compatibility)
         self._pipeline = blocks.init_pipeline(components_manager=components)
 
         # 4. Update components
@@ -916,6 +979,13 @@ class ImageEncode(NodeBase):
                 )
                 if live_vae is not installed_vae:
                     raise ValueError("The connected Encode VAE changed during component installation.")
+            if route_contract == "qwen" and model_type == "QwenImageEditModularPipeline":
+                if compatibility == "whole_v1" and live_vae is not preinit_vae:
+                    raise ValueError("The connected Qwen Encode VAE changed during pipeline initialization.")
+                if live_vae is not None:
+                    from .qwen_inpaint_compatibility import require_compatible_vae_owner
+
+                    require_compatible_vae_owner(live_vae, compatibility)
             if route_contract == "sdxl":
                 if live_vae is not preinit_vae:
                     raise ValueError("The connected Encode VAE changed during pipeline initialization.")
@@ -972,6 +1042,10 @@ class ImageEncode(NodeBase):
             node_kwargs["image"] = prepare_image_for_vae_pipeline(node_kwargs["image"], self._pipeline_class)
 
         # 6. Run the pipeline
+        if reference_snapshot is not None and require_exact_resident_component(
+            self._pipeline, vae, "vae", label="Reference VAE",
+        ) is not reference_vae:
+            raise ValueError("The exact reference VAE changed before encoding.")
         if route_contract == "wan_i2v":
             if require_exact_resident_component(
                 self._pipeline,
@@ -1053,6 +1127,14 @@ class ImageEncode(NodeBase):
         for name in output_names:
             if name == "doc":
                 outputs["doc"] = self._pipeline.blocks.doc
+            elif name == REFERENCE_BINDING:
+                if require_exact_resident_component(self._pipeline, vae, "vae", label="Reference VAE") is not reference_vae:
+                    raise ValueError("The exact reference VAE changed during encoding.")
+                outputs[name] = issue_reference_binding(
+                    vae_payload=vae, manager=components, images=node_kwargs.get("image"),
+                    processed_images=node_output_state.get("condition_images"),
+                    latents=node_output_state.get("image_cond_latents"), source_snapshot=reference_snapshot,
+                )
             elif name == ROUTE_STATE_OUTPUT:
                 if encoder_generator is None or route_binding is None:
                     raise ValueError("The Modular VAE route is missing its validated generator or loader binding.")
@@ -1085,6 +1167,7 @@ class ImageEncode(NodeBase):
                     "image_latents": node_output_state.get("image_latents"),
                     "processed_mask_image": node_output_state.get("processed_mask_image"),
                     "mask_overlay_kwargs": node_output_state.get("mask_overlay_kwargs"),
+                    "inpaint_compatibility_state": node_output_state.get("qwen_inpaint_compatibility_state"),
                 }
                 if route_contract == "sdxl":
                     route_kwargs.update(
@@ -1104,6 +1187,11 @@ class ImageEncode(NodeBase):
             else:
                 outputs[name] = node_output_state.get(name)
 
+        if REFERENCE_BINDING in outputs:
+            outputs["layout_reference_summary"] = reference_summary(
+                outputs[REFERENCE_BINDING], component=vae, role="vae", manager=components,
+                identity=_node_message_identity(),
+            )
         tensor_summary = None
         for name in output_names:
             tensor_summary = sanitized_tensor_summary(outputs.get(name))

@@ -522,6 +522,29 @@ class StudioBlockPersistenceTests(unittest.IsolatedAsyncioTestCase):
             "_auto_resize",
         )
 
+    async def test_spawned_field_bindings_and_edges_keep_strict_public_ids(self):
+        from copy import deepcopy
+        for field in ('item>>>shot-2', 'item>>>_0-a'):
+            payload = block_definition_v2()
+            payload['graph']['nodes'][1]['data']['params'][field] = {'type': 'string', 'default': 'starter prompt'}
+            payload['boundary']['inputs'][0]['binding']['fieldOrPortId'] = field
+            payload['controls'][0]['binding']['fieldId'] = field
+            payload['graph']['edges'][0]['targetPortId'] = field
+            payload['graph']['graphHash'] = block_graph_hash_v2(payload['graph'])
+            payload['contentHash'] = block_definition_content_hash_v2(payload)
+            self.assertEqual(validate_block_definition_v2(payload), payload)
+            invalid = deepcopy(payload)
+            invalid['boundary']['inputs'][0]['portId'] = field
+            invalid['contentHash'] = block_definition_content_hash_v2(invalid)
+            with self.assertRaisesRegex(ValueError, 'portId'):
+                validate_block_definition_v2(invalid)
+        for field in ('item>', 'item>>x', 'item>>>', 'item>>>>x', 'item>>>x>>>y'):
+            payload = block_definition_v2()
+            payload['boundary']['inputs'][0]['binding']['fieldOrPortId'] = field
+            payload['contentHash'] = block_definition_content_hash_v2(payload)
+            with self.assertRaisesRegex(ValueError, 'fieldOrPortId'):
+                validate_block_definition_v2(payload)
+
     async def test_v2_mirrored_controls_match_client_hashes_and_fail_closed(self):
         server = await self.make_server()
         payload = mirrored_control_definition_v2()

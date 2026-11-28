@@ -192,7 +192,48 @@ def apply_call_inputs(options: dict[str, Any], target: dict[str, Any]) -> None:
             target.pop(f'{prefix}prompt_2', None)
 
 
-def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=None):
+def is_reviewed_direct_image_edit(adapter, pipeline):
+    from modiff.model_artifact_catalog import catalog_revision
+
+    reviewed_pipelines = {
+        'DreamLiteMobilePipeline',
+        'LatentConsistencyModelImg2ImgPipeline',
+        'SanaSprintImg2ImgPipeline',
+        'StableDiffusionImg2ImgPipeline',
+        'StableDiffusionXLImg2ImgPipeline',
+    }
+    if (adapter.pipeline_class not in reviewed_pipelines
+            or getattr(pipeline, '_modiff_image_mode', None) != 'edit_image'
+            or getattr(pipeline, '_modiff_image_source', None) != 'hub'
+            or getattr(pipeline, '_modiff_image_repo', None) != adapter.default_repo):
+        return False
+    revision = catalog_revision(adapter.default_repo)
+    return revision is not None and getattr(pipeline, '_modiff_image_revision', None) == revision
+
+
+def direct_image_accounting_fields(action, adapter, pipeline):
+    """Pick the bounded field contract for the actual generic action and owner."""
+    from modiff.execution_input_provenance import (
+        CONDITIONAL_IMAGE_ACCOUNTING_FIELDS, DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS,
+    )
+    from modiff.model_artifact_catalog import catalog_revision
+
+    if action == 'Generate':
+        return CONDITIONAL_IMAGE_ACCOUNTING_FIELDS
+    if action == 'Edit' and is_reviewed_direct_image_edit(adapter, pipeline):
+        return DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS
+    if (action == 'Inpaint'
+            and adapter.pipeline_class in {'StableDiffusionInpaintPipeline', 'StableDiffusionXLInpaintPipeline'}
+            and getattr(pipeline, '_modiff_image_mode', None) == 'inpaint'
+            and getattr(pipeline, '_modiff_image_source', None) == 'hub'
+            and getattr(pipeline, '_modiff_image_repo', None) == adapter.default_repo):
+        revision = catalog_revision(adapter.default_repo)
+        if revision is not None and getattr(pipeline, '_modiff_image_revision', None) == revision:
+            return DIRECT_IMAGE_EDIT_ACCOUNTING_FIELDS
+    return frozenset()
+
+
+def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=None, *, requested_inputs=None):
     """Capture effective bounded controls without claiming opaque RNG state.
 
     The adapter may consume text while preparing embeddings before dispatch.
@@ -200,8 +241,14 @@ def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=
     schedules do not establish the saved seed or number of executed steps.
     """
     from modiff.execution_input_provenance import FIELD_NAMES
+    from .main import IMAGE_ACTION_MODES
 
     effective = {**call_kwargs, **(encoded_inputs or {})}
+    # Called after action validation: capture the selected runtime mode, never
+    # an advisory graph/form label. Legacy shared-mode pipelines stay unknown.
+    mode = getattr(values.get('pipeline'), '_modiff_image_mode', None)
+    allowed = set(adapter.modes) & set(IMAGE_ACTION_MODES[node.class_name])
+    effective['executed_task'] = mode if mode in allowed else (next(iter(allowed)) if len(allowed) == 1 else None)
     source_fields = {}
     for source, destination in (
         ('guidance_scale', adapter.guidance_parameter),
@@ -229,3 +276,72 @@ def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=
         effective.setdefault(key, None)
     node.record_generation_inputs(effective)
     node._execution_input_source_fields = source_fields
+    if node.class_name == 'UnconditionalGenerate':
+        # Account for the generic controls at this actual pipeline call. A
+        # class label is not consumed by DDIM; its saved sentinel is evidence
+        # of inactivity, never a claim that class_labels was passed.
+        from .main import image_pipeline_contract
+        consumed = {key: call_kwargs[key] for key in ('batch_size', 'num_inference_steps', 'output_type', 'eta')
+                    if key in call_kwargs}
+        consumed['seed'] = effective['seed']
+        inactive = {}
+        for field in ('eta', 'class_label'):
+            call_field = 'class_labels' if field == 'class_label' else field
+            if call_field in call_kwargs:
+                consumed[field] = call_kwargs[call_field]
+            else:
+                inactive[field] = 'adapter-inactive'
+        expected = image_pipeline_contract(adapter, effective['executed_task'])
+        node.record_field_accounting(values, consumed=consumed, inactive=inactive,
+                                     metadata={'image_contract': expected})
+    elif not encoded_inputs and requested_inputs is not None:
+        task = effective['executed_task']
+        supported_tasks = {'Generate': 'text_to_image', 'Edit': 'edit_image', 'Inpaint': 'inpaint'}
+        if task != supported_tasks.get(node.class_name):
+            return
+        fields = direct_image_accounting_fields(node.class_name, adapter, values['pipeline'])
+        if fields:
+            _record_direct_image_accounting(node, requested_inputs, values, call_kwargs, adapter, task=task,
+                                            allowed=fields)
+
+
+def _record_direct_image_accounting(node, requested, values, call_kwargs, adapter, *, task, allowed):
+    # Observe only reviewed scalar controls and the actual PIL arguments at dispatch.
+    from modiff.execution_input_provenance import decoded_image_projection
+    from .main import image_pipeline_contract
+
+    # Optional schedules, supplied state and other runtime inputs need their
+    # own provenance. This boundary uses a node-created generator and PIL output.
+    if (call_kwargs['output_type'] != 'pil' or values['use_guidance_scale_2']
+            or any(values.get(key) is not None for key in CALL_INPUT_PARAMS)):
+        return
+    disabled_guidance = {'use_guidance_scale_2', 'guidance_scale_2'}
+    aliases = {key: key for key in allowed
+               - {'image_contract', 'seed'} - disabled_guidance}
+    aliases.update(guidance_scale=adapter.guidance_parameter,
+                   image_guidance_scale=adapter.image_guidance_parameter,
+                   max_sequence_length=adapter.max_sequence_length_parameter)
+    internal = {'generator', 'return_dict', 'callback_on_step_end', 'callback_on_step_end_tensor_inputs'}
+    # The adapter fixes caption cleanup independently of graph controls.
+    if adapter.clean_caption is not None and call_kwargs.get('clean_caption') is adapter.clean_caption:
+        internal.add('clean_caption')
+    image_ports = {'edit_image': ('image',), 'inpaint': ('image', 'mask_image')}.get(task, ())
+    internal.update(image_ports)
+    if call_kwargs.keys() - internal - set(aliases.values()):
+        return
+    input_projections = {}
+    for port in image_ports:
+        source = decoded_image_projection(call_kwargs.get(port), mask=port == 'mask_image')
+        if source is None:
+            return
+        input_projections[port] = source
+    consumed = {key: call_kwargs[argument] for key, argument in aliases.items()
+                if key in requested and argument in call_kwargs}
+    if 'seed' in requested:
+        consumed['seed'] = call_kwargs['generator'].initial_seed()
+    inactive_fields = (requested.keys() & allowed) - consumed.keys() - {'image_contract'}
+    inactive = {key: 'feature-disabled' if key in disabled_guidance else 'adapter-inactive'
+                for key in inactive_fields}
+    node.record_field_accounting(requested, consumed=consumed, inactive=inactive,
+                                 metadata={'image_contract': image_pipeline_contract(adapter, task)},
+                                 input_projections=input_projections)

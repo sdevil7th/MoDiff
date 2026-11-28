@@ -30,6 +30,19 @@ unreasonable user expectations. The corrective obligations are:
 
 ## Invariants to protect
 
+- One ordinary node is the default for a single executable stage. Reuse
+  generic stages across compatible models and keep their ports named by role.
+  Fold internal operations only under the same owner with no independent
+  consumer of the intermediate result. Reserve new Blocks for a meaningful
+  typed boundary, such as a complete shot, reusable composition or loop.
+- Keep each model stage's task with its own execution owner. When an export
+  combines video with a separately generated soundtrack, test the published
+  graph and confirm that the audio loader retains its declared audio mode.
+- Present one editor for a connected setting and retain the saved fallback.
+  When selecting the default for similar stages, verify the fresh Creator
+  path and the corresponding saved workflow, including the precise ordered
+  execution export, compatible model switch and reopening. Preserve legacy
+  Block interfaces and registered definition hashes.
 - One owning `BlockInstanceV2`, one flat effective execution graph and one
   existing backend executor. Nested containment is not a second persisted
   execution system. Ordinary leaves remain ordinary nodes.
@@ -96,6 +109,22 @@ unreasonable user expectations. The corrective obligations are:
 
 ## Cross-machine preservation and merge
 
+Shared value edits must inspect the complete connected authoring graph when a
+nested container consumes a loader owned outside it. Resolve each visible alias
+through its declared control binding before finding its scoped peers; a local
+container graph cannot prove those external relationships. Apply value changes
+atomically through the existing field writers, preserve sealed controls and
+unrelated shots, and keep model/task adaptation restrictions separate. Regression
+tests must call the real exposed-control setter and cover both directions,
+Undo/Redo and save/reopen; mutating an already-flat test graph misses this defect.
+
+When composing stage Blocks inside another Block, preserve exact child-port
+field identities (including colon-qualified keys); sanitize only the new public
+port identifier. Remap advisory references across sibling containers together,
+not only inside each container. Test repeated real branches sharing one model,
+their independent paired controls, common mirrored inputs, save/reopen and scoped
+Run. A routing flag or a single-branch test cannot prove a sequence template.
+
 Before retiring a machine, preserve code history, all secondary worktrees,
 uncommitted changes, generated media, reference inputs, saved workflows/User
 Nodes, run receipts, exact parameters, test evidence and session handoffs.
@@ -123,6 +152,24 @@ the failed resource recipe as passing. A long first step with rising RAM/swap is
 not evidence of harmless compilation. Inspect pressure promptly, distinguish a
 kernel OOM kill from an assumed driver failure, and verify supervisor/UI recovery
 before retrying a known failed or cancelled task.
+
+On Windows, freed CPU tensors can leave committed pages in Torch's bundled
+mimalloc allocator while the process is idle. Empty model registries, a small
+GC-visible tensor sample and `torch.cuda.empty_cache()` do not establish that
+host memory was returned. Compare a bounded allocate/free reproduction with
+process commit and OS availability, then repeat the original model sequence.
+The existing pre-import startup policy defaults `MIMALLOC_PURGE_DELAY=0` on
+Windows and preserves an explicit operator value. Document its allocation
+performance tradeoff; an allocator-only reproduction is not model fit proof.
+
+Immediate purge does not guarantee reclamation when short-lived loader threads
+allocate tensors that another thread later frees. Preserve thread ownership and
+pool lifetime in allocator controls. Windows startup defaults official Diffusers
+and Transformers loading to serial before imports, preserving each explicit
+operator flag; other platforms retain their loading defaults. Document the
+load-time tradeoff and require a fresh process when flags change. Repeat the
+original model, cache release and next run separately; a CPU control or one
+successful image cannot establish broad fit or repeatability.
 
 ## Native edits and dynamic input types
 
@@ -274,6 +321,20 @@ the original geometry assertions, then repeat the concurrent generation gesture.
 - Runtime-only failures need the same visible correction path, restricted to
   their exact active workflow/run. Keep them advisory after edits until a new
   execution verifies the correction; never fabricate an initial tensor or model.
+- Bind Run-blocked recovery actions to the document and effective inputs that
+  produced the diagnostic, not only whichever tab is active when clicked.
+  Preserve exact field and declared runtime targets. Prove ordinary navigation,
+  delayed metadata, panel departure and stale-action rejection without installing
+  packages or submitting a graph. Focus requests are volatile; progress and
+  presentation changes must not impersonate authored input changes. Keep actual
+  resource rejection and unsupported-platform checks intact.
+- Setup must inspect the same lowered and selected Run closure without authoring
+  a graph, executing suppliers or randomizing seeds. Keep base packages, exact
+  model artifacts, optional environments and system steps distinct in one
+  checklist. A staged install is not activation, and each requested profile
+  needs a verified active identity. Deduplicate exact selections and durable
+  jobs; a file count cannot prove download-file identity. Lost status reads
+  must not create duplicate installs or turn last-known progress into readiness.
 - Diagnose the effective bound iteration input, not only the enclosing loop's
   original Pipeline State. Report bounded type/shape summaries, never contents,
   and preserve the resource-error category for memory failures.
@@ -600,6 +661,11 @@ runtimes or rewrite graph inputs.
 - Test legacy NanoID prefixes, public wires, completed previews, mixed selections,
   missing destinations and Undo/Redo. Native evidence must use actual selection
   and drag gestures; a reducer test alone does not prove toolbar behavior.
+- Composing complete Blocks preserves each child's local primary preview. The
+  new outer Block keeps its own primary, or the first child primary in graph
+  order, and retains later child previews as secondary outer previews. Prove
+  sibling and mixed-node composition without weakening the one-primary schema
+  invariant or changing child definitions, values, hierarchy, or wires.
 
 ## Auto owner lifetimes and computed controls
 
@@ -742,6 +808,19 @@ successful run, and retain immutable definitions and unrelated preview owners.
 - Opt-in generation tests need explicit backend isolation, installed-artifact
   checks, an idle queue, bounded execution and task-scoped cleanup. A file-path
   environment variable or an empty queue alone does not establish isolation.
+- Exercise ordinary output persistence after a native submission. The Client
+  writes the executed API snapshot through `/studio_outputs`. An isolated
+  capture must accept the metadata save for its own task, then independently
+  join it to the original graph request and terminal event. Preserve any
+  missing snapshot as a capture gap.
+- For an archived server run with capture gaps, compare its running queue and
+  terminal records by task, attempt, client run and input identity. Match the
+  saved executable graph independently. Record which original messages are
+  absent in the receipt.
+- A registry replay uses archived source bytes and recorded runtime packages.
+  It verifies the node schemas without executing a model. Where preprocessing
+  changes input bytes, recompute the normalized pixel identity and compare it
+  with the saved execution.
 - Keep reviewed upstream source checkouts outside ordinary application test
   discovery. Distinguish collection/harness failures from product failures;
   reproduce suspect pre-existing assertions on the original commit.
@@ -749,6 +828,23 @@ successful run, and retain immutable definitions and unrelated preview owners.
   through the established tooling and verify emitted bytes; do not hand-edit
   minified files or mistake regenerated inventory hashes for new qualification.
   Stop expanding the campaign when the requested scope has sufficient evidence.
+
+## Admitting a new model route
+
+- Exercise each advertised task's actual pinned-library preparation path with
+  small inputs before acquiring weights. A text call can pass while an image
+  or video branch needs an additional codec. Put required Python packages in
+  the ordinary project contract and exercise the same capability probe during
+  guided setup and preflight.
+- Check the connected stage's real component reads, including dependencies on
+  components owned by other stages. Test decode working memory separately
+  from weight residency, and check phase transitions clear obsolete progress.
+- Verify that a fresh template, a saved workflow and a compatible model switch
+  all display the same generic stage cards. Compare the ordered executable
+  graph before and after presentation changes and keep the saved input and
+  output evidence tied to its recorded run.
+
+For visual stage discovery, exercise both a name and an action alias in the picker, import a saved graph, and verify its typed wires and executable export. Search metadata belongs to the published registry. A wording change must preserve the recorded recipe and the approved asset.
 
 Keep acceptance criteria in [workbench acceptance](workbench-acceptance.md),
 implementation contracts in technical references, and dated plans/run ledgers in

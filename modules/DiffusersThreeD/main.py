@@ -211,6 +211,27 @@ def _tag_pipeline(
     setattr(pipeline, "_modiff_three_d_revision", revision)
 
 
+def _current_three_d_contract(adapter: ThreeDPipelineAdapter, saved: Any) -> dict[str, Any]:
+    current = adapter.signal_value()
+    if saved == current:
+        return current
+    if adapter is SHAP_E_ADAPTER:
+        # The two published text-route contracts predate either the action map
+        # alone or both the action map and input declarations. Retain only
+        # those exact presentations of the same execution controls.
+        before_actions = {key: value for key, value in current.items() if key != "actions"}
+        if saved == before_actions:
+            return current
+        del before_actions["inputContract"]
+        before_actions["fieldParams"] = {
+            key: value for key, value in current["fieldParams"].items()
+            if key not in {"prompt", "reference_images"}
+        }
+        if saved == before_actions:
+            return current
+    raise ValueError("The connected 3D pipeline published a stale or mismatched task contract.")
+
+
 def _validate_connected_pipeline(pipeline: Any, contract: Any) -> ThreeDPipelineAdapter:
     if pipeline is None:
         raise ValueError("Rendered 3D generation requires a connected Diffusers pipeline.")
@@ -218,9 +239,7 @@ def _validate_connected_pipeline(pipeline: Any, contract: Any) -> ThreeDPipeline
         getattr(pipeline, "_modiff_three_d_pipeline_class", None),
         getattr(pipeline, "_modiff_three_d_mode", None),
     )
-    expected_contract = adapter.signal_value()
-    if contract != expected_contract:
-        raise ValueError("The connected 3D pipeline published a stale or mismatched task contract.")
+    _current_three_d_contract(adapter, contract)
     identity = (
         getattr(pipeline, "_modiff_three_d_pipeline_class", None),
         getattr(pipeline, "_modiff_three_d_mode", None),
@@ -547,10 +566,11 @@ class GenerateRenderedArtifact(NodeBase):
         if not isinstance(contract, dict):
             raise ValueError("The connected 3D pipeline published a stale or mismatched task contract.")
         pipeline_class = contract.get("pipelineClass")
-        adapter = THREE_D_PIPELINE_ADAPTERS.get(pipeline_class)
-        if adapter is None or contract != adapter.signal_value():
+        adapter = THREE_D_PIPELINE_ADAPTERS.get(pipeline_class) if isinstance(pipeline_class, str) else None
+        if adapter is None:
             raise ValueError("The connected 3D pipeline published a stale or mismatched task contract.")
-        for field, params in contract["fieldParams"].items():
+        current = _current_three_d_contract(adapter, contract)
+        for field, params in current["fieldParams"].items():
             self.set_field_params(field, params)
 
     def __call__(self, **kwargs):

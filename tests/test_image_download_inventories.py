@@ -40,6 +40,39 @@ def test_alternate_qwen_download_layouts_remain_distinct_and_revision_bound():
         assert reviewed_repository_download_files(repo) == []
 
 
+def test_qwen_image_21_turbo_uses_its_exact_reviewed_download_selection():
+    model_type = 'QwenImage21TurboPipeline'
+    repo = 'Qwen/Qwen-Image-2.1-Turbo'
+    revision = 'fc13ba1986fcb905854dc8de2f52eee395f49b5b'
+    capability = studio_capability_definitions()[model_type]
+    files = capability['downloadFiles']
+    assert capability['defaultRepo'] == repo
+    assert catalog.catalog_repository_pin(repo, model_type=model_type) == {
+        'repo': repo,
+        'revision': revision,
+        'license': 'qwen-research',
+        'kind': 'base',
+        'modelType': model_type,
+    }
+    inventory = catalog.catalog_download_inventory(repo, revision, files)
+    assert inventory['exactBytes'] == 32_451_624_677
+    assert len(files) == 18
+    entries = {entry['path']: entry for entry in inventory['files']}
+    assert entries['LICENSE']['gitBlobId'] == '13ae08d5a5828f508cf0e852b1b316c0c0bbb9b3'
+    assert {path: entry['byteSize'] for path, entry in entries.items() if path.endswith('.safetensors')} == {
+        'text_encoder/model.safetensors': 17_534_340_584,
+        'transformer/diffusion_pytorch_model-00001-of-00002.safetensors': 9_968_332_504,
+        'transformer/diffusion_pytorch_model-00002-of-00002.safetensors': 4_261_951_904,
+        'vae/diffusion_pytorch_model.safetensors': 675_508_656,
+    }
+    assert entries['vae/diffusion_pytorch_model.safetensors']['sha256'] == (
+        '71879ffd5321e6d10c3c87513e2b474b1252efa7f3dec2969214a9bf06a6dd5c'
+    )
+    base_revision = catalog.catalog_revision('Qwen/Qwen-Image-2.1')
+    assert catalog.catalog_download_inventory(repo, base_revision, files) is None
+    assert catalog.catalog_download_inventory(repo, revision, files + ['assets/architecture.jpg']) is None
+
+
 def test_download_byte_inventory_invalidates_on_changed_selection_or_revision(monkeypatch):
     row = deepcopy(catalog.read_model_artifact_catalog()['downloadInventories'][0])
     files = [item['path'] for item in row['files']]

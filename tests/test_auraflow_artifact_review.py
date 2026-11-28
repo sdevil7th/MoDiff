@@ -3,6 +3,9 @@ import json
 from pathlib import Path
 import re
 import unittest
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 from modiff.model_artifact_catalog import catalog_repository_pin
 from modiff.studio_execution_specs import (
@@ -104,6 +107,29 @@ class AuraFlowArtifactReviewTests(unittest.TestCase):
         self.assertTrue(
             all(SHA256.fullmatch(digest) for digest in self.review["metadataSha256"].values())
         )
+
+    def test_offline_legacy_index_preserves_the_verified_repo_relative_lookup(self):
+        from modules.DiffusersImage import main as image
+
+        repository = self.review["repository"]
+        adapter = image.IMAGE_PIPELINE_ADAPTERS["AuraFlowPipeline"]
+        repo, revision = repository["repository"], repository["revision"]
+        component = object()
+        load = Mock(return_value=component)
+        factory = SimpleNamespace(config_name="config.json", from_pretrained=load)
+        with TemporaryDirectory(prefix="modiff-cache.with.dots-") as directory:
+            cache = Path(directory)
+            snapshot = cache / "models--fal--AuraFlow-v0.3" / "snapshots" / revision
+            kwargs = {
+                "revision": revision, "variant": "fp16", "use_safetensors": True,
+                "local_files_only": True, "low_cpu_mem_usage": True, "torch_dtype": "fp16",
+            }
+            with (patch("utils.huggingface.exact_cached_snapshot_path", return_value=snapshot) as resolve,
+                  patch.object(image, "pipeline_class_from_name", return_value=factory) as select):
+                self.assertIs(image.load_legacy_cached_image_transformer(adapter, repo, kwargs), component)
+            resolve.assert_called_once_with(repo, revision)
+            select.assert_called_once_with("AuraFlowTransformer2DModel")
+            load.assert_called_once_with(repo, subfolder="transformer", cache_dir=str(cache), **kwargs)
 
     def test_resource_claim_remains_estimate_only(self):
         envelope = self.review["remoteResourceEnvelope"]

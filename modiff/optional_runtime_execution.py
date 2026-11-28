@@ -17,6 +17,7 @@ from typing import Any
 from modiff.diffusers_profiles import (
     OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
     DiffusersExecutionProfile,
+    DIFFUSERS_EXECUTION_PROFILES,
     execution_profiles_for_execution,
     optional_runtime_requirement_for_profiles as declarative_requirement_for_profiles,
     resolve_execution_profiles_for_loader,
@@ -25,6 +26,7 @@ from modiff.optimization_packages import public_optional_runtime_catalog
 from modiff.optional_runtimes import (
     GALLERY_MEDIA_RUNTIME_PROFILE_ID,
     OPTIONAL_RUNTIME_PROFILES,
+    TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
 )
 
 
@@ -103,6 +105,10 @@ _LTX2_IMAGE_CONDITIONING_EXECUTION_PROFILE = _NodeOptionalRuntimeProfile(
     id="ltx2:image-conditioning-media",
     optional_runtime_profiles=(GALLERY_MEDIA_RUNTIME_PROFILE_ID,),
 )
+_IMAGE_TEXT_NF4_EXECUTION_PROFILE = _NodeOptionalRuntimeProfile(
+    id='transformers:image-text-nf4',
+    optional_runtime_profiles=(TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,),
+)
 _NODE_OPTIONAL_RUNTIME_PROFILES = {
     ("modules.VideoConditioning", "EdgePreprocessor"): (
         _GALLERY_MEDIA_EXECUTION_PROFILE,
@@ -118,6 +124,11 @@ def _execution_profiles_for_node(
     action: str,
     values: dict[str, Any],
 ) -> tuple[tuple[Any, ...], str | None]:
+    if ((module, action) == ('modules.HuggingFaceTransformers', 'LoadImageTextToTextModel')
+            and values.get('quantization_mode') == 'bnb_4bit'):
+        # Every requested quantized path must satisfy activation first. Exact
+        # artifact/dtype/device policy is independently checked before factories.
+        return (_IMAGE_TEXT_NF4_EXECUTION_PROFILE,), None
     node_profiles = _NODE_OPTIONAL_RUNTIME_PROFILES.get((module, action))
     if node_profiles is not None:
         return node_profiles, None
@@ -323,6 +334,15 @@ def optional_runtime_requirement_for_profiles(
 
     states = [_catalog_profile_state(by_id[profile_id], process_status) for profile_id in requested]
     if states and all(state == "active" for state, _reason in states):
+        # Metadata visibility is declarative. Run readiness additionally proves
+        # the exact process-selected provider rather than trusting ENV/catalog.
+        required_providers = {getattr(profile, 'required_diffusers_provider', None) for profile in selected}
+        required_providers.discard(None)
+        if required_providers:
+            from modiff.runtime_overlays import required_diffusers_provider_available
+            if not all(required_diffusers_provider_available(identity) for identity in required_providers):
+                return _copy_requirement(requirement, state="unavailable",
+                                         reason="optional_runtime_provider_unavailable")
         return _copy_requirement(
             requirement,
             state="active",
@@ -356,6 +376,20 @@ def loader_optional_runtime_requirement(
         action,
         values,
     )
+    # A retained private graph is not silently rebound to a newly selected
+    # public provider. This is an execution observation, not discovery filtering.
+    from modiff.studio_execution_specs import studio_public_authoring_replacements
+    replaced = studio_public_authoring_replacements()
+    replacements = tuple(DIFFUSERS_EXECUTION_PROFILES[replaced[p.id]] for p in profiles if p.id in replaced)
+    if replacements:
+        from modiff.runtime_overlays import active_diffusers_provider
+        try:
+            selected_provider = active_diffusers_provider()
+        except (OSError, RuntimeError, ValueError, TypeError, KeyError):
+            selected_provider = {'invalid': True}
+        if selected_provider is not None:
+            current = declarative_requirement_for_profiles(replacements)
+            return _copy_requirement(current, state='unavailable', reason='execution_profile_rebind_required')
     return optional_runtime_requirement_for_profiles(
         profiles,
         resolution_reason=resolution_reason,

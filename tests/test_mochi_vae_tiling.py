@@ -8,11 +8,12 @@ pytest.importorskip("transformers")
 import torch
 from diffusers import AutoencoderKLMochi, MochiPipeline
 
+from modiff.studio_execution_specs import studio_capability_definition
 from modules.DiffusersVideo.main import LoadPipeline, MOCHI_REPO, MOCHI_REVISION
 
 
 def load_with_vae(vae, apply_recipe, apply_offload):
-    pipeline = SimpleNamespace(vae=vae)
+    pipeline = SimpleNamespace(vae=vae, transformer=SimpleNamespace())
     node = LoadPipeline("mochi-tiling-regression")
     with (
         patch("transformers.T5EncoderModel.from_pretrained", return_value=object()),
@@ -44,6 +45,7 @@ def test_real_upstream_vae_tiling_is_enabled_after_recipe_before_placement():
     calls = []
 
     def recipe(pipeline, config):
+        assert pipeline.transformer._modiff_direct_torch_math is True
         pipeline.vae.use_tiling = False
         calls.append("recipe")
 
@@ -56,6 +58,14 @@ def test_real_upstream_vae_tiling_is_enabled_after_recipe_before_placement():
     assert vae.use_tiling is True
     assert calls == ["recipe", "offload"]
     assert {name: getattr(vae, name) for name in defaults} == defaults
+
+
+def test_mandatory_tiling_is_published_for_the_reviewed_model():
+    capability = studio_capability_definition("MochiPipeline")
+    assert capability["requiresVaeTiling"] is True
+    assert capability["defaultRepo"] == MOCHI_REPO
+    assert capability["revisionCandidates"] == [MOCHI_REVISION]
+    assert "requiresVaeTiling" not in studio_capability_definition("AllegroPipeline")
 
 
 @pytest.mark.parametrize("vae", [None, SimpleNamespace(), SimpleNamespace(enable_tiling=False)])

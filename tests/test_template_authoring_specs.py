@@ -5,7 +5,9 @@ from pathlib import Path
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
+from modiff import template_authoring_specs
 from modiff.template_authoring_specs import (
     TemplateAuthoringSpecError,
     build_template_authoring_spec_ledger,
@@ -51,26 +53,52 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 148,
-                "promptDraftedCount": 123,
-                "promptNotApplicableCount": 25,
-                "canonicalDefaultsCapturedCount": 148,
-                "inputSelectionPendingCount": 93,
-                "rightsReviewPendingCount": 148,
-                "generationPendingCount": 148,
+                "authoringSpecCount": 44,
+                "promptDraftedCount": 27,
+                "promptNotApplicableCount": 17,
+                "canonicalDefaultsCapturedCount": 44,
+                "inputSelectionPendingCount": 28,
+                "rightsReviewPendingCount": 44,
+                "generationPendingCount": 44,
                 "assetCount": 0,
                 "authoringStateCounts": {
-                    "draft_complete_execution_pending": 55,
-                    "draft_complete_input_selection_pending": 93,
+                    "draft_complete_execution_pending": 16,
+                    "draft_complete_input_selection_pending": 28,
                 },
             },
         )
 
+    def test_public_ctc_recipe_has_no_duplicate_hidden_authoring_spec(self):
+        workflow_id = "HuggingFaceCTCSpeechRecognitionModel:speech_to_text"
+        self.assertFalse(any(row["canonicalWorkflowId"] == workflow_id for row in self.ledger["specifications"]))
+        row = next(item for item in self.manifest["workflows"] if item["id"] == workflow_id)
+        self.assertEqual(row["requiredInputs"]["requiredAudio"], ["sourceAudio"])
+        self.assertEqual(row["mediaKind"], "json")
+        self.assertEqual(row["runtimeQualificationStatus"], "unqualified")
+
+    def test_published_retained_recipes_have_no_duplicate_hidden_authoring_specs(self):
+        published = {
+            "FluxCannyPipeline:control_edit_image",
+            "FluxDepthPipeline:control_edit_image",
+            "PixArtSigmaPipeline:text_to_image",
+            "PixArtSigmaPAGPipeline:text_to_image",
+            "DDPMPipeline:unconditional_image",
+            "ConsistencyModelPipeline:unconditional_image",
+            "ShapEPipeline:text_to_3d",
+        }
+        hidden = {row["canonicalWorkflowId"] for row in self.ledger["specifications"]}
+        self.assertTrue(published.isdisjoint(hidden))
+
     def test_every_hidden_candidate_has_one_original_authoring_spec(self):
         candidate_by_id = {row["canonicalWorkflowId"]: row for row in self.candidates["contracts"]}
-        specs_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["specifications"]}
+        specs_by_id = {
+            row["canonicalWorkflowId"]: row
+            for row in self.ledger["specifications"]
+            if "replacementSourceTemplateId" not in row
+        }
         self.assertEqual(set(specs_by_id), set(candidate_by_id))
-        self.assertEqual(len(specs_by_id), len(self.ledger["specifications"]))
+        all_spec_ids = {row["canonicalWorkflowId"] for row in self.ledger["specifications"]}
+        self.assertEqual(len(all_spec_ids), len(self.ledger["specifications"]))
         for workflow_id, specification in specs_by_id.items():
             candidate = candidate_by_id[workflow_id]
             with self.subTest(workflow=workflow_id):
@@ -85,6 +113,95 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
                 self.assertEqual(specification["publicationState"], "hidden_candidate")
                 self.assertEqual(specification["assetState"], "not_generated")
                 self.assertEqual(specification["assets"], [])
+
+    def test_wan_video_replacements_have_independent_pending_authoring_records(self):
+        replacements = [row for row in self.ledger["specifications"] if "replacementSourceTemplateId" in row]
+        expected_sources = {
+            "WanImageToVideoPipeline:image_to_video": "wan_22_i2v_seed_vault",
+            "WanTI2VPipeline:text_to_video": "wan_22_ti2v_5b_seed_vault",
+            "WanVACEPipeline:video_inpaint": "wan_vace_masked_object_replace",
+        }
+        self.assertEqual(
+            {row["canonicalWorkflowId"]: row["replacementSourceTemplateId"] for row in replacements},
+            expected_sources,
+        )
+        for replacement in replacements:
+            workflow_id = replacement["canonicalWorkflowId"]
+            with self.subTest(workflow_id=workflow_id):
+                old = next(row for row in self.manifest["workflows"] if row["id"] == workflow_id)
+                self.assertEqual(replacement["replacementSourceTemplateId"], old["sourceTemplateId"])
+                self.assertEqual(replacement["canonicalGraph"], {"path": old["graphPath"], "sha256": old["graphHash"]})
+                self.assertEqual(replacement["artifactPlan"]["requiredArtifacts"], old["requiredArtifacts"])
+                self.assertEqual(replacement["publicationState"], "hidden_candidate")
+                self.assertEqual(replacement["assets"], [])
+                self.assertFalse(any(replacement["claims"].values()))
+
+    def test_experimental_canonical_candidates_have_hidden_authoring_specs(self):
+        experimental = {row["id"]: row for row in self.manifest["experimentalWorkflows"]}
+        self.assertEqual(
+            set(experimental),
+            {
+                "MiniMaxH3ImageModularPipeline:text_to_image",
+                "Flux3DistilledModularPipeline:text_to_image",
+                "Flux3DistilledModularPipeline:edit_image",
+                "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
+                "Flux3ModularPipeline:text_to_image",
+                "Flux3ModularPipeline:edit_image",
+                "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
+                "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_text_to_image",
+                "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_raw_coordinate_prompt",
+                "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_single_reference_edit",
+                "Flux3DistilledModularPipeline:edit_image:flux3_klein_fp8r512_multi_reference_edit",
+                "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_text_to_image",
+                "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_raw_coordinate_prompt",
+                "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_single_reference_edit",
+                "Flux3ModularPipeline:edit_image:flux3_klein_base_fp8r512_multi_reference_edit",
+                "MiniMaxH3ImageModularPipeline:text_to_image:minimax_h3_image_old_town_cat",
+            },
+        )
+        ledger = build_template_authoring_spec_ledger(ROOT)
+        specifications = {row["canonicalWorkflowId"]: row for row in ledger["specifications"]}
+        ordinary_ids = {row["id"] for row in self.manifest["workflows"]}
+        self.assertTrue(ordinary_ids.isdisjoint(experimental))
+        for workflow_id, workflow in experimental.items():
+            with self.subTest(workflow=workflow_id):
+                specification = specifications[workflow_id]
+                self.assertEqual(
+                    specification["canonicalGraph"],
+                    {"path": workflow["graphPath"], "sha256": workflow["graphHash"]},
+                )
+                self.assertEqual(specification["artifactPlan"]["requiredArtifacts"], workflow["requiredArtifacts"])
+                self.assertEqual(specification["publicationState"], "hidden_candidate")
+                self.assertEqual(specification["assetState"], "not_generated")
+                self.assertEqual(specification["assets"], [])
+                self.assertTrue(all(value is False for value in specification["claims"].values()))
+                self.assertEqual(specification["rightsPlan"]["status"], "review_required")
+                self.assertEqual(specification["generationPlan"]["status"], "blocked_pending_external_evidence")
+                self.assertIn("exact_runtime_execution_receipt_required", specification["generationPlan"]["blockers"])
+                self.assertEqual(workflow["runtimeQualificationStatus"], "unqualified")
+                self.assertEqual(workflow["optimizationQualificationStatus"], "unqualified")
+                self.assertEqual(workflow["qualifiedRuntimeProfiles"], [])
+
+    def test_experimental_manifest_lookup_rejects_missing_and_duplicate_identities(self):
+        missing = copy.deepcopy(self.manifest)
+        missing["experimentalWorkflows"].pop()
+        duplicate = copy.deepcopy(self.manifest)
+        duplicate["experimentalWorkflows"].append(copy.deepcopy(duplicate["workflows"][0]))
+        read_json = template_authoring_specs._read_json
+
+        for manifest, message in (
+            (missing, "no exact workflow manifest record"),
+            (duplicate, "ids must be unique strings"),
+        ):
+            def read_with_manifest(root, relative_path, *, label):
+                value, sha = read_json(root, relative_path, label=label)
+                return (manifest, sha) if relative_path == "data/workflow-library-manifest.json" else (value, sha)
+
+            with self.subTest(message=message), patch.object(
+                template_authoring_specs, "_read_json", side_effect=read_with_manifest
+            ):
+                with self.assertRaisesRegex(TemplateAuthoringSpecError, message):
+                    build_template_authoring_spec_ledger(ROOT)
 
     def test_prompt_drafts_are_original_bounded_and_mode_complete(self):
         no_prompt_modes = {
@@ -145,13 +262,20 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
 
     def test_input_plans_are_exact_and_keep_selection_and_rights_pending(self):
         candidate_by_id = {row["canonicalWorkflowId"]: row for row in self.candidates["contracts"]}
+        manifest_by_id = {row["id"]: row for row in self.manifest["workflows"]}
         media_keys = {
             "requiredImages": "image",
             "requiredVideos": "video",
             "requiredAudio": "audio",
         }
         for specification in self.ledger["specifications"]:
-            required_inputs = candidate_by_id[specification["canonicalWorkflowId"]]["requiredInputs"]
+            workflow_id = specification["canonicalWorkflowId"]
+            source = (
+                manifest_by_id[workflow_id]
+                if "replacementSourceTemplateId" in specification
+                else candidate_by_id[workflow_id]
+            )
+            required_inputs = source["requiredInputs"]
             expected = []
             if isinstance(required_inputs, dict):
                 minimum_counts = required_inputs.get("minimumCounts", {})
@@ -197,13 +321,13 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
             )
             captured_count += len(fields)
             self.assertTrue(forbidden_parameters.isdisjoint(item["parameter"] for item in fields))
-        self.assertGreater(captured_count, 900)
+        self.assertEqual(captured_count, 214)
 
-    def test_video_upscale_authoring_stays_input_and_execution_pending(self):
+    def test_frame_interpolation_authoring_stays_input_and_execution_pending(self):
         specification = next(
             row
             for row in self.ledger["specifications"]
-            if row["canonicalWorkflowId"] == "SpandrelVideoUpscale:video_upscale"
+            if row["canonicalWorkflowId"] == "BuiltinVideoOperation:frame_interpolation"
         )
         self.assertEqual(specification["promptPlan"]["status"], "not_applicable")
         self.assertIsNone(specification["promptPlan"]["prompt"])
@@ -224,7 +348,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
                 }
             ],
         )
-        self.assertEqual(specification["artifactPlan"]["requiredArtifacts"], ["nateraw/real-esrgan"])
+        self.assertEqual(specification["artifactPlan"]["requiredArtifacts"], ["builtin://modiff/video-operations/v1"])
         self.assertEqual(specification["assetState"], "not_generated")
         self.assertFalse(specification["claims"]["workflowExecuted"])
 
@@ -293,6 +417,14 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         graph = copy.deepcopy(self.ledger)
         graph["specifications"][0]["canonicalGraph"]["sha256"] = "0" * 64
         mutations.append(graph)
+
+        experimental_graph = copy.deepcopy(self.ledger)
+        experimental_specification = next(
+            row for row in experimental_graph["specifications"]
+            if row["canonicalWorkflowId"] == "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style"
+        )
+        experimental_specification["canonicalGraph"]["sha256"] = "0" * 64
+        mutations.append(experimental_graph)
 
         for mutated in mutations:
             _reseal(mutated)

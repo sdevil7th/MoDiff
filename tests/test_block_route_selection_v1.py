@@ -46,6 +46,27 @@ def route_selection_fixture():
 
 
 class BlockRouteSelectionV1Tests(unittest.TestCase):
+    def test_compact_internal_size_round_trips_active_and_inactive_layouts(self):
+        original = route_selection_fixture()
+        self.assertEqual(validate_block_instance_v2(original), original)
+        instance = copy.deepcopy(original)
+        layouts = [
+            instance["presentation"]["internalLayout"],
+            instance["routeSelection"]["inactiveDrafts"]["qwen-archived"]["internalLayout"],
+        ]
+        for layout in layouts:
+            layout["generate"].update(width=371, height=312, sizeMode="compact")
+        self.assertEqual(validate_block_instance_v2(instance), instance)
+        for key in ("definitionSnapshot", "effectiveGraph", "values", "authorities"):
+            self.assertEqual(instance[key], original[key])
+        for layout in layouts:
+            for invalid in (None, False, 1, "", "expanded", {}, ["compact"]):
+                with self.subTest(invalid=invalid, inactive=layout is layouts[1]):
+                    layout["generate"]["sizeMode"] = invalid
+                    with self.assertRaisesRegex(ValueError, "sizeMode.*compact"):
+                        validate_block_instance_v2(instance)
+                layout["generate"]["sizeMode"] = "compact"
+
     def test_definition_switch_preserves_user_draft_only_in_explicit_switch_contract(self):
         instance = route_selection_fixture()
         draft = instance['routeSelection']['inactiveDrafts']['qwen-archived']
@@ -148,6 +169,17 @@ class BlockRouteSelectionV1Tests(unittest.TestCase):
 
         self.assertEqual(modular_container_node_ids_v2(graph), [parent["nodeId"]])
         self.assertEqual(validate_block_instance_v2(instance), instance)
+
+    def test_stage_editor_is_presentation_only_and_must_be_explicit(self):
+        instance = route_selection_fixture()
+        original_hash = instance["effectiveGraph"]["graphHash"]
+        instance["presentation"].update(expanded=True, stageEditorOpen=True)
+        validated = validate_block_instance_v2(instance)
+        self.assertIs(validated["presentation"]["stageEditorOpen"], True)
+        self.assertEqual(validated["effectiveGraph"]["graphHash"], original_hash)
+        instance["presentation"]["stageEditorOpen"] = "yes"
+        with self.assertRaisesRegex(ValueError, "stageEditorOpen"):
+            validate_block_instance_v2(instance)
 
 
 if __name__ == "__main__":

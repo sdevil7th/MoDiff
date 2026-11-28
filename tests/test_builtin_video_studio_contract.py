@@ -1,4 +1,7 @@
 import json
+from pathlib import Path
+import subprocess
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -47,6 +50,78 @@ def _asset(*, frames=24, width=16, height=16, fps=24.0, path="source.mp4"):
 
 
 class BuiltinVideoOperationTests(unittest.TestCase):
+    def test_file_edits_preserve_audio_at_the_edited_times(self):
+        import numpy as np
+        from imageio_ffmpeg import get_ffmpeg_exe
+        from modiff.config import CONFIG
+        from modiff.media_assets import run_ffmpeg
+
+        with tempfile.TemporaryDirectory() as directory, patch.dict(CONFIG.paths, {"temp": directory}):
+            tone, silent = (str(Path(directory, name)) for name in ("tone.mp4", "silent.mp4"))
+            picture = ["-f", "lavfi", "-i", "color=red:s=32x24:r=12:d=1"]
+            run_ffmpeg(picture + ["-f", "lavfi", "-i", "sine=f=440:d=0.5", "-af", "apad",
+                                  "-t", "1", "-c:a", "aac", "-c:v", "libx264"], tone)
+            run_ffmpeg(picture + ["-c:v", "libx264"], silent)
+            cases = (
+                ("video_trim", tone, {"end_seconds": 0.75}, 0.75, [0.15], [0.65]),
+                ("video_reverse", tone, {}, 1, [0.8], [0.2]),
+                ("frame_interpolation", tone, {"interpolation_fps": 24}, 1, [0.2], [0.75]),
+                ("video_stitch", [silent, tone], {}, 2, [1.2], [0.2, 1.8]),
+                ("video_stitch", [tone, tone], {"transition_seconds": 0.25}, 1.75, [0.2, 1], [1.55]),
+                ("video_tile", [silent, tone], {}, 1, [0.2], [0.8]),
+            )
+            for operation, source, settings, duration, audible, quiet in cases:
+                with self.subTest(operation=operation, settings=settings), patch(
+                    "modules.Video.main._pil_frames", side_effect=AssertionError("file was materialized")
+                ):
+                    result = ProcessVideo().execute(operation=operation, videos=source, **settings)
+                    pcm = subprocess.check_output([get_ffmpeg_exe(), "-v", "error", "-i", result["video"],
+                                                   "-map", "0:a:0", "-f", "f32le", "-ar", "8000", "-ac", "1", "-"])
+                    samples = np.frombuffer(pcm, dtype="<f4")
+                    self.assertAlmostEqual(len(samples) / 8000, duration, delta=0.06)
+                    for t in audible + quiet:
+                        rms = np.sqrt(np.mean(samples[int(t*8000):int(t*8000)+400] ** 2))
+                        if t in audible:
+                            self.assertGreater(rms, 0.015)
+                        else:
+                            self.assertLess(rms, 0.005)
+
+    def test_connected_frames_override_file_picker_and_keep_frame_rate_and_pixels(self):
+        frames = [Image.new("RGB", (18, 12), color) for color in ("red", "green", "blue")]
+        result = ProcessVideo().execute(source=frames, videos="unused.mp4", fps=5, selection_mode="first_last")
+        self.assertEqual(result["timestamps"], [0, 0.4])
+        self.assertEqual([f.tobytes() for f in result["images"]], [frames[i].tobytes() for i in (0, 2)])
+
+    def test_decoded_arrays_and_tensors_keep_channel_order_and_clean_up_on_failure(self):
+        import numpy as np
+        import torch
+        from modiff.config import CONFIG
+
+        rgb = np.arange(2 * 3 * 12 * 3, dtype=np.uint8).reshape(2, 3, 12, 3)
+        with tempfile.TemporaryDirectory() as directory, patch.dict(CONFIG.paths, {"temp": directory}):
+            for source in [rgb, torch.from_numpy(rgb).permute(0, 3, 1, 2).unsqueeze(0)]:
+                result = ProcessVideo()(source=source, fps=10, selection_mode="last")
+                np.testing.assert_array_equal(np.asarray(result["images"][0]), rgb[-1])
+            with self.assertRaisesRegex(ValueError, "consistent dimensions"):
+                ProcessVideo().execute(source=[Image.new("RGB", (16, 16)), Image.new("RGB", (32, 16))])
+            cancelled = ProcessVideo()
+            cancelled._interrupt = True
+            with self.assertRaises(InterruptedError):
+                cancelled.execute(source=rgb)
+            self.assertEqual(list(Path(directory).glob("video-edit-*")), [])
+
+    def test_long_file_trim_reads_only_file_metadata_in_python(self):
+        from modiff.config import CONFIG
+        from modiff.media_assets import probe_video_file, run_ffmpeg
+
+        with tempfile.TemporaryDirectory() as directory, patch.dict(CONFIG.paths, {"temp": directory}):
+            source = str(Path(directory, "long.mp4"))
+            run_ffmpeg(["-f", "lavfi", "-i", "color=blue:s=32x24:r=10:d=120", "-c:v", "libx264"], source)
+            with patch("modules.Video.main._edit_frame_pixels", side_effect=AssertionError("decoded a file in Python")):
+                result = ProcessVideo()(source=source, videos="unused.mp4", operation="video_trim",
+                                        start_seconds=119, end_seconds=120)
+            self.assertEqual(probe_video_file(result["video"])["frame_count"], 10)
+
     def test_frame_extract_delegates_with_one_bounded_file_asset(self):
         expected = {
             "frames": [Image.new("RGB", (2, 2), "red")],

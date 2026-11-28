@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:f18ffca9fe31ed2690729c1dad6cf4d82959a4f9b45c02b2336467c078cdc9a8",
+  "contentHash": "sha256:bbee849d63e081126b63e69d834414c0d4cb023c54d59745c5102155481270fb",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -53,11 +53,13 @@
         "Stable Audio"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:StableAudioPipeline:text_to_audio",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "StableAudioPipeline:text_to_audio",
         "modelFamily": "Stable Audio",
         "modelType": "StableAudioPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "stable_audio_glass_roof_rain"
+        ],
         "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
@@ -107,11 +109,13 @@
         "Stable Audio"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:StableAudioPipeline:text_to_audio",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "StableAudioPipeline:text_to_audio",
         "modelFamily": "Stable Audio",
         "modelType": "StableAudioPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "stable_audio_glass_roof_rain"
+        ],
         "qualificationStatus": "graph-qualified"
       },
       "representativeWorkflowOptions": [
@@ -293,11 +297,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AnimateDiffControlNetPipeline:control_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AnimateDiffControlNetPipeline:control_to_video",
         "modelFamily": "AnimateDiff",
         "modelType": "AnimateDiffControlNetPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "animatediff_ivory_balloon_blue_mountains"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -351,11 +357,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanAnimatePipeline:character_replace",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanAnimatePipeline:character_replace",
         "modelFamily": "Wan Video",
         "modelType": "WanAnimatePipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_animate_glasshouse_keeper"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -403,11 +411,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanAnimatePipeline:character_replace",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanAnimatePipeline:character_replace",
         "modelFamily": "Wan Video",
         "modelType": "WanAnimatePipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_animate_glasshouse_keeper"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -931,11 +941,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AnimateDiffControlNetPipeline:control_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AnimateDiffControlNetPipeline:control_to_video",
         "modelFamily": "AnimateDiff",
         "modelType": "AnimateDiffControlNetPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "animatediff_ivory_balloon_blue_mountains"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -1524,11 +1536,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -1576,11 +1590,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -1628,11 +1644,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -1680,11 +1698,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -1804,11 +1824,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -1928,11 +1950,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ChromaImg2ImgPipeline:edit_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ChromaImg2ImgPipeline:edit_image",
         "modelFamily": "Chroma",
         "modelType": "ChromaImg2ImgPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "chroma_alpine_block_print"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -2410,11 +2434,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -2618,11 +2644,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -2690,11 +2718,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:image_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:image_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_glasshouse_drip"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -2936,11 +2966,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AnimateDiffControlNetPipeline:control_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AnimateDiffControlNetPipeline:control_to_video",
         "modelFamily": "AnimateDiff",
         "modelType": "AnimateDiffControlNetPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "animatediff_ivory_balloon_blue_mountains"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -2994,11 +3026,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:HuggingFaceAnyToAnyModel:text_generation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:text_generation",
         "modelFamily": "Janus",
         "modelType": "HuggingFaceAnyToAnyModel",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "janus_reykjavik_travel_note"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3239,7 +3273,7 @@
       },
       "contractId": "comfy-research:blueprint:text_to_image",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "explicit_title_text_to_image",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -3247,11 +3281,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3277,6 +3313,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -3441,7 +3483,7 @@
       },
       "contractId": "comfy-research:blueprint:text_to_image_anima",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "explicit_title_text_to_image",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -3449,11 +3491,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3479,6 +3523,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -3643,7 +3693,7 @@
       },
       "contractId": "comfy-research:blueprint:text_to_image_anima_base_1_0",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "explicit_title_text_to_image",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -3651,11 +3701,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3681,6 +3733,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -3845,7 +3903,7 @@
       },
       "contractId": "comfy-research:blueprint:text_to_image_ernie_image",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "explicit_title_text_to_image",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -3855,11 +3913,13 @@
         "ERNIE Image"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:ErnieImagePipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "ErnieImagePipeline:text_to_image",
         "modelFamily": "ERNIE Image",
         "modelType": "ErnieImagePipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "bookshop_at_blue_hour"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3898,8 +3958,8 @@
         "taskEvidenceConfirmedFromGraph": false
       },
       "contractId": "comfy-research:blueprint:text_to_image_flux_2_dev",
-      "currentFamilyOptionCount": 4,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentFamilyOptionCount": 5,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "explicit_title_text_to_image",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -3955,7 +4015,7 @@
       },
       "contractId": "comfy-research:blueprint:text_to_image_ideogram_v4",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "explicit_title_text_to_image",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -3963,11 +4023,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -3993,6 +4055,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -4157,7 +4225,7 @@
       },
       "contractId": "comfy-research:blueprint:text_to_image_netayume_lumina",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "explicit_title_text_to_image",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -4165,11 +4233,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -4195,6 +4265,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -4359,7 +4435,7 @@
       },
       "contractId": "comfy-research:blueprint:text_to_image_qwen_image",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "explicit_title_text_to_image",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -4380,8 +4456,7 @@
           "qwen_low_vram_text_rendering",
           "qwen_poster_logo_text",
           "qwen_product_mockup",
-          "qwen_text_rendering",
-          "qwen_upscale_finish"
+          "qwen_text_rendering"
         ],
         "qualificationStatus": "graph-qualified"
       },
@@ -4422,7 +4497,7 @@
       },
       "contractId": "comfy-research:blueprint:text_to_image_z_image_base",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "explicit_title_text_to_image",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -4492,11 +4567,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:text_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:text_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_kiln_at_first_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -4752,11 +4829,12 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": null,
+        "authoringSpecId": "template-authoring:WanVACEPipeline:video_inpaint",
         "canonicalWorkflowId": "WanVACEPipeline:video_inpaint",
         "modelFamily": "Wan Video",
         "modelType": "WanVACEPipeline",
         "publicTemplateIds": [
+          "wan_vace_amber_glass_stabilized",
           "wan_vace_masked_object_replace"
         ],
         "qualificationStatus": "execution-qualified-gallery-review-pending"
@@ -4936,11 +5014,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:SpandrelVideoUpscale:video_upscale",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "SpandrelVideoUpscale:video_upscale",
         "modelFamily": "Real-ESRGAN",
         "modelType": "SpandrelVideoUpscale",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "spandrel_tram_shelter_video_2x"
+        ],
         "qualificationStatus": "execution-qualified-gallery-review-pending"
       },
       "representativeWorkflowOptions": [
@@ -5528,8 +5608,8 @@
         "taskEvidenceConfirmedFromGraph": false
       },
       "contractId": "comfy-research:template:image_flux.1_fill_dev_OneReward",
-      "currentFamilyOptionCount": 4,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentFamilyOptionCount": 5,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "image_category_model_generation_candidate",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -5586,8 +5666,8 @@
         "taskEvidenceConfirmedFromGraph": false
       },
       "contractId": "comfy-research:template:image_flux2",
-      "currentFamilyOptionCount": 4,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentFamilyOptionCount": 5,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "image_category_model_generation_candidate",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -5644,8 +5724,8 @@
         "taskEvidenceConfirmedFromGraph": false
       },
       "contractId": "comfy-research:template:image_flux2_fp8",
-      "currentFamilyOptionCount": 4,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentFamilyOptionCount": 5,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "image_category_model_generation_candidate",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -5702,7 +5782,7 @@
       },
       "contractId": "comfy-research:template:image_hidream_o1",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "explicit_title_text_to_image",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -5710,11 +5790,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -5740,6 +5822,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -5905,7 +5993,7 @@
       },
       "contractId": "comfy-research:template:image_hidream_o1_dev",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "inferenceBasis": "image_category_model_generation_candidate",
       "inferredMode": "text_to_image",
       "presentationMediaHints": [
@@ -5913,11 +6001,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AuraFlowPipeline:text_to_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AuraFlowPipeline:text_to_image",
         "modelFamily": "AuraFlow",
         "modelType": "AuraFlowPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "salt_marsh_from_above"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -5943,6 +6033,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -6191,11 +6287,13 @@
         "Qwen Image"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:QwenImageControlNetPipeline:control_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "QwenImageControlNetPipeline:control_image",
         "modelFamily": "Qwen Image",
         "modelType": "QwenImageControlNetPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "qwen_control_winter_cabin_blue_hour"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -6247,11 +6345,13 @@
         "Qwen Image"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:QwenImageControlNetPipeline:control_image",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "QwenImageControlNetPipeline:control_image",
         "modelFamily": "Qwen Image",
         "modelType": "QwenImageControlNetPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "qwen_control_winter_cabin_blue_hour"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -6704,11 +6804,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -6877,11 +6979,13 @@
       ],
       "recognizedMoDiffFamilies": [],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:MarigoldDepthPipeline:depth_estimation",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "MarigoldDepthPipeline:depth_estimation",
         "modelFamily": "Marigold",
         "modelType": "MarigoldDepthPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "marigold_depth_synthetic_ramp"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7172,11 +7276,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:reference_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_enamel_teapot_window_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7227,11 +7333,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:LTX2ConditionPipeline:reference_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "LTX2ConditionPipeline:reference_to_video",
         "modelFamily": "LTX Video",
         "modelType": "LTX2ConditionPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "ltx2_enamel_teapot_window_light"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7283,11 +7391,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AnimateDiffControlNetPipeline:control_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AnimateDiffControlNetPipeline:control_to_video",
         "modelFamily": "AnimateDiff",
         "modelType": "AnimateDiffControlNetPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "animatediff_ivory_balloon_blue_mountains"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7345,11 +7455,13 @@
         "LTX Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:AnimateDiffControlNetPipeline:control_to_video",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "AnimateDiffControlNetPipeline:control_to_video",
         "modelFamily": "AnimateDiff",
         "modelType": "AnimateDiffControlNetPipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "animatediff_ivory_balloon_blue_mountains"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7406,11 +7518,13 @@
         "Wan Video"
       ],
       "recommendedWorkflow": {
-        "authoringSpecId": "template-authoring:WanAnimatePipeline:character_animate",
+        "authoringSpecId": null,
         "canonicalWorkflowId": "WanAnimatePipeline:character_animate",
         "modelFamily": "Wan Video",
         "modelType": "WanAnimatePipeline",
-        "publicTemplateIds": [],
+        "publicTemplateIds": [
+          "wan_animate_signal_through_the_rain"
+        ],
         "qualificationStatus": "graph-qualified-execution-pending"
       },
       "representativeWorkflowOptions": [
@@ -7483,18 +7597,18 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:25433f08dc2d43521b16c1b6ab53e9d0dfaeb78a1e794fee7c1695df65fa0dea",
+      "contentHash": "sha256:1c8c711061d3255b1c0aa856396d4f07986a8822bf35afe5e3bb6d191d10fe0e",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:17ff9c9bbe8b7283c8ff960699d4f1cbe6baae15aaa8e487328ded4601359321"
+      "sha256": "sha256:69d89969e51ce99e3333ec79823e582bf41b06ffb1544053970e8425e1d27e40"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:ed25c084c7fb0be603cc00e79e49d3b6dc53b053c88cd2bcd97711811eb239d1",
+      "contentHash": "sha256:cb8705d40f53162dcde84ee23b4b1a98a5f3838266e45286298a4ac198d4909c",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:bfd3e3c6a565549bea2b7d545f78b89eda39129b14213f4323e73c94c8acfb83"
+      "sha256": "sha256:4d7fa5237a981569413039a30c3c192a4cb933a57cd940e4fb01771901c4ed56"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:e0770f481ed444f78e215ceb2055c11d0d26f7259653e63ae3cd327cd2833cf8"
+      "sha256": "sha256:ed00bee200c560415fcd58364d2ab27d51d8347657bb6187f063123985a30f9f"
     }
   },
   "summary": {
@@ -7546,9 +7660,9 @@
     },
     "newWorkflowClaims": 0,
     "recordsStillUndetermined": 1,
-    "recordsWithHiddenAuthoringSpecOption": 63,
+    "recordsWithHiddenAuthoringSpecOption": 28,
     "recordsWithInferredTask": 115,
-    "recordsWithPublicTemplateOption": 26,
+    "recordsWithPublicTemplateOption": 62,
     "recordsWithRecommendedWorkflow": 89,
     "resolutionCount": 116,
     "resolutionStateCounts": {

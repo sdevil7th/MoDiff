@@ -1,4 +1,6 @@
 from copy import deepcopy
+import json
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
@@ -50,6 +52,179 @@ def executable_graph_for_spec(spec):
 
 
 class StudioExecutionSpecTests(unittest.TestCase):
+    def test_empty_component_bindings_use_lists_for_multiple_choice_fields(self):
+        constants = {'empty': '', 'emptyList': []}
+        checked = set()
+        for spec in validate_studio_execution_specs(module_registry.MODULE_MAP):
+            roles = {role: key for role, key, _x, _y in spec['roles']}
+            for role, name, source in spec['bindings']:
+                if source not in constants:
+                    continue
+                module, action = roles[role].rsplit('.', 1)
+                field = module_registry.MODULE_MAP[module][action]['params'][name]
+                if not field.get('fieldOptions', {}).get('multiple') or 'options' not in field:
+                    continue
+                with self.subTest(spec=spec['id'], role=role, field=name):
+                    self.assertIsInstance(constants[source], list)
+                    self.assertEqual(constants[source], [])
+                checked.add(spec['modelType'])
+        self.assertTrue({'DDPMPipeline', 'DDIMPipeline', 'ConsistencyModelPipeline'} <= checked)
+
+    def test_published_canonical_multiple_choice_values_retain_list_shape(self):
+        root = Path(module_registry.__file__).resolve().parents[1]
+        manifest = json.loads((root / 'data/workflow-library-manifest.json').read_text(encoding='utf-8'))
+        checked = 0
+        for row in manifest['workflows']:
+            graph = json.loads((root / 'data/graphs' / row['graphPath']).read_text(encoding='utf-8'))
+            for node in graph['nodes']:
+                data = node['data']
+                definition = module_registry.MODULE_MAP.get(data.get('module'), {}).get(data.get('action'), {})
+                for name, field in definition.get('params', {}).items():
+                    if not field.get('fieldOptions', {}).get('multiple') or 'options' not in field:
+                        continue
+                    saved = data.get('params', {}).get(name)
+                    if not saved:
+                        continue
+                    with self.subTest(workflow=row['id'], node=node['id'], field=name):
+                        value = saved.get('value', saved.get('default'))
+                        self.assertIsInstance(value, list)
+                        for option in value:
+                            self.assertIn(option, field['options'])
+                    checked += 1
+        self.assertGreaterEqual(checked, 3)
+
+    def test_published_canonical_recipes_use_the_registered_denoiser_cache_enum(self):
+        root = Path(module_registry.__file__).resolve().parents[1]
+        manifest = json.loads((root / 'data/workflow-library-manifest.json').read_text(encoding='utf-8'))
+        options = module_registry.MODULE_MAP['modules.DiffusersRuntime']['DiffusersExecutionRecipe']['params'][
+            'denoiser_cache']['options']
+        checked = 0
+        for row in manifest['workflows']:
+            graph = json.loads((root / 'data/graphs' / row['graphPath']).read_text(encoding='utf-8'))
+            for node in graph['nodes']:
+                data = node['data']
+                if (data.get('module'), data.get('action')) != (
+                        'modules.DiffusersRuntime', 'DiffusersExecutionRecipe'):
+                    continue
+                with self.subTest(workflow=row['id'], node=node['id']):
+                    field = data['params']['denoiser_cache']
+                    self.assertIn(field.get('value', field.get('default')), options)
+                checked += 1
+        self.assertGreaterEqual(checked, 18)
+
+    def test_disabled_denoiser_cache_bindings_preserve_the_registered_enum(self):
+        options = module_registry.MODULE_MAP['modules.DiffusersRuntime']['DiffusersExecutionRecipe']['params'][
+            'denoiser_cache']['options']
+        checked = set()
+        # Resolve the shared client binding constants, then check the actual
+        # node enum rather than permitting a boolean spelling of disabled.
+        constants = {'false': False, 'denoiserCache': 'none'}
+        for spec in validate_studio_execution_specs(module_registry.MODULE_MAP):
+            recipe_roles = {role for role, key, _x, _y in spec['roles']
+                            if key == 'modules.DiffusersRuntime.DiffusersExecutionRecipe'}
+            for role, field, source in spec['bindings']:
+                if role in recipe_roles and field == 'denoiser_cache':
+                    with self.subTest(spec=spec['id']):
+                        self.assertIn(constants[source], options)
+                    checked.add(spec['modelType'])
+        self.assertTrue({'DDPMPipeline', 'DDIMPipeline', 'ConsistencyModelPipeline', 'ShapEPipeline'} <= checked)
+
+    def test_unselected_inpaint_policy_preserves_every_registered_loader_schema(self):
+        node_key = "modules.ModularDiffusers.ModelsLoader"
+        definition = module_registry.MODULE_MAP["modules.ModularDiffusers"]["ModelsLoader"]
+        original = deepcopy(definition)
+        legacy_definition = deepcopy(definition)
+        legacy_definition["params"].pop("inpaint_compatibility")
+        checked = 0
+        for spec in validate_studio_execution_specs(module_registry.MODULE_MAP):
+            if not any(key == node_key for _role, key, _x, _y in spec["roles"]):
+                continue
+            with self.subTest(spec_id=spec["id"]):
+                actual = _execution_spec_role_params(spec, node_key, definition)
+                self.assertNotIn("inpaint_compatibility", actual)
+                self.assertEqual(actual, _execution_spec_role_params(spec, node_key, legacy_definition))
+                checked += 1
+        self.assertGreater(checked, 0)
+        self.assertEqual(definition, original)
+
+    def test_explicit_inpaint_owner_binding_or_connection_keeps_the_exact_field(self):
+        node_key = "modules.ModularDiffusers.ModelsLoader"
+        definition = module_registry.MODULE_MAP["modules.ModularDiffusers"]["ModelsLoader"]
+        # The whole inpaint route is intentionally not promoted to a native
+        # registered spec. Add only a hypothetical explicit schema use here.
+        spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "modular_inpainting")
+        self.assertIsNotNone(spec)
+        loader_roles = [role for role, key, _x, _y in spec["roles"] if key == node_key]
+        self.assertEqual(len(loader_roles), 1)
+        role = loader_roles[0]
+        for use in ("binding", "connection"):
+            with self.subTest(use=use):
+                selected = deepcopy(spec)
+                if use == "binding":
+                    selected["bindings"] = (*selected["bindings"], (role, "inpaint_compatibility", "inpaintCompatibility"))
+                else:
+                    selected["edges"] = (*selected["edges"], ("explicitPolicy", "policy", role, "inpaint_compatibility"))
+                params = _execution_spec_role_params(selected, node_key, definition)
+                self.assertEqual(params["inpaint_compatibility"], definition["params"]["inpaint_compatibility"])
+
+    def test_unbound_image_text_loader_quantization_preserves_exact_legacy_schema(self):
+        spec = studio_execution_spec_for_pair("HuggingFaceImageTextToTextModel", "image_to_text")
+        key = "modules.HuggingFaceTransformers.LoadImageTextToTextModel"
+        definition = module_registry.MODULE_MAP["modules.HuggingFaceTransformers"]["LoadImageTextToTextModel"]
+        original = deepcopy(definition)
+        legacy = deepcopy(definition)
+        legacy["params"].pop("quantization_mode")
+        projected = _execution_spec_role_params(spec, key, definition)
+        self.assertNotIn("quantization_mode", projected)
+        self.assertEqual(projected, _execution_spec_role_params(spec, key, legacy))
+        self.assertEqual(definition, original)
+
+    def test_unbound_image_text_request_limits_preserve_exact_legacy_schema(self):
+        spec = studio_execution_spec_for_pair("HuggingFaceImageTextToTextModel", "image_to_text")
+        key = "modules.HuggingFaceTransformers.GenerateImageVideoText"
+        definition = module_registry.MODULE_MAP["modules.HuggingFaceTransformers"]["GenerateImageVideoText"]
+        original = deepcopy(definition)
+        legacy = deepcopy(definition)
+        for field in ("max_input_tokens", "max_image_pixels"):
+            legacy["params"].pop(field)
+        projected = _execution_spec_role_params(spec, key, definition)
+        self.assertNotIn("max_input_tokens", projected)
+        self.assertNotIn("max_image_pixels", projected)
+        self.assertEqual(projected, _execution_spec_role_params(spec, key, legacy))
+        self.assertEqual(definition, original)
+
+    def test_explicit_image_text_controls_keep_registered_bound_or_connected_fields(self):
+        spec = studio_execution_spec_for_pair("HuggingFaceImageTextToTextModel", "image_to_text")
+        for action, fields in (
+                ("LoadImageTextToTextModel", ("quantization_mode",)),
+                ("GenerateImageVideoText", ("max_input_tokens", "max_image_pixels"))):
+            key = "modules.HuggingFaceTransformers." + action
+            definition = module_registry.MODULE_MAP["modules.HuggingFaceTransformers"][action]
+            original = deepcopy(definition)
+            role = next(role for role, candidate, _x, _y in spec["roles"] if candidate == key)
+            for field in fields:
+                for use in ("binding", "connection"):
+                    with self.subTest(action=action, field=field, use=use):
+                        selected = deepcopy(spec)
+                        if use == "binding":
+                            selected["bindings"] = (*selected["bindings"], (role, field, "explicitValue"))
+                        else:
+                            selected["edges"] = (*selected["edges"], ("explicitControl", "value", role, field))
+                        params = _execution_spec_role_params(selected, key, definition)
+                        self.assertEqual(params[field], definition["params"][field])
+            self.assertEqual(definition, original)
+
+    def test_z_image_native_modes_retain_negative_conditioning_bindings(self):
+        self.assertTrue(STUDIO_MODEL_CAPABILITIES["ZImageModularPipeline"]["supportsNegativePrompt"])
+        for mode in ("modular_text_to_image", "modular_image_to_image"):
+            with self.subTest(mode=mode):
+                spec = studio_execution_spec_for_pair("ZImageModularPipeline", mode)
+                self.assertIn(("prompt", "negative_prompt", "negativePrompt"), spec["bindings"])
+                graph, hints = executable_graph_for_spec(spec)
+                encoder = graph["nodes"][hints["studioExecutionSpec"]["nodes"]["prompt"]]
+                self.assertIn("negative_prompt", encoder["params"])
+                assert_studio_execution_graph(graph, hints)
+
     def test_every_modular_models_loader_binds_the_exact_artifact_revision(self):
         modular_specs = [
             (spec_id, definition)
@@ -168,7 +343,13 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 "kind": "safety_checker",
                 "repo": "nvidia/Cosmos-Guardrail1",
                 "revision": "d6d4bfa899a71454a700907664f3e88f503950cf",
-            }
+            },
+            {
+                "id": "cosmos3-mandatory-text-safety-classifier",
+                "kind": "safety_checker",
+                "repo": "Qwen/Qwen3Guard-Gen-0.6B",
+                "revision": "fada3b2f655b89601929198343c94cd2f64d93cc",
+            },
         ]
 
         self.assertEqual(
@@ -300,8 +481,25 @@ class StudioExecutionSpecTests(unittest.TestCase):
         )
         self.assertEqual(studio_model_dependencies_for_pair("FluxReduxPipeline", "text_to_image"), [])
 
+    def test_native_flux_recipe_binds_its_authored_prompt_token_limit(self):
+        spec = studio_execution_spec_for_pair("FluxModularPipeline", "text_to_image")
+        self.assertIn(("prompt", "max_sequence_length", "maxSequenceLength"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_native_qwen_edit_recipe_binds_authored_output_dimensions(self):
+        spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "edit_image")
+        self.assertIn(("denoise", "width", "width"), spec["bindings"])
+        self.assertIn(("denoise", "height", "height"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
     def test_flux_registry_owns_profile_capability_and_auto_contracts(self):
         specs = validate_studio_execution_specs(module_registry.MODULE_MAP)
+        # These unselected whole routes retain the former shared shape; Redux
+        # and Fill now have their own explicitly staged contracts.
+        whole_edit = studio_execution_spec_for_pair("FluxKontextPipeline", "edit_image")
+        whole_inpaint = studio_execution_spec_for_pair("StableDiffusionXLPipeline", "inpaint")
         self.assertEqual(
             [(item["modelType"], item["mode"]) for item in specs],
             [
@@ -389,6 +587,12 @@ class StudioExecutionSpecTests(unittest.TestCase):
                     "first_last_frame_to_video_with_audio",
                 ),
                 ("MiniMaxH3ModularPipeline", "reference_to_video_with_audio"),
+                ("MiniMaxH3ImageModularPipeline", "text_to_image"),
+                ("MiniMaxH3ImageModularPipeline", "edit_image"),
+                ("MiniMaxH3ImageModularPipeline", "multi_image_reference_edit"),
+                ("PikaH3FlexModularPipeline", "text_to_video_with_audio"),
+                ("PikaH3FlexModularPipeline", "first_last_frame_to_video_with_audio"),
+                ("PikaH3FlexModularPipeline", "reference_to_video_with_audio"),
                 ("WanAnimate2ModularPipeline", "character_animate"),
                 ("WanAnimate2DistilledModularPipeline", "character_animate"),
                 ("Cosmos3OmniModularPipeline", "text_to_image"),
@@ -536,6 +740,9 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("QwenImage21Pipeline", "text_to_image"),
                 ("QwenImage21Pipeline", "edit_image"),
                 ("QwenImage21Pipeline", "multi_image_reference_edit"),
+                ("QwenImage21TurboPipeline", "text_to_image"),
+                ("QwenImage21TurboPipeline", "edit_image"),
+                ("QwenImage21TurboPipeline", "multi_image_reference_edit"),
                 ("QwenImageEditPipeline", "edit_image"),
                 ("QwenImageEditPlusPipeline", "edit_image"),
                 ("QwenImageEditPlusPipeline", "multi_image_reference_edit"),
@@ -549,6 +756,18 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("ChromaInpaintPipeline", "inpaint"),
                 ("ChromaInpaintPipeline", "outpaint"),
                 ("LTX2Pipeline", "text_to_video"),
+                ("Kandinsky6TI2VAPipeline", "text_to_video"),
+                ("Kandinsky6DistilledTI2VAPipeline", "text_to_video"),
+                ("Kandinsky6TI2VAPipeline", "image_to_video"),
+                ("Kandinsky6DistilledTI2VAPipeline", "image_to_video"),
+                ("Kandinsky6TI2VAPipeline", "text_to_video_with_audio"),
+                ("Kandinsky6DistilledTI2VAPipeline", "text_to_video_with_audio"),
+                ("Kandinsky6TI2VAPipeline", "image_to_video_with_audio"),
+                ("Kandinsky6DistilledTI2VAPipeline", "image_to_video_with_audio"),
+                ("LTX25FullPipeline", "text_to_video_with_audio"),
+                ("LTX25FullPipeline", "image_to_video_with_audio"),
+                ("LTX25FullPipeline", "reference_to_video_with_audio"),
+                ("LTX25FullPipeline", "video_to_video_with_audio"),
                 ("BuiltinImageOperation", "image_adjustment"),
                 ("BuiltinImageOperation", "image_filter"),
                 ("BuiltinImageOperation", "image_crop"),
@@ -589,6 +808,11 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("Flux2KleinKVPipeline", "text_to_image"),
                 ("Flux2KleinKVPipeline", "edit_image"),
                 ("Flux2KleinKVPipeline", "multi_image_reference_edit"),
+                ("Flux3ModularPipeline", "text_to_image"),
+                ("Flux3ModularPipeline", "edit_image"),
+                ("Flux3DistilledModularPipeline", "text_to_image"),
+                ("Flux3DistilledModularPipeline", "edit_image"),
+                ("WanTI2VPipeline", "image_to_video"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
@@ -1003,26 +1227,26 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(sdxl_edit["id"], "sdxl-base:edit-image:v1")
         self.assertEqual(sdxl_edit["pipelineClass"], "StableDiffusionXLImg2ImgPipeline")
         self.assertEqual(sdxl_edit["defaultRepo"], "stabilityai/stable-diffusion-xl-base-1.0")
-        self.assertEqual(sdxl_edit["roles"], specs[5]["roles"])
-        self.assertEqual(sdxl_edit["edges"], specs[5]["edges"])
+        self.assertEqual(sdxl_edit["roles"], whole_edit["roles"])
+        self.assertEqual(sdxl_edit["edges"], whole_edit["edges"])
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), sdxl_edit["bindings"])
         sdxl_inpaint = by_id["sdxl-base:inpaint:v1"]
         self.assertEqual(sdxl_inpaint["id"], "sdxl-base:inpaint:v1")
         self.assertEqual(sdxl_inpaint["pipelineClass"], "StableDiffusionXLInpaintPipeline")
         self.assertEqual(sdxl_inpaint["defaultRepo"], "stabilityai/stable-diffusion-xl-base-1.0")
-        self.assertEqual(sdxl_inpaint["roles"], specs[8]["roles"])
-        self.assertEqual(sdxl_inpaint["edges"], specs[8]["edges"])
+        self.assertEqual(sdxl_inpaint["roles"], whole_inpaint["roles"])
+        self.assertEqual(sdxl_inpaint["edges"], whole_inpaint["edges"])
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), sdxl_inpaint["bindings"])
         flux_dev_edit = by_id["flux-dev:edit-image:v1"]
         self.assertEqual(flux_dev_edit["id"], "flux-dev:edit-image:v1")
         self.assertEqual(flux_dev_edit["pipelineClass"], "FluxImg2ImgPipeline")
-        self.assertEqual(flux_dev_edit["roles"], specs[5]["roles"])
-        self.assertEqual(flux_dev_edit["edges"], specs[5]["edges"])
+        self.assertEqual(flux_dev_edit["roles"], whole_edit["roles"])
+        self.assertEqual(flux_dev_edit["edges"], whole_edit["edges"])
         flux_dev_inpaint = by_id["flux-dev:inpaint:v1"]
         self.assertEqual(flux_dev_inpaint["id"], "flux-dev:inpaint:v1")
         self.assertEqual(flux_dev_inpaint["pipelineClass"], "FluxInpaintPipeline")
-        self.assertEqual(flux_dev_inpaint["roles"], specs[8]["roles"])
-        self.assertEqual(flux_dev_inpaint["edges"], specs[8]["edges"])
+        self.assertEqual(flux_dev_inpaint["roles"], whole_inpaint["roles"])
+        self.assertEqual(flux_dev_inpaint["edges"], whole_inpaint["edges"])
         self.assertIn(
             ("diffusersImagePipeline", "revision", "defaultRevision"),
             flux_dev_inpaint["bindings"],
@@ -1040,13 +1264,15 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 "diffusersRecipe",
                 "diffusersImagePipeline",
                 "loadImage",
-                "diffusersImageControl",
+                "imageEncode",
+                "denoise",
+                "decode",
                 "preview",
             ],
         )
         self.assertIn(("loadImage", "file", "controlImage"), specs[3]["bindings"])
         self.assertIn(
-            ("loadImage", "image", "diffusersImageControl", "control_image"),
+            ("loadImage", "image", "imageEncode", "control_image"),
             specs[3]["edges"],
         )
         self.assertEqual(specs[3]["roles"], specs[4]["roles"])
@@ -1059,15 +1285,20 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 "diffusersRecipe",
                 "diffusersImagePipeline",
                 "loadImage",
-                "diffusersImageEdit",
+                "imageEncode",
+                "denoise",
+                "decode",
                 "preview",
             ],
         )
         self.assertIn(("loadImage", "file", "referenceImages"), specs[5]["bindings"])
-        self.assertIn(("diffusersImageEdit", "reference_strength", "conditioningScale"), specs[5]["bindings"])
-        self.assertEqual(specs[6]["roles"], specs[5]["roles"])
-        self.assertEqual(specs[6]["edges"], specs[5]["edges"])
-        self.assertEqual(specs[6]["bindings"], specs[5]["bindings"])
+        self.assertIn(("imageEncode", "reference_strength", "conditioningScale"), specs[5]["bindings"])
+        self.assertNotEqual(specs[6]["roles"], specs[5]["roles"])
+        self.assertNotEqual(specs[6]["edges"], specs[5]["edges"])
+        strength_binding = ("diffusersImageEdit", "strength", "strength")
+        self.assertNotIn(strength_binding, specs[5]["bindings"])
+        self.assertNotIn(strength_binding, specs[6]["bindings"])
+        self.assertNotEqual(specs[6]["bindings"], specs[5]["bindings"])
         self.assertEqual(specs[6]["pipelineClass"], "FluxKontextPipeline")
         self.assertEqual(specs[7]["roles"], specs[6]["roles"])
         self.assertEqual(specs[7]["edges"], specs[6]["edges"])
@@ -1081,14 +1312,16 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 "diffusersImagePipeline",
                 "loadImage",
                 "loadMask",
-                "diffusersImageInpaint",
+                "imageEncode",
+                "denoise",
+                "decode",
                 "preview",
             ],
         )
         self.assertIn(("loadMask", "file", "maskImage"), specs[8]["bindings"])
         self.assertIn(("loadMask", "alpha_channel", "removeAlpha"), specs[8]["bindings"])
-        self.assertIn(("diffusersImageInpaint", "reference_strength", "conditioningScale"), specs[8]["bindings"])
-        self.assertIn(("loadMask", "image", "diffusersImageInpaint", "mask_image"), specs[8]["edges"])
+        self.assertIn(("imageEncode", "reference_strength", "conditioningScale"), specs[8]["bindings"])
+        self.assertIn(("loadMask", "image", "imageEncode", "mask_image"), specs[8]["edges"])
         self.assertEqual(specs[8]["pipelineClass"], "FluxFillPipeline")
         self.assertEqual(specs[9]["roles"], specs[8]["roles"])
         self.assertEqual(specs[9]["edges"], specs[8]["edges"])
@@ -1099,9 +1332,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(specs[10]["edges"], specs[0]["edges"])
         self.assertEqual(specs[10]["bindings"], specs[0]["bindings"])
         self.assertEqual(specs[10]["pipelineClass"], "Flux2KleinPipeline")
-        self.assertEqual(specs[11]["roles"], specs[5]["roles"])
-        self.assertEqual(specs[11]["edges"], specs[5]["edges"])
-        self.assertEqual(specs[11]["bindings"], specs[5]["bindings"])
+        self.assertEqual(specs[11]["roles"], whole_edit["roles"])
+        self.assertEqual(specs[11]["edges"], whole_edit["edges"])
+        self.assertEqual(specs[11]["bindings"], whole_edit["bindings"])
+        self.assertNotIn(strength_binding, specs[11]["bindings"])
         self.assertEqual(specs[11]["pipelineClass"], "Flux2KleinPipeline")
         self.assertEqual(specs[12]["roles"], specs[11]["roles"])
         self.assertEqual(specs[12]["edges"], specs[11]["edges"])
@@ -1314,7 +1548,9 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertEqual(STUDIO_MODEL_CAPABILITIES[spec["modelType"]], definition["capability"])
             if "autoRequirements" in definition:
                 requirements_key = definition.get("autoRequirementKey", spec["modelType"])
-                self.assertEqual(AUTO_MODEL_REQUIREMENTS[requirements_key], definition["autoRequirements"])
+                self.assertEqual(AUTO_MODEL_REQUIREMENTS[requirements_key], {
+                    **definition["autoRequirements"], "memorySemantics": "machine_capacity",
+                })
 
     def test_combined_control_specs_are_exact_generic_graphs_with_immutable_profiles(self):
         specs = {item["id"]: item for item in validate_studio_execution_specs(module_registry.MODULE_MAP)}
@@ -1533,6 +1769,159 @@ class StudioExecutionSpecTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "disconnected"):
                 validate_studio_execution_specs(module_registry.MODULE_MAP)
 
+    def test_exact_historical_cosmos_image_receipt_preserves_its_saved_graph(self):
+        root = Path(module_registry.__file__).resolve().parents[1]
+        payload = json.loads((root / "data/studio-execution-spec-compatibility.v1.json").read_text(encoding="utf-8"))
+        historical = payload["specifications"][0]["specification"]
+        self.assertEqual(historical["contentHash"], "studio-spec-v1-91ed105d")
+        resolved = studio_execution_spec_for_pair(
+            historical["modelType"], historical["mode"], content_hash=historical["contentHash"],
+        )
+        self.assertEqual(resolved, historical)
+        graph, hints = executable_graph_for_spec(historical)
+        before = deepcopy((graph, hints))
+        assert_studio_execution_graph(graph, hints)
+        server = WebServer(modules=module_registry.MODULE_MAP)
+        self.assertEqual(server._coerce_runtime_hints(hints)["studioExecutionSpec"], hints["studioExecutionSpec"])
+        self.assertEqual((graph, hints), before)
+        self.assertIn("afterDecode", hints["studioExecutionSpec"]["nodes"])
+        current = studio_execution_spec_for_pair(historical["modelType"], historical["mode"])
+        self.assertNotEqual(current["contentHash"], historical["contentHash"])
+        self.assertNotIn("afterDecode", {role for role, *_rest in current["roles"]})
+        for bad_hash in ("studio-spec-v1-00000000", "studio-spec-v1-91ed105e"):
+            with self.subTest(hash=bad_hash):
+                hints["studioExecutionSpec"]["contentHash"] = bad_hash
+                self.assertIsNone(studio_execution_spec_for_pair(
+                    historical["modelType"], historical["mode"], content_hash=bad_hash,
+                ))
+                with self.assertRaisesRegex(RuntimeError, "does not match"):
+                    assert_studio_execution_graph(graph, hints)
+                with self.assertRaisesRegex(RuntimeError, "does not match"):
+                    server._coerce_runtime_hints(hints)
+        self.assertIsNone(studio_execution_spec_for_pair(
+            "Cosmos3OmniModularPipeline", "text_to_video", content_hash=historical["contentHash"],
+        ))
+
+    def test_saved_ddpm_and_consistency_receipts_preserve_their_exact_managed_graphs(self):
+        root = Path(module_registry.__file__).resolve().parents[1]
+        payload = json.loads((root / "data/unconditional-studio-spec-compatibility.v1.json").read_text(encoding="utf-8"))
+        historical = {row["specification"]["modelType"]: row["specification"] for row in payload["specifications"]}
+        hashes = {
+            "DDPMPipeline": ("studio-spec-v1-6a3b6073", "studio-spec-v1-02c5414e"),
+            "ConsistencyModelPipeline": ("studio-spec-v1-95990ceb", "studio-spec-v1-f3633720"),
+        }
+        mode = "unconditional_image"
+        server = object.__new__(WebServer)
+        for model, (saved_hash, current_hash) in hashes.items():
+            with self.subTest(model=model):
+                saved = historical[model]
+                profile = saved["executionProfileId"]
+                self.assertEqual(saved["contentHash"], saved_hash)
+                resolved = studio_execution_spec_for_pair(
+                    model, mode, content_hash=saved_hash, execution_profile_id=profile,
+                )
+                self.assertEqual(json.loads(json.dumps(resolved)), saved)
+                self.assertIn(["diffusersRecipe", "attention_backend", "nativeMath"], saved["bindings"])
+                current = studio_execution_spec_for_pair(model, mode)
+                self.assertEqual(current["contentHash"], current_hash)
+                self.assertEqual(current["executionProfileId"], profile)
+                self.assertIn(("diffusersRecipe", "attention_backend", "attentionBackend"), current["bindings"])
+
+                graph, hints = executable_graph_for_spec(saved)
+                recipe_id = hints["studioExecutionSpec"]["nodes"]["diffusersRecipe"]
+                graph["nodes"][recipe_id]["params"]["attention_backend"]["value"] = "_native_math"
+                before = deepcopy((graph, hints))
+                assert_studio_execution_graph(graph, hints)
+                self.assertEqual(server._coerce_runtime_hints(hints)["studioExecutionSpec"], hints["studioExecutionSpec"])
+                self.assertEqual((graph, hints), before)
+
+                self.assertIsNone(studio_execution_spec_for_pair("DDIMPipeline", mode, content_hash=saved_hash))
+                self.assertIsNone(studio_execution_spec_for_pair(model, "text_to_image", content_hash=saved_hash))
+                self.assertIsNone(studio_execution_spec_for_pair(
+                    model, mode, content_hash=saved_hash, execution_profile_id="ddim-cifar10:direct",
+                ))
+                for changes in (
+                    {"modelType": "DDIMPipeline"},
+                    {"mode": "text_to_image"},
+                    {"autoResourcePlan": {"executionProfileId": "ddim-cifar10:direct"}},
+                ):
+                    with self.assertRaisesRegex(RuntimeError, "does not match"):
+                        assert_studio_execution_graph(graph, {**hints, **changes})
+
+                current_graph, current_hints = executable_graph_for_spec(current)
+                assert_studio_execution_graph(current_graph, current_hints)
+                del current_graph["nodes"][recipe_id]["params"]["attention_backend"]
+                with self.assertRaisesRegex(RuntimeError, "binding is missing"):
+                    assert_studio_execution_graph(current_graph, current_hints)
+
+        ddim = studio_execution_spec_for_pair("DDIMPipeline", mode)
+        self.assertEqual(ddim["contentHash"], "studio-spec-v1-238fc1df")
+        self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), ddim["bindings"])
+
+    def test_video_attention_defaults_preserve_exact_saved_receipts_and_other_routes(self):
+        root = Path(module_registry.__file__).resolve().parents[1] / "data"
+        archive = json.loads((root / "video-attention-studio-spec-compatibility.v1.json").read_text(encoding="utf-8"))
+        conditioned_archive = json.loads(
+            (root / "video-conditioned-attention-compatibility.v1.json").read_text(encoding="utf-8")
+        )
+        manifest = json.loads((root / "workflow-library-manifest.json").read_text(encoding="utf-8"))
+        paths = {row["id"]: row["graphPath"] for row in manifest["workflows"]}
+        latte_archive = json.loads(
+            (root / "latte-attention-studio-spec-compatibility.v1.json").read_text(encoding="utf-8")
+        )
+        cogvideox_archive = json.loads(
+            (root / "cogvideox-v2v-attention-compatibility.v1.json").read_text(encoding="utf-8")
+        )
+        native_processor_archive = json.loads(
+            (root / "allegro-sana-i2v-attention-compatibility.v1.json").read_text(encoding="utf-8")
+        )
+        mochi_archive = json.loads(
+            (root / "mochi-attention-studio-spec-compatibility.v1.json").read_text(encoding="utf-8")
+        )
+        role_field = ["diffusersRecipe", "attention_backend"]
+        entries = [
+            *archive["specifications"], *conditioned_archive["specifications"],
+            *latte_archive["specifications"], *cogvideox_archive["specifications"],
+            *native_processor_archive["specifications"],
+            *mochi_archive["specifications"],
+        ]
+        for entry in entries:
+            saved = entry["specification"]
+            model, mode = saved["modelType"], saved["mode"]
+            with self.subTest(model=model):
+                profile = saved["executionProfileId"]
+                old_hash = saved["contentHash"]
+                resolved = studio_execution_spec_for_pair(
+                    model, mode, content_hash=old_hash, execution_profile_id=profile,
+                )
+                self.assertEqual(resolved, saved)
+                self.assertIsNone(studio_execution_spec_for_pair(model, mode, content_hash="studio-spec-v1-ffffffff"))
+                self.assertIsNone(studio_execution_spec_for_pair(
+                    model, mode, content_hash=old_hash, execution_profile_id="unreviewed:direct",
+                ))
+                current = json.loads(json.dumps(studio_execution_spec_for_pair(model, mode)))
+                self.assertNotEqual(current["contentHash"], old_hash)
+                expected = deepcopy(saved)
+                expected["contentHash"] = current["contentHash"]
+                for binding in expected["bindings"]:
+                    if binding[:2] == role_field:
+                        self.assertEqual(binding[2], "nativeMath")
+                        binding[2] = "attentionBackend"
+                self.assertEqual(current, expected)
+
+                for spec, attention in ((saved, "_native_math"), (current, "auto"), (current, "_native_math")):
+                    graph, hints = executable_graph_for_spec(spec)
+                    recipe_id = hints["studioExecutionSpec"]["nodes"]["diffusersRecipe"]
+                    graph["nodes"][recipe_id]["params"]["attention_backend"]["value"] = attention
+                    graph_before = deepcopy(graph)
+                    assert_studio_execution_graph(graph, hints)
+                    self.assertEqual(graph, graph_before)
+
+                published = json.loads((root / "graphs" / paths[f"{model}:{mode}"]).read_text(encoding="utf-8"))
+                recipes = [node["data"]["params"] for node in published["nodes"]
+                           if node["data"].get("action") == "DiffusersExecutionRecipe"]
+                self.assertEqual([recipe["attention_backend"]["value"] for recipe in recipes], ["auto"])
+
     def test_cosmos3_nano_specs_use_exact_official_nodes_and_remain_unqualified(self):
         expected = {
             "text_to_image": (
@@ -1585,7 +1974,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertEqual(spec["id"], spec_id)
                 self.assertEqual(spec["executionProfileId"], "cosmos3-nano:official-modular-workflow")
                 self.assertEqual(spec["defaultRepo"], "nvidia/Cosmos3-Nano")
-                self.assertEqual(spec["auxiliaryTerminalRoles"], ("afterDecode",))
+                self.assertEqual(spec["auxiliaryTerminalRoles"], () if mode == "text_to_image" else ("afterDecode",))
                 node_keys = ["modules.ModularDiffusers.ModelsLoader"]
                 if source:
                     node_keys.append(source)
@@ -1596,16 +1985,17 @@ class StudioExecutionSpecTests(unittest.TestCase):
                     [
                         "modules.ModularDiffusers.WorkflowCosmos3OmniDenoise",
                         "modules.ModularDiffusers.WorkflowCosmos3OmniDecode",
-                        "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode",
-                        sink,
                     ]
                 )
+                if mode != "text_to_image":
+                    node_keys.append("modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode")
+                node_keys.append(sink)
                 self.assertEqual([node_key for _role, node_key, _x, _y in spec["roles"]], node_keys)
                 self.assertIn(frame_binding, spec["bindings"])
-                self.assertIn(
-                    ("decode", "state_out", "afterDecode", "state_in"),
-                    spec["edges"],
-                )
+                if mode != "text_to_image":
+                    self.assertIn(("decode", "state_out", "afterDecode", "state_in"), spec["edges"])
+                else:
+                    self.assertFalse(any("afterDecode" in edge for edge in spec["edges"]))
                 if source:
                     self.assertIn(("prompt", "state_out", "imageEncode", "state_in"), spec["edges"])
                     self.assertIn(("imageEncode", "state_out", "denoise", "state_in"), spec["edges"])
@@ -1841,8 +2231,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(edit["pipelineClass"], "ZImageImg2ImgPipeline")
         self.assertEqual(edit["defaultRepo"], "Tongyi-MAI/Z-Image-Turbo")
         self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), edit["bindings"])
-        self.assertEqual(edit["roles"], validate_studio_execution_specs(module_registry.MODULE_MAP)[5]["roles"])
-        self.assertEqual(edit["edges"], validate_studio_execution_specs(module_registry.MODULE_MAP)[5]["edges"])
+        self.assertEqual(edit["roles"], studio_execution_spec_for_pair("FluxKontextPipeline", "edit_image")["roles"])
+        self.assertEqual(edit["edges"], studio_execution_spec_for_pair("FluxKontextPipeline", "edit_image")["edges"])
         self.assertIn(("loadImage", "file", "referenceImages"), edit["bindings"])
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), edit["bindings"])
 
@@ -1851,8 +2241,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(inpaint["id"], "qwen-image-2512:inpaint:v1")
         self.assertEqual(inpaint["executionProfileId"], "qwen-image:inpaint-direct")
         self.assertEqual(inpaint["pipelineClass"], "QwenImageInpaintPipeline")
-        self.assertEqual(inpaint["roles"], validate_studio_execution_specs(module_registry.MODULE_MAP)[8]["roles"])
-        self.assertEqual(inpaint["edges"], validate_studio_execution_specs(module_registry.MODULE_MAP)[8]["edges"])
+        self.assertEqual(inpaint["roles"], studio_execution_spec_for_pair("StableDiffusionXLPipeline", "inpaint")["roles"])
+        self.assertEqual(inpaint["edges"], studio_execution_spec_for_pair("StableDiffusionXLPipeline", "inpaint")["edges"])
         self.assertIn(("loadImage", "file", "referenceImages"), inpaint["bindings"])
         self.assertIn(("loadMask", "file", "maskImage"), inpaint["bindings"])
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), inpaint["bindings"])
@@ -1885,8 +2275,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(edit["executionProfileId"], "qwen-image:img2img-direct")
         self.assertEqual(edit["pipelineClass"], "QwenImageImg2ImgPipeline")
         self.assertEqual(edit["defaultRepo"], "Qwen/Qwen-Image-2512")
-        self.assertEqual(edit["roles"], validate_studio_execution_specs(module_registry.MODULE_MAP)[5]["roles"])
-        self.assertEqual(edit["edges"], validate_studio_execution_specs(module_registry.MODULE_MAP)[5]["edges"])
+        self.assertEqual(edit["roles"], studio_execution_spec_for_pair("FluxKontextPipeline", "edit_image")["roles"])
+        self.assertEqual(edit["edges"], studio_execution_spec_for_pair("FluxKontextPipeline", "edit_image")["edges"])
         self.assertIn(("loadImage", "file", "referenceImages"), edit["bindings"])
         self.assertIn(("diffusersImagePipeline", "revision", "defaultRevision"), edit["bindings"])
 
@@ -1944,6 +2334,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 )
 
         framepack = studio_execution_spec_for_pair("HunyuanVideoFramepackPipeline", "image_to_video")
+        self.assertIn(("diffusersRecipe", "attention_backend", "attentionBackend"), framepack["bindings"])
         self.assertIn(("wanGenerate", "true_cfg_scale", "trueCfgScale1"), framepack["bindings"])
 
         no_flow_shift_pairs = {
@@ -2150,7 +2541,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionPath"], "direct-diffusers-video")
         self.assertEqual(spec["defaultRepo"], "stabilityai/stable-video-diffusion-img2vid-xt-1-1")
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), spec["bindings"])
         self.assertIn(("wanGenerate", "prompt", "empty"), spec["bindings"])
         self.assertIn(("wanGenerate", "negative_prompt", "empty"), spec["bindings"])
@@ -2164,7 +2555,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionProfileId"], "cogvideox-2b:direct")
         self.assertEqual(spec["defaultRepo"], "zai-org/CogVideoX-2b")
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
@@ -2304,11 +2695,21 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionProfileId"], "allegro:direct")
         self.assertEqual(spec["defaultRepo"], "rhymes-ai/Allegro")
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
+
+    def test_ltx_long_distilled_defaults_use_the_native_sampler(self):
+        capability = STUDIO_MODEL_CAPABILITIES["LTXI2VLongMultiPromptPipeline"]
+        self.assertEqual(capability["recommendedSteps"], 8)
+        self.assertEqual(capability["recommendedGuidance"], 1.0)
+        self.assertEqual(capability["recommendedMaxSequenceLength"], 128)
+        self.assertEqual(capability["lowVram"]["steps"], 8)
+        spec = studio_execution_spec_for_pair("LTXI2VLongMultiPromptPipeline", "image_to_video")
+        self.assertEqual(spec["id"], "ltx-long:image-to-video:v1")
+        self.assertIn(["wanGenerate", "num_inference_steps", "steps"], [list(row) for row in spec["bindings"]])
 
     def test_latte_seals_exact_safe_native_text_to_video_route(self):
         spec = studio_execution_spec_for_pair("LattePipeline", "text_to_video")
@@ -2316,8 +2717,9 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionProfileId"], "latte:direct")
         self.assertEqual(spec["defaultRepo"], "maxin-cn/Latte-1")
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
+        self.assertIn(("diffusersRecipe", "attention_backend", "attentionBackend"), spec["bindings"])
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
@@ -2328,7 +2730,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionProfileId"], "mochi:direct")
         self.assertEqual(spec["defaultRepo"], "genmo/mochi-1-preview")
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
@@ -2346,7 +2748,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertEqual(spec["executionProfileId"], profile_id)
                 self.assertEqual(spec["defaultRepo"], "Efficient-Large-Model/SANA-Video_2B_480p_diffusers")
                 self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-                self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+                self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
                 self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
                 self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
                 graph, hints = executable_graph_for_spec(spec)
@@ -2592,6 +2994,18 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 graph, hints = executable_graph_for_spec(specification)
                 assert_studio_execution_graph(graph, hints)
 
+    def test_bundled_z_image_outpaint_starts_with_full_strength(self):
+        root = Path(module_registry.__file__).resolve().parents[1] / "data"
+        manifest = json.loads((root / "workflow-library-manifest.json").read_text(encoding="utf-8"))
+        entries = {row["id"]: row for row in manifest["workflows"]}
+
+        for mode, expected in (("outpaint", 1.0), ("inpaint", 0.8)):
+            with self.subTest(mode=mode):
+                path = root / "graphs" / entries[f"ZImageInpaintPipeline:{mode}"]["graphPath"]
+                graph = json.loads(path.read_text(encoding="utf-8"))
+                actors = [node["data"]["params"] for node in graph["nodes"] if node["data"].get("action") == "Inpaint"]
+                self.assertEqual([actor["strength"]["value"] for actor in actors], [expected])
+
     def test_qwen_image_edit_outpaint_seals_the_generated_canvas_and_mask_route(self):
         spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "outpaint")
         self.assertIsNotNone(spec)
@@ -2677,6 +3091,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(edit["executionProfileId"], multi["executionProfileId"])
         self.assertNotEqual(edit["contentHash"], multi["contentHash"])
         for spec in (edit, multi):
+            self.assertNotIn(("diffusersImageEdit", "strength", "strength"), spec["bindings"])
+            self.assertIn(("imageEncode", "reference_strength", "conditioningScale"), spec["bindings"])
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
         self.assertEqual(AUTO_MODEL_REQUIREMENTS["FluxReduxPipeline"]["supportedTasks"], ["edit_image"])
@@ -2706,7 +3122,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(edit["pipelineClass"], "Flux2KleinPipeline")
         self.assertEqual(multi["pipelineClass"], "Flux2KleinPipeline")
         self.assertEqual(text["roles"], validate_studio_execution_specs(module_registry.MODULE_MAP)[0]["roles"])
-        self.assertEqual(edit["roles"], studio_execution_spec_for_pair("FluxReduxPipeline", "edit_image")["roles"])
+        self.assertEqual(edit["roles"], studio_execution_spec_for_pair("FluxKontextPipeline", "edit_image")["roles"])
         self.assertEqual(multi["roles"], edit["roles"])
         self.assertNotEqual(text["contentHash"], edit["contentHash"])
         self.assertNotEqual(multi["contentHash"], edit["contentHash"])
@@ -2741,7 +3157,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         graph, hints = executable_graph_for_spec(spec)
         assert_studio_execution_graph(graph, hints)
 
-        control_id = hints["studioExecutionSpec"]["nodes"]["diffusersImageControl"]
+        control_id = hints["studioExecutionSpec"]["nodes"]["imageEncode"]
         graph["nodes"][control_id]["params"]["control_image"].pop("sourceId")
         with self.assertRaisesRegex(RuntimeError, "edge"):
             assert_studio_execution_graph(graph, hints)

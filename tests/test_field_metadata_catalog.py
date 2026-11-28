@@ -57,7 +57,12 @@ def test_all_video_modes_use_isolated_fields(subtests):
                           if call.args[0] == "pipeline")
             for action in ("Generate", "GenerateVideoAudio", "GenerateLTX2", "GenerateSequence"):
                 for mode in adapter.modes:
-                    callback("modules.DiffusersVideo", action, "update_adapter_modes", {"video_contract": signal, "mode": mode})
+                    values = {"video_contract": signal, "mode": mode}
+                    if not signal['actions'].get(action, signal['actions']['Generate']):
+                        with pytest.raises(ValueError, match='generation node compatible'):
+                            callback("modules.DiffusersVideo", action, "update_adapter_modes", values)
+                    else:
+                        callback("modules.DiffusersVideo", action, "update_adapter_modes", values)
 
 
 def test_all_rendered_3d_models_use_isolated_fields(subtests):
@@ -121,6 +126,30 @@ def test_additional_modular_callbacks_have_no_model_ownership(action, method, va
     fn(values, {})
 
 
+def test_unwired_guider_waits_for_model_metadata_without_relaxing_admission():
+    fn = metadata_field_callback("Guider", "updateNode", node_id="draft", sid="editing")
+    context = fn.__self__
+    values = {"guider": "SkipLayerGuidance", "model_type": ""}
+    context.get_signal_value = Mock(return_value=None)
+    context.send_node_definition = Mock()
+    fn(values, {})
+    context.get_signal_value.assert_called_once_with("guider_out")
+    context.send_node_definition.assert_not_called()
+
+    with pytest.raises(ValueError, match="class allowed"):
+        fn({**values, "model_type": "UnreviewedPipeline"}, {})
+    context.send_node_definition.assert_not_called()
+
+    context.get_signal_value.return_value = "StableDiffusionXLModularPipeline"
+    fn(values, {})
+    assert "skip_layer_guidance_scale" in context.send_node_definition.call_args.args[0]
+
+    context.send_node_definition.reset_mock()
+    context.get_signal_value.return_value = None
+    fn(values, {})
+    context.send_node_definition.assert_not_called()
+
+
 def test_legacy_custom_definition_keeps_request_workflow_ownership():
     from modiff.NodeBase import node_message_context
     from modules.ModularDiffusers import dynamic_node
@@ -153,3 +182,35 @@ def test_disconnected_metadata_always_clears_previous_dynamic_schema(action, sig
     fn.__self__.send_node_definition.assert_called_once()
     params = fn.__self__.send_node_definition.call_args.args[0]
     assert set(params) == ({"model_type", "controlnet_bundle"} if action == "Controlnet" else set())
+
+
+@pytest.mark.parametrize("action", ["EncodeInputs", "Denoise"])
+def test_declared_image_stage_callbacks_use_the_exact_metadata_boundary(action):
+    request = {"module": "modules.DiffusersImage", "action": action, "fn": "update_image_contract"}
+    assert is_metadata_field_action(request)
+    assert is_metadata_field_action({**request, "queue": False})
+    assert not is_metadata_field_action({**request, "queue": True})
+    assert not is_metadata_field_action({**request, "queue": 0})
+    assert not is_metadata_field_action({**request, "fn": "execute"})
+    assert not is_metadata_field_action({**request, "module": "modules.CustomImage"})
+
+
+@pytest.mark.parametrize("action", ["EncodeInputs", "Denoise"])
+def test_declared_image_stage_metadata_retains_an_isolated_nonexecuting_context(action):
+    from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS, image_pipeline_contract
+    signal = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxFillPipeline"], "inpaint")
+    with (
+        patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("metadata constructed node")),
+        patch("socket.socket.connect", side_effect=AssertionError("metadata used network")),
+        patch("subprocess.Popen", side_effect=AssertionError("metadata spawned process")),
+    ):
+        context = callback("modules.DiffusersImage", action, "update_image_contract", {"image_contract": signal})
+    original = getattr(import_module("modules.DiffusersImage.main"), action)
+    assert isinstance(context, FieldMessageContext)
+    assert not isinstance(context, original)
+    assert not hasattr(context, "execute")
+    assert not hasattr(context, "__del__")
+    assert context.__class__.params == original.params
+    assert context.__class__.params is not original.params
+    assert context.set_field_params.call_count > 0
+    assert signal["pipelineClass"] == "FluxFillPipeline"

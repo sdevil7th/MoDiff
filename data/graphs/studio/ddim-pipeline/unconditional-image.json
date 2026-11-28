@@ -118,47 +118,25 @@
           },
           "conditioning_kind": {
             "default": "none",
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
+            "hidden": true,
             "label": "Conditioning Kind",
             "options": [
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "none",
-                "schemaVersion": 1,
-                "value": "none"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "controlnet",
-                "schemaVersion": 1,
-                "value": "controlnet"
-              },
-              {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "t2i_adapter",
-                "schemaVersion": 1,
-                "value": "t2i_adapter"
-              }
+              "none"
             ],
             "type": "string",
             "value": "none"
           },
           "conditioning_model_id": {
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "filter": {
                 "hub": {
-                  "className": [
-                    "ControlNetModel"
-                  ]
+                  "className": []
                 }
               },
               "noValidation": true,
@@ -166,20 +144,38 @@
                 "hub"
               ]
             },
+            "hidden": true,
             "label": "Conditioning Model",
             "type": "string",
             "value": ""
           },
           "conditioning_revision": {
             "default": "",
+            "disabled": false,
+            "hidden": true,
             "label": "Conditioning Revision",
             "type": "string",
             "value": ""
+          },
+          "control_components": {
+            "description": "Optional exact configurations replace the single conditioning-model selection. Loaded as independently owned upstream ControlNet components.",
+            "display": "input",
+            "isConnected": false,
+            "label": "Control Components",
+            "type": "diffusers_control_components"
           },
           "device": {
             "default": "cpu:0",
             "label": "Device",
             "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
+              },
               {
                 "availability": "installed",
                 "compatibility": "compatible",
@@ -268,10 +264,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -298,11 +293,27 @@
             "label": "VAE tiling",
             "type": "bool"
           },
+          "execution_profile_id": {
+            "default": "",
+            "fieldOptions": {
+              "noValidation": true
+            },
+            "hidden": true,
+            "label": "Execution Profile",
+            "type": "string"
+          },
           "execution_recipe": {
             "display": "input",
             "isConnected": true,
             "label": "Execution Recipe",
             "type": "diffusers_execution_recipe"
+          },
+          "image_prompt_adapter": {
+            "description": "Optional pinned configuration. Attach to this loader before offload; supported FLUX.1 pipelines only.",
+            "display": "input",
+            "isConnected": false,
+            "label": "Image Prompt Adapter",
+            "type": "diffusers_image_prompt_adapter"
           },
           "low_cpu_mem_usage": {
             "default": true,
@@ -420,7 +431,7 @@
           },
           "pipeline_class": {
             "default": "FluxPipeline",
-            "disabled": true,
+            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
@@ -449,6 +460,14 @@
                 "label": "ConsistencyModelPipeline",
                 "schemaVersion": 1,
                 "value": "ConsistencyModelPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "QwenImage21Pipeline",
+                "schemaVersion": 1,
+                "value": "QwenImage21Pipeline"
               },
               {
                 "availability": "installed",
@@ -982,6 +1001,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "Flux2Pipeline",
+                "schemaVersion": 1,
+                "value": "Flux2Pipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "Flux2KleinPipeline",
                 "schemaVersion": 1,
                 "value": "Flux2KleinPipeline"
@@ -993,6 +1020,14 @@
                 "label": "Flux2KleinInpaintPipeline",
                 "schemaVersion": 1,
                 "value": "Flux2KleinInpaintPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux2KleinKVPipeline",
+                "schemaVersion": 1,
+                "value": "Flux2KleinKVPipeline"
               },
               {
                 "availability": "installed",
@@ -1017,6 +1052,30 @@
                 "label": "FluxFillPipeline",
                 "schemaVersion": 1,
                 "value": "FluxFillPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FluxControlNetPipeline",
+                "schemaVersion": 1,
+                "value": "FluxControlNetPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FluxControlNetImg2ImgPipeline",
+                "schemaVersion": 1,
+                "value": "FluxControlNetImg2ImgPipeline"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "FluxControlNetInpaintPipeline",
+                "schemaVersion": 1,
+                "value": "FluxControlNetInpaintPipeline"
               },
               {
                 "availability": "installed",
@@ -1110,6 +1169,14 @@
             "type": "string",
             "value": "DDIMPipeline"
           },
+          "prequantized_transformer": {
+            "description": "Optional reviewed single-file transformer component for exact base-pipeline assembly.",
+            "display": "input",
+            "isConnected": false,
+            "label": "Pre-quantized Transformer",
+            "required": false,
+            "type": "any"
+          },
           "quantization_mode": {
             "default": "none",
             "label": "Quantization",
@@ -1125,7 +1192,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
                 "installationState": "unavailable",
                 "label": "bnb_4bit",
                 "schemaVersion": 1,
@@ -1134,7 +1201,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
                 "installationState": "unavailable",
                 "label": "bnb_8bit",
                 "schemaVersion": 1,
@@ -1161,7 +1228,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires TorchAO and a qualified NVIDIA compute capability of at least 8.9",
+                "disabledReason": "TorchAO detected on an FP8-capable NVIDIA device",
                 "installationState": "unavailable",
                 "label": "torchao_float8",
                 "schemaVersion": 1,
@@ -1230,7 +1297,7 @@
               }
             ],
             "type": "string",
-            "value": ""
+            "value": []
           },
           "resolved_artifact": {
             "display": "output",
@@ -1255,8 +1322,7 @@
           0,
           0
         ],
-        "type": "custom",
-        "uiState": {}
+        "type": "custom"
       },
       "id": "node-01",
       "position": {
@@ -1294,7 +1360,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
                 "installationState": "unavailable",
                 "label": "bnb_4bit",
                 "schemaVersion": 1,
@@ -1303,7 +1369,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
                 "installationState": "unavailable",
                 "label": "bnb_8bit",
                 "schemaVersion": 1,
@@ -1330,7 +1396,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires TorchAO and a qualified NVIDIA compute capability of at least 8.9",
+                "disabledReason": "TorchAO detected on an FP8-capable NVIDIA device",
                 "installationState": "unavailable",
                 "label": "torchao_float8",
                 "schemaVersion": 1,
@@ -1424,10 +1490,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -1520,17 +1585,16 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "Native flash SDPA is unavailable in this Torch build. Select auto attention.",
                 "installationState": "unavailable",
                 "label": "_native_flash",
                 "schemaVersion": 1,
                 "value": "_native_flash"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_efficient",
                 "schemaVersion": 1,
                 "value": "_native_efficient"
@@ -1544,10 +1608,9 @@
                 "value": "_native_math"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires NVIDIA CUDA",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_cudnn",
                 "schemaVersion": 1,
                 "value": "_native_cudnn"
@@ -1555,7 +1618,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a PyTorch accelerator build with FlexAttention",
+                "disabledReason": "Requires a successful compiled FlexAttention probe on this accelerator",
                 "installationState": "unavailable",
                 "label": "flex",
                 "schemaVersion": 1,
@@ -1564,7 +1627,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "flash-attn package is not installed",
                 "installationState": "unavailable",
                 "label": "flash",
                 "schemaVersion": 1,
@@ -1645,7 +1708,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "SageAttention package is not installed",
                 "installationState": "unavailable",
                 "label": "sage",
                 "schemaVersion": 1,
@@ -1672,7 +1735,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff only enables xFormers on NVIDIA CUDA",
+                "disabledReason": "xFormers package is not installed",
                 "installationState": "unavailable",
                 "label": "xformers",
                 "schemaVersion": 1,
@@ -1824,7 +1887,7 @@
               }
             ],
             "type": "string",
-            "value": false
+            "value": "none"
           },
           "device": {
             "default": "cuda:0",
@@ -2113,7 +2176,8 @@
           },
           "eta": {
             "default": 0,
-            "hidden": true,
+            "disabled": false,
+            "hidden": false,
             "label": "DDIM eta",
             "max": 1,
             "min": 0,
@@ -2338,6 +2402,10 @@
             "signal": {
               "direction": "output"
             },
+            "signalCompatibility": {
+              "action": "$node",
+              "required": true
+            },
             "type": "image_diffusion_pipeline"
           },
           "seed": {
@@ -2411,6 +2479,14 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
               }
             },
             "type": "string"

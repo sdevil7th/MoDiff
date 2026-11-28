@@ -13,6 +13,8 @@ from __future__ import annotations
 import os
 from pathlib import Path, PurePosixPath
 
+from modiff.material_checkpoints import is_private_material_path
+
 
 DATA_PATH_PREFIX = "@data"
 
@@ -79,6 +81,8 @@ def resolve_data_path_identifier(
         candidate.relative_to(root)
     except ValueError as exc:
         raise ValueError("The data-path identifier escapes the configured data directory.") from exc
+    if is_private_material_path(candidate, root):
+        raise ValueError("The data-path identifier selects private MoDiff run state.")
     return candidate
 
 
@@ -116,6 +120,8 @@ def resolve_managed_path_identifier(
     if not candidate.is_absolute():
         candidate = work / candidate
     candidate = candidate.resolve(strict=False)
+    if is_private_material_path(candidate, data):
+        return None
     for root in (work, data):
         try:
             candidate.relative_to(root)
@@ -151,4 +157,6 @@ def resolve_runtime_input_path(
     path = Path(raw).expanduser()
     if not path.is_absolute():
         path = Path(work_root).expanduser() / path
+    if is_private_material_path(path, data_root):
+        raise ValueError("This node cannot access private MoDiff run state as a file.")
     return path

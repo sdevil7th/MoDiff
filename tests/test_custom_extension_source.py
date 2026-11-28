@@ -5,6 +5,38 @@ from types import SimpleNamespace
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def online_hub_metadata(monkeypatch):
+    # Each test controls the Hub's offline flag independently of the test runner.
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", False)
+
+
+@pytest.mark.parametrize("source,revision", [
+    ("owner/repo", "a" * 40),
+    ("https://huggingface.co/owner/repo/tree/" + "a" * 40, None),
+    ("https://huggingface.co/owner/repo", "a" * 40),
+])
+def test_offline_exact_hub_revision_resolves_without_network_or_staging(monkeypatch, source, revision):
+    from modiff.custom_extension_source import resolve_hub_extension
+
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", True)
+    monkeypatch.setattr("huggingface_hub.HfApi.model_info", lambda *a, **k: pytest.fail("No metadata request"))
+    monkeypatch.setattr("huggingface_hub.snapshot_download", lambda *a, **k: pytest.fail("No source staging"))
+    assert resolve_hub_extension(source, revision) == {
+        "kind": "hub", "source": "owner/repo", "requestedRevision": "a" * 40, "revision": "a" * 40,
+    }
+
+
+@pytest.mark.parametrize("revision", [None, "main", "release", "A" * 40, "a" * 39])
+def test_offline_mutable_or_noncanonical_revisions_require_an_exact_commit(monkeypatch, revision):
+    from modiff.custom_extension_source import resolve_hub_extension
+
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", True)
+    monkeypatch.setattr("huggingface_hub.HfApi.model_info", lambda *a, **k: pytest.fail("No metadata request"))
+    with pytest.raises(ValueError, match="offline.*40-character"):
+        resolve_hub_extension("owner/repo", revision)
+
+
 def test_hub_url_resolves_without_staging_or_import(monkeypatch):
     from modiff.custom_extension_source import resolve_hub_extension
 
@@ -38,9 +70,11 @@ def test_hub_url_resolves_without_staging_or_import(monkeypatch):
         ("owner/repo", 42),
     ],
 )
-def test_invalid_sources_fail_before_network(monkeypatch, source, revision):
+@pytest.mark.parametrize("offline", [False, True])
+def test_invalid_sources_fail_before_network(monkeypatch, source, revision, offline):
     from modiff.custom_extension_source import resolve_hub_extension
 
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", offline)
     monkeypatch.setattr("huggingface_hub.HfApi.model_info", lambda *a, **k: pytest.fail("No network"))
     with pytest.raises(ValueError):
         resolve_hub_extension(source, revision)

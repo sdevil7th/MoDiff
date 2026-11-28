@@ -55,6 +55,15 @@ def test_lyric_overlay_requires_and_renders_lrc_timeline():
     assert np.asarray(result["output"][10]).max() > 0
 
 
+def test_optional_lyrics_preserve_every_source_pixel_without_a_timeline():
+    frames = solid('navy', count=3)
+    original = [frame.tobytes() for frame in frames]
+    result = LyricOverlay('optional-lyrics')(video=frames, enabled=False, lrc='')
+    assert [frame.tobytes() for frame in result['output']] == original
+    with pytest.raises(RuntimeError, match='at least one'):
+        LyricOverlay('required-lyrics')(video=frames, enabled=True, lrc='')
+
+
 def test_export_with_audio_muxes_mp4(tmp_path):
     samples = np.zeros((48000, 2), dtype=np.float32)
     samples[:, 0] = 0.1 * np.sin(np.linspace(0, 440 * 2 * np.pi, 48000))

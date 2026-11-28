@@ -10,6 +10,10 @@ disconnected for ordinary pipeline loading; graph repair must not supply an
 unrelated value for it. Connected overrides still require the reviewed component
 contract and exact base-pipeline identity.
 
+## Generic image stages
+
+Selected Fill, Control and Redux image tasks use `LoadPipeline → EncodeInputs → Denoise → DecodeLatents`. The frontend groups these as Model Setup, Encode Inputs, Denoise and Image Output; source images and masks stay connected. See [Image pipeline stages](../../docs/image-pipeline-stages.md) for the actual encoding boundaries, saved-workflow compatibility and LoRA loading restrictions.
+
 ## Unconditional image starters
 
 New canonical DDPM, DDIM and Consistency Model loaders use the existing reviewed
@@ -49,9 +53,10 @@ catalog revisions. Optional-runtime, resource, trust and local-file boundaries
 are unchanged. No downloads occur merely from catalog discovery.
 
 Component quantization constructs each config through its owning library.
-Diffusers-only transformer quantization does not import the optional Transformers
-package. Text-encoder quantization requires the reviewed, explicitly activated
-Transformers + PEFT runtime and reports that action when it is absent.
+Diffusers-only transformer quantization keeps Transformers imports lazy.
+Text-encoder quantization uses Transformers and PEFT from the required base
+installation. Additional quantization backends retain their separate verified
+dependency contracts.
 
 ## Optional typed call inputs
 
@@ -112,6 +117,12 @@ Update execution specifications, selected `image_contract` fields, dependency pi
 composite admissions and paired compiled V2 identities together. Existing saved
 definitions and instance values are not silently rewritten. New backend-defined
 routes use their compiled defaults when no explicit legacy Studio profile exists.
+
+For reviewed Stable Diffusion 1.5 and SDXL inpaint snapshots, private run
+evidence can bind the separate decoded source and mask to the actual pipeline
+call. The verifier checks both original file uploads and the exact model and
+recipe. This evidence records execution and media identity. Template approval
+and redistribution use their own records.
 
 Tests distinguish contract fixtures, tiny real components and full-weight frontend
 generation. `test_flux_controlnet_runtime.py` uses actual small ControlNet/transformer/
@@ -262,6 +273,10 @@ silently reshape incompatible inputs or execute arbitrary Python callbacks.
 
 Existing saved outpaint strength values are not silently replaced with 1.
 Change an old instance explicitly if blank border regeneration is intended.
+The bundled Z-Image Outpaint starts at strength 1 so the expanded margins
+are regenerated. Use Seam overlap and Mask feather to tune the transition.
+Seam overlap extends into the source only along edges adjoining new canvas
+space. Feathering softens the resulting mask at those seams.
 Do not copy a base model's step count onto a distilled model, or vice versa.
 Model/resource changes, reduced steps and quantization must remain explicit.
 Model installation uses the app's Hugging Face Hub path and pinned revisions.

@@ -1,0 +1,652 @@
+{
+  "version": 1,
+  "stages": [
+    {
+      "id": "model-setup",
+      "modelBound": true,
+      "memberDecomposition": "loader",
+      "label": "Model Setup",
+      "tier": "browse",
+      "summary": "Choose a model, task and loading configuration.",
+      "modes": [
+        {"node":"modules.DiffusersImage.LoadPipeline","label":"Image model","terms":["load checkpoint","CheckpointLoaderSimple","Checkpoint Loader Simple","select image model"]},
+        {"node":"modules.ModularDiffusers.ModelsLoader","label":"Shared modular components","terms":["Load Models","Load Modular Components","checkpoint loader"]},
+        {"node":"modules.DiffusersVideo.LoadPipeline","label":"Video model","terms":["Load Diffusers Video Pipeline","load video model"]},
+        {"node":"modules.DiffusersAudio.LoadPipeline","label":"Audio model","terms":["Load Diffusers Audio Pipeline","load music model"]},
+        {"node":"modules.DiffusersThreeD.LoadPipeline","label":"3D model","terms":["Load Diffusers 3D Pipeline"]},
+        {"node":"modules.HuggingFaceSpeech.LoadSpeechRecognitionModel","label":"Load Speech Recognition Model"},
+        {"node":"modules.HuggingFaceSpeech.LoadCTCSpeechRecognitionModel","label":"Load CTC Speech Recognition Model"},
+        {"node":"modules.HuggingFaceTransformers.LoadTextGenerationModel","label":"Load Text Generation Model"},
+        {"node":"modules.HuggingFaceTransformers.LoadImageTextToTextModel","label":"Load Image/Video-to-Text Model"},
+        {"node":"modules.HuggingFaceTransformers.LoadAnyToAnyModel","label":"Load Any-to-Any Model"},
+        {"node":"modules.HuggingFaceTransformers.LoadDepthEstimationModel","label":"Load Depth Estimation Model"}
+      ],
+      "members": [
+        "modules.ModularDiffusers.AutoModelLoader",
+        "modules.DiffusersRuntime.LoadPrequantizedDiffusersComponent",
+        "modules.DiffusersRuntime.DiffusersExecutionRecipe",
+        "modules.DiffusersRuntime.PipelineQuantizationConfigV2",
+        "modules.ModularDiffusers.QuantizationConfigNode",
+        "modules.DiffusersRuntime.ApplyPipelineRuntimeConfig",
+        "modules.DiffusersImage.LoadAdapter",
+        "modules.DiffusersImage.ImagePromptAdapter",
+        "modules.DiffusersImage.ControlComponent",
+        "modules.ModularDiffusers.Lora",
+        "modules.ModularDiffusers.Controlnet",
+        "modules.ModularDiffusers.ControlnetUnion",
+        "modules.ModularDiffusers.IPAdapter",
+        "modules.DiffusersAudio.LoadAdapter",
+        "modules.DiffusersAudio.SetAdapters",
+        "modules.DiffusersAudio.FuseAdapters"
+      ]
+    },
+    {
+      "id": "media-input",
+      "label": "Media Input",
+      "tier": "browse",
+      "summary": "Open an image, clip or recording as a source.",
+      "modes": [
+        {"node":"modules.Image.Load","label":"Load Image","terms":["LoadImage","load photo"]},
+        {"node":"modules.MediaSource.LocalMedia","label":"Local Media","terms":["managed file","local path"]},
+        {"node":"modules.MediaSource.WebMedia","label":"Web Media"},
+        {"node":"modules.MediaSource.YouTubeMedia","label":"YouTube Media"},
+        {"node":"modules.Audio.Load","label":"Load Audio","terms":["open WAV","LoadAudio"]},
+        {"node":"modules.Video.Load","label":"Load Video","terms":["open clip","LoadVideo"]}
+      ],
+      "members": ["modules.VideoConditioning.Normalize"]
+    },
+    {
+      "id": "generate-image",
+      "modelBound": true,
+      "memberTasks": ["text_to_image", "unconditional_image", "control_image", "any_to_image"],
+      "label": "Generate Image",
+      "tier": "browse",
+      "summary": "Create images from a prompt or supported guidance.",
+      "modes": [
+        {"node":"modules.DiffusersImage.Generate","label":"Text to image","terms":["KSampler","sample latents","denoise","text to image","VAE Decode"],"guidance":"plain"},
+        {"node":"modules.DiffusersImage.ControlGenerate","label":"Generate with a control guide","terms":["Diffusers Control Generate","control guidance","ControlNet text to image"],"guidance":"guided"},
+        {"node":"modules.DiffusersImage.UnconditionalGenerate","label":"Sample without a prompt","terms":["Diffusers Unconditional Image Generate","unconditional image"]},
+        {"node":"modules.DiffusersImage.Denoise","label":"Sample image latents","terms":["Denoise Image","KSampler","sample latents"]},
+        {"node":"modules.ModularDiffusers.Denoise","label":"Sample modular latents","terms":["Denoise"]},
+        {"node":"modules.DiffusersImage.DecodeLatents","label":"Decode supplied image latents","terms":["Decode Image Latents","VAEDecode","VAE Decode","decode supplied latents"]},
+        {"node":"modules.ModularDiffusers.DecodeLatents","label":"Decode modular latents","terms":["Decode Latents"]}
+      ],
+      "members": [
+        "modules.ModularDiffusers.WorkflowImageDenoise",
+        "modules.ModularDiffusers.WorkflowErnieImageDenoise",
+        "modules.ModularDiffusers.WorkflowStableDiffusion3Denoise",
+        "modules.ModularDiffusers.WorkflowKrea2Denoise",
+        "modules.ModularDiffusers.WorkflowKrea2TurboDenoise",
+        "modules.ModularDiffusers.WorkflowIdeogram4Denoise",
+        "modules.ModularDiffusers.WorkflowDecodeImage",
+        "modules.ModularDiffusers.WorkflowErnieDecodeImage",
+        "modules.ModularDiffusers.WorkflowStableDiffusion3Decode",
+        "modules.ModularDiffusers.WorkflowKrea2Decode",
+        "modules.ModularDiffusers.WorkflowIdeogram4Decode",
+        "modules.ModularDiffusers.WorkflowCosmos3DistilledDenoise",
+        "modules.ModularDiffusers.WorkflowCosmos3OmniDenoise",
+        "modules.ModularDiffusers.WorkflowCosmos3DistilledDecode",
+        "modules.ModularDiffusers.WorkflowCosmos3OmniDecode",
+        "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode",
+        "modules.HuggingFaceTransformers.GenerateAnyToAny"
+      ]
+    },
+    {
+      "id": "edit-image",
+      "modelBound": true,
+      "memberTasks": ["edit_image", "image_to_image", "multi_image_reference_edit", "control_edit_image"],
+      "label": "Edit Image",
+      "tier": "browse",
+      "summary": "Transform a source image or ordered references.",
+      "modes": [
+        {"node":"modules.DiffusersImage.Edit","label":"Edit source image","terms":["img2img","image to image","KSampler","VAE Decode"],"guidance":"plain"},
+        {"node":"modules.DiffusersImage.ControlEdit","label":"Edit with a control guide","terms":["Diffusers Control Edit","edit with control","guided edit"],"guidance":"guided"}
+      ],
+      "members": [
+        "modules.DiffusersImage.Denoise",
+        "modules.ModularDiffusers.Denoise",
+        "modules.ModularDiffusers.WorkflowImageDenoise",
+        "modules.ModularDiffusers.WorkflowErnieImageDenoise",
+        "modules.ModularDiffusers.WorkflowStableDiffusion3Denoise",
+        "modules.ModularDiffusers.WorkflowKrea2Denoise",
+        "modules.ModularDiffusers.WorkflowKrea2TurboDenoise",
+        "modules.ModularDiffusers.WorkflowIdeogram4Denoise",
+        "modules.ModularDiffusers.WorkflowDecodeImage",
+        "modules.DiffusersImage.DecodeLatents",
+        "modules.ModularDiffusers.DecodeLatents",
+        "modules.ModularDiffusers.WorkflowErnieDecodeImage",
+        "modules.ModularDiffusers.WorkflowStableDiffusion3Decode",
+        "modules.ModularDiffusers.WorkflowKrea2Decode",
+        "modules.ModularDiffusers.WorkflowIdeogram4Decode"
+      ]
+    },
+    {
+      "id": "inpaint-image",
+      "modelBound": true,
+      "memberTasks": ["inpaint", "outpaint", "control_inpaint"],
+      "label": "Inpaint Image",
+      "tier": "browse",
+      "summary": "Generate inside a selected image mask.",
+      "modes": [
+        {"node":"modules.DiffusersImage.Inpaint","label":"Edit masked area","terms":["masked fill","inpainting","KSampler","VAE Decode"],"guidance":"plain"},
+        {"node":"modules.DiffusersImage.ControlInpaint","label":"Inpaint with a control guide","terms":["Diffusers Control Inpaint","control inpaint","inpaint with control"],"guidance":"guided"}
+      ],
+      "members": [
+        "modules.DiffusersImage.Denoise",
+        "modules.ModularDiffusers.Denoise",
+        "modules.ModularDiffusers.WorkflowImageDenoise",
+        "modules.ModularDiffusers.WorkflowErnieImageDenoise",
+        "modules.ModularDiffusers.WorkflowStableDiffusion3Denoise",
+        "modules.ModularDiffusers.WorkflowKrea2Denoise",
+        "modules.ModularDiffusers.WorkflowKrea2TurboDenoise",
+        "modules.ModularDiffusers.WorkflowIdeogram4Denoise",
+        "modules.ModularDiffusers.WorkflowDecodeImage",
+        "modules.DiffusersImage.DecodeLatents",
+        "modules.ModularDiffusers.DecodeLatents",
+        "modules.ModularDiffusers.WorkflowErnieDecodeImage",
+        "modules.ModularDiffusers.WorkflowStableDiffusion3Decode",
+        "modules.ModularDiffusers.WorkflowKrea2Decode",
+        "modules.ModularDiffusers.WorkflowIdeogram4Decode"
+      ]
+    },
+    {
+      "id": "generate-video",
+      "modelBound": true,
+      "memberTasks": ["text_to_video", "image_to_video", "reference_to_video", "control_to_video", "control_video_to_video", "video_to_video", "video_inpaint", "video_outpaint", "character_animate", "character_replace", "audio_to_video", "audio_video", "text_to_audio_video", "image_to_audio_video", "any_to_video"],
+      "label": "Generate Video",
+      "tier": "browse",
+      "summary": "Generate or transform a video shot.",
+      "modes": [
+        {"node":"modules.DiffusersVideo.Generate","label":"Generate video frames","terms":["Diffusers Video Generate","image to video","text to video","sample video latents","VAE decode video"]},
+        {"node":"modules.DiffusersVideo.Denoise","label":"Denoise Video","terms":["sample video latents"]},
+        {"node":"modules.DiffusersVideo.DecodeLatents","label":"Decode Video Latents","terms":["decode supplied video latents","VAE decode video"]},
+        {"node":"modules.DiffusersVideo.GenerateVideoAudio","label":"Generate video with synchronized sound","terms":["Diffusers Video + Audio Generate","audio video","joint soundtrack"]},
+        {"node":"modules.DiffusersVideo.GenerateShotJob","label":"Generate Video Shot Job"}
+      ],
+      "members": [
+        "modules.ModularDiffusers.WorkflowLTX25Duration",
+        "modules.ModularDiffusers.WorkflowJointAVDenoise",
+        "modules.ModularDiffusers.WorkflowMiniMaxH3Denoise",
+        "modules.ModularDiffusers.WorkflowVideoDenoise",
+        "modules.ModularDiffusers.WorkflowHunyuanVideo15Denoise",
+        "modules.ModularDiffusers.WorkflowCosmos3DistilledDenoise",
+        "modules.ModularDiffusers.WorkflowCosmos3OmniDenoise",
+        "modules.ModularDiffusers.WorkflowLTX25Denoise",
+        "modules.ModularDiffusers.WorkflowWanAnimateDenoise",
+        "modules.ModularDiffusers.WorkflowJointAVDecode",
+        "modules.ModularDiffusers.WorkflowMiniMaxH3Decode",
+        "modules.ModularDiffusers.WorkflowDecodeVideo",
+        "modules.ModularDiffusers.WorkflowHunyuanVideo15Decode",
+        "modules.ModularDiffusers.WorkflowCosmos3DistilledDecode",
+        "modules.ModularDiffusers.WorkflowCosmos3OmniDecode",
+        "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode",
+        "modules.ModularDiffusers.WorkflowLTX25Decode",
+        "modules.ModularDiffusers.WorkflowWanAnimateDecode",
+        "modules.DiffusersVideo.GenerateSequence",
+        "modules.DiffusersVideo.GenerateLTX2"
+      ]
+    },
+    {
+      "id": "generate-audio",
+      "modelBound": true,
+      "label": "Generate Audio",
+      "tier": "browse",
+      "summary": "Create music or sound, or continue an existing recording.",
+      "modes": [
+        {"node":"modules.DiffusersAudio.Generate","label":"Generate a soundtrack","terms":["Diffusers Audio Generate","text to music","generate sound","continue song"]}
+      ],
+      "members": [
+        "modules.ModularDiffusers.WorkflowSemanticGeneration",
+        "modules.ModularDiffusers.WorkflowDecodeAudio",
+        "modules.ModularDiffusers.WorkflowDenoise"
+      ]
+    },
+    {
+      "id": "generate-text",
+      "modelBound": true,
+      "label": "Generate Text",
+      "tier": "browse",
+      "summary": "Write text or describe supplied media.",
+      "modes": [
+        {"node":"modules.HuggingFaceTransformers.GenerateText","label":"Generate Text","terms":["write text"]},
+        {"node":"modules.HuggingFaceTransformers.GenerateImageVideoText","label":"Generate Image/Video Text","terms":["image caption","describe video"]},
+        {"node":"modules.HuggingFaceTransformers.GenerateAnyToAny","label":"Generate Any-to-Any"}
+      ]
+    },
+    {
+      "id": "transcribe-audio",
+      "modelBound": true,
+      "label": "Transcribe Audio",
+      "tier": "browse",
+      "summary": "Turn speech into words and supported timestamps.",
+      "modes": [
+        {"node":"modules.HuggingFaceSpeech.TranscribeAudio","label":"Transcribe Audio","terms":["speech to text","transcribe WAV","word timestamps"]},
+        {"node":"modules.HuggingFaceSpeech.TranscribeCTCAudio","label":"Transcribe CTC Audio"}
+      ]
+    },
+    {
+      "id": "process-image",
+      "label": "Process Image",
+      "tier": "browse",
+      "summary": "Crop, filter, resize or adjust pixels.",
+      "modes": [
+        {"node":"modules.ImageOperations.ProcessImage","label":"Process Image","terms":["process pixels"]},
+        {"node":"modules.ImageOperations.ProcessImage","label":"Crop","terms":["crop","crop image"],"settings":{"operation":"image_crop"}},
+        {"node":"modules.ImageOperations.ProcessImage","label":"Resize","terms":["resize","resize image"],"settings":{"operation":"image_upscale"}},
+        {"node":"modules.ImageOperations.ProcessImage","label":"Gaussian blur","terms":["blur","Gaussian blur"],"settings":{"operation":"image_filter","filter_operation":"gaussian_blur"}},
+        {"node":"modules.Image.Resize","label":"Resize a batch or snap to a size multiple","terms":["resize","batch resize","multiple of"]},
+        {"node":"modules.Image.ImageGrid","label":"Image Grid"},
+        {"node":"modules.Image.SplitImageGrid","label":"Split Image Grid"},
+        {"node":"modules.ImageOperations.AdjustImage","label":"Adjust Image"},
+        {"node":"modules.ImageOperations.FilterImage","label":"Filter Image"},
+        {"node":"modules.ImageOperations.CropImage","label":"Crop Image"},
+        {"node":"modules.ImageOperations.ResizeImage","label":"Resize Image"},
+        {"node":"modules.ImageOperations.TileImage","label":"Split Image into Tiles"},
+        {"node":"modules.ImageOperations.StitchImages","label":"Stitch Images"},
+        {"node":"modules.ImageOperations.ImageChannels","label":"Extract Image Channels"},
+        {"node":"modules.ImageFilters.GaussianBlur","label":"Gaussian blur on a selected device","terms":["Gaussian Blur","blur device"]},
+        {"node":"modules.ImageFilters.GuidedBlur","label":"Guided Blur"},
+        {"node":"modules.ImageFilters.UnsharpMask","label":"Unsharp Mask"},
+        {"node":"modules.ImageFilters.AdaptiveSharpening","label":"Adaptive Sharpening"},
+        {"node":"modules.Color.Invert","label":"Invert Colors"}
+      ]
+    },
+    {
+      "id": "process-video",
+      "label": "Process Video",
+      "tier": "browse",
+      "summary": "Extract frames or edit clip timing and color.",
+      "modes": [
+        {"node":"modules.Video.ProcessVideo","label":"Process Video"},
+        {"node":"modules.Video.ProcessVideo","label":"Trim clip","terms":["trim clip","trim video"],"settings":{"operation":"video_trim"}},
+        {"node":"modules.Video.ProcessVideo","label":"Reverse clip","terms":["reverse video"],"settings":{"operation":"video_reverse"}},
+        {"node":"modules.Video.ProcessVideo","label":"Extract last frame","terms":["extract last frame"],"settings":{"operation":"video_frame_extract","selection_mode":"last"}},
+        {"node":"modules.VideoConditioning.Normalize","label":"Normalize Video"},
+        {"node":"modules.Video.FrameExtract","label":"Extract Video Frames","terms":["extract frames"]},
+        {"node":"modules.VideoConditioning.FirstLastFrames","label":"First/Last Video Frames","terms":["extract last frame"]},
+        {"node":"modules.Video.Trim","label":"Trim Video","terms":["trim clip"]},
+        {"node":"modules.Video.TrimAsset","label":"Trim Retained Video"},
+        {"node":"modules.Video.Reverse","label":"Reverse Video","terms":["reverse video"]},
+        {"node":"modules.Video.ReverseAsset","label":"Reverse Retained Video"},
+        {"node":"modules.Video.FrameInterpolateAsset","label":"Interpolate Retained Video Frames"},
+        {"node":"modules.Video.TemporalCleanPlate","label":"Temporal Clean Plate"},
+        {"node":"modules.Video.ExtendCleanPlate","label":"Extend Video Clean Plate"},
+        {"node":"modules.VideoColor.Adjust","label":"Adjust Video Color"},
+        {"node":"modules.VideoColor.LUTApprox","label":"Video Color Mix"}
+      ]
+    },
+    {
+      "id": "process-audio",
+      "label": "Process Audio",
+      "tier": "browse",
+      "summary": "Trim, join or match audio to a timeline.",
+      "modes": [
+        {"node":"modules.Audio.ProcessAudio","label":"Process Audio"},
+        {"node":"modules.Audio.ProcessAudio","label":"Trim audio","terms":["trim audio"],"settings":{"operation":"audio_trim"}},
+        {"node":"modules.Audio.ProcessAudio","label":"Match loudness","terms":["match loudness","normalize loudness"],"settings":{"operation":"audio_loudness_match"}},
+        {"node":"modules.Audio.TrimPad","label":"Trim / Pad Audio"},
+        {"node":"modules.Audio.FitDuration","label":"Fit Audio Duration","terms":["fit audio duration"]},
+        {"node":"modules.Audio.Join","label":"Join Audio"},
+        {"node":"modules.Audio.MatchLoudness","label":"Match Audio Loudness","terms":["normalize loudness","match loudness"]}
+      ]
+    },
+    {
+      "id": "upscale",
+      "label": "Upscale",
+      "tier": "browse",
+      "summary": "Increase image or video resolution using a model.",
+      "modes": [
+        {"node":"modules.Spandrel.Upscaler","label":"Upscale with model","terms":["Spandrel","super resolution","upscale image"]},
+        {"node":"modules.Video.UpscaleVideo","label":"Upscale Video","terms":["upscale frames","super resolution video"]}
+      ]
+    },
+    {
+      "id": "preview",
+      "label": "Preview",
+      "tier": "browse",
+      "summary": "Inspect a result without creating a delivery file.",
+      "modes": [
+        {"node":"modules.Image.Preview","label":"Preview Image","terms":["PreviewImage"]},
+        {"node":"modules.ModularDiffusers.LatentsPreview","label":"Latents Preview","terms":["latent preview"]},
+        {"node":"modules.Audio.Preview","label":"Preview Audio","terms":["listen","play audio"]},
+        {"node":"modules.Primitive.DataViewer","label":"Data Viewer","terms":["inspect data"]}
+      ]
+    },
+    {
+      "id": "export",
+      "label": "Export",
+      "tier": "browse",
+      "summary": "Save an image, video, audio or data file.",
+      "modes": [
+        {"node":"modules.Image.Save","label":"Save Image","terms":["SaveImage","save PNG"]},
+        {"node":"modules.Audio.Export","label":"Export Audio","terms":["save WAV"]},
+        {"node":"modules.Video.Export","label":"Export Video","terms":["export MP4","SaveVideo"]},
+        {"node":"modules.Video.ExportAsset","label":"Export Retained Video Asset"},
+        {"node":"modules.Video.ExportWithAudio","label":"Export Video with Audio"},
+        {"node":"modules.Primitive.ExportData","label":"Export Data","terms":["export JSON"]}
+      ],
+      "members": ["modules.Video.MuxAudioAsset"]
+    },
+    {
+      "id": "encode-inputs",
+      "modelBound": true,
+      "label": "Encode Inputs",
+      "tier": "task",
+      "summary": "Encode prompts and media into model conditioning.",
+      "modes": [
+        {"node":"modules.DiffusersImage.EncodeInputs","label":"Encode Image Inputs","terms":["CLIPTextEncode","text encode","prompt embeddings"]},
+        {"node":"modules.ModularDiffusers.EncodePrompt","label":"Encode Prompt","terms":["CLIPTextEncode","text encode"]},
+        {"node":"modules.ModularDiffusers.ImageEncode","label":"Encode Image"},
+        {"node":"modules.ModularDiffusers.ImageEmbeddings","label":"Image Embeddings"},
+        {"node":"modules.DiffusersVideo.EncodeInputs","label":"Encode Video Inputs"}
+      ],
+      "members": [
+        "modules.ModularDiffusers.WorkflowErniePromptEnhance",
+        "modules.ModularDiffusers.WorkflowIdeogram4PromptUpsample",
+        "modules.ModularDiffusers.WorkflowTextEncode",
+        "modules.ModularDiffusers.WorkflowErnieTextEncode",
+        "modules.ModularDiffusers.WorkflowHunyuanVideo15TextEncode",
+        "modules.ModularDiffusers.WorkflowStableDiffusion3TextEncode",
+        "modules.ModularDiffusers.WorkflowKrea2TextEncode",
+        "modules.ModularDiffusers.WorkflowKrea2TurboTextEncode",
+        "modules.ModularDiffusers.WorkflowIdeogram4TextEncode",
+        "modules.ModularDiffusers.WorkflowCosmos3DistilledTextEncode",
+        "modules.ModularDiffusers.WorkflowCosmos3OmniTextEncode",
+        "modules.ModularDiffusers.WorkflowJointAVTextEncode",
+        "modules.ModularDiffusers.WorkflowMiniMaxH3TextEncode",
+        "modules.ModularDiffusers.WorkflowLTX25TextEncode",
+        "modules.ModularDiffusers.WorkflowWanAnimateTextEncode",
+        "modules.ModularDiffusers.WorkflowJointAVBeforeEncode",
+        "modules.ModularDiffusers.WorkflowMiniMaxH3BeforeEncode",
+        "modules.ModularDiffusers.WorkflowPrepareImages",
+        "modules.ModularDiffusers.WorkflowImageEncode",
+        "modules.ModularDiffusers.WorkflowStableDiffusion3VaeEncode",
+        "modules.ModularDiffusers.WorkflowVideoImageEncode",
+        "modules.ModularDiffusers.WorkflowHunyuanVideo15VaeEncode",
+        "modules.ModularDiffusers.WorkflowHunyuanVideo15ImageEncode",
+        "modules.ModularDiffusers.WorkflowLTX25VaeEncode",
+        "modules.ModularDiffusers.WorkflowWanAnimateImageEncode",
+        "modules.ModularDiffusers.WorkflowWanAnimateVaeEncode",
+        "modules.ModularDiffusers.WorkflowJointAVVaeEncode",
+        "modules.ModularDiffusers.WorkflowMiniMaxH3VaeEncode",
+        "modules.ModularDiffusers.WorkflowVideoEncode",
+        "modules.ModularDiffusers.WorkflowCosmos3DistilledVaeEncode",
+        "modules.ModularDiffusers.WorkflowCosmos3OmniVaeEncode",
+        "modules.ModularDiffusers.WorkflowLTX25ConditionEncode",
+        "modules.ModularDiffusers.WorkflowLTX25ReferenceEncode",
+        "modules.ModularDiffusers.WorkflowWanAnimateVideoEncode"
+      ]
+    },
+    {
+      "id": "references",
+      "label": "References",
+      "tier": "task",
+      "summary": "Collect image or media references in a defined order.",
+      "modes": [
+        {"node":"modules.VideoConditioning.ReferenceImages","label":"Video Reference Images","terms":["ordered reference images","identity reference"]}
+      ],
+      "members": [
+        "modules.ModularDiffusers.WorkflowJointAVReferenceAssembler",
+        "modules.ModularDiffusers.WorkflowMiniMaxH3ReferenceAssembler"
+      ]
+    },
+    {
+      "id": "prepare-mask",
+      "label": "Prepare Mask",
+      "tier": "task",
+      "summary": "Prepare a mask and its matching source canvas.",
+      "modes": [
+        {"node":"modules.DiffusersImage.OutpaintCanvas","label":"Outpaint Canvas","terms":["grow canvas","outpaint","expand borders"]},
+        {"node":"modules.VideoConditioning.OutpaintCanvas","label":"Prepare Video Canvas"},
+        {"node":"modules.VideoConditioning.AlignMask","label":"Align Video Mask","terms":["align mask"]},
+        {"node":"modules.VideoConditioning.ObjectMaskPropagate","label":"Propagate Object Mask","terms":["propagate video mask"]}
+      ]
+    },
+    {
+      "id": "control-map",
+      "label": "Control Map",
+      "tier": "task",
+      "summary": "Build a structural guide from images or video.",
+      "modes": [
+        {"node":"modules.ImageFilters.Canny","label":"Canny Edge Detection","terms":["Canny","edge map","detect edges"]},
+        {"node":"modules.VideoConditioning.EdgePreprocessor","label":"Video Edge / Sketch Preprocessor","terms":["video edges","sketch guide"]}
+      ]
+    },
+    {
+      "id": "predict-map",
+      "modelBound": true,
+      "label": "Predict Map",
+      "tier": "task",
+      "summary": "Predict a map from an image and inspect the result.",
+      "modes": [
+        {"node":"modules.DiffusersImage.PredictMap","label":"Diffusers Predict Map","terms":["depth estimation","Marigold","predict depth"]},
+        {"node":"modules.HuggingFaceTransformers.PredictDepth","label":"Predict Depth","terms":["numeric depth","depth estimation"]}
+      ]
+    },
+    {
+      "id": "separate-layers",
+      "modelBound": true,
+      "label": "Separate Layers",
+      "tier": "task",
+      "summary": "Decompose an image into ordered layers.",
+      "modes": [
+        {"node":"modules.DiffusersImage.LayerDecompose","label":"Diffusers Layer Decompose","terms":["decompose image","split into layers"]}
+      ]
+    },
+    {
+      "id": "render-3d",
+      "modelBound": true,
+      "label": "Render 3D",
+      "tier": "task",
+      "summary": "Render views of a generated 3D subject.",
+      "modes": [
+        {"node":"modules.DiffusersThreeD.GenerateRenderedArtifact","label":"Diffusers 3D Rendered Generate","terms":["render turntable","generate 3D views"]}
+      ]
+    },
+    {
+      "id": "composite",
+      "label": "Composite",
+      "tier": "task",
+      "summary": "Combine a base and overlay or apply a mask.",
+      "modes": [
+        {"node":"modules.Image.Merge","label":"Merge Images","terms":["alpha composite","overlay image"]},
+        {"node":"modules.Image.ApplyMask","label":"Apply Mask","terms":["apply mask"]},
+        {"node":"modules.Video.MaskedComposite","label":"Masked Video Composite"},
+        {"node":"modules.Video.LyricOverlay","label":"Timed Lyric Overlay"},
+        {"node":"modules.ImageOperations.MaskComposite","label":"Composite Images with Mask","terms":["masked composite"]}
+      ]
+    },
+    {
+      "id": "assemble-clips",
+      "label": "Assemble Clips",
+      "tier": "task",
+      "summary": "Arrange clips, transitions or soundtrack tracks.",
+      "modes": [
+        {"node":"modules.Video.Compose","label":"Compose Video","terms":["timeline","assemble clips"]},
+        {"node":"modules.Video.Concatenate","label":"Concatenate Videos","terms":["concatenate clips"]},
+        {"node":"modules.Video.ConcatenateAssets","label":"Join Retained Videos"},
+        {"node":"modules.Video.Crossfade","label":"Crossfade Videos","terms":["crossfade"]},
+        {"node":"modules.Video.CrossfadeAssets","label":"Crossfade Retained Videos"},
+        {"node":"modules.Video.KeyframeChain","label":"Assemble Keyframe Chain"},
+        {"node":"modules.Video.StackTile","label":"Stack / Tile Videos"},
+        {"node":"modules.Video.StackTileAssets","label":"Tile Retained Videos"},
+        {"node":"modules.Video.MuxAudioAsset","label":"Add Audio to Retained Video","terms":["mux soundtrack"]}
+      ]
+    },
+    {
+      "id": "storyboard",
+      "label": "Storyboard",
+      "tier": "task",
+      "summary": "Prepare linked shots, prompts and timing.",
+      "modes": [
+        {"node":"modules.VideoConditioning.Storyboard","label":"Storyboard","terms":["shot list","plan sequence","linked shots"]},
+        {"node":"modules.DiffusersVideo.GenerateSequence","label":"Diffusers Video Generate Sequence"},
+        {"node":"modules.VideoConditioning.ShotInputs","label":"Shot Inputs"},
+        {"node":"modules.VideoConditioning.ShotPrompt","label":"Shot Prompt"},
+        {"node":"modules.DiffusersVideo.BuildShotJobs","label":"Build Quality Video Shot Jobs"},
+        {"node":"modules.DiffusersVideo.PlanLongVideo","label":"Plan Long Video"},
+        {"node":"modules.Video.FirstLastSegmentBuilder","label":"Build First / Last Segments"},
+        {"node":"modules.WorkflowControl.AuthorShotList","label":"Author Shot List"}
+      ]
+    },
+    {
+      "id": "text-data",
+      "label": "Text & Data",
+      "tier": "task",
+      "summary": "Create text, select a value or read a record field.",
+      "modes": [
+        {"node":"modules.Text.ProcessText","label":"Process Text/Data","terms":["select line"]},
+        {"node":"modules.Primitive.TextValue","label":"Text Value","terms":["text value"]},
+        {"node":"modules.WorkflowControl.GetField","label":"Get Record Field","terms":["get field"]}
+      ],
+      "members": [
+        "modules.ModularDiffusers.WorkflowErniePromptEnhance",
+        "modules.ModularDiffusers.WorkflowIdeogram4PromptUpsample"
+      ]
+    },
+    {
+      "id": "collection",
+      "label": "Collection",
+      "tier": "task",
+      "summary": "Collect, split or select ordered items.",
+      "modes": [
+        {"node":"modules.Primitive.ToList","label":"Items to List","terms":["collect items"]},
+        {"node":"modules.Text.TextToList","label":"Text to List"},
+        {"node":"modules.WorkflowControl.CollectionItem","label":"Get Collection Item","terms":["select item"]},
+        {"node":"modules.WorkflowControl.CollectionBatch","label":"Batch Collection","terms":["batch items"]},
+        {"node":"modules.WorkflowControl.CollectionFlatten","label":"Flatten Collection","terms":["flatten list"]},
+        {"node":"modules.WorkflowControl.FanOut","label":"Fan Out"}
+      ]
+    },
+    {
+      "id": "compare",
+      "label": "Compare",
+      "tier": "task",
+      "summary": "Compare two images side by side.",
+      "modes": [
+        {"node":"modules.Image.Compare","label":"Image Compare","terms":["before and after","compare images"]}
+      ]
+    },
+    {
+      "id": "parameter-set",
+      "label": "Parameter Set",
+      "tier": "task",
+      "summary": "Share settings, generate seeds or plan a parameter sweep.",
+      "modes": [
+        {"node":"modules.WorkflowControl.ParameterPreset","label":"Parameter Preset","terms":["shared preset"]},
+        {"node":"modules.DiffusersAdapters.LoRAComparisonJobs","label":"Build LoRA Comparison Jobs"},
+        {"node":"modules.WorkflowControl.ParameterMatrix","label":"Parameter Matrix","terms":["parameter sweep"]},
+        {"node":"modules.WorkflowControl.SeedSequence","label":"Seed Sequence","terms":["seed sequence"]},
+        {"node":"modules.Tensor.SeededGenerator","label":"Seeded Generator"}
+      ]
+    },
+    {
+      "id": "model-component",
+      "label": "Model Component",
+      "tier": "advanced",
+      "summary": "Supply one independently wired model component.",
+      "modes": [
+        {"node":"modules.ModularDiffusers.AutoModelLoader","label":"Load Model","terms":["VAE loader","VAELoader","transformer weights","ControlNetLoader"]},
+        {"node":"modules.DiffusersRuntime.LoadPrequantizedDiffusersComponent","label":"Load Pre-quantized Diffusers Component","terms":["GGUF","prequantized transformer"]}
+      ]
+    },
+    {
+      "id": "adapter-stack",
+      "label": "Adapter Stack",
+      "tier": "advanced",
+      "summary": "Attach, mix or inspect adapter weights.",
+      "modes": [
+        {"node":"modules.DiffusersAdapters.LoRAStackMix","label":"Diffusers LoRA Stack / Mix","terms":["mix LoRA","adapter weights"]},
+        {"node":"modules.DiffusersImage.LoadAdapter","label":"Load Diffusers Image Adapter","terms":["load LoRA","LoraLoader"]},
+        {"node":"modules.DiffusersImage.ImagePromptAdapter","label":"Image Prompt Adapter","terms":["IP-Adapter weights"]},
+        {"node":"modules.DiffusersImage.ControlComponent","label":"Control Component","terms":["ControlNet weights","ControlNetLoader"]},
+        {"node":"modules.ModularDiffusers.Lora","label":"Lora","terms":["load LoRA","LoraLoader"]},
+        {"node":"modules.ModularDiffusers.Controlnet","label":"ControlNet","terms":["ControlNet","guide weights"]},
+        {"node":"modules.ModularDiffusers.ControlnetUnion","label":"ControlNet Union"},
+        {"node":"modules.ModularDiffusers.IPAdapter","label":"IP-Adapter Embeddings"},
+        {"node":"modules.DiffusersAudio.LoadAdapter","label":"Load Diffusers Audio LoRA"},
+        {"node":"modules.DiffusersAudio.SetAdapters","label":"Set Audio LoRA Blend"},
+        {"node":"modules.DiffusersAudio.FuseAdapters","label":"Fuse Audio LoRA"},
+        {"node":"modules.DiffusersAdapters.LoRAInspectValidate","label":"Inspect / Validate Diffusers LoRA"},
+        {"node":"modules.DiffusersAdapters.LoRAHotswap","label":"Hotswap Diffusers LoRA"},
+        {"node":"modules.DiffusersAdapters.LoRAFuseUnfuse","label":"Fuse / Unfuse Diffusers LoRA"},
+        {"node":"modules.DiffusersAdapters.LoRAUnloadReset","label":"Unload / Reset Diffusers LoRA"}
+      ]
+    },
+    {
+      "id": "runtime-settings",
+      "label": "Runtime Settings",
+      "tier": "advanced",
+      "summary": "Share typed sampling, attention or memory settings.",
+      "modes": [
+        {"node":"modules.DiffusersRuntime.DiffusersExecutionRecipe","label":"Diffusers Execution Recipe","terms":["offload policy","shared runtime settings"]},
+        {"node":"modules.DiffusersRuntime.PipelineQuantizationConfigV2","label":"Pipeline Quantization Config V2"},
+        {"node":"modules.ModularDiffusers.QuantizationConfigNode","label":"Quantization Config"},
+        {"node":"modules.ModularDiffusers.Scheduler","label":"Scheduler","terms":["scheduler"]},
+        {"node":"modules.ModularDiffusers.Guider","label":"Guider"},
+        {"node":"modules.ModularDiffusers.Layers","label":"Layers"},
+        {"node":"modules.DiffusersRuntime.ExecutionRecipePlanner","label":"Execution Recipe Planner"},
+        {"node":"modules.DiffusersRuntime.HardwareCapabilityProbe","label":"Hardware Capability Probe"},
+        {"node":"modules.DiffusersRuntime.DiffusersComponentInventory","label":"Diffusers Component Inventory"},
+        {"node":"modules.DiffusersRuntime.PipelineMemoryEstimate","label":"Pipeline Memory Estimate"},
+        {"node":"modules.Tensor.AttentionArguments","label":"Attention Arguments"}
+      ]
+    },
+    {
+      "id": "resource-action",
+      "label": "Resource Action",
+      "tier": "advanced",
+      "summary": "Schedule a resource change or release.",
+      "modes": [
+        {"node":"modules.DiffusersRuntime.ReleasePipelineMemory","label":"Release Pipeline Memory","terms":["release model memory","unload pipeline"]},
+        {"node":"modules.DiffusersRuntime.ApplyPipelineRuntimeConfig","label":"Apply Pipeline Runtime Config"},
+        {"node":"modules.Video.CleanupAssets","label":"Clean Temporary Media"}
+      ]
+    },
+    {
+      "id": "build-model-artifact",
+      "label": "Build Model Artifact",
+      "tier": "advanced",
+      "summary": "Write a quantized model or merged adapter to disk.",
+      "modes": [
+        {"node":"modules.ModelArtifact.QuantizeDiffusersComponents","label":"Quantize Diffusers Components","terms":["quantize model to disk"]},
+        {"node":"modules.DiffusersAdapters.LoRAMergeArtifact","label":"Merge Diffusers LoRA Artifact","terms":["merge LoRA to file"]}
+      ]
+    },
+    {
+      "id": "tensor-math",
+      "label": "Tensor Math",
+      "tier": "advanced",
+      "summary": "Transform tensors for a custom computation.",
+      "modes": [
+        {"node":"modules.Tensor.MultiplyTensor","label":"Multiply Tensor"},
+        {"node":"modules.Tensor.AddTensorNoise","label":"Add Tensor Noise","terms":["add tensor noise"]},
+        {"node":"modules.Tensor.MergeTensors","label":"Merge Tensors"},
+        {"node":"modules.Tensor.AverageTensors","label":"Average Tensors","terms":["average tensors"]}
+      ]
+    }
+  ],
+  "otherActions": {
+    "Setup inspector": [
+      "modules.DiffusersRuntime.ExecutionRecipePlanner",
+      "modules.DiffusersRuntime.HardwareCapabilityProbe",
+      "modules.DiffusersRuntime.DiffusersComponentInventory",
+      "modules.DiffusersRuntime.PipelineMemoryEstimate"
+    ],
+    "Compiler placement": [
+      "modules.ModularDiffusers.ReviewedModularWorkflowStep"
+    ],
+    "Developer inspector": [
+      "modules.ModularDiffusers.DynamicBlockNode"
+    ],
+    "Asset management": [
+      "modules.Video.CleanupAssets"
+    ],
+    "Loop Block": [
+      "modules.WorkflowControl.LoopItems",
+      "modules.WorkflowControl.LoopIndex",
+      "modules.WorkflowControl.LoopInput",
+      "modules.WorkflowControl.LoopResult"
+    ]
+  }
+}
